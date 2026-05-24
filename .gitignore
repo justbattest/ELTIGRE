@@ -1,0 +1,12 @@
+temp/
+*.db
+.env
+.env.local
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+webapp/.next/
+webapp/node_modules/
+/tmp/hf_*
+webapp/
