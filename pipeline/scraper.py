@@ -1,9 +1,12 @@
 """
-Apify Instagram scraper — carousels triés par engagement (likes + comments).
+Apify Instagram scraper — posts triés par engagement (likes + comments).
 Téléchargement immédiat des images (URLs CDN expirent rapidement).
 
 Actor utilisé : apify/instagram-post-scraper (99.9% success rate, 94k users)
-Plus fiable que apify/instagram-scraper qui se fait bloquer sur certains profils.
+
+On scrape TOUS les posts (images simples + carousels confondus) :
+- La seule règle est d'avoir au moins 1 image et un max d'engagement
+- On n'exclut plus les images simples, elles sont valides pour la génération
 """
 
 import asyncio
@@ -15,11 +18,7 @@ from apify_client import ApifyClient
 
 
 def clean_instagram_url(url: str) -> str:
-    """Nettoie une URL Instagram : supprime les query params (?igsh=...) et fragments.
-    Exemples :
-      https://www.instagram.com/emma?igsh=xxx  →  https://www.instagram.com/emma/
-      https://www.instagram.com/p/ABC/?hl=fr   →  https://www.instagram.com/p/ABC/
-    """
+    """Nettoie une URL Instagram : supprime les query params (?igsh=...) et fragments."""
     url = re.sub(r'[?#].*$', '', url.strip())
     if not url.endswith('/'):
         url += '/'
@@ -27,46 +26,39 @@ def clean_instagram_url(url: str) -> str:
 
 
 def scrape_profile(profile_url: str, max_posts: int, apify_key: str) -> list:
-    """Scrape les carousels d'un profil Instagram via Apify.
-    Utilise apify/instagram-post-scraper (plus fiable, 99.9% success rate).
-    Retourne les carousels triés par engagement DESC.
+    """Scrape tous les posts d'un profil Instagram via Apify (images + carousels).
+    Retourne les posts triés par engagement DESC.
     """
     clean_url = clean_instagram_url(profile_url)
     client = ApifyClient(apify_key)
 
-    # Actor officiel Apify v2 — supporte URLs directes et usernames
-    # detailedData = retourne toutes les images du carousel (childPosts inclus)
     run = client.actor("apify/instagram-post-scraper").call(run_input={
         "username": [clean_url],
         "resultsLimit": max_posts,
         "dataDetailLevel": "detailedData",
     })
 
-    # apify-client v3 : objet Pydantic, accès via attribut snake_case
     dataset_id = run.default_dataset_id
     items = list(client.dataset(dataset_id).iterate_items())
 
     # Filtrer les erreurs (profils bloqués, privés)
-    valid_items = []
+    valid_posts = []
     for item in items:
         if item.get("error") or item.get("requestErrorMessages"):
-            err = item.get("error") or (item.get("requestErrorMessages") or [""])[0][:100]
-            print(json.dumps({"type": "warn", "msg": f"Profile skipped: {err}"}), flush=True)
+            err = (item.get("requestErrorMessages") or [""])[0][:100]
+            print(json.dumps({"type": "warn", "msg": f"Post skipped: {err}"}), flush=True)
             continue
-        valid_items.append(item)
+        # Doit avoir au moins 1 image
+        if not item.get("images") and not item.get("displayUrl"):
+            continue
+        valid_posts.append(item)
 
-    # Carousels uniquement — type "Sidecar" (nouveau) ou "GraphSidecar" (ancien)
-    # Fallback : tout post avec 2+ images compte comme carousel
-    CAROUSEL_TYPES = {"GraphSidecar", "Sidecar"}
-    carousels = [
-        p for p in valid_items
-        if p.get("type") in CAROUSEL_TYPES or len(p.get("images", [])) > 1
-    ]
-    carousels.sort(
+    # Tri par engagement (likes + comments) DESC
+    valid_posts.sort(
         key=lambda p: p.get("likesCount", 0) + p.get("commentsCount", 0),
         reverse=True
     )
-    return carousels
+    return valid_posts
 
 
 def _get_image_url(img) -> str | None:
@@ -79,20 +71,18 @@ def _get_image_url(img) -> str | None:
 
 
 def _extract_slide_urls(post: dict) -> list[str]:
-    """Extrait toutes les URLs de slides d'un carousel.
+    """Extrait toutes les URLs d'images d'un post.
 
-    Stratégie (par ordre de préférence) :
-    1. post["images"]  — liste de strings URLs (format nouveau actor)
-    2. post["childPosts"][*]["displayUrl"]  — slides individuelles
-    3. post["displayUrl"]  — image principale (fallback single image)
+    Stratégie :
+    1. post["images"]  — liste directe (format nouveau actor)
+    2. post["childPosts"][*]["displayUrl"]  — slides carousel
+    3. post["displayUrl"]  — image principale (fallback)
     """
-    # 1. Champ images direct
     raw_images = post.get("images", [])
     urls = [u for img in raw_images if (u := _get_image_url(img))]
     if urls:
         return urls
 
-    # 2. childPosts (slides du carousel)
     child_posts = post.get("childPosts", [])
     if child_posts:
         child_urls = []
@@ -103,15 +93,14 @@ def _extract_slide_urls(post: dict) -> list[str]:
         if child_urls:
             return child_urls
 
-    # 3. Fallback : image principale uniquement
     if post.get("displayUrl"):
         return [post["displayUrl"]]
 
     return []
 
 
-async def download_carousel(post: dict, run_dir: str) -> list[str]:
-    """Télécharge toutes les slides d'un carousel.
+async def download_post(post: dict, run_dir: str) -> list[str]:
+    """Télécharge toutes les images d'un post (1 image ou plusieurs pour carousel).
     Retourne les chemins locaux des images téléchargées.
     IMPORTANT: télécharger immédiatement — les URLs CDN expirent rapidement.
     """
@@ -154,35 +143,41 @@ async def scrape_and_download_all(
     """
     print(json.dumps({"type": "phase", "phase": "scraping", "pct": 0}), flush=True)
 
-    carousels = scrape_profile(profile_url, max_posts, apify_key)
+    posts = scrape_profile(profile_url, max_posts, apify_key)
+
+    is_carousel = lambda p: p.get("type") in ("Sidecar", "GraphSidecar") or len(p.get("images", [])) > 1
+    n_carousels = sum(1 for p in posts if is_carousel(p))
+    n_singles = len(posts) - n_carousels
 
     print(json.dumps({
         "type": "phase",
         "phase": "scraping",
         "pct": 100,
-        "total_carousels": len(carousels),
+        "total_posts": len(posts),
+        "total_carousels": n_carousels,
+        "total_singles": n_singles,
         "profile": profile_url,
     }), flush=True)
 
-    if not carousels:
+    if not posts:
         print(json.dumps({
             "type": "error",
-            "msg": f"Aucun carousel trouvé pour {profile_url}. Profil privé, bloqué ou sans carousel.",
+            "msg": f"Aucun post trouvé pour {profile_url}. Profil privé, bloqué ou vide.",
         }), flush=True)
         return []
 
     print(json.dumps({"type": "phase", "phase": "downloading", "pct": 0}), flush=True)
 
     results = []
-    tasks = [download_carousel(post, run_dir) for post in carousels]
+    tasks = [download_post(post, run_dir) for post in posts]
     downloaded = await asyncio.gather(*tasks, return_exceptions=True)
 
-    for i, (post, paths) in enumerate(zip(carousels, downloaded)):
+    for i, (post, paths) in enumerate(zip(posts, downloaded)):
         if isinstance(paths, Exception):
             sc = post.get('shortCode') or post.get('shortcode')
             print(json.dumps({"type": "warn", "msg": f"download error for {sc}: {paths}"}), flush=True)
             paths = []
-        if paths:  # Seulement si au moins 1 image téléchargée
+        if paths:
             results.append({"post": post, "local_images": paths})
 
     print(json.dumps({

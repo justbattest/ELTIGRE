@@ -57,6 +57,8 @@ async def main():
     apify_key = os.environ.get("APIFY_KEY")
     anthropic_key = os.environ.get("ANTHROPIC_KEY")
     higgsfield_token = os.environ.get("HIGGSFIELD_TOKEN")
+    drive_credentials = os.environ.get("DRIVE_CREDENTIALS")  # JSON service account (optionnel)
+    drive_folder_id = os.environ.get("DRIVE_FOLDER_ID")       # ID dossier Drive (optionnel)
 
     if not apify_key:
         print(json.dumps({"type": "error", "message": "APIFY_KEY manquant"}), flush=True)
@@ -76,7 +78,6 @@ async def main():
 
     work_dir = args.work_dir or f"./temp/{args.run_id}"
 
-    # Importer ici pour ne pas crasher si deps manquantes avant les checks
     from pipeline.queue_manager import run_pipeline
 
     await run_pipeline(
@@ -92,6 +93,8 @@ async def main():
         anthropic_key=anthropic_key,
         higgsfield_token=higgsfield_token,
         work_dir=work_dir,
+        drive_credentials=drive_credentials,
+        drive_folder_id=drive_folder_id,
     )
 
 

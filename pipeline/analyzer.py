@@ -1,6 +1,7 @@
 """
 Analyse Claude API + skill i2i-avatar-creator-base.
-Génère un prompt Higgsfield pour la meilleure slide d'un carousel.
+Génère un prompt Higgsfield pour la meilleure image d'un post Instagram.
+Fonctionne aussi bien pour les images simples que les carousels multi-slides.
 """
 
 import json
@@ -10,16 +11,12 @@ import anthropic
 
 
 def load_i2i_skill() -> str:
-    """Charge le skill i2i-avatar-creator-base depuis ./skills/.
-    Toujours chargé dynamiquement (jamais hardcodé).
-    """
+    """Charge le skill i2i-avatar-creator-base depuis ./skills/."""
     base = Path("./skills/i2i-avatar-creator-base")
 
-    # Vérifier que le skill existe
     if not (base / "SKILL.md").exists():
         raise FileNotFoundError(
-            f"Skill i2i-avatar-creator-base introuvable dans {base.absolute()}. "
-            "Vérifier que ./skills/i2i-avatar-creator-base/ existe."
+            f"Skill i2i-avatar-creator-base introuvable dans {base.absolute()}."
         )
 
     parts = [
@@ -37,8 +34,8 @@ def load_i2i_skill() -> str:
 ---
 ## CONTEXTE PIPELINE AUTOMATIQUE
 
-Tu analyses des images de carousels Instagram.
-Génère UN SEUL prompt pour la slide la plus représentative du carousel.
+Tu analyses des images Instagram (image seule ou carousel multi-slides).
+Génère UN SEUL prompt pour l'image ou la slide la plus représentative.
 NE PAS inclure <<<UUID>>> dans le prompt (le pipeline l'injecte selon le modèle).
 Recommande le modèle optimal parmi : soul_cinematic / seedream_v4_5 / nano_banana_2
 
@@ -59,18 +56,18 @@ def encode_image(path: str) -> str:
     return base64.b64encode(Path(path).read_bytes()).decode()
 
 
-def analyze_carousel(slides: list[str], anthropic_key: str) -> dict:
-    """Analyse un carousel et génère un prompt Higgsfield.
+def analyze_post(slides: list[str], anthropic_key: str) -> dict:
+    """Analyse un post Instagram (1 image ou plusieurs slides) et génère un prompt Higgsfield.
 
     Args:
-        slides: Liste de chemins locaux vers les images (max 10 recommandé, max 20)
+        slides: Liste de chemins locaux vers les images (max 10)
         anthropic_key: Clé API Anthropic
 
     Returns:
         dict avec best_slide_index, recommended_model, scene_description, prompt
     """
-    # Respecter la limite de 20 images / appel Claude (recommandé : 10)
     slides_to_use = slides[:10]
+    n = len(slides_to_use)
 
     client = anthropic.Anthropic(api_key=anthropic_key)
 
@@ -85,10 +82,16 @@ def analyze_carousel(slides: list[str], anthropic_key: str) -> dict:
             }
         })
 
-    content.append({
-        "type": "text",
-        "text": f"Carousel de {len(slides_to_use)} slides. Génère le prompt pour la meilleure slide."
-    })
+    if n == 1:
+        content.append({
+            "type": "text",
+            "text": "Image Instagram (post simple). Génère le prompt pour cette image."
+        })
+    else:
+        content.append({
+            "type": "text",
+            "text": f"Carousel Instagram de {n} slides. Génère le prompt pour la meilleure slide."
+        })
 
     resp = client.messages.create(
         model="claude-sonnet-4-6",
@@ -107,7 +110,6 @@ def analyze_carousel(slides: list[str], anthropic_key: str) -> dict:
 
     result = json.loads(raw.strip())
 
-    # Valider les champs requis
     required = ["best_slide_index", "recommended_model", "scene_description", "prompt"]
     for field in required:
         if field not in result:
@@ -116,30 +118,30 @@ def analyze_carousel(slides: list[str], anthropic_key: str) -> dict:
     return result
 
 
-async def analyze_all_carousels(
-    carousel_data: list[dict],
+async def analyze_all_posts(
+    post_data: list[dict],
     anthropic_key: str,
 ) -> list[dict]:
-    """Analyse tous les carousels séquentiellement (pas de parallélisation pour Claude).
+    """Analyse tous les posts séquentiellement.
     Émet des événements JSON sur stdout.
 
     Args:
-        carousel_data: Liste de {post, local_images}
+        post_data: Liste de {post, local_images}
         anthropic_key: Clé API Anthropic
 
     Returns:
         Liste de {post, local_images, analysis} ou {post, local_images, analysis_error}
     """
     results = []
-    total = len(carousel_data)
+    total = len(post_data)
 
-    for i, item in enumerate(carousel_data):
+    for i, item in enumerate(post_data):
         post = item["post"]
         shortcode = post.get("shortCode", f"post_{i}")
         slides = item["local_images"]
 
         try:
-            analysis = analyze_carousel(slides, anthropic_key)
+            analysis = analyze_post(slides, anthropic_key)
             item["analysis"] = analysis
             print(json.dumps({
                 "type": "analysis",
@@ -162,3 +164,7 @@ async def analyze_all_carousels(
         results.append(item)
 
     return results
+
+
+# Backwards-compat alias
+analyze_all_carousels = analyze_all_posts
