@@ -51,10 +51,12 @@ def build_cmd(
     ]
 
     if model == "soul_cinematic":
+        # soul_cinematic n'accepte que 1.5k et 2k — on plafonne 4k → 2k
+        sc_quality = quality if quality in ("1.5k", "2k") else "2k"
         return base + [
             "--prompt", prompt,
             "--soul-id", soul_id,
-            "--quality", quality if quality in ("2k", "4k", "high") else "2k"
+            "--quality", sc_quality
         ]
     elif model == "seedream_v4_5":
         return base + [

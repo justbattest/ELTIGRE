@@ -5,13 +5,14 @@ Communique via stdout JSON lines (lu par Next.js API route → DB → SSE).
 
 import asyncio
 import json
+import sys
 from pathlib import Path
 from datetime import datetime
 
 from pipeline.scraper import scrape_and_download_all
 from pipeline.analyzer import analyze_all_posts
 from pipeline.generator import generate_with_fallback
-from pipeline.drive_uploader import init_drive_uploader, get_uploader
+from pipeline.drive_uploader import init_drive_uploader_from_env, get_uploader
 
 
 async def run_pipeline(
@@ -27,8 +28,9 @@ async def run_pipeline(
     anthropic_key: str,
     higgsfield_token: str,
     work_dir: str,
-    drive_credentials: str | None = None,
-    drive_folder_id: str | None = None,
+    drive_credentials: str | None = None,    # kept for compat, unused
+    drive_folder_id: str | None = None,      # kept for compat, unused
+    session_cookie: str | None = None,       # Cookie session Instagram (optionnel)
 ) -> None:
     """Pipeline complet pour un run.
 
@@ -42,13 +44,10 @@ async def run_pipeline(
     """
     Path(work_dir).mkdir(parents=True, exist_ok=True)
 
-    # Initialiser Drive si configuré
-    if drive_credentials and drive_folder_id:
-        try:
-            init_drive_uploader(drive_credentials, drive_folder_id)
-            print(json.dumps({"type": "info", "msg": "Google Drive configuré ✓"}), flush=True)
-        except Exception as e:
-            print(json.dumps({"type": "warn", "msg": f"Drive init failed: {e}"}), flush=True)
+    # Initialiser Drive depuis les env vars (GOOGLE_REFRESH_TOKEN + DRIVE_FOLDER_ID)
+    uploader_init = init_drive_uploader_from_env()
+    if uploader_init:
+        print(json.dumps({"type": "info", "msg": "Google Drive configuré ✓"}), flush=True)
 
     try:
         # ── Phase 1 : Scraping + Download ──────────────────────────────────
@@ -59,12 +58,13 @@ async def run_pipeline(
                 max_posts=max_posts,
                 apify_key=apify_key,
                 run_dir=work_dir,
+                session_cookie=session_cookie,
             )
             all_post_data.extend(data)
 
         if not all_post_data:
-            print(json.dumps({"type": "error", "message": "Aucun post trouvé"}), flush=True)
-            return
+            print(json.dumps({"type": "error", "message": "Aucun post trouvé — profil bloqué par Instagram ou tous les posts sont des vidéos sans image."}), flush=True)
+            sys.exit(1)  # Exit code 1 → proc.on('close') marque le run comme 'failed'
 
         # ── Phase 2 : Analyse Claude ────────────────────────────────────────
         analyzed = await analyze_all_posts(all_post_data, anthropic_key)
@@ -165,8 +165,9 @@ async def run_pipeline(
                     "drive_source_url": drive_source_url,
                     "drive_generated_url": drive_generated_url,
                     "scene": analysis.get("scene_description", ""),
-                    "likes": post.get("likesCount", 0),
-                    "comments": post.get("commentsCount", 0),
+                    # Fallback multi-noms : certains acteurs/profils utilisent des noms différents
+                    "likes": (post.get("likesCount") or post.get("likes") or post.get("likeCount") or 0),
+                    "comments": (post.get("commentsCount") or post.get("comments") or post.get("commentCount") or 0),
                     "caption": (post.get("caption") or "")[:500],
                     "post_url": post.get("url", ""),
                     "rank": rank,

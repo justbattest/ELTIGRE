@@ -57,8 +57,9 @@ async def main():
     apify_key = os.environ.get("APIFY_KEY")
     anthropic_key = os.environ.get("ANTHROPIC_KEY")
     higgsfield_token = os.environ.get("HIGGSFIELD_TOKEN")
-    drive_credentials = os.environ.get("DRIVE_CREDENTIALS")  # JSON service account (optionnel)
-    drive_folder_id = os.environ.get("DRIVE_FOLDER_ID")       # ID dossier Drive (optionnel)
+    drive_credentials = os.environ.get("DRIVE_CREDENTIALS")        # JSON service account (optionnel)
+    drive_folder_id = os.environ.get("DRIVE_FOLDER_ID")            # ID dossier Drive (optionnel)
+    session_cookie = os.environ.get("INSTAGRAM_SESSION_COOKIE")    # Cookie session Instagram (optionnel)
 
     if not apify_key:
         print(json.dumps({"type": "error", "message": "APIFY_KEY manquant"}), flush=True)
@@ -95,6 +96,7 @@ async def main():
         work_dir=work_dir,
         drive_credentials=drive_credentials,
         drive_folder_id=drive_folder_id,
+        session_cookie=session_cookie,
     )
 
 
