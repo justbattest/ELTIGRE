@@ -156,20 +156,22 @@ class DriveUploader:
         shortcode: str,
         local_image_path: str | None,
         generated_image_url: str | None,
-        rank: int = 0,
+        rank: int = 0,  # gardé pour compatibilité, non utilisé pour la structure Drive
     ) -> dict:
         """Upload la paire source + généré pour une génération.
 
-        Structure Drive :
-          <folder>/<run_id>/source/<shortcode>.jpg          ← original Instagram (plat)
-          <folder>/<run_id>/carousel_N/<shortcode>.jpg     ← output Higgsfield (groupé par 4)
-          rank 0-indexé : ranks 0-3 → carousel_1, ranks 4-7 → carousel_2, ...
+        Structure Drive (plate) :
+          <folder>/<run_id>/source/<shortcode>.jpg       ← original Instagram
+          <folder>/<run_id>/generated/<shortcode>.jpg    ← output Higgsfield
+
+        Toutes les générées dans un dossier plat → téléchargement facile,
+        sélection manuelle pour le carousel creator.
         """
         try:
             run_folder_id = await self._ensure_run_folder(run_id)
             result = {}
 
-            # Upload image source (depuis le disque local) — structure plate
+            # Upload image source (depuis le disque local)
             if local_image_path and Path(local_image_path).exists():
                 source_folder_id = await self._ensure_folder("source", run_folder_id)
                 data = Path(local_image_path).read_bytes()
@@ -185,19 +187,17 @@ class DriveUploader:
                     "msg": f"Drive source skip [{shortcode}]: fichier local introuvable ({local_image_path})"
                 }), flush=True)
 
-            # Télécharger + upload l'image générée dans le dossier carousel_N
+            # Télécharger + upload l'image générée dans generated/ (dossier plat)
             if generated_image_url:
-                carousel_num = rank // 4 + 1
-                carousel_folder_name = f"carousel_{carousel_num}"
-                carousel_folder_id = await self._ensure_folder(carousel_folder_name, run_folder_id)
+                generated_folder_id = await self._ensure_folder("generated", run_folder_id)
                 async with httpx.AsyncClient(timeout=30) as client:
                     resp = await client.get(generated_image_url)
                     resp.raise_for_status()
-                    url = await self.upload_bytes(resp.content, f"{shortcode}.jpg", carousel_folder_id)
+                    url = await self.upload_bytes(resp.content, f"{shortcode}.jpg", generated_folder_id)
                     result["drive_generated_url"] = url
                     print(json.dumps({
                         "type": "info",
-                        "msg": f"Drive upload OK {carousel_folder_name} [{shortcode}]: {url}"
+                        "msg": f"Drive upload OK generated [{shortcode}]: {url}"
                     }), flush=True)
 
             return result

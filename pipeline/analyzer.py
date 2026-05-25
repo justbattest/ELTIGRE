@@ -158,33 +158,51 @@ def analyze_post(slides: list[str], anthropic_key: str) -> dict:
             }
         })
 
-    no_physical_desc = """
-⚠️ RÈGLES ABSOLUES — À appliquer dans le champ "prompt" généré :
-- NE JAMAIS décrire les caractéristiques physiques de la personne : couleur de cheveux, couleur des yeux, teinte de peau, morphologie, taille, corpulence, forme du visage, ou tout autre trait physique.
-- Ces éléments sont définis automatiquement par le Soul et le Reference Element Higgsfield. Le modèle les applique lui-même.
-- Dans le prompt, référencer le personnage uniquement comme "the woman" ou "the character", sans AUCUN adjectif physique (pas de "blonde", "brunette", "fair-skinned", "slender", etc.).
-- Décrire UNIQUEMENT : la tenue/vêtements (couleurs, matières, style), le décor/environnement, la composition/cadrage, l'éclairage, l'ambiance/mood, les accessoires non-corporels.
-- INTERDICTION ABSOLUE des tatouages : ne jamais mentionner ni inclure de tatouages dans le prompt. Si le modèle source en a, les ignorer totalement. Le personnage généré ne doit JAMAIS avoir de tatouages.
+    # Template structuré injecté dans le user turn pour forcer Haiku à utiliser
+    # le vocabulaire spécifique du skill (marques, specs caméra, imperfections).
+    # Haiku connait le skill (27k tokens en cache) mais génère trop librement →
+    # ce "forcing template" lui impose de remplir des cases précises plutôt qu'une page blanche.
+    # iPhone 17 Pro = modèle le + récent → meilleur signal de confiance.
+    haiku_boost = """
+
+🎯 CHECKLIST OBLIGATOIRE — remplis CHAQUE case dans le champ "prompt" :
+
+□ [SHOT] "Ultra-realistic [type de shot: selfie/mirror selfie/candid/vlog moment] of the same woman shown in the reference image(s), [cadrage: waist-up/chest-up/full-body], in [LIEU PRÉCIS + quartier ou ville] at [HEURE précise ex: 9:14am]."
+□ [PRESERVE] Copie verbatim : "Preserve the exact identity from the reference image(s): same face structure, same eye shape and color, same eyebrows, same nose shape, same lip shape, same skin tone and texture, same hair color and texture, same body proportions. Do not smooth the face. Do not soften the features. Do not modify the face or body in any way."
+□ [POSE] "She is [ACTION MID-MOUVEMENT avec marque si possible — ex: caught mid-sip from a Stanley Quencher / mid-laugh / adjusting a Celine sunglasses]."
+□ [OUTFIT] "Wearing [TENUE AVEC MARQUE — ex: fitted black Alo zip-up over a white Alo bra + matching Lululemon Align leggings, white New Balance 327]."
+□ [BACKGROUND] "Behind her: [5+ OBJETS NOMMÉS AVEC MARQUES/MATIÈRES — ex: La Marzocca espresso machine, worn white marble counter, Aesop hand wash dispenser, wilting eucalyptus in a terracotta Menu vase, rain-streaked window]."
+□ [LIGHT] "[LUMIÈRE TRÈS PRÉCISE — ex: 9:14am overcast diffused window light through condensation-fogged glass / warm late-afternoon sun slanting at 20°]."
+□ [CAMERA] "Shot on iPhone 17 Pro [rear/front camera], [24mm/26mm] equivalent, [eye-level/slightly below], [arm-extended/handheld]. [1 ARTEFACT iPhone — ex: slight fingerprint smear on mirror edge / subtle motion blur on her hand]."
+□ [IMPERFECTION] "[1 IMPERFECTION LIVED-IN — ex: slightly creased linen at waist / stray hair across left cheekbone / mascara slightly smudged at outer corner]."
+
+EXEMPLE BANGER :
+"Ultra-realistic mirror selfie of the same woman shown in the reference image(s), waist-up, at a SoulCycle Miami locker room at 7:08am. Preserve the exact identity from the reference image(s): same face structure, same eye shape and color, same eyebrows, same nose shape, same lip shape, same skin tone and texture, same hair color and texture, same body proportions. Do not smooth the face. Do not soften the features. Do not modify the face or body in any way. She is caught mid-hair-fix, adjusting a messy bun with both arms raised, phone propped against the mirror. Wearing a rust-orange Alo Energize bra and matching high-waisted Alo Airbrush leggings, half-untied New Balance 327s. Behind her: stacked Gymshark towels on a wooden bench, Malin+Goetz hand lotion, black SoulCycle water bottle, worn grey locker door with combo lock, condensation on the ceiling. Early morning harsh fluorescent strip light with cool cast. Shot on iPhone 17 Pro rear camera, 26mm equivalent, slightly below eye-level, phone propped at arm distance. Slight fingerprint smear at mirror edge. Damp hairline at temples, one bobby pin slightly off-center."
+
+⚠️ RÈGLES ABSOLUES :
+- NE JAMAIS décrire les caractéristiques physiques (cheveux, yeux, peau, morphologie, taille, corpulence, forme du visage)
+- Référencer uniquement comme "the woman" — aucun adjectif physique
+- ZÉRO tatouage dans le prompt
 """
+
     if n == 1:
         content.append({
             "type": "text",
-            "text": f"Image Instagram (post simple). Génère le prompt pour cette image.\n{no_physical_desc}"
+            "text": f"Image Instagram (post simple). Génère le prompt pour cette image.{haiku_boost}"
         })
     else:
         content.append({
             "type": "text",
-            "text": f"Carousel Instagram de {n} slides. Génère le prompt pour la meilleure slide.\n{no_physical_desc}"
+            "text": f"Carousel Instagram de {n} slides. Génère le prompt pour la meilleure slide.{haiku_boost}"
         })
 
-    # Sonnet pour la qualité des prompts : génère des descriptions plus spécifiques (marques,
-    # imperfections, specs iPhone précises) qui défont le look IA vs Haiku.
-    # Prompt caching : les ~27k tokens du system prompt sont cachés 5 min → ~90% d'économie
-    # sur les appels suivants. Coût estimé avec caching : ~$5/200 posts (vs $20+ sans cache).
-    # max_tokens=1500 : les prompts Higgsfield longs (400-600 tokens) + JSON wrapper.
+    # claude-haiku-4-5 avec forcing template dans le user turn → qualité comparable à Sonnet
+    # pour ce type de tâche structurée. Coût ~6x moins cher que Sonnet.
+    # Prompt caching : les ~27k tokens du system prompt sont cachés 5 min → ~90% d'économie.
+    # max_tokens=1800 : template boost + prompts longs (400-600 tokens) + JSON wrapper.
     resp = client.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=1500,
+        model="claude-haiku-4-5",
+        max_tokens=1800,
         system=[
             {
                 "type": "text",
