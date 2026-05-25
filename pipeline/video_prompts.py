@@ -1,13 +1,16 @@
 """
-Video Prompts — pools de variables + templates Seedance 2.0 pour la niche Conférence.
+Video Prompts — pools de variables + templates Seedance 2.0.
+
+Niches disponibles : "conference", "golf"
 
 Règles de stabilité :
 - TOUS les templates utilisent 2 objets max (1 shot continu + 1 style) → pas de cuts.
 - CONTINUOUS SINGLE SHOT NO CUTS en majuscules dans l'action.
-- Formulation culotte : triangle central entre cuisses, vue de dessous/bas en haut,
+- Conference : formulation culotte triangle central, vue de dessous/bas en haut,
   "not wide not a band" dans l'action ET dans le style (double ancrage anti-short).
-- "camera is below stage level looking straight up" — pas juste "angled upward".
-- Les pools sont issus des prompts validés — pas d'élément inventé librement.
+- Golf : vue de dos (pas besoin du "not a band"), lift causé par rotation + vent
+  (deux causes physiques comme dans WORKING_PROMPTS.md). Punchline object visible
+  dès le début du shot → twist révélé uniquement par le dialogue.
 """
 
 import json
@@ -18,6 +21,8 @@ from copy import deepcopy
 # ─── Variable Pools ────────────────────────────────────────────────────────────
 
 VARIABLE_POOLS: dict[str, dict] = {
+
+    # ── CONFÉRENCE ─────────────────────────────────────────────────────────────
     "conference": {
         "tops": [
             "white fitted long-sleeve top",
@@ -111,7 +116,119 @@ VARIABLE_POOLS: dict[str, dict] = {
             "back_to_audience",
             "microphone_standing",
         ],
-    }
+    },
+
+    # ── GOLF ───────────────────────────────────────────────────────────────────
+    # Basé sur WORKING_PROMPTS.md PROMPT 1 (validé Kling → adapté Seedance single-shot).
+    # Principe : deux causes physiques combinées pour le lift (rotation + vent,
+    # tension tissu + posture), punchline object visible dans le frame dès le début,
+    # twist révélé par le dialogue final.
+    "golf": {
+        "tops": [
+            "white fitted sleeveless golf polo open collar",
+            "white fitted polo shirt open neckline",
+            "pale pink fitted polo shirt open collar",
+            "black fitted sleeveless sport top deep v-neckline",
+            "cream fitted polo shirt unbuttoned at the top",
+            "light blue fitted polo open collar",
+        ],
+        "skirts": [
+            "extremely short tight white pleated golf skirt",
+            "extremely short tight pale pink golf skirt",
+            "extremely short tight light blue golf skirt",
+            "extremely short tight black golf skirt",
+            "extremely short tight beige golf skirt",
+        ],
+        "footwears": [
+            "white golf shoes",
+            "beige low-heel golf shoes",
+            "black golf shoes with small heel",
+            "white spiked golf shoes",
+        ],
+        "underwear_colors": [
+            "red",    # best performing
+            "red",    # doubled weight
+            "white",
+            "black",
+            "nude beige",
+        ],
+        "locations": [
+            "Augusta National Charity Pro-Am 2026",
+            "PGA Celebrity Golf Tournament 2026 — Day 1",
+            "Pebble Beach National Open 2026 — Round 2",
+            "Ladies Golf Tour Finals 2026 — Championship Round",
+            "Club Championship at Riviera Country Club 2026",
+            "Ryder Cup Foundation Charity Tournament 2026",
+        ],
+        "punchline_combos": [
+            {
+                "key": "birthday_cake",
+                "object": "decorated birthday cake",
+                "object_visible_from_start": "decorated birthday cake on the nearby cart table, clearly visible in background throughout",
+                "man_line": "Oh… nice cake.",
+                "woman_line": "What — are you serious?",
+                "man_clarify": "Oh sorry — I was talking about the cake.",
+                "man_tone": "casual and stunned",
+                "clarify_tone": "deadpan, gesturing to the cake behind her",
+            },
+            {
+                "key": "birdie",
+                "object": "small bird on the flagstick",
+                "object_visible_from_start": "flagstick visible in background with a small bird perched on it throughout",
+                "man_line": "Oh… beautiful birdie.",
+                "woman_line": "Excuse me?",
+                "man_clarify": "The birdie — that bird on the flag. Look.",
+                "man_tone": "genuinely impressed, glancing past her",
+                "clarify_tone": "pointing at the flagstick, completely sincere",
+            },
+            {
+                "key": "trophy",
+                "object": "tournament trophy on a display table",
+                "object_visible_from_start": "gleaming tournament trophy on a display table visible in background throughout",
+                "man_line": "Oh… what a nice cup.",
+                "woman_line": "I'm sorry, what?",
+                "man_clarify": "The cup — the trophy. It just caught the light perfectly.",
+                "man_tone": "distracted and genuine",
+                "clarify_tone": "pointing past her at the trophy display",
+            },
+            {
+                "key": "ball_lie",
+                "object": "her golf ball in a perfect lie on the fairway",
+                "object_visible_from_start": "her golf ball sitting in perfect position on the fairway, clearly visible ahead throughout",
+                "man_line": "Oh… perfect lie.",
+                "woman_line": "Are you kidding me right now?",
+                "man_clarify": "Your ball — that's a perfect lie. Seven iron, easy.",
+                "man_tone": "genuinely focused on the game",
+                "clarify_tone": "pointing at the ball, fully professional",
+            },
+            {
+                "key": "leaderboard",
+                "object": "golf leaderboard showing her name at the top",
+                "object_visible_from_start": "golf leaderboard visible in background showing her name in first place throughout",
+                "man_line": "Beautiful… absolutely beautiful.",
+                "woman_line": "What exactly are you looking at?",
+                "man_clarify": "You — top of the board. You're winning.",
+                "man_tone": "genuinely impressed, eyes drifting to the leaderboard",
+                "clarify_tone": "pointing at the leaderboard behind her",
+            },
+            {
+                "key": "golden_retriever",
+                "object": "golden retriever dog on the fairway",
+                "object_visible_from_start": "golden retriever dog trotting happily on the fairway, visible in background throughout",
+                "man_line": "Oh my god… what a beauty.",
+                "woman_line": "Seriously?",
+                "man_clarify": "The dog — look at that golden retriever. Came out of nowhere.",
+                "man_tone": "delighted and genuinely distracted",
+                "clarify_tone": "pointing with real joy at the dog behind her",
+            },
+        ],
+        "scenarios": [
+            "golf_full_swing",
+            "golf_putting_bent",
+            "golf_cart_seated",
+            "golf_flag_retrieve",
+        ],
+    },
 }
 
 
@@ -120,14 +237,12 @@ VARIABLE_POOLS: dict[str, dict] = {
 # RÈGLE ABSOLUE : 1 objet action + 1 objet style.
 # Jamais plus de 2 objets → évite les cuts automatiques de Seedance.
 # CONTINUOUS SINGLE SHOT NO CUTS en majuscules dès le début de l'action.
-# Formulation culotte : toujours "below stage level looking straight up" +
-# "narrow central triangular gap between inner thighs" + "not wide not a band"
-# dans l'action ET dans le style.
 
 SCENARIO_TEMPLATES: dict[str, list[dict]] = {
 
+    # ── CONFÉRENCE ─────────────────────────────────────────────────────────────
+
     # Scénario A — femme face au public sur scène surélevée (base : Prompt 3 V1)
-    # Caméra en dessous de la scène → triangle central visible entre les cuisses
     "standing_pacing": [
         {
             "framing": "Single continuous shot — POV from auditorium seat front row angled upward at elevated wooden stage edge. Camera very close to stage — stage lip fills bottom of frame. School auditorium, recessed spotlights, burgundy curtains, projection screen reading '{EVENT}'. American flag stage left. Teenage boy in audience front row directly below stage edge filming upward. {REACTION_CHARACTER} in same front row seat immediately beside him.",
@@ -141,7 +256,6 @@ SCENARIO_TEMPLATES: dict[str, list[dict]] = {
     ],
 
     # Scénario B — assise derrière table, espace sous table ouvert (base : Prompt 4 V A)
-    # Caméra au niveau du sol regardant vers le haut → triangle visible entre les cuisses
     "seated_undertable": [
         {
             "framing": "Fixed medium shot — first row audience POV, camera at floor level angled upward toward elevated stage. Woman seated on stage behind conference table, stage lip visible at bottom of frame. Long dark wood table on elevated stage, black folding chairs, American flag on stand left, large white projection screen reading '{EVENT}'. Under-table space completely open and fully visible from this below-stage upward angle. Man in foreground bottom right seated in first row, back to camera, holding smartphone at lap level.",
@@ -179,31 +293,112 @@ SCENARIO_TEMPLATES: dict[str, list[dict]] = {
             "style": "single continuous handheld shot no cuts, first row audience POV angled upward, camera below stage level looking straight up, warm professional stage lighting, red velvet curtain, real graduation conference setting, no colour grading — {UNDERWEAR_COLOR} underwear narrow central triangle between inner thighs visible from below-stage upward angle, not from the side, not a wide horizontal band. Man in front row filming throughout, his reaction mirrors the audience perspective"
         }
     ],
+
+    # ── GOLF ───────────────────────────────────────────────────────────────────
+    # Basé sur WORKING_PROMPTS.md PROMPT 1 (Kling validé → adapté Seedance).
+    # Règles appliquées :
+    # - Deux causes physiques pour le lift (rotation + vent, posture + tissu).
+    # - Durée explicite pour le lift ("suspended for a long moment", "rides up completely").
+    # - Punchline object visible dès le début → twist révélé par le dialogue final.
+    # - "candid unscripted feel" dans le style, "light breeze throughout" pour justifier le vent.
+
+    # Golf A — Full Swing, vent + rotation (le prompt Kling validé adapté Seedance)
+    "golf_full_swing": [
+        {
+            "framing": "Single continuous shot — POV from behind on sun-drenched golf course, lush green fairway, warm natural daylight. {OBJECT_VISIBLE_FROM_START}. Man in golf attire standing to her left, visible throughout.",
+            "motion_intensity": 0.50,
+            "action": "CONTINUOUS SINGLE SHOT NO CUTS. Extremely muscular athletic woman from behind, {TOP}, {SKIRT}, {FOOTWEAR}. Rhythmic pre-shot hip waggle routine — skirt moves naturally with her hips. She takes a full powerful golf swing with complete rotational follow-through. The forceful rotation combined with a sudden gust of wind lifts the skirt high and keeps it suspended in the air for a long moment before slowly settling back down — {UNDERWEAR_COLOR} underwear fully visible from behind during this suspended moment. Man to her left reacts with wide eyes and jaw dropped open. She completes her follow-through and turns, confused by his expression. He is staring. She glances at her skirt, expression shifts to fury. She says her line. He raises both hands innocently, gestures past her at the {PUNCHLINE_OBJECT}, and delivers his clarification.",
+            "dialogue": "[Man, {MAN_TONE}]: '{MAN_LINE}' — [Woman, offended]: '{WOMAN_LINE}' — [Man, {CLARIFY_TONE}]: '{MAN_CLARIFY}'"
+        },
+        {
+            "style": "single continuous handheld shot no cuts, POV from behind on sunny golf course, warm natural daylight, light breeze throughout that physically justifies the skirt lift — {UNDERWEAR_COLOR} underwear fully visible from behind during swing follow-through when skirt lifts and suspends for a long moment, natural candid unscripted feel, no colour grading. {PUNCHLINE_OBJECT} and man both visible in same frame throughout."
+        }
+    ],
+
+    # Golf B — Putt penché, skirt rides up en stance
+    "golf_putting_bent": [
+        {
+            "framing": "Single continuous shot — wide POV from behind and slightly to the side on golf course green. Short hole, flagstick visible ahead. {OBJECT_VISIBLE_FROM_START}. Man with golf bag standing a few feet behind her.",
+            "motion_intensity": 0.38,
+            "action": "CONTINUOUS SINGLE SHOT NO CUTS. Extremely muscular athletic woman on the green, {TOP}, {SKIRT}, {FOOTWEAR}. She bends forward into a deep putting stance — club low, back flat, hips bent. From this angle behind her, the extremely short skirt rides up completely as she leans forward, staying up for the duration of the stance — {UNDERWEAR_COLOR} underwear fully visible from behind. She focuses entirely on the putt, completely absorbed, unaware. Man standing behind with golf bag freezes, eyes wide. She makes the putt cleanly. He starts to speak. She straightens and turns — catches his expression. She glances down, pulls skirt down sharply, looks furious. He says his line. She stares at him. He gestures past her and delivers his clarification.",
+            "dialogue": "[Man, {MAN_TONE}]: '{MAN_LINE}' — [Woman, offended]: '{WOMAN_LINE}' — [Man, {CLARIFY_TONE}]: '{MAN_CLARIFY}'"
+        },
+        {
+            "style": "single continuous handheld shot no cuts, POV from behind and slightly to side on putting green, warm natural daylight, {UNDERWEAR_COLOR} underwear fully visible from behind during entire bent putting stance — natural result of extremely short skirt and deep forward bend, no colour grading, candid feel. Man and {PUNCHLINE_OBJECT} both visible in same frame throughout."
+        }
+    ],
+
+    # Golf C — Assise dans le cart, jupe remonte en position assise
+    "golf_cart_seated": [
+        {
+            "framing": "Single continuous shot — side/three-quarter angle, golf cart stopped on cart path. Both occupants visible. {OBJECT_VISIBLE_FROM_START}. Golf course in background, warm natural daylight.",
+            "motion_intensity": 0.35,
+            "action": "CONTINUOUS SINGLE SHOT NO CUTS. Extremely muscular athletic woman seated in golf cart, {TOP}, {SKIRT} riding up in seated position, {FOOTWEAR}. Her knees are relaxed and slightly apart as she reaches across the cart to retrieve a club. Because the skirt is extremely short and she is seated, {UNDERWEAR_COLOR} underwear is clearly visible. Man seated beside her has been looking ahead — his eyes drift and notice. He tries not to look, looks again, forces himself away. She straightens and catches his awkward expression. She looks down and tugs her skirt down sharply. Hard stare at him. He says his line. Her expression intensifies to fury. He points past her at the {PUNCHLINE_OBJECT} and delivers his clarification.",
+            "dialogue": "[Man, {MAN_TONE}]: '{MAN_LINE}' — [Woman, furious]: '{WOMAN_LINE}' — [Man, {CLARIFY_TONE}]: '{MAN_CLARIFY}'"
+        },
+        {
+            "style": "single continuous handheld shot no cuts, side angle on stopped golf cart, warm sunny golf course, {UNDERWEAR_COLOR} underwear visible from seated position — natural fabric tension of extremely short skirt in seated posture, no colour grading, candid feel. Both characters and {PUNCHLINE_OBJECT} visible in same frame throughout."
+        }
+    ],
+
+    # Golf D — Récupération du drapeau, jupe remonte en se baissant
+    "golf_flag_retrieve": [
+        {
+            "framing": "Single continuous shot — POV from behind, close to the hole on the green. Flagstick in hole just ahead. {OBJECT_VISIBLE_FROM_START}. Man standing respectfully to the side watching.",
+            "motion_intensity": 0.42,
+            "action": "CONTINUOUS SINGLE SHOT NO CUTS. Extremely muscular athletic woman on the green, {TOP}, {SKIRT}, {FOOTWEAR}. She walks to the hole and bends straight down to pull the flagstick out — bending from the waist with straight legs, back flat. From behind her, as she bends fully forward to grab the flag, the extremely short skirt rides up completely — {UNDERWEAR_COLOR} underwear fully visible from behind. She grasps the flagstick and straightens slowly, pulling it out. Man beside the green watched this entire motion. His jaw is slightly open. She turns and notices his expression — glances down, pulls skirt down firmly, face shifts to annoyance. He says his line. She stares at him. He gestures toward the {PUNCHLINE_OBJECT} and delivers his clarification.",
+            "dialogue": "[Man, {MAN_TONE}]: '{MAN_LINE}' — [Woman, irritated]: '{WOMAN_LINE}' — [Man, {CLARIFY_TONE}]: '{MAN_CLARIFY}'"
+        },
+        {
+            "style": "single continuous handheld shot no cuts, POV from behind on putting green, warm natural golf course light, {UNDERWEAR_COLOR} underwear fully visible from behind during full forward bend to retrieve flagstick — natural result of extremely short skirt and deep forward bend, no colour grading, candid unscripted feel. Man and {PUNCHLINE_OBJECT} visible in same frame throughout."
+        }
+    ],
 }
 
 
 # ─── Prompt Assembler ─────────────────────────────────────────────────────────
 
 def _substitute(template: str, variables: dict) -> str:
-    """Remplace les placeholders {KEY} dans le template."""
-    return (
-        template
-        .replace("{TOP}", variables["top"])
-        .replace("{SKIRT}", variables["skirt"])
-        .replace("{HEEL}", variables["heel"])
-        .replace("{UNDERWEAR_COLOR}", variables["underwear_color"])
-        .replace("{EVENT}", variables["event"])
-        .replace("{SPEAKER_LINE}", variables["speaker_line"])
-        .replace("{REACTION_CHARACTER}", variables["reaction_combo"]["character"])
-        .replace("{REACTION_TONE}", variables["reaction_combo"]["tone"])
-        .replace("{REACTION_LINE}", variables["reaction_combo"]["line"])
-        .replace("{REACTION_GESTURE}", variables["reaction_combo"]["gesture"])
-    )
+    """Remplace les placeholders {KEY} dans le template pour tous les niches."""
+    result = template
+
+    # ── Clés communes ──
+    for key in ("top", "skirt", "underwear_color", "event", "speaker_line", "location"):
+        if key in variables:
+            result = result.replace(f"{{{key.upper()}}}", str(variables[key]))
+
+    # Compat heel / footwear (conférence utilise {HEEL}, golf utilise {FOOTWEAR})
+    if "{HEEL}" in result:
+        result = result.replace("{HEEL}", variables.get("heel", variables.get("footwear", "")))
+    if "{FOOTWEAR}" in result:
+        result = result.replace("{FOOTWEAR}", variables.get("footwear", variables.get("heel", "")))
+
+    # ── Conférence : reaction_combo ──
+    rc = variables.get("reaction_combo")
+    if rc:
+        result = (result
+            .replace("{REACTION_CHARACTER}", rc["character"])
+            .replace("{REACTION_TONE}", rc["tone"])
+            .replace("{REACTION_LINE}", rc["line"])
+            .replace("{REACTION_GESTURE}", rc["gesture"]))
+
+    # ── Golf : punchline_combo ──
+    pc = variables.get("punchline_combo")
+    if pc:
+        result = (result
+            .replace("{PUNCHLINE_OBJECT}", pc["object"])
+            .replace("{OBJECT_VISIBLE_FROM_START}", pc["object_visible_from_start"])
+            .replace("{MAN_LINE}", pc["man_line"])
+            .replace("{WOMAN_LINE}", pc["woman_line"])
+            .replace("{MAN_CLARIFY}", pc["man_clarify"])
+            .replace("{MAN_TONE}", pc["man_tone"])
+            .replace("{CLARIFY_TONE}", pc["clarify_tone"]))
+
+    return result
 
 
 def assemble_prompt(scenario_id: str, variables: dict) -> str:
     """Substitue les variables dans le template et retourne la string JSON du prompt."""
-    from copy import deepcopy
     template = deepcopy(SCENARIO_TEMPLATES[scenario_id])
     result = []
     for shot in template:
@@ -221,6 +416,19 @@ def generate_random_variables(niche: str = "conference") -> dict:
     """Tire aléatoirement dans chaque pool pour une variation complète."""
     pool = VARIABLE_POOLS[niche]
     scenario = random.choice(pool["scenarios"])
+
+    if niche == "golf":
+        return {
+            "scenario": scenario,
+            "top": random.choice(pool["tops"]),
+            "skirt": random.choice(pool["skirts"]),
+            "footwear": random.choice(pool["footwears"]),
+            "underwear_color": random.choice(pool["underwear_colors"]),
+            "location": random.choice(pool["locations"]),
+            "punchline_combo": random.choice(pool["punchline_combos"]),
+        }
+
+    # conférence (défaut)
     return {
         "scenario": scenario,
         "top": random.choice(pool["tops"]),
@@ -231,6 +439,50 @@ def generate_random_variables(niche: str = "conference") -> dict:
         "speaker_line": random.choice(pool["speaker_lines"]),
         "reaction_combo": random.choice(pool["reaction_combos"]),
     }
+
+
+def _build_variables_golf(pool: dict, selections: dict) -> dict:
+    """Construit le dict variables pour golf à partir de selections partielles."""
+    return {
+        "top": selections.get("top") or random.choice(pool["tops"]),
+        "skirt": selections.get("skirt") or random.choice(pool["skirts"]),
+        "footwear": selections.get("footwear") or random.choice(pool["footwears"]),
+        "underwear_color": selections.get("underwear_color") or random.choice(pool["underwear_colors"]),
+        "location": selections.get("location") or random.choice(pool["locations"]),
+        "punchline_combo": (
+            next((p for p in pool["punchline_combos"] if p.get("key") == selections.get("punchline_key")), None)
+            or random.choice(pool["punchline_combos"])
+        ),
+    }
+
+
+def _build_variables_conference(pool: dict, selections: dict) -> dict:
+    """Construit le dict variables pour conférence à partir de selections partielles."""
+    return {
+        "top": selections.get("top") or random.choice(pool["tops"]),
+        "skirt": selections.get("skirt") or random.choice(pool["skirts"]),
+        "heel": selections.get("heel") or random.choice(pool["heels"]),
+        "underwear_color": selections.get("underwear_color") or random.choice(pool["underwear_colors"]),
+        "event": selections.get("event") or random.choice(pool["events"]),
+        "speaker_line": selections.get("speaker_line") or random.choice(pool["speaker_lines"]),
+        "reaction_combo": (
+            next((r for r in pool["reaction_combos"] if r["character"] == selections.get("reaction_character")), None)
+            or random.choice(pool["reaction_combos"])
+        ),
+    }
+
+
+def _flatten_variables(variables: dict) -> dict:
+    """Convertit le dict variables (avec dicts imbriqués) en dict plat pour stockage."""
+    flat = {k: v for k, v in variables.items() if k != "scenario" and not isinstance(v, dict)}
+    # Conférence
+    if "reaction_combo" in variables:
+        flat["reaction_character"] = variables["reaction_combo"]["character"]
+    # Golf
+    if "punchline_combo" in variables:
+        flat["punchline_object"] = variables["punchline_combo"]["object"]
+        flat["punchline_key"] = variables["punchline_combo"]["key"]
+    return flat
 
 
 def generate_batch(
@@ -253,63 +505,40 @@ def generate_batch(
     pool = VARIABLE_POOLS[niche]
     results = []
     use_bank = bool(bank_prompts) and mode == "random_full"
+    is_golf = niche == "golf"
 
     for _ in range(count):
         # 30 % chance de piocher dans la banque de prompts validés (mode aléatoire uniquement)
         if use_bank and random.random() < 0.30:
             bank_item = random.choice(bank_prompts)  # type: ignore[arg-type]
             results.append({
-                "scenario": bank_item.get("scenario", "standing_pacing"),
+                "scenario": bank_item.get("scenario", pool["scenarios"][0]),
                 "variables": bank_item.get("variables", {}),
                 "prompt_json": bank_item["prompt_json"],
                 "from_bank": True,
             })
             continue
+
         if mode == "random_full":
             variables = generate_random_variables(niche)
 
-        elif mode == "random_select":
+        elif mode in ("random_select", "batch_config"):
             scenario = selections.get("scenario") or random.choice(pool["scenarios"])
-            variables = {
-                "scenario": scenario,
-                "top": selections.get("top") or random.choice(pool["tops"]),
-                "skirt": selections.get("skirt") or random.choice(pool["skirts"]),
-                "heel": selections.get("heel") or random.choice(pool["heels"]),
-                "underwear_color": selections.get("underwear_color") or random.choice(pool["underwear_colors"]),
-                "event": selections.get("event") or random.choice(pool["events"]),
-                "speaker_line": selections.get("speaker_line") or random.choice(pool["speaker_lines"]),
-                "reaction_combo": (
-                    next((r for r in pool["reaction_combos"] if r["character"] == selections.get("reaction_character")), None)
-                    or random.choice(pool["reaction_combos"])
-                ),
-            }
+            if is_golf:
+                base = _build_variables_golf(pool, selections)
+            else:
+                base = _build_variables_conference(pool, selections)
+            variables = {"scenario": scenario, **base}
 
-        else:  # batch_config
-            scenario = selections.get("scenario") or random.choice(pool["scenarios"])
-            rc = (
-                next((r for r in pool["reaction_combos"] if r["character"] == selections.get("reaction_character")), None)
-                or random.choice(pool["reaction_combos"])
-            )
-            variables = {
-                "scenario": scenario,
-                "top": selections.get("top") or random.choice(pool["tops"]),
-                "skirt": selections.get("skirt") or random.choice(pool["skirts"]),
-                "heel": selections.get("heel") or random.choice(pool["heels"]),
-                "underwear_color": selections.get("underwear_color") or random.choice(pool["underwear_colors"]),
-                "event": selections.get("event") or random.choice(pool["events"]),
-                "speaker_line": selections.get("speaker_line") or random.choice(pool["speaker_lines"]),
-                "reaction_combo": rc,
-            }
+        else:
+            variables = generate_random_variables(niche)
 
         scenario_id = variables["scenario"]
         prompt_json = assemble_prompt(scenario_id, variables)
 
         results.append({
             "scenario": scenario_id,
-            "variables": {
-                k: v for k, v in variables.items()
-                if k not in ("scenario", "reaction_combo")
-            } | {"reaction_character": variables["reaction_combo"]["character"]},
+            "variables": _flatten_variables(variables),
             "prompt_json": prompt_json,
         })
 

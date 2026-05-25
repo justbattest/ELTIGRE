@@ -171,7 +171,7 @@ async def run_video_studio(
                 "model": "seedance_2_0",
                 "fallback": False,
                 "prompt": prompt_json,
-                "scene": f"{niche.title()} · {scenario.replace('_', ' ').title()}",
+                "scene": f"{niche.title()} · {scenario.replace(f'{niche}_', '').replace('_', ' ').title()}",
                 "scenario": scenario,
                 "variables": variables,
                 "likes": 0,
