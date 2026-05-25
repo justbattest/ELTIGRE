@@ -144,6 +144,7 @@ async def run_pipeline(
                             shortcode=shortcode,
                             local_image_path=local_image_path,
                             generated_image_url=result["url"],
+                            rank=rank,
                         )
                         drive_source_url = drive_result.get("drive_source_url")
                         drive_generated_url = drive_result.get("drive_generated_url")
