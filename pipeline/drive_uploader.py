@@ -5,9 +5,24 @@ Auth : OAuth2 Authorization Code Flow (refresh_token stocké en DB, passé via e
 Pas de Service Account JSON à gérer — l'user connecte son compte Google
 depuis Settings comme il connecte Higgsfield.
 
-Les fichiers sont organisés dans Drive :
-  <folder>/<run_id>/source/<shortcode>.jpg
-  <folder>/<run_id>/generated/<shortcode>.jpg
+Structure Drive :
+  <HYBRID CONTENT>/
+    generations/
+      <run_id>/
+        source/<shortcode>.jpg      ← original Instagram
+        generated/<shortcode>.jpg   ← output Higgsfield (scraping + studio)
+    carousels/
+      <run_id>/
+        carousel_1/
+          1.jpg  2.jpg  3.jpg  4.jpg
+        carousel_2/
+          ...
+    video/
+      Conférence/
+        <run_id>/
+          video_1.mp4
+          video_2.mp4
+          ...
 """
 
 import asyncio
@@ -25,11 +40,14 @@ DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files"
 class DriveUploader:
     """Upload vers Google Drive via OAuth2 refresh token."""
 
-    def __init__(self, refresh_token: str, folder_id: str, client_id: str, client_secret: str):
+    def __init__(self, refresh_token: str, folder_id: str, client_id: str, client_secret: str,
+                 character_folder: str = ""):
         self.refresh_token = refresh_token
-        self.folder_id = folder_id
+        self.folder_id = folder_id          # HYBRID CONTENT root
         self.client_id = client_id
         self.client_secret = client_secret
+        # Nom du sous-dossier personnage (ex: "NINA HYBRID"). Vide = compat backward.
+        self.character_folder = character_folder
         self._access_token: str | None = None
         self._token_expiry: float = 0
         # Cache des IDs de dossiers Drive pour éviter les appels API redondants
@@ -118,26 +136,114 @@ class DriveUploader:
             self._folder_cache[cache_key] = folder_id
             return folder_id
 
-    async def _ensure_run_folder(self, run_id: str) -> str:
-        """Crée (ou réutilise) le dossier racine pour ce run dans Drive."""
-        return await self._ensure_folder(run_id, self.folder_id)
+    async def _ensure_character_folder(self) -> str:
+        """Retourne l'ID du dossier personnage sous HYBRID CONTENT.
 
-    async def upload_bytes(self, data: bytes, filename: str, parent_id: str) -> str:
+        Ex : HYBRID CONTENT/NINA HYBRID/
+        Si character_folder est vide → retourne self.folder_id (compat backward).
+        """
+        if not self.character_folder:
+            return self.folder_id
+        return await self._ensure_folder(self.character_folder, self.folder_id)
+
+    async def _ensure_generations_folder(self) -> str:
+        """Crée (ou réutilise) le dossier 'generations' sous le dossier personnage."""
+        char_id = await self._ensure_character_folder()
+        return await self._ensure_folder("generations", char_id)
+
+    async def _ensure_carousels_folder(self) -> str:
+        """Crée (ou réutilise) le dossier 'carousels' sous le dossier personnage."""
+        char_id = await self._ensure_character_folder()
+        return await self._ensure_folder("carousels", char_id)
+
+    async def _ensure_run_folder(self, run_id: str) -> str:
+        """Crée (ou réutilise) le dossier d'un run sous generations/<run_id>."""
+        generations_id = await self._ensure_generations_folder()
+        return await self._ensure_folder(run_id, generations_id)
+
+    async def _ensure_carousel_run_folder(self, run_id: str) -> str:
+        """Crée (ou réutilise) le dossier d'un batch carousel sous carousels/<run_id>."""
+        carousels_id = await self._ensure_carousels_folder()
+        return await self._ensure_folder(run_id, carousels_id)
+
+    # ── Video folders ──────────────────────────────────────────────────────────
+
+    _NICHE_DISPLAY: dict[str, str] = {
+        "conference": "Conférence",
+    }
+
+    async def _ensure_video_folder(self) -> str:
+        """Crée (ou réutilise) le dossier 'video' sous le dossier personnage."""
+        char_id = await self._ensure_character_folder()
+        return await self._ensure_folder("video", char_id)
+
+    async def _ensure_video_niche_folder(self, niche: str) -> str:
+        """Crée (ou réutilise) le sous-dossier niche sous video/ (ex: 'Conférence')."""
+        video_id = await self._ensure_video_folder()
+        display = self._NICHE_DISPLAY.get(niche, niche.title())
+        return await self._ensure_folder(display, video_id)
+
+    async def _ensure_video_run_folder(self, run_id: str, niche: str) -> str:
+        """Crée (ou réutilise) le dossier d'un run sous video/<niche>/<run_id>."""
+        niche_id = await self._ensure_video_niche_folder(niche)
+        return await self._ensure_folder(run_id, niche_id)
+
+    async def upload_video(
+        self,
+        run_id: str,
+        niche: str,
+        shortcode: str,
+        video_url: str,
+    ) -> dict:
+        """Télécharge la vidéo depuis video_url et l'uploade dans Drive.
+
+        Structure : video/<niche>/<run_id>/<shortcode>.mp4
+        """
+        try:
+            run_folder_id = await self._ensure_video_run_folder(run_id, niche)
+
+            async with httpx.AsyncClient(timeout=120) as client:
+                resp = await client.get(video_url)
+                resp.raise_for_status()
+                video_bytes = resp.content
+
+            url = await self.upload_bytes(
+                video_bytes,
+                f"{shortcode}.mp4",
+                run_folder_id,
+                content_type="video/mp4",
+            )
+            print(json.dumps({
+                "type": "info",
+                "msg": f"Drive video upload OK [{shortcode}]: {url}"
+            }), flush=True)
+            return {"drive_video_url": url}
+
+        except Exception as e:
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"Drive video upload ERREUR [{shortcode}]: {e}"
+            }), flush=True)
+            return {"drive_error": str(e)}
+
+    async def upload_bytes(self, data: bytes, filename: str, parent_id: str, content_type: str = "image/jpeg") -> str:
         """Upload des bytes en multipart vers Drive. Retourne l'URL Drive."""
         token = await self._get_access_token()
         metadata = json.dumps({"name": filename, "parents": [parent_id]}).encode()
+        ct_bytes = content_type.encode()
 
         body = (
             b"--boundary\r\n"
             b"Content-Type: application/json\r\n\r\n"
             + metadata
             + b"\r\n--boundary\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n"
+            b"Content-Type: " + ct_bytes + b"\r\n\r\n"
             + data
             + b"\r\n--boundary--"
         )
 
-        async with httpx.AsyncClient(timeout=60) as client:
+        timeout = 120 if content_type.startswith("video/") else 60
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(
                 f"{DRIVE_UPLOAD_URL}?uploadType=multipart&fields=id",
                 content=body,
@@ -160,9 +266,9 @@ class DriveUploader:
     ) -> dict:
         """Upload la paire source + généré pour une génération.
 
-        Structure Drive (plate) :
-          <folder>/<run_id>/source/<shortcode>.jpg       ← original Instagram
-          <folder>/<run_id>/generated/<shortcode>.jpg    ← output Higgsfield
+        Structure Drive :
+          generations/<run_id>/source/<shortcode>.jpg       ← original Instagram
+          generations/<run_id>/generated/<shortcode>.jpg    ← output Higgsfield
 
         Toutes les générées dans un dossier plat → téléchargement facile,
         sélection manuelle pour le carousel creator.
@@ -223,8 +329,10 @@ def init_drive_uploader_from_env() -> DriveUploader | None:
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
 
+    character_folder = os.environ.get("CHARACTER_FOLDER_NAME", "")
+
     if refresh_token and folder_id and client_id and client_secret:
-        _uploader = DriveUploader(refresh_token, folder_id, client_id, client_secret)
+        _uploader = DriveUploader(refresh_token, folder_id, client_id, client_secret, character_folder)
         return _uploader
     return None
 
