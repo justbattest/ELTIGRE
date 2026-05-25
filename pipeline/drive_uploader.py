@@ -10,6 +10,7 @@ Les fichiers sont organisés dans Drive :
   <folder>/<run_id>/generated/<shortcode>.jpg
 """
 
+import asyncio
 import json
 import time
 import httpx
@@ -31,6 +32,11 @@ class DriveUploader:
         self.client_secret = client_secret
         self._access_token: str | None = None
         self._token_expiry: float = 0
+        # Cache des IDs de dossiers Drive pour éviter les appels API redondants
+        # et les race conditions lors des générations parallèles (max 8 jobs simultanés).
+        # Clé : "parent_id/name" → valeur : folder_id Drive
+        self._folder_cache: dict[str, str] = {}
+        self._folder_lock = asyncio.Lock()  # Protège la création concurrente de dossiers
 
     async def _get_access_token(self) -> str:
         """Rafraîchit l'access token si nécessaire."""
@@ -60,38 +66,57 @@ class DriveUploader:
             return self._access_token
 
     async def _ensure_folder(self, name: str, parent_id: str) -> str:
-        """Crée (ou réutilise) un sous-dossier nommé `name` dans `parent_id`."""
-        token = await self._get_access_token()
-        headers = {"Authorization": f"Bearer {token}"}
+        """Crée (ou réutilise) un sous-dossier nommé `name` dans `parent_id`.
 
-        async with httpx.AsyncClient() as client:
-            # Chercher si le dossier existe déjà
-            resp = await client.get(
-                DRIVE_FILES_URL,
-                headers=headers,
-                params={
-                    "q": f"name='{name}' and '{parent_id}' in parents "
-                         f"and mimeType='application/vnd.google-apps.folder' and trashed=false",
-                    "fields": "files(id)",
-                }
-            )
-            resp.raise_for_status()
-            files = resp.json().get("files", [])
-            if files:
-                return files[0]["id"]
+        Thread-safe via double-checked locking : plusieurs générations parallèles peuvent
+        appeler cette fonction simultanément pour le même carousel_N sans créer de doublons.
+        """
+        cache_key = f"{parent_id}/{name}"
 
-            # Créer le sous-dossier
-            resp = await client.post(
-                DRIVE_FILES_URL,
-                headers=headers,
-                json={
-                    "name": name,
-                    "mimeType": "application/vnd.google-apps.folder",
-                    "parents": [parent_id],
-                }
-            )
-            resp.raise_for_status()
-            return resp.json()["id"]
+        # Lecture rapide sans lock (cas courant : dossier déjà connu)
+        if cache_key in self._folder_cache:
+            return self._folder_cache[cache_key]
+
+        # Lock pour éviter la race condition à la création
+        async with self._folder_lock:
+            # Double-check après acquisition du lock
+            if cache_key in self._folder_cache:
+                return self._folder_cache[cache_key]
+
+            token = await self._get_access_token()
+            headers = {"Authorization": f"Bearer {token}"}
+
+            async with httpx.AsyncClient() as client:
+                # Chercher si le dossier existe déjà dans Drive
+                resp = await client.get(
+                    DRIVE_FILES_URL,
+                    headers=headers,
+                    params={
+                        "q": f"name='{name}' and '{parent_id}' in parents "
+                             f"and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                        "fields": "files(id)",
+                    }
+                )
+                resp.raise_for_status()
+                files = resp.json().get("files", [])
+                if files:
+                    folder_id = files[0]["id"]
+                else:
+                    # Créer le sous-dossier
+                    resp = await client.post(
+                        DRIVE_FILES_URL,
+                        headers=headers,
+                        json={
+                            "name": name,
+                            "mimeType": "application/vnd.google-apps.folder",
+                            "parents": [parent_id],
+                        }
+                    )
+                    resp.raise_for_status()
+                    folder_id = resp.json()["id"]
+
+            self._folder_cache[cache_key] = folder_id
+            return folder_id
 
     async def _ensure_run_folder(self, run_id: str) -> str:
         """Crée (ou réutilise) le dossier racine pour ce run dans Drive."""
@@ -138,7 +163,7 @@ class DriveUploader:
         Structure Drive :
           <folder>/<run_id>/source/<shortcode>.jpg          ← original Instagram (plat)
           <folder>/<run_id>/carousel_N/<shortcode>.jpg     ← output Higgsfield (groupé par 4)
-          où N = rank // 4 + 1  (ex: ranks 0-3 → carousel_1, 4-7 → carousel_2, ...)
+          rank 0-indexé : ranks 0-3 → carousel_1, ranks 4-7 → carousel_2, ...
         """
         try:
             run_folder_id = await self._ensure_run_folder(run_id)

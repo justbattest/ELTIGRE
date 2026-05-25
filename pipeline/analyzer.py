@@ -13,18 +13,17 @@ import anthropic
 
 
 def load_i2i_skill() -> str:
-    """Charge le skill i2i-avatar-creator-base depuis ./skills/.
+    """Charge le skill i2i-avatar-creator-base complet depuis ./skills/.
 
-    Optimisation tokens : on charge uniquement les 3 fichiers essentiels pour le pipeline.
-    - SKILL.md          : template + règles + exemple de prompt (~4 200 tokens)
-    - identity-preservation.md : phrases de préservation + contre-phrases (~2 400 tokens)
-    - vocabulary-banks.md      : imperfections, backgrounds, camera specs (~6 300 tokens)
+    On charge les 5 fichiers pour maximiser la qualité des prompts générés.
+    Avec le prompt caching Anthropic (cache_control ephemeral, TTL 5 min),
+    le surcoût des 14k tokens supplémentaires est négligeable après le 1er appel :
+    - example-scenes.md : 15 exemples complets → guident fortement le niveau de détail
+    - vocabulary-banks.md : banques de marques, imperfections, specs caméra → spécificité
+    - Les 5 fichiers ensemble (~27k tokens) sont cachés → paiement 10% sur les suivants
 
-    Fichiers volontairement exclus (inutiles pour la génération automatique) :
-    - style-templates.md  : styles B/C/D/E — on utilise toujours A, déjà dans SKILL.md (-4 600 tokens)
-    - example-scenes.md   : 15 prompts complets — SKILL.md a déjà un exemple suffisant (-9 500 tokens)
-
-    Économie : ~14 100 tokens / appel (~52% du system prompt)
+    Tokens estimés : ~27 000 (vs ~13 000 en version pruned)
+    Coût avec cache : ~10% du coût d'un appel non-caché pour les appels 2+
     """
     base = Path("./skills/i2i-avatar-creator-base")
 
@@ -33,12 +32,17 @@ def load_i2i_skill() -> str:
             f"Skill i2i-avatar-creator-base introuvable dans {base.absolute()}."
         )
 
+    refs = base / "references"
     parts = [
         (base / "SKILL.md").read_text(),
         "\n\n---\n## identity-preservation.md\n",
-        (base / "references/identity-preservation.md").read_text(),
+        (refs / "identity-preservation.md").read_text(),
         "\n\n---\n## vocabulary-banks.md\n",
-        (base / "references/vocabulary-banks.md").read_text(),
+        (refs / "vocabulary-banks.md").read_text(),
+        "\n\n---\n## style-templates.md\n",
+        (refs / "style-templates.md").read_text(),
+        "\n\n---\n## example-scenes.md\n",
+        (refs / "example-scenes.md").read_text(),
         """
 
 ---
@@ -128,11 +132,13 @@ def analyze_post(slides: list[str], anthropic_key: str) -> dict:
     Returns:
         dict avec best_slide_index, recommended_model, scene_description, prompt
 
-    Optimisation coût :
-    - Modèle : claude-haiku-4-5 (4-10x moins cher que Sonnet, même qualité pour JSON structuré)
-    - Prompt caching : le system prompt (22 800 tokens) est mis en cache 5 min par Anthropic
-      → les appels successifs paient ~10x moins sur le system prompt
-    - max_tokens réduit : 800 suffisent pour le JSON de réponse
+    Qualité vs coût :
+    - Modèle : claude-sonnet-4-5 — génère des prompts avec la spécificité nécessaire
+      (marques, imperfections, specs caméra) pour défaire le look IA. Haiku produit des
+      prompts trop génériques sur un skill aussi complexe.
+    - Prompt caching (cache_control ephemeral, TTL 5 min) : les ~27k tokens sont mis en cache
+      → appels suivants paient ~10% du coût normal. Estimé ~$5/200 posts avec caching.
+    - max_tokens=1500 : prompts Higgsfield longs (400-600 tokens) + JSON wrapper.
     """
     # Max 2 slides envoyées à Claude — suffisant pour choisir la meilleure scène,
     # et réduit le coût image de ~75% par rapport à envoyer tout le carousel (jusqu'à 10 slides).
@@ -171,11 +177,13 @@ def analyze_post(slides: list[str], anthropic_key: str) -> dict:
             "text": f"Carousel Instagram de {n} slides. Génère le prompt pour la meilleure slide.\n{no_physical_desc}"
         })
 
-    # Prompt caching : le system prompt est caché 5 min par Anthropic → ~90% d'économie.
-    # max_tokens=1500 : les prompts Higgsfield sont longs (300-500 tokens) + JSON wrapper.
-    #   800 était trop court → JSON tronqué → "Unterminated string" errors.
+    # Sonnet pour la qualité des prompts : génère des descriptions plus spécifiques (marques,
+    # imperfections, specs iPhone précises) qui défont le look IA vs Haiku.
+    # Prompt caching : les ~27k tokens du system prompt sont cachés 5 min → ~90% d'économie
+    # sur les appels suivants. Coût estimé avec caching : ~$5/200 posts (vs $20+ sans cache).
+    # max_tokens=1500 : les prompts Higgsfield longs (400-600 tokens) + JSON wrapper.
     resp = client.messages.create(
-        model="claude-haiku-4-5",
+        model="claude-sonnet-4-5",
         max_tokens=1500,
         system=[
             {

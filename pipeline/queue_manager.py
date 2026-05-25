@@ -185,7 +185,7 @@ async def run_pipeline(
                 }), flush=True)
 
         tasks = [
-            generate_one(item, rank + 1)
+            generate_one(item, rank)   # rank 0-indexé → carousel = rank // 4 + 1
             for rank, item in enumerate(analyzed)
         ]
         await asyncio.gather(*tasks)
