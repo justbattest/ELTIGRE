@@ -36,9 +36,12 @@ export async function POST(req: NextRequest) {
 
   const imageFile = formData.get('image') as File | null
   const videoFile = formData.get('video') as File | null
+  const elementId = (formData.get('elementId') as string | null) || ''
+  const characterName = (formData.get('characterName') as string | null) || ''
 
   if (!imageFile) return NextResponse.json({ error: 'Image concept requise' }, { status: 400 })
   if (!videoFile) return NextResponse.json({ error: 'Vidéo de référence requise' }, { status: 400 })
+  if (!elementId) return NextResponse.json({ error: 'Personnage (element ID) requis pour Seedream.' }, { status: 400 })
 
   // Récupérer les credentials
   const creds = await prisma.userCredentials.findUnique({
@@ -71,8 +74,10 @@ export async function POST(req: NextRequest) {
       ...(session.user.id ? { user: { connect: { id: session.user.id } } } : {}),
       inputProfiles: '[]',
       maxPosts: 4,
+      selectedElementId: elementId,
       modelSetting: 'kling_motion_control',
       status: 'running',
+      characterName: characterName || null,
     },
   })
 
@@ -85,6 +90,7 @@ export async function POST(req: NextRequest) {
       '--run-id', run.id,
       '--concept-image', imagePath,
       '--concept-video', videoPath,
+      '--element-id', elementId,
     ],
     {
       cwd: path.join(process.cwd(), '..'),

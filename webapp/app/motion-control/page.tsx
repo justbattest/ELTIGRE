@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
+type RefElement = { id: string; name: string }
+
 // ─── Outfit preview ────────────────────────────────────────────────────────────
 
 const OUTFIT_STYLES = [
@@ -194,13 +198,38 @@ function readDirectoryFiles(entry: FileSystemDirectoryEntry): Promise<File[]> {
 export default function MotionControlPage() {
   const router = useRouter()
 
+  // ── Personnage (Seedream a besoin du element_id) ──
+  const [refElements, setRefElements] = useState<RefElement[]>([])
+  const [selectedElementId, setSelectedElementId] = useState('')
+  const [selectedElementName, setSelectedElementName] = useState('')
+  const [loadingChars, setLoadingChars] = useState(false)
+  const [charsError, setCharsError] = useState('')
+
+  // ── Concept files ──
   const [conceptImage, setConceptImage] = useState<File | null>(null)
   const [conceptVideo, setConceptVideo] = useState<File | null>(null)
 
   const [launching, setLaunching] = useState(false)
   const [error, setError] = useState('')
 
-  const canLaunch = !!conceptImage && !!conceptVideo && !launching
+  // ── Load reference elements ──
+  useEffect(() => {
+    setLoadingChars(true)
+    fetch('/api/characters')
+      .then(r => r.json())
+      .then(data => {
+        const elements: RefElement[] = data.referenceElements || []
+        setRefElements(elements)
+        if (elements.length) {
+          setSelectedElementId(elements[0].id)
+          setSelectedElementName(elements[0].name)
+        }
+      })
+      .catch(e => setCharsError(String(e)))
+      .finally(() => setLoadingChars(false))
+  }, [])
+
+  const canLaunch = !!conceptImage && !!conceptVideo && !!selectedElementId && !launching
 
   const handleLaunch = async () => {
     if (!canLaunch) return
@@ -211,6 +240,8 @@ export default function MotionControlPage() {
       const fd = new FormData()
       fd.append('image', conceptImage!)
       fd.append('video', conceptVideo!)
+      fd.append('elementId', selectedElementId)
+      fd.append('characterName', selectedElementName)
 
       const res = await fetch('/api/motion-control/start', {
         method: 'POST',
@@ -274,8 +305,38 @@ export default function MotionControlPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">🎭 Motion Control</h1>
           <p className="text-gray-400 text-sm mt-1">
-            Glisse ton dossier concept → 4 tenues générées automatiquement → motion appliquée via Kling 3.0
+            Seedream v4.5 génère 4 tenues sur ton concept → Kling 3.0 applique la motion de ta vidéo
           </p>
+        </div>
+
+        {/* Personnage (Seedream) */}
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+            Personnage <span className="text-gray-600 normal-case font-normal">(utilisé par Seedream pour les tenues)</span>
+          </label>
+          {loadingChars ? (
+            <p className="text-xs text-gray-500">Chargement…</p>
+          ) : charsError ? (
+            <p className="text-xs text-red-400">{charsError}</p>
+          ) : refElements.length === 0 ? (
+            <p className="text-xs text-gray-500">Aucun Reference Element trouvé. Vérifiez vos credentials Higgsfield.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {refElements.map(e => (
+                <button
+                  key={e.id}
+                  onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                    selectedElementId === e.id
+                      ? 'bg-violet-600 border-violet-500 text-white'
+                      : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                  }`}
+                >
+                  {e.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Folder drop zone */}
@@ -334,13 +395,15 @@ export default function MotionControlPage() {
           )}
         </button>
 
-        {(!conceptImage || !conceptVideo) && (
+        {(!conceptImage || !conceptVideo || !selectedElementId) && (
           <p className="text-xs text-center text-gray-600">
-            {!conceptImage && !conceptVideo
-              ? "Glisse ton dossier pour démarrer"
+            {!selectedElementId
+              ? '⚠️ Sélectionne un personnage'
+              : !conceptImage && !conceptVideo
+              ? 'Glisse ton dossier pour démarrer'
               : !conceptImage
-              ? "⚠️ Image manquante dans le dossier"
-              : "⚠️ Vidéo manquante dans le dossier"}
+              ? '⚠️ Image manquante dans le dossier'
+              : '⚠️ Vidéo manquante dans le dossier'}
           </p>
         )}
 

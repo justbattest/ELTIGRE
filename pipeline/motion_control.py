@@ -69,11 +69,16 @@ async def generate_outfit_image(
     user_token: str,
     concept_image: str,
     outfit_description: str,
+    element_id: str,
     shortcode: str,
     timeout: int = 600,
 ) -> dict:
-    """Phase 1 : Seedream v4.5 img2img — change l'outfit sur l'image concept."""
+    """Phase 1 : Seedream v4.5 img2img — change l'outfit sur l'image concept.
+
+    Le tag <<<element_id>>> est obligatoire pour que Seedream reconnaisse le personnage.
+    """
     prompt = (
+        f"<<<{element_id}>>> "
         f"Change outfit only to: {outfit_description}. "
         f"Keep identical: same person's face, same body, same pose, same background and lighting. "
         f"No bikini, no swimwear."
@@ -152,13 +157,13 @@ async def process_one_outfit(
     user_token: str,
     concept_image: str,
     concept_video: str,
+    element_id: str,
     drive,
 ) -> None:
     """Traite un outfit de bout en bout : Seedream → Kling MC → Drive.
 
-    Si Seedream échoue (ex. element_id manquant), on passe directement
-    l'image concept à Kling MC avec un prompt d'outfit — au pire on obtient
-    4 vidéos avec la motion appliquée, sans variation d'outfit.
+    Si Seedream échoue malgré le element_id, on passe directement
+    l'image concept à Kling MC avec un prompt d'outfit en fallback.
     """
     shortcode = f"mc_{i + 1}"
     scene = f"Motion Control · {style['label']}"
@@ -182,6 +187,7 @@ async def process_one_outfit(
         user_token=user_token,
         concept_image=concept_image,
         outfit_description=style["outfit"],
+        element_id=element_id,
         shortcode=shortcode,
     )
 
@@ -265,6 +271,7 @@ async def run_motion_control(
     user_token: str,
     concept_image: str,
     concept_video: str,
+    element_id: str,
 ) -> None:
     """Orchestre la génération de 4 vidéos Motion Control en parallèle."""
     from pipeline.drive_uploader import init_drive_uploader_from_env
@@ -281,6 +288,7 @@ async def run_motion_control(
             user_token=user_token,
             concept_image=concept_image,
             concept_video=concept_video,
+            element_id=element_id,
             drive=drive,
         )
         for i, style in enumerate(OUTFIT_STYLES)
@@ -302,11 +310,16 @@ def main():
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--concept-image", required=True, help="Chemin local vers l'image concept")
     parser.add_argument("--concept-video", required=True, help="Chemin local vers la vidéo de référence")
+    parser.add_argument("--element-id", required=True, help="Higgsfield Reference Element ID (pour Seedream)")
     args = parser.parse_args()
 
     user_token = os.environ.get("HIGGSFIELD_TOKEN")
     if not user_token:
         print(json.dumps({"type": "error", "message": "HIGGSFIELD_TOKEN manquant"}), flush=True)
+        sys.exit(1)
+
+    if not args.element_id:
+        print(json.dumps({"type": "error", "message": "element-id requis pour Seedream"}), flush=True)
         sys.exit(1)
 
     if not Path(args.concept_image).exists():
@@ -322,6 +335,7 @@ def main():
         user_token=user_token,
         concept_image=args.concept_image,
         concept_video=args.concept_video,
+        element_id=args.element_id,
     ))
 
 
