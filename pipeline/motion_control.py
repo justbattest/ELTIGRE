@@ -1,9 +1,9 @@
 """
-Motion Control — génération batch de 4 vidéos Kling 2.6 Motion Control.
+Motion Control — génération batch de 4 vidéos Kling 3.0 Motion Control.
 
 Flow par outfit (4 en parallèle) :
 1. Seedream v4.5 img2img : change l'outfit sur l'image concept → outfit_url
-2. Kling 2.6 Motion Control : applique la motion de la vidéo de référence → video_url
+2. Kling 3.0 Motion Control : applique la motion de la vidéo de référence → video_url
 3. Upload Drive → Motion Control/<run_id>/mc_<i+1>.mp4
 
 Events JSON stdout (même protocole que video_studio.py / studio.py).
@@ -105,9 +105,9 @@ async def generate_motion_video(
     shortcode: str,
     timeout: int = 900,
 ) -> dict:
-    """Phase 2 : Kling 2.6 Motion Control — applique la motion de la vidéo de référence."""
+    """Phase 2 : Kling 3.0 Motion Control — applique la motion de la vidéo de référence."""
     cmd = [
-        "higgsfield", "generate", "create", "kling2_6",
+        "higgsfield", "generate", "create", "kling3_0",
         "--image", outfit_image_url,
         "--video", concept_video,
         "--wait",
@@ -157,7 +157,7 @@ async def process_one_outfit(
         "shortcode": shortcode,
         "status": "started",
         "rank": i,
-        "model": "kling2_6",
+        "model": "kling3_0",
         "scene": scene,
     }), flush=True)
 
@@ -215,7 +215,7 @@ async def process_one_outfit(
         "shortcode": shortcode,
         "status": "complete",
         "url": video_url,
-        "model": "kling2_6",
+        "model": "kling3_0",
         "fallback": False,
         "prompt": "",
         "scene": scene,
@@ -275,7 +275,7 @@ async def run_motion_control(
 # ─── Entry point ───────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Motion Control — Seedream + Kling 2.6 batch")
+    parser = argparse.ArgumentParser(description="Motion Control — Seedream + Kling 3.0 batch")
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--concept-image", required=True, help="Chemin local vers l'image concept")
     parser.add_argument("--concept-video", required=True, help="Chemin local vers la vidéo de référence")
