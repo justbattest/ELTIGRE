@@ -125,14 +125,21 @@ async def generate_motion_video(
     timeout: int = 900,
     prompt: str | None = None,
 ) -> dict:
-    """Phase 2 : Kling 3.0 Motion Control — applique la motion de la vidéo de référence.
+    """Phase 2 : Seedance 2.0 — applique la motion de la vidéo de référence sur l'image outfit.
 
-    `prompt` est optionnel : si fourni (fallback Seedream), guide Kling sur l'outfit.
+    Seedance 2.0 est le seul modèle Higgsfield qui accepte image + video en entrée.
+    Kling 3.0 n'accepte que start_image/end_image (pas de --video), d'où la 500.
+
+    `prompt` est optionnel : utilisé uniquement en fallback Seedream pour guider l'outfit.
     """
     cmd = [
-        "higgsfield", "generate", "create", "kling3_0",
+        "higgsfield", "generate", "create", "seedance_2_0",
         "--image", outfit_image_url,
         "--video", concept_video,
+        "--aspect_ratio", "9:16",
+        "--resolution", "1080p",
+        "--duration", "5",
+        "--mode", "std",
         "--wait",
         "--wait-timeout", "15m",
     ]
@@ -187,7 +194,7 @@ async def process_one_outfit(
         "shortcode": shortcode,
         "status": "started",
         "rank": i,
-        "model": "kling3_0",
+        "model": "seedance_2_0",
         "scene": scene,
     }), flush=True)
 
@@ -280,7 +287,7 @@ async def process_one_outfit(
         "shortcode": shortcode,
         "status": "complete",
         "url": video_url,
-        "model": "kling3_0",
+        "model": "seedance_2_0",
         "fallback": fallback_used,
         "prompt": kling_prompt or "",
         "scene": scene,

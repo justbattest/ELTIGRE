@@ -305,7 +305,7 @@ export default function MotionControlPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">🎭 Motion Control</h1>
           <p className="text-gray-400 text-sm mt-1">
-            Seedream v4.5 génère 4 tenues sur ton concept → Kling 3.0 applique la motion de ta vidéo
+            Seedream v4.5 génère 4 tenues sur ton concept → Seedance 2.0 applique la motion de ta vidéo
           </p>
         </div>
 
@@ -366,7 +366,7 @@ export default function MotionControlPage() {
             ))}
           </div>
           <p className="text-xs text-gray-500">
-            Seedream v4.5 génère chaque tenue → Kling 3.0 Motion Control applique la motion de ta vidéo.
+            Seedream v4.5 génère chaque tenue → Seedance 2.0 applique la motion de ta vidéo de référence.
           </p>
         </div>
 
