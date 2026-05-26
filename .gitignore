@@ -6,7 +6,12 @@ venv/
 __pycache__/
 *.pyc
 .DS_Store
+/tmp/hf_*
+
+# Webapp — build artifacts et secrets uniquement
 webapp/.next/
 webapp/node_modules/
-/tmp/hf_*
-webapp/
+webapp/.prisma/
+webapp/.env
+webapp/.env.local
+webapp/.env*.local

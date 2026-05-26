@@ -1,0 +1,170 @@
+/**
+ * POST /api/run — lance un nouveau run de génération.
+ * Crée l'entrée en DB, démarre le subprocess Python, retourne le run ID.
+ */
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { decryptIfPresent } from '@/lib/crypto'
+import { spawn } from 'child_process'
+import * as path from 'path'
+import { handlePipelineEvent } from '@/lib/pipeline-events'
+
+// Map globale : runId → process (pour pause/stop)
+export const runningProcesses: Map<string, ReturnType<typeof spawn>> = new Map()
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const body = await req.json()
+  const {
+    profiles,
+    maxPosts = 50,
+    soulId,
+    elementId,
+    model = 'auto',
+    aspectRatio = '2:3',
+    quality = '2k',
+    characterName = '',
+  } = body
+
+  if (!profiles?.length) {
+    return NextResponse.json({ error: 'Au moins un profil requis' }, { status: 400 })
+  }
+  if (!soulId) return NextResponse.json({ error: 'Soul ID requis' }, { status: 400 })
+  if (!elementId) return NextResponse.json({ error: 'Element ID requis' }, { status: 400 })
+
+  // Récupérer les credentials déchiffrés
+  const creds = await prisma.userCredentials.findUnique({
+    where: { userId: session.user.id },
+  })
+
+  const apifyKey = decryptIfPresent(creds?.apifyApiKey)
+  const anthropicKey = decryptIfPresent(creds?.anthropicApiKey)
+  const higgsToken = decryptIfPresent(creds?.higgsFieldToken)
+  const googleRefreshToken = creds?.googleRefreshToken || null
+  const driveFolderId = creds?.driveFolderId || null
+  const instagramSessionCookie = decryptIfPresent(creds?.instagramSessionCookie) || null
+
+  if (!apifyKey || !anthropicKey || !higgsToken) {
+    return NextResponse.json({ error: 'Credentials incomplets. Vérifier les Settings.' }, { status: 400 })
+  }
+
+  // Créer le run en DB
+  const run = await prisma.run.create({
+    data: {
+      userId: session.user.id,
+      inputProfiles: JSON.stringify(profiles),
+      maxPosts,
+      selectedSoulId: soulId,
+      selectedElementId: elementId,
+      modelSetting: model,
+      aspectRatio,
+      quality,
+      status: 'running',
+    },
+  })
+
+  const workDir = path.join(process.cwd(), '..', 'temp', run.id)
+
+  // Lancer le pipeline Python en subprocess
+  const pythonPath = path.join(process.cwd(), '..', 'venv', 'bin', 'python')
+  const proc = spawn(
+    pythonPath,
+    [
+      '-m', 'pipeline.main',
+      '--run-id', run.id,
+      '--profiles', JSON.stringify(profiles),
+      '--max-posts', String(maxPosts),
+      '--soul-id', soulId,
+      '--element-id', elementId,
+      '--model', model,
+      '--aspect-ratio', aspectRatio,
+      '--quality', quality,
+      '--work-dir', workDir,
+    ],
+    {
+      cwd: path.join(process.cwd(), '..'), // root du projet
+      env: {
+        ...process.env,
+        APIFY_KEY: apifyKey,
+        ANTHROPIC_KEY: anthropicKey,
+        HIGGSFIELD_TOKEN: higgsToken,
+        ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
+        ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
+        ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),
+        ...(process.env.GOOGLE_CLIENT_SECRET ? { GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET } : {}),
+        ...(instagramSessionCookie ? { INSTAGRAM_SESSION_COOKIE: instagramSessionCookie } : {}),
+        ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }
+  )
+
+  runningProcesses.set(run.id, proc)
+
+  // Lire stdout et mettre à jour la DB en temps réel
+  proc.stdout.on('data', async (data: Buffer) => {
+    const lines = data.toString().split('\n').filter(Boolean)
+    for (const line of lines) {
+      try {
+        const event = JSON.parse(line)
+        console.log(`[run:${run.id}]`, JSON.stringify(event))
+        await handlePipelineEvent(run.id, session.user.id, event)
+      } catch {
+        // Ligne non JSON (ex: logs Apify colorés) — afficher quand même
+        if (line.trim()) console.log(`[run:${run.id}][stdout]`, line)
+      }
+    }
+  })
+
+  // Capturer stderr Python pour debug
+  proc.stderr.on('data', (data: Buffer) => {
+    const text = data.toString()
+    // Filtrer les logs Apify colorés (informatifs, pas des erreurs)
+    if (!text.includes('apify.instagram-scraper')) {
+      console.error(`[run:${run.id}][stderr]`, text.trim())
+    }
+  })
+
+  proc.on('close', async (code) => {
+    runningProcesses.delete(run.id)
+    const currentRun = await prisma.run.findUnique({ where: { id: run.id } })
+    if (currentRun?.status === 'running') {
+      await prisma.run.update({
+        where: { id: run.id },
+        data: { status: code === 0 ? 'completed' : 'failed' },
+      })
+    }
+  })
+
+  return NextResponse.json({ runId: run.id })
+}
+
+// GET /api/run — liste les runs de l'user
+export async function GET() {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const runs = await prisma.run.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+    select: {
+      id: true,
+      status: true,
+      createdAt: true,
+      totalPosts: true,
+      completedPosts: true,
+      failedPosts: true,
+      inputProfiles: true,
+      modelSetting: true,
+    },
+  })
+
+  return NextResponse.json(runs)
+}
+
+// handlePipelineEvent est maintenant dans @/lib/pipeline-events (partagé avec /api/studio/start)

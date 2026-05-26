@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  passwordHash String           @map("password_hash")
+  createdAt    DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+  generations  Generation[]
+  runs         Run[]
+  credentials  UserCredentials?
+
+  @@map("users")
+}
+
+model UserCredentials {
+  userId                 String    @id @map("user_id")
+  apifyApiKey            String?   @map("apify_api_key")
+  anthropicApiKey        String?   @map("anthropic_api_key")
+  higgsFieldToken        String?   @map("higgsfield_token")
+  higgsFieldRefreshToken String?   @map("higgsfield_refresh_token")
+  defaultModel           String?   @default("auto") @map("default_model")
+  defaultAspectRatio     String?   @default("2:3") @map("default_aspect_ratio")
+  defaultQuality         String?   @default("2k") @map("default_quality")
+  referenceElements      String?   @map("reference_elements")
+  googleRefreshToken        String?   @map("google_refresh_token")
+  driveFolderId             String?   @map("drive_folder_id")
+  instagramSessionCookie    String?   @map("instagram_session_cookie")
+  updatedAt              DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("user_credentials")
+}
+
+model Run {
+  id                String       @id @default(cuid())
+  userId            String?      @map("user_id")
+  inputProfiles     String       @map("input_profiles")
+  maxPosts          Int?         @default(50) @map("max_posts")
+  selectedSoulId    String?      @map("selected_soul_id")
+  selectedElementId String?      @map("selected_element_id")
+  modelSetting      String?      @default("auto") @map("model_setting")
+  aspectRatio       String?      @default("2:3") @map("aspect_ratio")
+  quality           String?      @default("2k")
+  characterName     String?      @map("character_name")
+  createdAt         DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  status            String?      @default("running")
+  totalPosts        Int?         @default(0) @map("total_posts")
+  completedPosts    Int?         @default(0) @map("completed_posts")
+  failedPosts       Int?         @default(0) @map("failed_posts")
+  fallbackCount     Int?         @default(0) @map("fallback_count")
+  generations       Generation[]
+  user              User?        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([status], map: "idx_runs_status")
+  @@index([userId], map: "idx_runs_user_id")
+  @@map("runs")
+}
+
+model Generation {
+  id                     Int       @id @default(autoincrement())
+  runId                  String?   @map("run_id")
+  userId                 String?   @map("user_id")
+  sourcePostUrl          String?   @map("source_post_url")
+  sourceShortcode        String?   @map("source_shortcode")
+  sourceLikes            Int?      @default(0) @map("source_likes")
+  sourceComments         Int?      @default(0) @map("source_comments")
+  sourceCaption          String?   @map("source_caption")
+  sourceRank             Int?      @map("source_rank")
+  slideIndex             Int?      @map("slide_index")
+  localImagePath         String?   @map("local_image_path")
+  promptUsed             String?   @map("prompt_used")
+  sceneDescription       String?   @map("scene_description")
+  claudeRecommendedModel String?   @map("claude_recommended_model")
+  modelUsed              String?   @map("model_used")
+  fallbackUsed           Boolean?  @default(false) @map("fallback_used")
+  fallbackReason         String?   @map("fallback_reason")
+  higgsFieldJobId        String?   @map("higgsfield_job_id")
+  generatedImageUrl      String?   @map("generated_image_url")
+  generationStatus       String?   @default("pending") @map("generation_status")
+  creditsUsed            Float?    @map("credits_used")
+  scrapedAt              DateTime? @map("scraped_at") @db.Timestamptz(6)
+  analyzedAt             DateTime? @map("analyzed_at") @db.Timestamptz(6)
+  generatedAt            DateTime? @map("generated_at") @db.Timestamptz(6)
+  run                    Run?      @relation(fields: [runId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user                   User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([runId], map: "idx_generations_run_id")
+  @@index([sourceShortcode], map: "idx_generations_shortcode")
+  @@index([generationStatus], map: "idx_generations_status")
+  @@index([userId], map: "idx_generations_user_id")
+  @@map("generations")
+}
+
+model VideoPromptBank {
+  id            Int      @id @default(autoincrement())
+  userId        String?  @map("user_id")
+  characterName String?  @map("character_name")
+  modelType     String?  @map("model_type")
+  niche         String   @default("conference")
+  scenario      String?
+  promptJson    String   @map("prompt_json") @db.Text
+  variables     String?  @db.Text
+  notes         String?
+  usageCount    Int      @default(0) @map("usage_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([niche], map: "idx_vpb_niche")
+  @@index([userId], map: "idx_vpb_user_id")
+  @@index([characterName], map: "idx_vpb_character")
+  @@map("video_prompt_bank")
+}
