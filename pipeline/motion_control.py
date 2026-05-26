@@ -14,6 +14,8 @@ import asyncio
 import json
 import os
 import sys
+import tempfile
+import urllib.request
 from pathlib import Path
 
 from pipeline.generator import run_higgsfield_for_user
@@ -61,6 +63,18 @@ OUTFIT_STYLES = [
 
 
 MAX_CONCURRENT = 4  # 4 outfits en parallèle
+
+
+# ─── Helpers ───────────────────────────────────────────────────────────────────
+
+async def download_image(url: str, suffix: str = ".png") -> str:
+    """Télécharge une URL image vers un fichier temp local. Retourne le chemin."""
+    loop = asyncio.get_event_loop()
+    tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False, prefix="hf_mc_")
+    tmp_path = tmp.name
+    tmp.close()
+    await loop.run_in_executor(None, urllib.request.urlretrieve, url, tmp_path)
+    return tmp_path
 
 
 # ─── Core generation helpers ───────────────────────────────────────────────────
@@ -192,21 +206,36 @@ async def process_one_outfit(
     )
 
     seedream_ok = bool(seedream_result.get("url"))
+    kling_prompt = None
+    fallback_used = False
+    outfit_local_path: str | None = None
+
     if seedream_ok:
-        outfit_image = seedream_result["url"]   # URL Higgsfield
-        kling_prompt = None                      # image already has the outfit
-        fallback_used = False
-    else:
-        seedream_err = seedream_result.get("error", "UNKNOWN")
+        # Seedream retourne une URL CloudFront — Kling MC n'accepte que des chemins locaux.
+        # On télécharge l'image dans un fichier temp avant de la passer à Kling.
+        seedream_url = seedream_result["url"]
         print(json.dumps({
             "type": "warn",
-            "msg": (
-                f"[{shortcode}] Seedream failed ({seedream_err}), "
-                f"fallback → concept image + outfit prompt pour Kling MC"
-            ),
+            "msg": f"[{shortcode}] Seedream OK → téléchargement image outfit…"
         }), flush=True)
-        outfit_image = concept_image             # local path — auto-uploadé par CLI
-        kling_prompt = (                         # guide Kling MC pour l'outfit
+        try:
+            outfit_local_path = await download_image(seedream_url)
+        except Exception as dl_err:
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"[{shortcode}] Download failed ({dl_err!s:.200}), fallback → concept image"
+            }), flush=True)
+            outfit_local_path = None
+
+    if not outfit_local_path:
+        # Fallback : concept image directement + prompt d'outfit pour Kling
+        seedream_err = seedream_result.get("error", "UNKNOWN") if not seedream_ok else "download_failed"
+        print(json.dumps({
+            "type": "warn",
+            "msg": f"[{shortcode}] Fallback → concept image + outfit prompt ({seedream_err})"
+        }), flush=True)
+        outfit_local_path = concept_image
+        kling_prompt = (
             f"Apply motion from reference video exactly. "
             f"Style the outfit as: {style['outfit']}. "
             f"Keep same person, same face, same background."
@@ -218,14 +247,21 @@ async def process_one_outfit(
         "msg": f"[{shortcode}] Phase 2/2 — Kling Motion Control…"
     }), flush=True)
 
-    # Phase 2 : Kling Motion Control
+    # Phase 2 : Kling Motion Control (chemin local → auto-uploadé par CLI)
     kling_result = await generate_motion_video(
         user_token=user_token,
-        outfit_image_url=outfit_image,
+        outfit_image_url=outfit_local_path,
         concept_video=concept_video,
         shortcode=shortcode,
         prompt=kling_prompt,
     )
+
+    # Nettoyage du fichier temp Seedream
+    if outfit_local_path and outfit_local_path != concept_image:
+        try:
+            Path(outfit_local_path).unlink(missing_ok=True)
+        except Exception:
+            pass
 
     if not kling_result.get("url"):
         print(json.dumps({
