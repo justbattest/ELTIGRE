@@ -104,8 +104,12 @@ async def generate_motion_video(
     concept_video: str,
     shortcode: str,
     timeout: int = 900,
+    prompt: str | None = None,
 ) -> dict:
-    """Phase 2 : Kling 3.0 Motion Control — applique la motion de la vidéo de référence."""
+    """Phase 2 : Kling 3.0 Motion Control — applique la motion de la vidéo de référence.
+
+    `prompt` est optionnel : si fourni (fallback Seedream), guide Kling sur l'outfit.
+    """
     cmd = [
         "higgsfield", "generate", "create", "kling3_0",
         "--image", outfit_image_url,
@@ -113,6 +117,8 @@ async def generate_motion_video(
         "--wait",
         "--wait-timeout", "15m",
     ]
+    if prompt:
+        cmd += ["--prompt", prompt]
 
     for attempt in range(3):
         try:
@@ -148,7 +154,12 @@ async def process_one_outfit(
     concept_video: str,
     drive,
 ) -> None:
-    """Traite un outfit de bout en bout : Seedream → Kling MC → Drive."""
+    """Traite un outfit de bout en bout : Seedream → Kling MC → Drive.
+
+    Si Seedream échoue (ex. element_id manquant), on passe directement
+    l'image concept à Kling MC avec un prompt d'outfit — au pire on obtient
+    4 vidéos avec la motion appliquée, sans variation d'outfit.
+    """
     shortcode = f"mc_{i + 1}"
     scene = f"Motion Control · {style['label']}"
 
@@ -161,7 +172,7 @@ async def process_one_outfit(
         "scene": scene,
     }), flush=True)
 
-    # Phase 1 : Seedream outfit variant
+    # Phase 1 : Seedream outfit variant (best effort — fallback sur concept_image)
     print(json.dumps({
         "type": "warn",
         "msg": f"[{shortcode}] Phase 1/2 — Seedream outfit ({style['label']})…"
@@ -174,17 +185,28 @@ async def process_one_outfit(
         shortcode=shortcode,
     )
 
-    if not seedream_result.get("url"):
+    seedream_ok = bool(seedream_result.get("url"))
+    if seedream_ok:
+        outfit_image = seedream_result["url"]   # URL Higgsfield
+        kling_prompt = None                      # image already has the outfit
+        fallback_used = False
+    else:
+        seedream_err = seedream_result.get("error", "UNKNOWN")
         print(json.dumps({
-            "type": "generation",
-            "shortcode": shortcode,
-            "status": "failed",
-            "error": f"Seedream failed: {seedream_result.get('error', 'UNKNOWN')}",
-            "rank": i,
+            "type": "warn",
+            "msg": (
+                f"[{shortcode}] Seedream failed ({seedream_err}), "
+                f"fallback → concept image + outfit prompt pour Kling MC"
+            ),
         }), flush=True)
-        return
+        outfit_image = concept_image             # local path — auto-uploadé par CLI
+        kling_prompt = (                         # guide Kling MC pour l'outfit
+            f"Apply motion from reference video exactly. "
+            f"Style the outfit as: {style['outfit']}. "
+            f"Keep same person, same face, same background."
+        )
+        fallback_used = True
 
-    outfit_url = seedream_result["url"]
     print(json.dumps({
         "type": "warn",
         "msg": f"[{shortcode}] Phase 2/2 — Kling Motion Control…"
@@ -193,9 +215,10 @@ async def process_one_outfit(
     # Phase 2 : Kling Motion Control
     kling_result = await generate_motion_video(
         user_token=user_token,
-        outfit_image_url=outfit_url,
+        outfit_image_url=outfit_image,
         concept_video=concept_video,
         shortcode=shortcode,
+        prompt=kling_prompt,
     )
 
     if not kling_result.get("url"):
@@ -216,8 +239,8 @@ async def process_one_outfit(
         "status": "complete",
         "url": video_url,
         "model": "kling3_0",
-        "fallback": False,
-        "prompt": "",
+        "fallback": fallback_used,
+        "prompt": kling_prompt or "",
         "scene": scene,
         "scenario": style["key"],
         "variables": {"outfit_style": style["label"]},

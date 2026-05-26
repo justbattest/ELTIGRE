@@ -104,7 +104,10 @@ export async function handlePipelineEvent(
 
         await prisma.generation.update({
           where: { id: genId },
-          data: { generationStatus: 'failed' },
+          data: {
+            generationStatus: 'failed',
+            fallbackReason: (event.error as string) || null,
+          },
         })
 
         await prisma.run.update({

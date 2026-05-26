@@ -25,6 +25,7 @@ type Generation = {
   generatedImageUrl: string | null
   sceneDescription: string | null
   promptUsed: string | null
+  fallbackReason: string | null
 }
 
 type SSEPayload = {
@@ -131,9 +132,14 @@ function VideoCard({ gen }: { gen: Generation }) {
             className="w-full h-full object-cover"
           />
         ) : isFailed ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 px-3">
             <span className="text-3xl">❌</span>
             <span className="text-xs text-gray-500">Échec</span>
+            {gen.fallbackReason && (
+              <span className="text-[10px] text-red-400 text-center leading-tight">
+                {gen.fallbackReason}
+              </span>
+            )}
           </div>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-3">
@@ -241,8 +247,9 @@ function RunCard({ run }: { run: RunMeta }) {
   const status = data?.status ?? run.status
   const isRunning = status === 'running'
 
-  const typeIcon = run.runType === 'video' ? '🎬' : run.runType === 'studio' ? '✨' : '🔄'
-  const typeLabel = run.runType === 'video' ? 'Vidéos' : run.runType === 'studio' ? 'Prompt Studio' : 'Scraping'
+  const isMotionControl = run.modelSetting === 'kling_motion_control'
+  const typeIcon = run.runType === 'video' ? (isMotionControl ? '🎭' : '🎬') : run.runType === 'studio' ? '✨' : '🔄'
+  const typeLabel = run.runType === 'video' ? (isMotionControl ? 'Motion Control' : 'Vidéos') : run.runType === 'studio' ? 'Prompt Studio' : 'Scraping'
   const gridCols = run.runType === 'video'
     ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
     : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6'

@@ -52,6 +52,7 @@ export async function GET(
                   generatedImageUrl: true,
                   sceneDescription: true,
                   promptUsed: true,
+                  fallbackReason: true,
                 },
               },
             },
