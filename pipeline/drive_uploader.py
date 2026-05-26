@@ -170,6 +170,7 @@ class DriveUploader:
 
     _NICHE_DISPLAY: dict[str, str] = {
         "conference": "Conférence",
+        "golf": "Golf",
     }
 
     async def _ensure_video_folder(self) -> str:
@@ -223,6 +224,55 @@ class DriveUploader:
             print(json.dumps({
                 "type": "warn",
                 "msg": f"Drive video upload ERREUR [{shortcode}]: {e}"
+            }), flush=True)
+            return {"drive_error": str(e)}
+
+    # ── Motion Control folders ─────────────────────────────────────────────────
+
+    async def _ensure_motion_control_folder(self) -> str:
+        """Crée (ou réutilise) le dossier 'Motion Control' sous le dossier personnage."""
+        char_id = await self._ensure_character_folder()
+        return await self._ensure_folder("Motion Control", char_id)
+
+    async def _ensure_motion_control_run_folder(self, run_id: str) -> str:
+        """Crée (ou réutilise) le dossier du run sous Motion Control/<run_id>."""
+        mc_id = await self._ensure_motion_control_folder()
+        return await self._ensure_folder(run_id, mc_id)
+
+    async def upload_motion_control_video(
+        self,
+        run_id: str,
+        shortcode: str,
+        video_url: str,
+    ) -> dict:
+        """Télécharge la vidéo Kling MC et l'uploade dans Drive.
+
+        Structure : Motion Control/<run_id>/<shortcode>.mp4
+        """
+        try:
+            run_folder_id = await self._ensure_motion_control_run_folder(run_id)
+
+            async with httpx.AsyncClient(timeout=120) as client:
+                resp = await client.get(video_url)
+                resp.raise_for_status()
+                video_bytes = resp.content
+
+            url = await self.upload_bytes(
+                video_bytes,
+                f"{shortcode}.mp4",
+                run_folder_id,
+                content_type="video/mp4",
+            )
+            print(json.dumps({
+                "type": "info",
+                "msg": f"Drive MC upload OK [{shortcode}]: {url}"
+            }), flush=True)
+            return {"drive_video_url": url}
+
+        except Exception as e:
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"Drive MC upload ERREUR [{shortcode}]: {e}"
             }), flush=True)
             return {"drive_error": str(e)}
 
