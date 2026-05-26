@@ -59,11 +59,6 @@ OUTFIT_STYLES = [
     },
 ]
 
-KLING_MOTION_PROMPT = (
-    "Natural fluid movement following the reference video motion exactly. "
-    "Maintain character appearance, face, and outfit precisely. "
-    "Cinematic quality, smooth motion, no artifacts."
-)
 
 MAX_CONCURRENT = 4  # 4 outfits en parallèle
 
@@ -117,7 +112,6 @@ async def generate_motion_video(
         "higgsfield", "generate", "create", "kling2_6",
         "--image", outfit_image_url,
         "--video", concept_video,
-        "--prompt", KLING_MOTION_PROMPT,
         "--wait",
         "--wait-timeout", "15m",
     ]
@@ -228,7 +222,7 @@ async def process_one_outfit(
         "url": video_url,
         "model": "kling2_6",
         "fallback": False,
-        "prompt": KLING_MOTION_PROMPT,
+        "prompt": "",
         "scene": scene,
         "scenario": style["key"],
         "variables": {"outfit_style": style["label"]},
