@@ -66,7 +66,6 @@ MAX_CONCURRENT = 4  # 4 outfits en parallèle
 # ─── Core generation helpers ───────────────────────────────────────────────────
 
 async def generate_outfit_image(
-    element_id: str,
     user_token: str,
     concept_image: str,
     outfit_description: str,
@@ -75,7 +74,7 @@ async def generate_outfit_image(
 ) -> dict:
     """Phase 1 : Seedream v4.5 img2img — change l'outfit sur l'image concept."""
     prompt = (
-        f"<<<{element_id}>>> Change outfit only to: {outfit_description}. "
+        f"Change outfit only to: {outfit_description}. "
         f"Keep identical: same person's face, same body, same pose, same background and lighting. "
         f"No bikini, no swimwear."
     )
@@ -100,7 +99,6 @@ async def generate_outfit_image(
 
 
 async def generate_motion_video(
-    element_id: str,
     user_token: str,
     outfit_image_url: str,
     concept_video: str,
@@ -145,7 +143,6 @@ async def process_one_outfit(
     i: int,
     style: dict,
     run_id: str,
-    element_id: str,
     user_token: str,
     concept_image: str,
     concept_video: str,
@@ -171,7 +168,6 @@ async def process_one_outfit(
     }), flush=True)
 
     seedream_result = await generate_outfit_image(
-        element_id=element_id,
         user_token=user_token,
         concept_image=concept_image,
         outfit_description=style["outfit"],
@@ -196,7 +192,6 @@ async def process_one_outfit(
 
     # Phase 2 : Kling Motion Control
     kling_result = await generate_motion_video(
-        element_id=element_id,
         user_token=user_token,
         outfit_image_url=outfit_url,
         concept_video=concept_video,
@@ -244,7 +239,6 @@ async def process_one_outfit(
 
 async def run_motion_control(
     run_id: str,
-    element_id: str,
     user_token: str,
     concept_image: str,
     concept_video: str,
@@ -261,7 +255,6 @@ async def run_motion_control(
             i=i,
             style=style,
             run_id=run_id,
-            element_id=element_id,
             user_token=user_token,
             concept_image=concept_image,
             concept_video=concept_video,
@@ -286,7 +279,6 @@ def main():
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--concept-image", required=True, help="Chemin local vers l'image concept")
     parser.add_argument("--concept-video", required=True, help="Chemin local vers la vidéo de référence")
-    parser.add_argument("--element-id", required=True, help="Higgsfield element ID du personnage")
     args = parser.parse_args()
 
     user_token = os.environ.get("HIGGSFIELD_TOKEN")
@@ -304,7 +296,6 @@ def main():
 
     asyncio.run(run_motion_control(
         run_id=args.run_id,
-        element_id=args.element_id,
         user_token=user_token,
         concept_image=args.concept_image,
         concept_video=args.concept_video,
