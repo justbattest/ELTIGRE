@@ -2,10 +2,15 @@
 
 import { useState, FormEvent } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { Suspense } from 'react'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const justRegistered = searchParams.get('registered') === '1'
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -40,6 +45,13 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-white">EL TIGRE FACTORY</h1>
           <p className="text-gray-400 text-sm mt-1">Pipeline de génération automatisé</p>
         </div>
+
+        {/* Message succès inscription */}
+        {justRegistered && (
+          <div className="mb-4 bg-emerald-900/30 border border-emerald-800 text-emerald-400 text-sm rounded-xl px-4 py-3 text-center">
+            ✅ Compte créé ! Connecte-toi maintenant.
+          </div>
+        )}
 
         {/* Card */}
         <form
@@ -86,10 +98,21 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-gray-600 text-xs mt-4">
-          Accès sur invitation uniquement
+        <p className="text-center text-gray-500 text-sm mt-4">
+          Pas encore de compte ?{' '}
+          <Link href="/register" className="text-violet-400 hover:text-violet-300 transition">
+            S&apos;inscrire
+          </Link>
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

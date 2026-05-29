@@ -117,17 +117,16 @@ export async function handlePipelineEvent(
       }
       break
 
-    case 'done':
-      await prisma.run.update({
-        where: { id: runId },
-        data: {
-          status: 'completed',
-          completedPosts: (event.completed as number) || 0,
-          failedPosts: (event.failed as number) || 0,
-          fallbackCount: (event.fallbacks as number) || 0,
-        },
-      })
+    case 'done': {
+      // N'écrase les compteurs que si l'event les fournit explicitement.
+      // motion_control.py n'envoie que {run_id, total} → on ne touche pas completedPosts.
+      const doneData: Record<string, unknown> = { status: 'completed' }
+      if (typeof event.completed === 'number') doneData.completedPosts = event.completed
+      if (typeof event.failed    === 'number') doneData.failedPosts    = event.failed
+      if (typeof event.fallbacks === 'number') doneData.fallbackCount  = event.fallbacks
+      await prisma.run.update({ where: { id: runId }, data: doneData })
       break
+    }
 
     case 'error':
       await prisma.run.update({

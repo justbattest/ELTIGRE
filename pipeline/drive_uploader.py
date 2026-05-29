@@ -55,33 +55,43 @@ class DriveUploader:
         # Clé : "parent_id/name" → valeur : folder_id Drive
         self._folder_cache: dict[str, str] = {}
         self._folder_lock = asyncio.Lock()  # Protège la création concurrente de dossiers
+        # Client HTTP persistant — réutilisé pour tous les appels Google API.
+        # Évite de recréer un nouveau client (+ résolution DNS) pour chaque fichier,
+        # ce qui provoque [Errno 8] nodename nor servname provided sur macOS lors de
+        # gros batches (100+ fichiers). Les timeouts sont passés par requête.
+        self._http = httpx.AsyncClient(timeout=None)
+
+    async def aclose(self) -> None:
+        """Ferme le client HTTP partagé. Appeler en fin de batch/subprocess."""
+        await self._http.aclose()
 
     async def _get_access_token(self) -> str:
         """Rafraîchit l'access token si nécessaire."""
         if self._access_token and time.time() < self._token_expiry - 60:
             return self._access_token
 
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                GOOGLE_TOKEN_URL,
-                data={
-                    "client_id": self.client_id,
-                    "client_secret": self.client_secret,
-                    "refresh_token": self.refresh_token,
-                    "grant_type": "refresh_token",
-                }
-            )
-            if not resp.is_success:
-                err_body = resp.text[:300]
-                print(json.dumps({
-                    "type": "warn",
-                    "msg": f"Drive token refresh failed [{resp.status_code}]: {err_body}"
-                }), flush=True)
-            resp.raise_for_status()
-            data = resp.json()
-            self._access_token = data["access_token"]
-            self._token_expiry = time.time() + data.get("expires_in", 3600)
-            return self._access_token
+        client = self._http
+        resp = await client.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "refresh_token": self.refresh_token,
+                "grant_type": "refresh_token",
+            },
+            timeout=30,
+        )
+        if not resp.is_success:
+            err_body = resp.text[:300]
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"Drive token refresh failed [{resp.status_code}]: {err_body}"
+            }), flush=True)
+        resp.raise_for_status()
+        data = resp.json()
+        self._access_token = data["access_token"]
+        self._token_expiry = time.time() + data.get("expires_in", 3600)
+        return self._access_token
 
     async def _ensure_folder(self, name: str, parent_id: str) -> str:
         """Crée (ou réutilise) un sous-dossier nommé `name` dans `parent_id`.
@@ -104,34 +114,36 @@ class DriveUploader:
             token = await self._get_access_token()
             headers = {"Authorization": f"Bearer {token}"}
 
-            async with httpx.AsyncClient() as client:
-                # Chercher si le dossier existe déjà dans Drive
-                resp = await client.get(
+            client = self._http
+            # Chercher si le dossier existe déjà dans Drive
+            resp = await client.get(
+                DRIVE_FILES_URL,
+                headers=headers,
+                params={
+                    "q": f"name='{name}' and '{parent_id}' in parents "
+                         f"and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                    "fields": "files(id)",
+                },
+                timeout=30,
+            )
+            resp.raise_for_status()
+            files = resp.json().get("files", [])
+            if files:
+                folder_id = files[0]["id"]
+            else:
+                # Créer le sous-dossier
+                resp = await client.post(
                     DRIVE_FILES_URL,
                     headers=headers,
-                    params={
-                        "q": f"name='{name}' and '{parent_id}' in parents "
-                             f"and mimeType='application/vnd.google-apps.folder' and trashed=false",
-                        "fields": "files(id)",
-                    }
+                    json={
+                        "name": name,
+                        "mimeType": "application/vnd.google-apps.folder",
+                        "parents": [parent_id],
+                    },
+                    timeout=30,
                 )
                 resp.raise_for_status()
-                files = resp.json().get("files", [])
-                if files:
-                    folder_id = files[0]["id"]
-                else:
-                    # Créer le sous-dossier
-                    resp = await client.post(
-                        DRIVE_FILES_URL,
-                        headers=headers,
-                        json={
-                            "name": name,
-                            "mimeType": "application/vnd.google-apps.folder",
-                            "parents": [parent_id],
-                        }
-                    )
-                    resp.raise_for_status()
-                    folder_id = resp.json()["id"]
+                folder_id = resp.json()["id"]
 
             self._folder_cache[cache_key] = folder_id
             return folder_id
@@ -203,10 +215,9 @@ class DriveUploader:
         try:
             run_folder_id = await self._ensure_video_run_folder(run_id, niche)
 
-            async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.get(video_url)
-                resp.raise_for_status()
-                video_bytes = resp.content
+            resp = await self._http.get(video_url, timeout=120)
+            resp.raise_for_status()
+            video_bytes = resp.content
 
             url = await self.upload_bytes(
                 video_bytes,
@@ -239,6 +250,18 @@ class DriveUploader:
         mc_id = await self._ensure_motion_control_folder()
         return await self._ensure_folder(run_id, mc_id)
 
+    # ── Metadata folders ───────────────────────────────────────────────────────
+
+    async def _ensure_metadata_folder(self) -> str:
+        """Crée (ou réutilise) le dossier 'metadata' sous le dossier personnage."""
+        char_id = await self._ensure_character_folder()
+        return await self._ensure_folder("metadata", char_id)
+
+    async def _ensure_metadata_run_folder(self, run_id: str) -> str:
+        """Crée (ou réutilise) le dossier du run sous metadata/<run_id>."""
+        metadata_id = await self._ensure_metadata_folder()
+        return await self._ensure_folder(run_id, metadata_id)
+
     async def upload_motion_control_video(
         self,
         run_id: str,
@@ -252,10 +275,9 @@ class DriveUploader:
         try:
             run_folder_id = await self._ensure_motion_control_run_folder(run_id)
 
-            async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.get(video_url)
-                resp.raise_for_status()
-                video_bytes = resp.content
+            resp = await self._http.get(video_url, timeout=120)
+            resp.raise_for_status()
+            video_bytes = resp.content
 
             url = await self.upload_bytes(
                 video_bytes,
@@ -277,7 +299,33 @@ class DriveUploader:
             return {"drive_error": str(e)}
 
     async def upload_bytes(self, data: bytes, filename: str, parent_id: str, content_type: str = "image/jpeg") -> str:
-        """Upload des bytes en multipart vers Drive. Retourne l'URL Drive."""
+        """Upload des bytes en multipart vers Drive. Retourne l'URL Drive.
+
+        Avant l'upload, passe les données dans metadata_optimizer :
+        - images → strip EXIF AI + injection iPhone 17 Pro EXIF unique
+        - vidéos → strip tags encodeur MP4 via ffmpeg (re-mux sans réencodage)
+        Dégradation gracieuse : en cas d'erreur du optimizer, upload les données originales.
+        """
+        # ── Optimisation métadonnées ─────────────────────────────────────────
+        try:
+            import hashlib
+            from pipeline.metadata_optimizer import optimize_image_bytes, optimize_video_bytes
+            # Seed déterministe basée sur le contenu complet du fichier :
+            # - hashlib.md5 (pas hash() qui est aléatoire par process en Python)
+            # - On prend début + milieu + fin → unique même si le header JPEG est identique
+            mid = len(data) // 2
+            sample = data[:1024] + data[mid:mid+1024] + data[-512:]
+            seed = int.from_bytes(hashlib.md5(sample).digest()[:4], 'big')
+            if content_type.startswith("image/"):
+                data = optimize_image_bytes(data, seed)
+            elif content_type.startswith("video/"):
+                data = optimize_video_bytes(data, seed)
+        except Exception as e:
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"metadata_optimizer error (upload non bloqué) : {e}"
+            }), flush=True)
+        # ── Upload Drive ─────────────────────────────────────────────────────
         token = await self._get_access_token()
         metadata = json.dumps({"name": filename, "parents": [parent_id]}).encode()
         ct_bytes = content_type.encode()
@@ -293,18 +341,18 @@ class DriveUploader:
         )
 
         timeout = 120 if content_type.startswith("video/") else 60
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(
-                f"{DRIVE_UPLOAD_URL}?uploadType=multipart&fields=id",
-                content=body,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "multipart/related; boundary=boundary",
-                }
-            )
-            resp.raise_for_status()
-            file_id = resp.json()["id"]
-            return f"https://drive.google.com/file/d/{file_id}/view"
+        resp = await self._http.post(
+            f"{DRIVE_UPLOAD_URL}?uploadType=multipart&fields=id",
+            content=body,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "multipart/related; boundary=boundary",
+            },
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+        file_id = resp.json()["id"]
+        return f"https://drive.google.com/file/d/{file_id}/view"
 
     async def upload_generation(
         self,
@@ -346,15 +394,14 @@ class DriveUploader:
             # Télécharger + upload l'image générée dans generated/ (dossier plat)
             if generated_image_url:
                 generated_folder_id = await self._ensure_folder("generated", run_folder_id)
-                async with httpx.AsyncClient(timeout=30) as client:
-                    resp = await client.get(generated_image_url)
-                    resp.raise_for_status()
-                    url = await self.upload_bytes(resp.content, f"{shortcode}.jpg", generated_folder_id)
-                    result["drive_generated_url"] = url
-                    print(json.dumps({
-                        "type": "info",
-                        "msg": f"Drive upload OK generated [{shortcode}]: {url}"
-                    }), flush=True)
+                resp = await self._http.get(generated_image_url, timeout=30)
+                resp.raise_for_status()
+                url = await self.upload_bytes(resp.content, f"{shortcode}.jpg", generated_folder_id)
+                result["drive_generated_url"] = url
+                print(json.dumps({
+                    "type": "info",
+                    "msg": f"Drive upload OK generated [{shortcode}]: {url}"
+                }), flush=True)
 
             return result
 

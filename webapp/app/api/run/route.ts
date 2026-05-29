@@ -9,7 +9,33 @@ import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
 import { spawn } from 'child_process'
 import * as path from 'path'
+import * as fs from 'fs'
 import { handlePipelineEvent } from '@/lib/pipeline-events'
+
+/** Écrit /tmp/run_<id>.pid pour que le stop puisse tuer le process même après un hot-reload. */
+export function writePidFile(runId: string, pid: number | undefined) {
+  if (!pid) return
+  try { fs.writeFileSync(`/tmp/run_${runId}.pid`, String(pid)) } catch {}
+}
+
+/** Supprime le fichier PID. */
+export function deletePidFile(runId: string) {
+  try { fs.unlinkSync(`/tmp/run_${runId}.pid`) } catch {}
+}
+
+/** Tue un process via PID file (fallback quand runningProcesses est vide). */
+export function killByPidFile(runId: string) {
+  try {
+    const pidFile = `/tmp/run_${runId}.pid`
+    if (!fs.existsSync(pidFile)) return false
+    const pid = parseInt(fs.readFileSync(pidFile, 'utf-8').trim(), 10)
+    if (!isNaN(pid)) {
+      try { process.kill(pid, 'SIGKILL') } catch {}
+    }
+    fs.unlinkSync(pidFile)
+    return true
+  } catch { return false }
+}
 
 // Map globale : runId → process (pour pause/stop)
 export const runningProcesses: Map<string, ReturnType<typeof spawn>> = new Map()
@@ -104,6 +130,7 @@ export async function POST(req: NextRequest) {
   )
 
   runningProcesses.set(run.id, proc)
+  writePidFile(run.id, proc.pid)
 
   // Lire stdout et mettre à jour la DB en temps réel
   proc.stdout.on('data', async (data: Buffer) => {
@@ -131,6 +158,7 @@ export async function POST(req: NextRequest) {
 
   proc.on('close', async (code) => {
     runningProcesses.delete(run.id)
+    deletePidFile(run.id)
     const currentRun = await prisma.run.findUnique({ where: { id: run.id } })
     if (currentRun?.status === 'running') {
       await prisma.run.update({

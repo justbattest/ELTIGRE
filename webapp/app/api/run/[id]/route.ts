@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { runningProcesses } from '../route'
+import { runningProcesses, deletePidFile, killByPidFile } from '../route'
 
 export async function GET(
   _req: NextRequest,
@@ -50,10 +50,15 @@ export async function POST(
   if (!run) return NextResponse.json({ error: 'Run introuvable' }, { status: 404 })
 
   if (action === 'stop') {
+    // Tentative 1 : tuer via runningProcesses (même process Node)
     const proc = runningProcesses.get(id)
     if (proc) {
-      proc.kill('SIGTERM')
+      try { proc.kill('SIGKILL') } catch {}
       runningProcesses.delete(id)
+      deletePidFile(id)
+    } else {
+      // Tentative 2 : tuer via PID file (survit aux hot-reloads)
+      killByPidFile(id)
     }
     await prisma.run.update({
       where: { id },

@@ -31,7 +31,13 @@ export async function GET(
     )
   }
 
+  // Vérifier que le run appartient à l'utilisateur courant
+  if (state.userId && state.userId !== session.user.id) {
+    return new Response('Accès refusé', { status: 403 })
+  }
+
   let sentIndex = 0
+  const runState = state  // capture locale : TS perd le narrowing dans les closures
 
   const stream = new ReadableStream({
     start(controller) {
@@ -45,10 +51,10 @@ export async function GET(
 
       function flush() {
         try {
-          while (sentIndex < state.events.length) {
-            send(state.events[sentIndex++])
+          while (sentIndex < runState.events.length) {
+            send(runState.events[sentIndex++])
           }
-          if (state.done) {
+          if (runState.done) {
             controller.close()
             return
           }

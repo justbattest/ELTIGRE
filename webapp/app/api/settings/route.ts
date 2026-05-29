@@ -37,6 +37,8 @@ export async function GET() {
   const rawHiggsfield = decryptIfPresent(creds.higgsFieldToken)
 
   const rawInstagramCookie = decryptIfPresent(creds.instagramSessionCookie)
+  const rawKlingAccess = decryptIfPresent(creds.klingAccessKey)
+  const rawKlingSecret = decryptIfPresent(creds.klingSecretKey)
 
   return NextResponse.json({
     apifyApiKey: maskKey(rawApify),
@@ -45,6 +47,8 @@ export async function GET() {
     anthropicApiKeyFull: rawAnthropic || '',
     higgsFieldConnected: !!rawHiggsfield,
     higgsFieldEmail: null,
+    klingAccessKey: maskKey(rawKlingAccess),
+    klingSecretKey: maskKey(rawKlingSecret),
     defaultModel: creds.defaultModel,
     defaultAspectRatio: creds.defaultAspectRatio,
     defaultQuality: creds.defaultQuality,
@@ -64,6 +68,8 @@ export async function POST(req: NextRequest) {
   const {
     apifyApiKey,
     anthropicApiKey,
+    klingAccessKey,
+    klingSecretKey,
     higgsFieldToken,
     defaultModel,
     defaultAspectRatio,
@@ -102,6 +108,12 @@ export async function POST(req: NextRequest) {
   }
   if (instagramSessionCookie && !instagramSessionCookie.includes('...')) {
     data.instagramSessionCookie = encrypt(instagramSessionCookie)
+  }
+  if (klingAccessKey && !klingAccessKey.includes('...')) {
+    data.klingAccessKey = encrypt(klingAccessKey)
+  }
+  if (klingSecretKey && !klingSecretKey.includes('...')) {
+    data.klingSecretKey = encrypt(klingSecretKey)
   }
 
   await prisma.userCredentials.upsert({

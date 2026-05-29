@@ -1,0 +1,462 @@
+'use client'
+
+import { useCallback, useRef, useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type FileEntry = {
+  file: File
+  preview: string | null  // objectURL pour images, null pour vidéos
+  isVideo: boolean
+}
+
+type FileResult = {
+  filename: string
+  isVideo: boolean
+  driveUrl: string | null
+  error: string | null
+}
+
+// ── Constantes ────────────────────────────────────────────────────────────────
+
+/**
+ * Taille de chunk pour l'upload HTTP (phase 1).
+ * 50 × 3 MB avg = ~150 MB par requête — confortable pour Node.js sans OOM.
+ * Tous les chunks vont dans le MÊME dossier Drive (un seul run).
+ */
+const UPLOAD_CHUNK_SIZE = 50
+
+// ── Helper SSE ────────────────────────────────────────────────────────────────
+
+function waitForRun(
+  runId: string,
+  onFile: (r: FileResult) => void,
+  signal: AbortSignal,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const es = new EventSource(`/api/metadata/events/${runId}`)
+    const cleanup = () => es.close()
+    signal.addEventListener('abort', () => { cleanup(); reject(new Error('Annulé')) }, { once: true })
+
+    es.onmessage = (e) => {
+      try {
+        const ev = JSON.parse(e.data)
+        if (ev.type === 'file') {
+          onFile({ filename: ev.filename, isVideo: ev.is_video, driveUrl: ev.drive_url, error: ev.error })
+        } else if (ev.type === 'done') {
+          cleanup(); resolve()
+        } else if (ev.type === 'error') {
+          cleanup(); reject(new Error(ev.message || 'Erreur Python'))
+        }
+      } catch { /* ignore malformed */ }
+    }
+    es.onerror = () => { cleanup(); reject(new Error('SSE perdu (serveur redémarré ?)')) }
+  })
+}
+
+// ── Composant ─────────────────────────────────────────────────────────────────
+
+export default function MetadataPage() {
+  useSession()
+  const router = useRouter()
+
+  const [entries,  setEntries]  = useState<FileEntry[]>([])
+  const [dragging, setDragging] = useState(false)
+  const [error,    setError]    = useState('')
+
+  // ── Personnage ──────────────────────────────────────────────────────────────
+  const [characters,            setCharacters]            = useState<{ id: string; name: string }[]>([])
+  const [selectedCharacterName, setSelectedCharacterName] = useState('')
+
+  useEffect(() => {
+    fetch('/api/characters')
+      .then(r => r.json())
+      .then(data => {
+        const all = [...(data.referenceElements || []), ...(data.soulCharacters || [])]
+        setCharacters(all)
+        if (all.length) setSelectedCharacterName(all[0].name)
+      })
+      .catch(() => {})
+  }, [])
+
+  // ── État du run ─────────────────────────────────────────────────────────────
+
+  // Phase 1 — envoi des fichiers sur le serveur
+  const [phase,        setPhase]        = useState<'idle' | 'uploading' | 'processing' | 'done'>('idle')
+  const [uploadedFiles, setUploadedFiles] = useState(0)   // fichiers arrivés sur serveur
+
+  // Phase 2 — traitement Python + upload Drive
+  const [total,      setTotal]      = useState(0)          // total fichiers à traiter
+  const [completed,  setCompleted]  = useState(0)          // fichiers traités par Python
+  const [results,    setResults]    = useState<FileResult[]>([])
+
+  const abortRef = useRef<AbortController | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // ── Fichiers ────────────────────────────────────────────────────────────────
+
+  const isVideoFile = (f: File) =>
+    f.type.startsWith('video/') || /\.(mp4|mov|m4v|avi|mkv)$/i.test(f.name)
+
+  const addFiles = useCallback((newFiles: FileList | File[]) => {
+    Array.from(newFiles)
+      .filter(f => f.type.startsWith('image/') || isVideoFile(f))
+      .forEach(f => {
+        setEntries(prev => [...prev, {
+          file: f,
+          preview: isVideoFile(f) ? null : URL.createObjectURL(f),
+          isVideo: isVideoFile(f),
+        }])
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const removeEntry = (idx: number) => {
+    setEntries(prev => {
+      const e = prev[idx]
+      if (e.preview) URL.revokeObjectURL(e.preview)
+      return prev.filter((_, i) => i !== idx)
+    })
+  }
+
+  const resetAll = () => {
+    abortRef.current?.abort()
+    entries.forEach(e => { if (e.preview) URL.revokeObjectURL(e.preview) })
+    setEntries([])
+    setPhase('idle')
+    setUploadedFiles(0)
+    setTotal(0)
+    setCompleted(0)
+    setResults([])
+    setError('')
+  }
+
+  // ── Drag & drop ─────────────────────────────────────────────────────────────
+
+  const onDragOver  = (e: React.DragEvent) => { e.preventDefault(); setDragging(true) }
+  const onDragLeave = () => setDragging(false)
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files)
+  }
+
+  // ── Lancement ───────────────────────────────────────────────────────────────
+  //
+  // Architecture 2 phases :
+  //
+  // Phase 1 — Upload chunks (HTTP)
+  //   • Envoie les fichiers par paquets de UPLOAD_CHUNK_SIZE vers /api/metadata/upload
+  //   • Chaque paquet est une requête ~150 MB max → pas d'OOM Node.js
+  //   • Tous les chunks partagent le même runId → 1 seul dossier tmp sur le serveur
+  //   • Montre une barre de progression "envoi X/N fichiers"
+  //
+  // Phase 2 — Processing (1 seul subprocess)
+  //   • POST /api/metadata/start → lance 1 seul subprocess Python sur TOUS les fichiers
+  //   • Python lit l'unique dossier tmp, traite tout, uploade dans 1 dossier Drive
+  //   • SSE stream : 1 event par fichier → barre de progression live
+  //
+  // Résultat Drive : <PERSO>/metadata/<run_id>/ avec TOUS les fichiers dedans
+
+  const launch = async () => {
+    if (entries.length === 0) { setError('Ajoute au moins un fichier.'); return }
+
+    setError('')
+    setPhase('uploading')
+    setUploadedFiles(0)
+    setTotal(entries.length)
+    setCompleted(0)
+    setResults([])
+
+    const abort = new AbortController()
+    abortRef.current = abort
+
+    try {
+      // ── Phase 1 : upload de tous les fichiers par chunks ────────────────────
+      let runId = ''
+      const chunks: FileEntry[][] = []
+      for (let i = 0; i < entries.length; i += UPLOAD_CHUNK_SIZE) {
+        chunks.push(entries.slice(i, i + UPLOAD_CHUNK_SIZE))
+      }
+
+      for (const chunk of chunks) {
+        if (abort.signal.aborted) return
+
+        const form = new FormData()
+        chunk.forEach(e => form.append('files', e.file))
+        if (runId) form.append('runId', runId)
+
+        const res  = await fetch('/api/metadata/upload', { method: 'POST', body: form, signal: abort.signal })
+        const data = await res.json()
+        if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
+
+        runId = data.runId  // garder le runId retourné (identique après le 1er chunk)
+        setUploadedFiles(data.totalSaved)
+      }
+
+      if (abort.signal.aborted || !runId) return
+
+      // ── Phase 2 : démarrer le subprocess Python (1 seul pour tous les fichiers) ──
+      setPhase('processing')
+
+      const startRes  = await fetch('/api/metadata/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId, characterName: selectedCharacterName }),
+        signal: abort.signal,
+      })
+      const startData = await startRes.json()
+      if (!startRes.ok || startData.error) throw new Error(startData.error || 'Erreur démarrage')
+
+      // Le subprocess Python tourne indépendamment côté serveur.
+      // On redirige vers En cours qui se reconnecte au SSE et affiche la progression.
+      router.push('/en-cours')
+
+    } catch (e) {
+      if (abort.signal.aborted) return
+      setError(String(e))
+      setPhase('done')
+    }
+  }
+
+  // ── Calculs UI ───────────────────────────────────────────────────────────────
+
+  const imgCount   = entries.filter(e => !e.isVideo).length
+  const videoCount = entries.filter(e =>  e.isVideo).length
+  const nChunks    = Math.ceil(entries.length / UPLOAD_CHUNK_SIZE)
+
+  const uploadPct  = total > 0 ? Math.round((uploadedFiles  / total) * 100) : 0
+  const processPct = total > 0 ? Math.round((completed      / total) * 100) : 0
+
+  const isRunning = phase === 'uploading' || phase === 'processing'
+  const isDone    = phase === 'done'
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen">
+      {/* Nav */}
+      <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950 z-20">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🐯</span>
+          <span className="font-semibold text-white">EL TIGRE FACTORY</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link href="/kpi"      className="text-gray-400 hover:text-white transition text-sm">📊 KPI</Link>
+          <Link href="/settings" className="text-gray-400 hover:text-white transition text-sm">⚙️ Settings</Link>
+        </div>
+      </nav>
+
+      {/* Tab bar */}
+      <div className="border-b border-gray-800 px-6 bg-gray-950 sticky top-[57px] z-10">
+        <div className="flex gap-0 -mb-px">
+          <Link href="/" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🔄 Scraping</Link>
+          <Link href="/studio" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">✨ Prompt Studio</Link>
+          <Link href="/carousel" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🃏 Carousels</Link>
+          <Link href="/video" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🎬 Vidéos</Link>
+          <Link href="/motion-control" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🎭 Motion Control</Link>
+          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">⏳ En cours</Link>
+          <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-cyan-500">🧹 Metadata Opti</div>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+
+        {/* ── Config (idle uniquement) ────────────────────────────────────── */}
+        {phase === 'idle' && (
+          <>
+            {/* Sélecteur personnage */}
+            {characters.length > 0 && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                <p className="text-xs text-gray-500 mb-2">Personnage (dossier Drive)</p>
+                <div className="flex flex-wrap gap-2">
+                  {characters.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedCharacterName(c.name)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                        selectedCharacterName === c.name
+                          ? 'bg-cyan-600 border-cyan-500 text-white'
+                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-cyan-600'
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Zone drag & drop */}
+            <div
+              onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                dragging ? 'border-cyan-400 bg-cyan-900/20' : 'border-gray-700 hover:border-gray-500 bg-gray-900/50'
+              }`}
+            >
+              <div className="text-4xl mb-3">🧹</div>
+              <p className="text-gray-300 font-medium">Glisse tes photos &amp; vidéos ici</p>
+              <p className="text-gray-500 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · quantité illimitée · tout arrive dans 1 seul dossier Drive</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*,.mov,.mkv,.avi"
+                multiple
+                className="hidden"
+                onChange={e => e.target.files && addFiles(e.target.files)}
+              />
+            </div>
+
+            {/* Previews */}
+            {entries.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-gray-400">
+                    {imgCount > 0 && <span>{imgCount} photo{imgCount > 1 ? 's' : ''}</span>}
+                    {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
+                    {videoCount > 0 && <span>{videoCount} vidéo{videoCount > 1 ? 's' : ''}</span>}
+                    {entries.length > UPLOAD_CHUNK_SIZE && (
+                      <span className="text-gray-600 ml-2">
+                        · envoyé en {nChunks} tranches de {UPLOAD_CHUNK_SIZE}, dans 1 dossier Drive
+                      </span>
+                    )}
+                  </span>
+                  <button onClick={resetAll} className="text-xs text-gray-600 hover:text-red-400 transition">
+                    Tout effacer
+                  </button>
+                </div>
+                <div className="grid grid-cols-6 sm:grid-cols-10 gap-1">
+                  {entries.map((entry, i) => (
+                    <div key={i} className="relative group aspect-square">
+                      {entry.preview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={entry.preview} alt="" className="w-full h-full object-cover rounded-md" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-800 rounded-md flex items-center justify-center">
+                          <span className="text-lg">🎬</span>
+                        </div>
+                      )}
+                      <button
+                        onClick={ev => { ev.stopPropagation(); removeEntry(i) }}
+                        className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-3.5 h-3.5 text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Infos */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-1.5">
+              <p className="text-[10px] text-gray-500">🖼️ <strong className="text-gray-400">Images</strong> — EXIF iPhone 17 Pro (iOS 26.x, GPS, ISO uniques) · ICC Display P3 · DQT Apple</p>
+              <p className="text-[10px] text-gray-500">🎬 <strong className="text-gray-400">Vidéos</strong> — com.apple.quicktime.* · handler Core Media Video · strip Kling/Lavf</p>
+              <p className="text-[10px] text-gray-500">📂 <strong className="text-gray-400">Drive</strong> — <code className="text-cyan-400">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 seul dossier, tous les fichiers dedans</p>
+            </div>
+
+            {error && (
+              <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm rounded-xl p-4">{error}</div>
+            )}
+
+            <button
+              onClick={launch}
+              disabled={entries.length === 0}
+              className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+            >
+              {entries.length === 0
+                ? '🧹 Ajoute des fichiers pour commencer'
+                : `🧹 Nettoyer et uploader ${entries.length} fichier${entries.length > 1 ? 's' : ''} → 1 dossier Drive`}
+            </button>
+          </>
+        )}
+
+        {/* ── Progression (running + done) ────────────────────────────────── */}
+        {(isRunning || isDone) && (
+          <div className="space-y-5">
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-5">
+
+              {/* Phase 1 — envoi serveur */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-gray-400">
+                    {phase === 'uploading' ? '⬆️ Envoi vers le serveur…' : '⬆️ Fichiers reçus'}
+                  </span>
+                  <span className="text-xs text-gray-500">{uploadedFiles}/{total}</span>
+                </div>
+                <div className="bg-gray-800 rounded-full h-1.5">
+                  <div
+                    className={`h-1.5 rounded-full transition-all duration-300 ${phase === 'uploading' ? 'bg-blue-500' : 'bg-blue-800'}`}
+                    style={{ width: `${uploadPct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Phase 2 — nettoyage + Drive */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-gray-400">
+                    {phase === 'uploading'   ? '⏳ En attente…'
+                    : isDone && !error       ? '✅ Nettoyage terminé !'
+                    : phase === 'processing' ? '🧹 Nettoyage + upload Drive…'
+                    : '❌ Erreur'}
+                  </span>
+                  <span className="text-xs text-gray-500">{completed}/{total}</span>
+                </div>
+                <div className="bg-gray-800 rounded-full h-1.5">
+                  <div
+                    className="bg-cyan-500 h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${processPct}%` }}
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm rounded-lg p-3">{error}</div>
+              )}
+
+              {isDone && (
+                <button onClick={resetAll} className="w-full bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg py-2.5 transition">
+                  + Nouveau batch
+                </button>
+              )}
+            </div>
+
+            {/* Résultats fichier par fichier */}
+            {results.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-400 mb-2">
+                  Fichiers traités ({results.length}/{total})
+                </h3>
+                <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
+                  {results.map((r, i) => (
+                    <div
+                      key={i}
+                      className={`bg-gray-900 border rounded-xl px-3 py-2 flex items-center justify-between gap-2 ${
+                        r.error ? 'border-red-900/50' : 'border-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm shrink-0">{r.isVideo ? '🎬' : '🖼️'}</span>
+                        <span className="text-xs text-gray-300 truncate">{r.filename}</span>
+                      </div>
+                      {r.error ? (
+                        <span className="text-[10px] text-red-400 shrink-0 ml-2">❌ {r.error.slice(0, 40)}</span>
+                      ) : r.driveUrl ? (
+                        <a href={r.driveUrl} target="_blank" rel="noopener noreferrer"
+                           className="text-[10px] text-cyan-400 hover:text-cyan-300 transition shrink-0 ml-2">
+                          Drive →
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

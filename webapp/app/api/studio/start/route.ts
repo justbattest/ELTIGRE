@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
 import { spawn } from 'child_process'
 import * as path from 'path'
-import { runningProcesses } from '@/app/api/run/route'
+import { runningProcesses, writePidFile, deletePidFile } from '@/app/api/run/route'
 import { handlePipelineEvent } from '@/lib/pipeline-events'
 
 export async function POST(req: NextRequest) {
@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
   )
 
   runningProcesses.set(run.id, proc)
+  writePidFile(run.id, proc.pid)
 
   proc.stdout.on('data', async (data: Buffer) => {
     const lines = data.toString().split('\n').filter(Boolean)
@@ -128,6 +129,7 @@ export async function POST(req: NextRequest) {
 
   proc.on('close', async (code) => {
     runningProcesses.delete(run.id)
+    deletePidFile(run.id)
     const currentRun = await prisma.run.findUnique({ where: { id: run.id } })
     if (currentRun?.status === 'running') {
       await prisma.run.update({

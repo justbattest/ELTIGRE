@@ -3,4 +3,12 @@
  * DOIT être dans lib/ (pas dans api/) pour garantir une seule instance de module.
  * Si défini dans une route Next.js, chaque route handler crée sa propre instance.
  */
-export const carouselRuns: Map<string, { events: string[]; done: boolean }> = new Map()
+export type CarouselRunState = {
+  events: string[]
+  done: boolean
+  characterName: string
+  startedAt: number
+  userId: string
+}
+
+export const carouselRuns: Map<string, CarouselRunState> = new Map()

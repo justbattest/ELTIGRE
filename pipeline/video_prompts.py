@@ -485,6 +485,118 @@ def _flatten_variables(variables: dict) -> dict:
     return flat
 
 
+# ─── Pools de variations légères — Conférence + Sport ────────────────────────
+#
+# Ces pools sont UNIQUEMENT utilisés en mode 'variation'.
+# Règles absolues :
+#   - Culotte rouge : JAMAIS touchée, toujours dans les prompts de base
+#   - Outfit conference : toujours formel/sexy (décolleté, jupe courte, talons)
+#   - Outfit sport : toujours athletic/sexy (crop top, shorts courts)
+#   - Phrase : toujours border/double-sens, défendable en contexte professionnel
+
+VARIATION_OUTFITS: dict[str, list[str]] = {
+    "conference": [
+        "white deep-V bodysuit open neckline, extremely short tight black mini skirt, black stiletto heels",
+        "cream silk blouse deep plunging neckline, extremely short tight charcoal mini skirt, nude stiletto heels",
+        "black fitted long-sleeve top deep v-neckline, extremely short tight dark navy mini skirt, beige stiletto heels",
+        "cobalt blue fitted blazer open neckline, extremely short tight black mini skirt, black pointed stilettos",
+        "blush satin button-down open neckline, extremely short tight dark brown leather-look mini skirt, white stiletto heels",
+        "white fitted crop blazer deep neckline, extremely short tight dark charcoal mini skirt, nude stiletto heels",
+        "black SKIMS sheer fitted long-sleeve deep-V, extremely short tight dark navy mini skirt, black stiletto heels",
+    ],
+    "sport": [
+        "tight black deep V-neck crop top deep cleavage, extremely short tight black athletic shorts very form-fitting back and sides",
+        "tight navy fitted athletic top deep v-neckline, extremely short tight grey athletic shorts form-fitting back and sides",
+        "tight pink fitted athletic tank top deep open neckline, extremely short tight black athletic shorts extremely form-fitting back and sides",
+        "tight white cutout crop top deep cleavage, extremely short tight burgundy athletic shorts very form-fitting",
+        "tight olive green deep V-neck athletic top, extremely short tight black athletic shorts form-fitting back and sides",
+    ],
+}
+
+VARIATION_PHRASES: dict[str, list[str]] = {
+    "conference": [
+        "Today I'm going to show you how to get every eye in the room completely on you.",
+        "There is one thing that separates great leaders from everyone else — knowing exactly what to put out there.",
+        "The most powerful women I know have never been afraid to let it all show.",
+        "If you want them to listen, you first have to make them look.",
+        "Success is about knowing exactly what to reveal — and exactly when to reveal it.",
+        "The number one lesson in leadership? Never underestimate what a confident woman can do in the right position.",
+        "I want every single person in this room to leave here knowing how to make a room stop.",
+        "The secret to owning a room? Make sure they cannot take their eyes off you.",
+        "Your greatest asset isn't what you know — it's knowing exactly what to show.",
+        "The key to influence? Walk in fully exposed to scrutiny and own it completely.",
+    ],
+    "sport": [
+        "Give me everything you've got — I want you fully extended by the end of this.",
+        "Push through it. Don't stop until I say so.",
+        "I need you focused on the movement — not on what's around you.",
+        "If you want real results, you're going to have to let yourself go completely.",
+        "Don't hold back. I want to see exactly what your body can do.",
+        "The best athletes I've trained? They always go harder when I'm watching.",
+        "Come on — I need your full commitment right now, nothing held back.",
+        "Stay with me. Eyes forward. Give me one more — all the way down.",
+    ],
+}
+
+
+def apply_variation(
+    prompt_json: str,
+    outfit_text: str | None = None,
+    new_outfit: str | None = None,
+    speaker_line: str | None = None,
+    new_phrase: str | None = None,
+) -> str:
+    """
+    Applique des overrides ultra-légers à un prompt validé.
+
+    Ne modifie QUE :
+      - outfit_text → new_outfit (remplacement de chaîne simple dans le JSON)
+      - speaker_line → new_phrase (remplacement de la réplique féminine)
+
+    La culotte rouge est ENFORCED : si le prompt original contenait 'red',
+    le résultat doit aussi le contenir. Si un outfit override le supprime,
+    il est rejeté silencieusement et le prompt original est retourné.
+
+    JAMAIS de modification structurelle (framing, motion_intensity, etc.)
+    """
+    result = prompt_json
+
+    if outfit_text and new_outfit and outfit_text in result:
+        result = result.replace(outfit_text, new_outfit, 1)
+
+    if speaker_line and new_phrase and speaker_line in result:
+        result = result.replace(speaker_line, new_phrase, 1)
+
+    # Garde-fou culotte rouge : si le prompt original avait 'red' et que le
+    # résultat ne l'a plus, on rejette la variation et retourne l'original.
+    had_red = "red" in prompt_json.lower()
+    has_red = "red" in result.lower()
+    if had_red and not has_red:
+        return prompt_json  # reject silently
+
+    return result
+
+
+def pick_variation_outfit(sub_niche: str, used: list[str] | None = None) -> str:
+    """Tire un outfit de variation en évitant les répétitions si possible."""
+    pool = VARIATION_OUTFITS.get(sub_niche, VARIATION_OUTFITS["conference"])
+    if used:
+        remaining = [o for o in pool if o not in used]
+        if remaining:
+            return random.choice(remaining)
+    return random.choice(pool)
+
+
+def pick_variation_phrase(sub_niche: str, used: list[str] | None = None) -> str:
+    """Tire une phrase de variation en évitant les répétitions si possible."""
+    pool = VARIATION_PHRASES.get(sub_niche, VARIATION_PHRASES["conference"])
+    if used:
+        remaining = [p for p in pool if p not in used]
+        if remaining:
+            return random.choice(remaining)
+    return random.choice(pool)
+
+
 def generate_batch(
     count: int,
     mode: str,

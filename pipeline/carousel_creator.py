@@ -3,6 +3,7 @@ Carousel Creator — génère des centaines de carousels uniques depuis n'import
 
 Pipeline :
   1. Chaque image source est nettoyée : EXIF strippé + iPhone 17 Pro EXIF fake injecté
+     (via pipeline.metadata_optimizer — logique partagée avec tous les uploads Drive)
   2. Chaque instance d'une image dans un carousel a des métadonnées UNIQUES (seed différent)
      → même photo dans 2 carousels différents = 2 fichiers binaires différents
   3. Combinatorics : C(N, 4) combinaisons, cap à max_carousels
@@ -12,47 +13,16 @@ Dépendances Python : piexif, Pillow (+ numpy optionnel pour le micro-noise)
 """
 
 import asyncio
-import io
 import json
 import os
 import random
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
-# ── Pool de villes GPS ─────────────────────────────────────────────────────────
-# Coordonnées réelles de villes lifestyle plausibles pour une influenceuse.
-# Chaque instance d'image reçoit une ville aléatoire + micro-offset (±0.005°).
-GPS_CITIES = [
-    ("Paris", 48.8566, 2.3522),
-    ("New York", 40.7128, -74.0060),
-    ("Los Angeles", 34.0522, -118.2437),
-    ("Miami", 25.7617, -80.1918),
-    ("London", 51.5074, -0.1278),
-    ("Monaco", 43.7384, 7.4246),
-    ("Dubai", 25.2048, 55.2708),
-    ("Ibiza", 38.9067, 1.4206),
-    ("Sydney", -33.8688, 151.2093),
-    ("Barcelona", 41.3851, 2.1734),
-    ("Amsterdam", 52.3676, 4.9041),
-    ("Rome", 41.9028, 12.4964),
-    ("Malibu", 34.0259, -118.7798),
-    ("Cannes", 43.5528, 7.0174),
-    ("Tokyo", 35.6762, 139.6503),
-]
-
-ISO_VALUES = [64, 80, 100, 125, 160]
-
-# ── Helpers EXIF ───────────────────────────────────────────────────────────────
-
-def _to_gps_coord(value: float) -> list:
-    """Convertit des degrés décimaux en format EXIF GPS [(deg,1),(min,1),(sec,100)]."""
-    deg = int(abs(value))
-    minutes_float = (abs(value) - deg) * 60
-    minutes = int(minutes_float)
-    seconds = (minutes_float - minutes) * 60
-    return [(deg, 1), (minutes, 1), (int(seconds * 100), 100)]
+# Logique EXIF centralisée dans metadata_optimizer (partagée avec drive_uploader)
+from pipeline.metadata_optimizer import GPS_CITIES, optimize_image_bytes
 
 
 def clean_image_for_carousel(
@@ -63,138 +33,20 @@ def clean_image_for_carousel(
     """
     Prépare une image pour un carousel Instagram avec métadonnées uniques.
 
-    Étapes :
-    1. Strip tout EXIF original (supprime AI markers, C2PA, watermark metadata)
-    2. Micro-crop aléatoire 1-3px (décale le pixel grid → casse les hashes perceptuels)
-    3. Micro-noise ±1 sur ~0.3% des pixels (disrupte les signatures fréquentielles)
-    4. Injecte iPhone 17 Pro EXIF unique basé sur instance_seed :
-       - Datetime aléatoire dans les 8 mois post-launch (sept. 2025 → mai 2026)
-       - GPS d'une ville lifestyle aléatoire + micro-offset (±0.005°)
-       - ISO / exposure_time / focal_length légèrement variés
-       - LensModel : "iPhone 17 Pro back triple camera 6.86mm f/1.78"
-    5. Re-save JPEG quality=93-96 (légère variation → fichiers binaires différents)
+    Délègue à optimize_image_bytes() de metadata_optimizer :
+    - Strip EXIF original (supprime AI markers)
+    - Micro-crop 1-3px (casse les hashes perceptuels)
+    - Micro-noise ±1 sur ~0.3% des pixels
+    - Injection iPhone 17 Pro EXIF unique (seed = unique par (carousel, slot, source))
 
     Args:
-        input_path  : chemin image source
-        output_path : chemin image de sortie (créé ou écrasé)
-        instance_seed : entier unique → chaque (carousel_idx, slot_idx, source) donne
-                        une seed différente = métadonnées différentes même si même source
+        input_path    : chemin image source
+        output_path   : chemin image de sortie (créé ou écrasé)
+        instance_seed : entier unique → métadonnées différentes même si même source
     """
-    try:
-        import piexif
-        from PIL import Image
-    except ImportError as e:
-        raise RuntimeError(f"Dépendances manquantes : {e}. Installer avec : pip install piexif Pillow") from e
-
-    rng = random.Random(instance_seed)
-
-    img = Image.open(input_path).convert("RGB")
-    w, h = img.size
-
-    # ── 1. Micro-crop (1-3px, côté aléatoire) ───────────────────────────────
-    crop_px = rng.randint(1, 3)
-    side = rng.choice(["left", "right", "top", "bottom"])
-    crop_map = {
-        "left":   (crop_px, 0, w, h),
-        "right":  (0, 0, w - crop_px, h),
-        "top":    (0, crop_px, w, h),
-        "bottom": (0, 0, w, h - crop_px),
-    }
-    img = img.crop(crop_map[side])
-    w, h = img.size
-
-    # ── 2. Micro-noise (±1 sur ~0.3% des pixels) ────────────────────────────
-    try:
-        import numpy as np
-        arr = np.array(img, dtype=np.int16)
-        n_pixels = max(1, (w * h) // 350)
-        for _ in range(n_pixels):
-            x = rng.randint(0, w - 1)
-            y = rng.randint(0, h - 1)
-            noise = rng.randint(-1, 1)
-            arr[y, x] = np.clip(arr[y, x] + noise, 0, 255)
-        img = Image.fromarray(arr.astype(np.uint8))
-    except ImportError:
-        pass  # numpy optionnel — on skip le noise sans planter
-
-    # ── 3. iPhone 17 Pro EXIF unique ────────────────────────────────────────
-    # Datetime : random entre sept. 2025 (launch iPhone 17 Pro) et mai 2026
-    launch_date = datetime(2025, 9, 12)
-    random_offset_days = rng.randint(0, 250)
-    random_hour   = rng.randint(7, 21)
-    random_minute = rng.randint(0, 59)
-    random_second = rng.randint(0, 59)
-    photo_dt = launch_date + timedelta(days=random_offset_days)
-    dt_str = (
-        f"{photo_dt.year}:{photo_dt.month:02d}:{photo_dt.day:02d} "
-        f"{random_hour:02d}:{random_minute:02d}:{random_second:02d}"
-    ).encode()
-
-    # GPS : ville aléatoire + micro-offset (±0.005°)
-    _, lat, lon = rng.choice(GPS_CITIES)
-    lat += rng.uniform(-0.005, 0.005)
-    lon += rng.uniform(-0.005, 0.005)
-
-    gps_lat_ref = b"N" if lat >= 0 else b"S"
-    gps_lon_ref = b"E" if lon >= 0 else b"W"
-    gps_lat = _to_gps_coord(lat)
-    gps_lon = _to_gps_coord(lon)
-
-    # Paramètres caméra légèrement variés
-    iso = rng.choice(ISO_VALUES)
-    exposure_denom = rng.choice([100, 120, 125, 160])
-    quality_val = rng.randint(93, 96)
-    # iPhone 17 Pro : main (24mm eq = 5.1mm), 2x (48mm eq = 12mm), 5x (120mm eq = 6.86mm réel)
-    focal_options = [(510, 100), (686, 100), (510, 100)]  # bias vers 24mm (main)
-    focal_length = rng.choice(focal_options)
-
-    w_final, h_final = img.size
-
-    exif_dict = {
-        "0th": {
-            piexif.ImageIFD.Make: b"Apple",
-            piexif.ImageIFD.Model: b"iPhone 17 Pro",
-            piexif.ImageIFD.Orientation: 1,
-            piexif.ImageIFD.Software: b"18.5",
-            piexif.ImageIFD.DateTime: dt_str,
-            piexif.ImageIFD.XResolution: (72, 1),
-            piexif.ImageIFD.YResolution: (72, 1),
-            piexif.ImageIFD.ResolutionUnit: 2,
-        },
-        "Exif": {
-            piexif.ExifIFD.ExposureTime: (1, exposure_denom),
-            piexif.ExifIFD.FNumber: (178, 100),          # f/1.78
-            piexif.ExifIFD.ISOSpeedRatings: iso,
-            piexif.ExifIFD.DateTimeOriginal: dt_str,
-            piexif.ExifIFD.DateTimeDigitized: dt_str,
-            piexif.ExifIFD.FocalLength: focal_length,
-            piexif.ExifIFD.ExifVersion: b"0232",
-            piexif.ExifIFD.FlashpixVersion: b"0100",
-            piexif.ExifIFD.ColorSpace: 65535,            # sRGB uncalibrated (iPhone default)
-            piexif.ExifIFD.PixelXDimension: w_final,
-            piexif.ExifIFD.PixelYDimension: h_final,
-            piexif.ExifIFD.Flash: 0,                     # no flash
-            piexif.ExifIFD.ExposureMode: 0,              # auto
-            piexif.ExifIFD.WhiteBalance: 0,              # auto
-            piexif.ExifIFD.LensMake: b"Apple",
-            piexif.ExifIFD.LensModel: b"iPhone 17 Pro back triple camera 6.86mm f/1.78",
-            piexif.ExifIFD.SceneCaptureType: 0,          # standard
-        },
-        "GPS": {
-            piexif.GPSIFD.GPSVersionID: (2, 3, 0, 0),
-            piexif.GPSIFD.GPSLatitudeRef: gps_lat_ref,
-            piexif.GPSIFD.GPSLatitude: gps_lat,
-            piexif.GPSIFD.GPSLongitudeRef: gps_lon_ref,
-            piexif.GPSIFD.GPSLongitude: gps_lon,
-        },
-        "1st": {},
-    }
-
-    exif_bytes = piexif.dump(exif_dict)
-
-    buf = io.BytesIO()
-    img.save(buf, "JPEG", quality=quality_val, exif=exif_bytes)
-    Path(output_path).write_bytes(buf.getvalue())
+    data = Path(input_path).read_bytes()
+    optimized = optimize_image_bytes(data, instance_seed)
+    Path(output_path).write_bytes(optimized)
 
 
 # ── Combinatorics ──────────────────────────────────────────────────────────────

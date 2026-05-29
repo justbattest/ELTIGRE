@@ -4,13 +4,14 @@
  * Reçoit en FormData :
  *   image        — image concept (File)
  *   video        — vidéo de référence (File)
- *   elementId    — Higgsfield element ID du personnage
- *   characterName — nom du personnage pour l'upload Drive
  *
  * Sauvegarde image + vidéo dans /tmp/mc_<timestamp>/,
  * crée un Run (modelSetting='kling_motion_control'),
  * spawn pipeline/motion_control.py,
  * retourne { runId }.
+ *
+ * Phase 1 : Flux Kontext Max — édition ciblée outfit uniquement (pas d'element_id requis)
+ * Phase 2 : Kling 3.0 Motion Control API — applique la motion de la vidéo de référence
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
@@ -20,7 +21,7 @@ import { decryptIfPresent } from '@/lib/crypto'
 import { spawn } from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
-import { runningProcesses } from '@/app/api/run/route'
+import { runningProcesses, writePidFile, deletePidFile } from '@/app/api/run/route'
 import { handlePipelineEvent } from '@/lib/pipeline-events'
 
 export async function POST(req: NextRequest) {
@@ -36,12 +37,10 @@ export async function POST(req: NextRequest) {
 
   const imageFile = formData.get('image') as File | null
   const videoFile = formData.get('video') as File | null
-  const elementId = (formData.get('elementId') as string | null) || ''
   const characterName = (formData.get('characterName') as string | null) || ''
 
   if (!imageFile) return NextResponse.json({ error: 'Image concept requise' }, { status: 400 })
   if (!videoFile) return NextResponse.json({ error: 'Vidéo de référence requise' }, { status: 400 })
-  if (!elementId) return NextResponse.json({ error: 'Personnage (element ID) requis pour Seedream.' }, { status: 400 })
 
   // Récupérer les credentials
   const creds = await prisma.userCredentials.findUnique({
@@ -51,6 +50,12 @@ export async function POST(req: NextRequest) {
   const higgsToken = decryptIfPresent(creds?.higgsFieldToken)
   if (!higgsToken) {
     return NextResponse.json({ error: 'Higgsfield token requis.' }, { status: 400 })
+  }
+
+  const klingAccessKey = decryptIfPresent(creds?.klingAccessKey)
+  const klingSecretKey = decryptIfPresent(creds?.klingSecretKey)
+  if (!klingAccessKey || !klingSecretKey) {
+    return NextResponse.json({ error: 'Clés API Kling requises pour Motion Control. Ajoutez-les dans les Paramètres.' }, { status: 400 })
   }
 
   const googleRefreshToken = creds?.googleRefreshToken || null
@@ -68,16 +73,14 @@ export async function POST(req: NextRequest) {
   fs.writeFileSync(imagePath, Buffer.from(await imageFile.arrayBuffer()))
   fs.writeFileSync(videoPath, Buffer.from(await videoFile.arrayBuffer()))
 
-  // Créer le Run (syntaxe relation `user: { connect }` pour éviter l'ambiguïté Prisma 5)
+  // Créer le Run
   const run = await prisma.run.create({
     data: {
       ...(session.user.id ? { user: { connect: { id: session.user.id } } } : {}),
       inputProfiles: '[]',
       maxPosts: 4,
-      selectedElementId: elementId,
       modelSetting: 'kling_motion_control',
       status: 'running',
-      characterName: characterName || null,
     },
   })
 
@@ -90,33 +93,43 @@ export async function POST(req: NextRequest) {
       '--run-id', run.id,
       '--concept-image', imagePath,
       '--concept-video', videoPath,
-      '--element-id', elementId,
     ],
     {
       cwd: path.join(process.cwd(), '..'),
       env: {
         ...process.env,
         HIGGSFIELD_TOKEN: higgsToken,
+        KLING_ACCESS_KEY: klingAccessKey,
+        KLING_SECRET_KEY: klingSecretKey,
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
         ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
+        ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     }
   )
 
   runningProcesses.set(run.id, proc)
+  writePidFile(run.id, proc.pid)
 
-  proc.stdout.on('data', async (data: Buffer) => {
-    const lines = data.toString().split('\n').filter(Boolean)
-    for (const line of lines) {
-      try {
-        const event = JSON.parse(line)
-        console.log(`[mc:${run.id}]`, JSON.stringify(event))
-        await handlePipelineEvent(run.id, session.user.id, event)
-      } catch {
-        if (line.trim()) console.log(`[mc:${run.id}][stdout]`, line)
+  // Chaîne de promesses pour traiter les chunks stdout en séquence stricte.
+  // Sans ça, plusieurs chunks async peuvent s'exécuter en parallèle → race condition
+  // où getOrCreateGenerationId voit un cache vide alors qu'un autre chunk l'a déjà rempli.
+  let stdoutChain = Promise.resolve()
+
+  proc.stdout.on('data', (data: Buffer) => {
+    stdoutChain = stdoutChain.then(async () => {
+      const lines = data.toString().split('\n').filter(Boolean)
+      for (const line of lines) {
+        try {
+          const event = JSON.parse(line)
+          console.log(`[mc:${run.id}]`, JSON.stringify(event))
+          await handlePipelineEvent(run.id, session.user.id, event)
+        } catch (err) {
+          console.error(`[mc:${run.id}] handlePipelineEvent error:`, err instanceof Error ? err.message : err, '| line:', line.slice(0, 150))
+        }
       }
-    }
+    })
   })
 
   proc.stderr.on('data', (data: Buffer) => {
@@ -134,6 +147,7 @@ export async function POST(req: NextRequest) {
 
   proc.on('close', async (code) => {
     runningProcesses.delete(run.id)
+    deletePidFile(run.id)
     // Nettoyer les fichiers temporaires
     try { fs.rmSync(runDir, { recursive: true, force: true }) } catch {}
     const currentRun = await prisma.run.findUnique({ where: { id: run.id } })

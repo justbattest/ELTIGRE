@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
 type CarouselEvent =
@@ -10,9 +11,11 @@ type CarouselEvent =
   | { type: 'carousel'; n: number; total: number; drive_urls: string[]; errors: string[] | null }
   | { type: 'done'; run_id: string; total: number; finished_at: string }
   | { type: 'error'; message: string }
+  | { type: 'stderr'; msg: string }
 
 export default function CarouselPage() {
   useSession()
+  const router = useRouter()
 
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -126,6 +129,8 @@ export default function CarouselPage() {
       }
       setRunId(data.runId)
       setUploading(false)
+      // Le subprocess Python tourne côté serveur — on passe immédiatement sur En cours.
+      router.push('/en-cours')
     } catch (e) {
       setError(String(e))
       setUploading(false)
@@ -227,6 +232,9 @@ export default function CarouselPage() {
           </Link>
           <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
             ⏳ En cours
+          </Link>
+          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
+            🧹 Metadata Opti
           </Link>
         </div>
       </div>

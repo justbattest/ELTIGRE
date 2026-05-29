@@ -10,6 +10,8 @@ type TestResults = {
   apify?: { ok: boolean; message: string }
   anthropic?: { ok: boolean; message: string }
   higgsfield?: { ok: boolean; message: string }
+  kling?: { ok: boolean; message: string }
+  drive?: { ok: boolean; message: string }
 }
 
 type HiggsAuthState = 'idle' | 'starting' | 'waiting' | 'approved' | 'error'
@@ -26,6 +28,9 @@ export default function SettingsPage() {
   const [referenceElements, setReferenceElements] = useState<RefElement[]>([])
   const [newElementId, setNewElementId] = useState('')
   const [newElementName, setNewElementName] = useState('')
+
+  const [klingAccessKey, setKlingAccessKey] = useState('')
+  const [klingSecretKey, setKlingSecretKey] = useState('')
 
   const [higgsConnected, setHiggsConnected] = useState(false)
   const [higgsAuthState, setHiggsAuthState] = useState<HiggsAuthState>('idle')
@@ -54,6 +59,8 @@ export default function SettingsPage() {
         setDefaultAspectRatio(data.defaultAspectRatio || '2:3')
         setDefaultQuality(data.defaultQuality || '2k')
         setReferenceElements(data.referenceElements || [])
+        setKlingAccessKey(data.klingAccessKey || '')
+        setKlingSecretKey(data.klingSecretKey || '')
         setHiggsConnected(data.higgsFieldConnected || false)
         setDriveConnected(data.driveConnected || false)
         setDriveFolderId(data.driveFolderId || '')
@@ -105,6 +112,8 @@ export default function SettingsPage() {
         body: JSON.stringify({
           apifyApiKey: apifyKey,
           anthropicApiKey: anthropicKey,
+          klingAccessKey,
+          klingSecretKey,
           defaultModel,
           defaultAspectRatio,
           defaultQuality,
@@ -282,6 +291,43 @@ export default function SettingsPage() {
             <p className="text-gray-500 text-xs mt-1.5">
               console.anthropic.com → API Keys
             </p>
+          </div>
+
+          {/* Kling AI API */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 className="font-medium mb-1 text-gray-200">
+              🎬 Kling AI API
+              <span className="ml-2 text-xs bg-blue-900/40 text-blue-400 border border-blue-800 px-2 py-0.5 rounded-full font-normal">Motion Control</span>
+            </h2>
+            <p className="text-gray-500 text-xs mb-3">
+              Requis pour Motion Control (Kling 3.0). Crée une clé sur{' '}
+              <a href="https://app.klingai.com/dev" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 underline">
+                app.klingai.com/dev
+              </a>
+              {' '}→ API Keys.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Access Key</label>
+                <input
+                  type="password"
+                  value={klingAccessKey}
+                  onChange={(e) => setKlingAccessKey(e.target.value)}
+                  placeholder="xxxxxxxxxxxxxxxx"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Secret Key</label>
+                <input
+                  type="password"
+                  value={klingSecretKey}
+                  onChange={(e) => setKlingSecretKey(e.target.value)}
+                  placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Higgsfield — Device Code Flow */}
@@ -535,13 +581,19 @@ export default function SettingsPage() {
           {/* Résultats tests */}
           {testResults && (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-2">
-              {(['apify', 'anthropic', 'higgsfield'] as const).map((key) => {
+              {([
+                { key: 'apify', label: 'Apify' },
+                { key: 'anthropic', label: 'Anthropic' },
+                { key: 'higgsfield', label: 'Higgsfield' },
+                { key: 'kling', label: 'Kling AI' },
+                { key: 'drive', label: 'Google Drive' },
+              ] as { key: keyof TestResults; label: string }[]).map(({ key, label }) => {
                 const r = testResults[key]
                 if (!r) return null
                 return (
                   <div key={key} className="flex items-center gap-2 text-sm">
                     <span>{r.ok ? '✅' : '❌'}</span>
-                    <span className="text-gray-400 capitalize">{key}</span>
+                    <span className="text-gray-400">{label}</span>
                     <span className="text-gray-500">—</span>
                     <span className={r.ok ? 'text-green-400' : 'text-red-400'}>{r.message}</span>
                   </div>

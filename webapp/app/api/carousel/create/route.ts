@@ -68,7 +68,13 @@ export async function POST(req: NextRequest) {
   console.log(`[carousel:${runId}] ${savedCount} images saved to ${uploadDir}`)
 
   // Initialiser le slot en mémoire (singleton partagé via lib/carousel-state)
-  carouselRuns.set(runId, { events: [], done: false })
+  carouselRuns.set(runId, {
+    events: [],
+    done: false,
+    characterName: characterName || '',
+    startedAt: Date.now(),
+    userId: session.user.id,
+  })
 
   // Lancer carousel_creator.py en subprocess
   const pythonPath = path.join(process.cwd(), '..', 'venv', 'bin', 'python')
