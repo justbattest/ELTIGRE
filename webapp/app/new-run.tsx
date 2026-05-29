@@ -74,15 +74,41 @@ export default function NewRunPage() {
     }
   }
 
-  const addProfile = () => setProfiles([...profiles, ''])
-  const updateProfile = (i: number, v: string) => {
-    const p = [...profiles]
-    p[i] = v
-    setProfiles(p)
+  // ── Multi-paste Instagram profiles ────────────────────────────────────────
+  const [pasteInput, setPasteInput] = useState('')
+
+  /** Parse une chaîne brute → liste d'URLs Instagram propres (dedupliquées). */
+  const parseProfileLinks = (raw: string): string[] => {
+    // Split sur newlines, espaces, virgules, pipes
+    const parts = raw.split(/[\n\r,| \t]+/)
+    const seen = new Set<string>()
+    const results: string[] = []
+    for (const part of parts) {
+      const trimmed = part.trim()
+      if (!trimmed) continue
+      // Accepter instagram.com URLs — nettoyer les query params (?igsh=...)
+      let url = trimmed
+      if (url.includes('instagram.com')) {
+        url = url.replace(/[?#].*$/, '').replace(/\/?$/, '/')
+        if (!url.startsWith('http')) url = 'https://' + url
+        if (!seen.has(url)) { seen.add(url); results.push(url) }
+      }
+    }
+    return results
   }
+
+  const handlePasteInput = (raw: string) => {
+    setPasteInput(raw)
+    const parsed = parseProfileLinks(raw)
+    if (parsed.length > 0) setProfiles(parsed)
+  }
+
   const removeProfile = (i: number) => {
-    if (profiles.length === 1) return
-    setProfiles(profiles.filter((_, idx) => idx !== i))
+    const updated = profiles.filter((_, idx) => idx !== i)
+    setProfiles(updated.length ? updated : [''])
+    // Resync le textarea
+    if (updated.length > 0) setPasteInput(updated.join('\n'))
+    else setPasteInput('')
   }
 
   const launch = async () => {
@@ -116,7 +142,7 @@ export default function NewRunPage() {
         setLaunchError(data.error)
         setLaunching(false)
       } else {
-        router.push(`/run/${data.runId}`)
+        router.push('/en-cours')
       }
     } catch (e) {
       setLaunchError(String(e))
@@ -193,50 +219,60 @@ export default function NewRunPage() {
 
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
         {/* Profils Instagram */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
             <h2 className="font-medium text-gray-200">Profils Instagram</h2>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">Max posts :</label>
+              <label className="text-xs text-gray-500">Max posts total :</label>
               <input
                 type="number"
                 value={maxPosts}
                 onChange={(e) => setMaxPosts(Number(e.target.value))}
                 min={5}
-                max={100}
+                max={500}
                 className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm focus:outline-none focus:border-violet-500"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            {profiles.map((p, i) => (
-              <div key={i} className="flex gap-2">
-                <input
-                  type="url"
-                  value={p}
-                  onChange={(e) => updateProfile(i, e.target.value)}
-                  placeholder="https://www.instagram.com/username/"
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
-                />
-                {profiles.length > 1 && (
-                  <button
-                    onClick={() => removeProfile(i)}
-                    className="text-gray-600 hover:text-red-400 transition px-2"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          {/* Zone de paste multi-liens */}
+          <textarea
+            value={pasteInput}
+            onChange={(e) => handlePasteInput(e.target.value)}
+            placeholder={"Colle ici tous tes liens Instagram d'un coup :\nhttps://www.instagram.com/username1/\nhttps://www.instagram.com/username2/\n...\n\n(séparés par des sauts de ligne, virgules ou espaces)"}
+            rows={4}
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm resize-none font-mono"
+          />
 
-          <button
-            onClick={addProfile}
-            className="mt-2 text-sm text-violet-400 hover:text-violet-300 transition"
-          >
-            + Ajouter un profil
-          </button>
+          {/* Profils parsés — chips supprimables */}
+          {profiles.filter(p => p.trim()).length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-2">
+                {profiles.filter(p => p.trim()).length} profil{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} détecté{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} :
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {profiles.map((p, i) => {
+                  if (!p.trim()) return null
+                  // Extraire le username pour l'affichage
+                  const username = p.replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '') || p
+                  return (
+                    <span
+                      key={i}
+                      className="flex items-center gap-1 bg-gray-800 border border-gray-700 rounded-full px-3 py-1 text-xs text-gray-200"
+                    >
+                      @{username}
+                      <button
+                        onClick={() => removeProfile(i)}
+                        className="text-gray-500 hover:text-red-400 transition ml-1 leading-none"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Personnages */}

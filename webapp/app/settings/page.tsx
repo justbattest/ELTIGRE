@@ -46,6 +46,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResults, setTestResults] = useState<TestResults | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [scanError, setScanError] = useState('')
 
   // Charger les settings au montage
   useEffect(() => {
@@ -212,6 +214,34 @@ export default function SettingsPage() {
 
   const removeElement = (id: string) => {
     setReferenceElements(referenceElements.filter((e) => e.id !== id))
+  }
+
+  const scanElements = async () => {
+    setScanning(true)
+    setScanError('')
+    try {
+      const res = await fetch('/api/characters/scan-elements')
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setScanError(data.error || 'Erreur lors du scan')
+        return
+      }
+      const scanned: RefElement[] = (data.elements || []).map((e: { id: string; name: string }) => ({
+        id: e.id,
+        name: e.name,
+      }))
+      // Fusionner avec les existants sans doublon
+      const existingIds = new Set(referenceElements.map(e => e.id))
+      const newOnes = scanned.filter(e => !existingIds.has(e.id))
+      setReferenceElements([...referenceElements, ...newOnes])
+      if (newOnes.length === 0 && scanned.length > 0) {
+        setScanError(`${scanned.length} personnage(s) trouvé(s) — déjà tous présents.`)
+      }
+    } catch (e) {
+      setScanError(String(e))
+    } finally {
+      setScanning(false)
+    }
   }
 
   return (
@@ -383,10 +413,23 @@ export default function SettingsPage() {
 
           {/* Reference Elements */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-1 text-gray-200">Reference Elements</h2>
+            <div className="flex items-start justify-between mb-1">
+              <h2 className="font-medium text-gray-200">Reference Elements</h2>
+              <button
+                onClick={scanElements}
+                disabled={scanning || !higgsConnected}
+                title={!higgsConnected ? 'Connecter Higgsfield d\'abord' : 'Scanner automatiquement les personnages depuis Higgsfield'}
+                className="text-xs bg-violet-700 hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg transition font-medium"
+              >
+                {scanning ? '⏳ Scan...' : '🔍 Scanner depuis Higgsfield'}
+              </button>
+            </div>
             <p className="text-gray-500 text-xs mb-3">
-              UUIDs stables pour Seedream/Nano Banana. Trouver sur higgsfield.ai → Reference Elements.
+              UUIDs de tes personnages pour Seedream/Nano Banana. Le bouton les détecte automatiquement.
             </p>
+            {scanError && (
+              <p className="text-xs text-amber-400 mb-2">{scanError}</p>
+            )}
 
             {/* Liste existante */}
             {referenceElements.length > 0 && (

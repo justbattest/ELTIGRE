@@ -78,11 +78,11 @@ def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: 
     except Exception as e:
         raise RuntimeError(f"instagrapi medias failed for @{username}: {e}")
 
+    # Collecter TOUS les posts avec image depuis fetch_count (pas de break anticipé).
+    # On trie par engagement APRÈS avoir tout collecté → on prend les meilleurs max_posts.
     posts = []
     skipped = 0
     for media in medias:
-        if len(posts) >= max_posts:
-            break
         # Ignorer les vidéos simples (media_type=2), garder images (1) et carousels (8)
         if media.media_type == 2:
             skipped += 1
@@ -93,15 +93,19 @@ def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: 
         else:
             skipped += 1
 
-    print(json.dumps({
-        "type": "info",
-        "msg": f"instagrapi: {len(medias)} posts fetchés → {len(posts)} avec image ({skipped} vidéos filtrées)"
-    }), flush=True)
-
+    # Tri par engagement DESC (likes + comments × 3) — même formule que le mode Apify
     posts.sort(
-        key=lambda p: (p.get("likesCount") or 0) + (p.get("commentsCount") or 0),
+        key=lambda p: (p.get("likesCount") or 0) + (p.get("commentsCount") or 0) * 3,
         reverse=True
     )
+    # Garder uniquement les meilleurs max_posts
+    posts = posts[:max_posts]
+
+    print(json.dumps({
+        "type": "info",
+        "msg": f"instagrapi: {len(medias)} fetchés → {len(posts)} meilleurs par engagement ({skipped} vidéos filtrées)"
+    }), flush=True)
+
     return posts
 
 
@@ -194,8 +198,11 @@ def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie:
     posts = []
     skipped_videos = 0
 
+    # Fetcher 2× plus que demandé pour compenser le filtrage vidéo et pouvoir trier par engagement
+    fetch_count = min(max_posts * 2, max_posts + 30)
+
     try:
-        for post in itertools.islice(profile.get_posts(), max_posts):
+        for post in itertools.islice(profile.get_posts(), fetch_count):
             # Ignorer les vidéos pures
             if post.typename == "GraphVideo":
                 skipped_videos += 1
@@ -209,7 +216,6 @@ def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie:
     except Exception:
         # Erreur pendant la récupération des posts (403, rate limit...) → fallback Apify
         if posts:
-            # On a quand même récupéré des posts avant l'erreur → on les retourne
             print(json.dumps({
                 "type": "info",
                 "msg": f"Instaloader: erreur en cours de scraping — retourne {len(posts)} posts déjà récupérés"
@@ -217,16 +223,18 @@ def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie:
         else:
             raise  # Aucun post → laisser remonter pour fallback Apify
 
-    print(json.dumps({
-        "type": "info",
-        "msg": f"Instaloader: {len(posts) + skipped_videos} posts → {len(posts)} avec image ({skipped_videos} vidéos filtrées)"
-    }), flush=True)
-
-    # Tri par engagement DESC
+    # Tri par engagement DESC, puis garder les meilleurs max_posts
     posts.sort(
-        key=lambda p: (p.get("likesCount") or 0) + (p.get("commentsCount") or 0),
+        key=lambda p: (p.get("likesCount") or 0) + (p.get("commentsCount") or 0) * 3,
         reverse=True
     )
+    posts = posts[:max_posts]
+
+    print(json.dumps({
+        "type": "info",
+        "msg": f"Instaloader: {len(posts) + skipped_videos} fetchés → {len(posts)} meilleurs par engagement ({skipped_videos} vidéos filtrées)"
+    }), flush=True)
+
     return posts
 
 
@@ -466,11 +474,14 @@ async def scrape_and_download_all(
     n_carousels = sum(1 for p in posts if is_carousel(p))
     n_singles = len(posts) - n_carousels
 
+    # NOTE : on utilise "profile_posts" (pas "total_posts") pour éviter que le UI
+    # écrase le compteur global avec le résultat d'un seul profil.
+    # Le total cumulatif est émis par queue_manager.py après tous les profils.
     print(json.dumps({
         "type": "phase",
         "phase": "scraping",
         "pct": 100,
-        "total_posts": len(posts),
+        "profile_posts": len(posts),
         "total_carousels": n_carousels,
         "total_singles": n_singles,
         "profile": profile_url,
@@ -483,7 +494,9 @@ async def scrape_and_download_all(
                if session_cookie
                else "Profil bloqué ou restreint par Instagram. Ajoute ton cookie de session Instagram dans Settings pour débloquer tous les profils.")
         )
-        print(json.dumps({"type": "error", "msg": msg}), flush=True)
+        # "warn" et non "error" : le pipeline continue avec les autres profils.
+        # Un seul profil vide ne doit pas marquer tout le run comme échoué.
+        print(json.dumps({"type": "warn", "msg": msg}), flush=True)
         return []
 
     print(json.dumps({"type": "phase", "phase": "downloading", "pct": 0}), flush=True)

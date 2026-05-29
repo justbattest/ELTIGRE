@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     elementId,
     characterName = '',
     aspectRatio = '9:16',
-    resolution = '1080p',
+    resolution = '720p',
     duration = 5,
   } = body
 

@@ -129,10 +129,10 @@ export async function handlePipelineEvent(
     }
 
     case 'error':
-      await prisma.run.update({
-        where: { id: runId },
-        data: { status: 'failed' },
-      })
+      // Ne PAS changer le statut ici — le code de sortie du subprocess (proc.on('close'))
+      // gère déjà le passage en 'failed' si le process quitte avec code != 0.
+      // Changer le statut sur chaque event 'error' causait des faux "Échec" alors
+      // que le pipeline continuait avec les profils restants et finissait en succès.
       break
   }
 }

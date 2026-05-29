@@ -74,8 +74,10 @@ export async function POST(req: NextRequest) {
   const driveFolderId = creds?.driveFolderId || null
   const instagramSessionCookie = decryptIfPresent(creds?.instagramSessionCookie) || null
 
-  if (!apifyKey || !anthropicKey || !higgsToken) {
-    return NextResponse.json({ error: 'Credentials incomplets. Vérifier les Settings.' }, { status: 400 })
+  // Apify est optionnel — utilisé uniquement en fallback si pas de cookie Instagram.
+  // Avec instagrapi (cookie) ou instaloader, Apify n'est pas nécessaire.
+  if (!anthropicKey || !higgsToken) {
+    return NextResponse.json({ error: 'Credentials incomplets (Anthropic + Higgsfield requis). Vérifier les Settings.' }, { status: 400 })
   }
 
   // Créer le run en DB
@@ -115,7 +117,7 @@ export async function POST(req: NextRequest) {
       cwd: path.join(process.cwd(), '..'), // root du projet
       env: {
         ...process.env,
-        APIFY_KEY: apifyKey,
+        ...(apifyKey ? { APIFY_KEY: apifyKey } : {}),
         ANTHROPIC_KEY: anthropicKey,
         HIGGSFIELD_TOKEN: higgsToken,
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),

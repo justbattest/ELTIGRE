@@ -51,16 +51,49 @@ async def run_pipeline(
 
     try:
         # ── Phase 1 : Scraping + Download ──────────────────────────────────
+        import math
+
+        # Quota par profil :
+        # - Minimum 15 pour avoir assez de données pour un bon tri par engagement
+        # - Minimum = ceil(max_posts / nb_profils) si ça dépasse 15
+        # Ex: 50 total, 11 profils → max(15, ceil(50/11)) = max(15, 5) = 15 par profil
+        #     → jusqu'à 165 posts collectés → tri engagement → top 50
+        # Ex: 200 total, 11 profils → max(15, ceil(200/11)) = max(15, 19) = 19 par profil
+        #     → jusqu'à 209 posts → tri engagement → top 200
+        n_profiles = len(profiles)
+        per_profile_max = max(15, math.ceil(max_posts / n_profiles))
+
         all_post_data = []
         for profile_url in profiles:
             data = await scrape_and_download_all(
                 profile_url=profile_url,
-                max_posts=max_posts,
+                max_posts=per_profile_max,
                 apify_key=apify_key,
                 run_dir=work_dir,
                 session_cookie=session_cookie,
             )
             all_post_data.extend(data)
+
+        # Tri cross-profils par engagement (best posts de tous les profils confondus)
+        all_post_data.sort(
+            key=lambda item: (
+                (item["post"].get("likesCount") or 0)
+                + (item["post"].get("commentsCount") or 0) * 3
+            ),
+            reverse=True,
+        )
+
+        # Couper au total demandé
+        all_post_data = all_post_data[:max_posts]
+
+        # Émettre le total cumulé définitif après TOUS les profils
+        print(json.dumps({
+            "type": "phase",
+            "phase": "scraping",
+            "pct": 100,
+            "total_posts": len(all_post_data),
+            "profiles_scraped": len(profiles),
+        }), flush=True)
 
         if not all_post_data:
             print(json.dumps({"type": "error", "message": "Aucun post trouvé — profil bloqué par Instagram ou tous les posts sont des vidéos sans image."}), flush=True)

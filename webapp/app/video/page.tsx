@@ -285,7 +285,7 @@ export default function VideoPage() {
               className="w-full accent-violet-500" />
           </div>
           <div className="text-xs text-gray-500 text-right leading-relaxed">
-            <div>9:16 · 1080p</div>
+            <div>9:16 · 720p</div>
             <div>Seedance 2.0</div>
           </div>
         </div>
