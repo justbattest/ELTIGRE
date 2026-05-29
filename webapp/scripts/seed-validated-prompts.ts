@@ -582,6 +582,256 @@ const PROMPTS: PromptSeed[] = [
     ])
   },
 
+  // ═══════════════════════════════════════════════════════════════════
+  // VIEUX
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── P7 — Terrasse · Lèche la joue ──
+  {
+    niche: 'vieux',
+    subNiche: 'restaurant',
+    title: 'P7 — Terrasse restaurant · Lèche la joue',
+    sortOrder: 10,
+    outfitText: 'low-cut top with deep cleavage visible',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium close shot at table level. Outdoor restaurant terrace, wooden slatted table foreground, glass railing and patio umbrellas behind. Soft overcast daylight.",
+        motion_intensity: 0.42,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Young muscular woman, low-cut top with deep cleavage visible, leaning against large older man — full white beard, white-blond hair, blue t-shirt, gold lion pendant. Both smiling at camera. She raises hand making peace sign, tongue out. She puts one finger on her own cheek asking for a kiss. Old man leans in and slowly licks her cheek with full extended tongue instead of kissing. Her mouth drops wide open in immediate shock — eyes wide. Both hands fly to cover her open mouth. She bends head forward down onto the table, both hands covering face. Lifts head back up slowly, hand still at mouth, breaking into laughter.",
+        dialogue: "[Patio ambient sound — shocked gasp then laughter]"
+      },
+      {
+        style: "fixed medium close shot table level, outdoor terrace, wooden table, glass railing, umbrella, soft natural light, no colour grading, candid — deep low-cut neckline with cleavage visible throughout. Lick instead of expected kiss causes immediate shocked reaction"
+      }
+    ])
+  },
+
+  // ── P8 — Terrasse · Lèche la bouche · MEILLEURE variation bouche ──
+  {
+    niche: 'vieux',
+    subNiche: 'restaurant',
+    title: 'P8 — Terrasse restaurant · Lèche la bouche · MEILLEURE',
+    isBest: true,
+    sortOrder: 11,
+    outfitText: 'low-cut top with deep generous cleavage',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium close shot — camera at table level facing both subjects directly. Outdoor restaurant terrace: wooden table, glass railing background, patio umbrellas, soft overcast daylight.",
+        motion_intensity: 0.42,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Sequence of actions in exact order. Young muscular woman in low-cut top with deep generous cleavage, leaning warmly against a large older man with white beard, thick white-blond hair, blue t-shirt, gold lion pendant necklace. Both smiling at camera. Then she straightens slightly and raises her hand making a peace sign toward camera, tongue out playfully. Then she turns to the man, places one finger gently against her own cheek — the universal gesture asking for a kiss. The old man leans toward her mouth and slowly kisses her lips, extending his tongue. Her expression immediately transforms — mouth drops wide open, eyes wide in genuine shock. She turns fully forward facing camera with both hands flying up to cover her mouth. Then she bends forward, head dropping down toward the table, both hands covering her face completely. Then she slowly lifts her head back up — hand still partially at her mouth — breaking into helpless laughter, eyes crinkled.",
+        dialogue: "[Ambient outdoor restaurant chatter — woman bursting into shocked laughter at end]"
+      },
+      {
+        style: "fixed medium close shot at table level, outdoor restaurant terrace, wooden table foreground, glass railing, patio umbrellas, soft natural overcast light, no colour grading, candid spontaneous feel — woman has deep low-cut neckline with generous cleavage visible throughout"
+      }
+    ])
+  },
+
+  // ── P9 — Nursing home · Massage pieds sur cuisses · PARFAIT ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P9 — Nursing home · Massage pieds cuisses · PARFAIT',
+    isBest: true,
+    sortOrder: 20,
+    outfitText: 'blue nurse uniform, deep open neckline with cleavage',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium low shot — bare feet dominate lower foreground resting on sofa, subjects seated behind. Nursing home bedroom: soft grey sofa, warm amber lamp, dim cosy interior.",
+        motion_intensity: 0.37,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in blue nurse uniform, deep open neckline with cleavage, seated on sofa with bare legs casually extended across elderly man's lap. Elderly man in cream cardigan, very old, sitting upright beside her. Her bare feet rest on his upper thighs in the lower foreground of the frame. She begins slowly kneading and pressing her bare feet into his upper thighs — toes rhythmically flexing and releasing — entirely casual, staring forward as if completely routine. The old man slowly looks down at her feet pressing on his upper thighs. Looks back up. Gives a single slow satisfied nod — the expression of a man with absolutely no complaints whatsoever.",
+        dialogue: "[Quiet ambient nursing home room — soft TV in background]"
+      },
+      {
+        style: "fixed medium low shot, feet on upper thighs prominent in foreground, grey upholstered sofa, warm amber lamp glow, dim nursing home bedroom, no colour grading, candid — nurse deep cleavage visible throughout. Feet pressing on upper thighs visible in foreground the full duration"
+      }
+    ])
+  },
+
+  // ── P10 — Hôpital · Vieux par terre · Tête cuisses · Résignée ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P10 — Hôpital · Vieux par terre · Tête cuisses · Résignée',
+    sortOrder: 30,
+    outfitText: 'short blue nurse uniform, deep open cleavage, black heels',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium low shot. Nurse's legs in lower foreground. Hospital room: beige carpet, hospital bed right, medical monitor stand, walking frame left, red emergency button on wall.",
+        motion_intensity: 0.36,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman, short blue nurse uniform, deep open cleavage, black heels, standing. Very old man in grey sweatshirt on floor beside her. He grabs her upper thighs with both hands to get up. Pulls himself forward instead. Presses his face into her upper thighs. Stays there — making no effort to actually stand. She looks down at him. Flat resigned expression. The face of a woman who has absolutely seen this before.",
+        dialogue: "[Quiet hospital ambient]"
+      },
+      {
+        style: "fixed medium low shot, legs in lower foreground, man's face pressed into upper thighs, beige carpet, hospital bed, medical equipment, walking frame, no colour grading, candid — nurse cleavage visible, man on floor pressing face into thighs in foreground"
+      }
+    ])
+  },
+
+  // ── P11 — Hôpital · Vieux se relève · Face cuisses · Sourit fin ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P11 — Hôpital · Vieux se relève · Face cuisses · Sourit',
+    sortOrder: 31,
+    outfitText: 'short blue nurse uniform, deep generous cleavage, black heels',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium low shot — bare legs fill lower foreground, man on floor visible below. Hospital room interior: beige carpet, single hospital bed right, medical monitor on wheeled stand, wooden bedside table, aluminium walking frame left side, red emergency call button on wall.",
+        motion_intensity: 0.37,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman, short blue nurse uniform, deep generous cleavage, black heels. Standing still. Very old man in grey sweatshirt is on the floor at her feet — he reaches up and grabs her upper thighs with both hands as if using her for support to stand. Instead of standing up, he pulls himself toward her and presses his face into her upper thighs, head resting directly against them. He makes no further effort to rise — entirely comfortable in this position. She looks down at him. Exhales slowly. The expression of a woman doing a job.",
+        dialogue: "[Hospital room quiet ambient — distant corridor sounds]"
+      },
+      {
+        style: "fixed medium low shot, nurse legs dominate lower foreground, man's face pressed into upper thighs on floor, beige carpet, hospital bed right, medical monitor, walking frame, red button on wall, no colour grading, candid hospital feel — nurse cleavage visible throughout"
+      }
+    ])
+  },
+
+  // ── P12 — Hôpital · Vieux à 4 pattes · Tête entre jambes dos ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P12 — Hôpital · Vieux à 4 pattes · Tête entre jambes',
+    sortOrder: 32,
+    outfitText: 'extremely short blue nurse uniform barely covering her upper thighs, deep open cleavage, black heels',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium low shot — nurse's bare legs dominate lower foreground, viewed from behind. Hospital room: beige carpet, hospital bed right, medical monitor stand, walking frame left, red emergency button on wall.",
+        motion_intensity: 0.36,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman, extremely short blue nurse uniform barely covering her upper thighs, deep open cleavage, black heels, standing with back to camera. Very old man in grey sweatshirt on the floor behind her. He gets himself up independently — crawling forward on his own until his head passes between her legs from behind, sliding through at upper thigh level. His head is now between her legs, face tilted upward looking up. He stays in this position — head between her legs, looking upward with a slow satisfied smile. She glances down over her shoulder at him. Breaks into a wide amused smile.",
+        dialogue: "[Quiet hospital ambient]"
+      },
+      {
+        style: "fixed medium low shot from behind, nurse's extremely short skirt and bare legs dominate lower foreground, man's head between her legs from behind at upper thigh level, face tilted upward, beige carpet, hospital bed, medical equipment, walking frame, no colour grading, candid — skirt extremely short, man's head clearly visible between legs from behind"
+      }
+    ])
+  },
+
+  // ── P13 — Hôpital · Se relève seul · Face cuisses · Sourit ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P13 — Hôpital · Se relève seul · Face cuisses · Grand sourire',
+    sortOrder: 33,
+    outfitText: 'extremely short blue nurse uniform — hemline at very top of thighs, deep plunging neckline with cleavage, black heels',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium low shot, three-quarter angle — nurse visible from slightly in front and side. Hospital room: beige carpet floor, hospital bed with pillows right, medical monitor pole, wooden bedside table, walking frame left, red emergency button on wall.",
+        motion_intensity: 0.37,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in extremely short blue nurse uniform — hemline at very top of thighs, deep plunging neckline with cleavage, black heels. Standing. Very old man in grey sweatshirt on the floor gets himself up independently — pushes off the floor with his hands, rising slowly on his own. As he reaches kneeling level his face arrives at her upper thighs. He pushes his head forward pressing his face into her upper thighs from below. Settles there — completely comfortable, not rising further. She looks down at him. Exhales. Then a slow wide smile spreads across her face — head tilting slightly — the smile of a woman who cannot actually be surprised by this anymore.",
+        dialogue: "[Soft hospital room ambient — distant monitor beep]"
+      },
+      {
+        style: "fixed medium low three-quarter angle shot, nurse's extremely short skirt hemline top of thighs in lower foreground, man's face pressed into upper thighs from below on floor, beige carpet, hospital bed, medical equipment, walking frame, red button wall, no colour grading, candid — skirt extremely short, cleavage visible throughout, woman ends with wide smile"
+      }
+    ])
+  },
+
+  // ── P14 — Hôpital · Infirmière sur lit · Vieux caresse · PARFAIT ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P14 — Hôpital · Infirmière sur lit · Vieux caresse · PARFAIT',
+    isBest: true,
+    sortOrder: 34,
+    outfitText: 'extremely short blue nurse uniform hemline top of thighs, deep open cleavage, hair in bun',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, slightly above. Nurse on hospital bed edge left, elderly man in bed right. Wooden bedside table with monitor and phone left background, cream curtains window right. Bed control panel hanging. Nurse's bare legs in lower foreground.",
+        motion_intensity: 0.34,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman, extremely short blue nurse uniform hemline top of thighs, deep open cleavage, hair in bun. No name badge. Seated on bed edge checking her watch. Very old man in grey shirt in bed. His hand reaches out slowly. Rests on her upper thigh. Begins gently stroking. She looks down at his hand. Looks up. Slow resigned smile.",
+        dialogue: "[Quiet room ambient]"
+      },
+      {
+        style: "fixed medium shot slightly above, nurse left on bed edge, man right in bed, wooden furniture medical equipment background, cream curtains, no colour grading, candid — skirt extremely short hemline top of thighs, bare legs lower foreground, cleavage visible, small central triangle of red underwear visible in narrow gap between inner thighs seated, not wide not a band, no name badge"
+      }
+    ])
+  },
+
+  // ── P15 — Fauteuil roulant · Album photos · Dialogue LUI ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P15 — Fauteuil roulant · Album photos · Dialogue lui',
+    sortOrder: 40,
+    outfitText: 'extremely short blue nurse uniform hemline top of thighs, deep open cleavage, bare legs visible',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, slightly above, three-quarter angle. Elderly man in blue wheelchair left, nurse sitting on his knees right. Nursing home bedroom: single bed background right, window floral curtains, family photo frames on windowsill, radiator right wall, painting left wall, beige carpet.",
+        motion_intensity: 0.33,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman sitting on elderly man's knees in wheelchair. Holding open photo album with black and white photos. Turning pages slowly. Pointing at photos. Old man looks at photos. His hand rests on her upper thigh. Slowly strokes. She turns another page. Smiles at a photo. He looks at her instead of the photos.",
+        dialogue: "[Old man, quiet and satisfied]: 'These are my favourite memories. But you're making a new one right now.'"
+      },
+      {
+        style: "fixed medium three-quarter shot slightly above, man in blue wheelchair left, woman on his knees right, nursing home bedroom, bed background, floral curtains, family photos windowsill, radiator, beige carpet, no colour grading, candid — extremely short blue nurse uniform hemline top of thighs, deep open cleavage, bare legs visible, no name badge"
+      }
+    ])
+  },
+
+  // ── P16 — Fauteuil roulant · Album photos · Dialogue ELLE ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P16 — Fauteuil roulant · Album photos · Dialogue elle',
+    sortOrder: 41,
+    outfitText: 'extremely short blue nurse uniform hemline top of thighs, deep open cleavage, bare legs visible',
+    speakerLine: "This is definitely my favourite part of the job.",
+    phraseVariations: [
+      "I could do this all day. Genuinely.",
+      "You know, most of my patients don't appreciate me this much.",
+      "This is the part of the job they definitely didn't cover in training.",
+      "I have to be honest — this shift is going much better than expected.",
+      "People always ask me why I love this job. I never know quite what to say.",
+      "Some residents are just naturally better at making me feel appreciated.",
+      "I don't know what it is about this room, but I always feel very comfortable here.",
+      "Between us? This is the best part of my day.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, slightly above, three-quarter angle. Elderly man in blue wheelchair left, nurse sitting on his knees right. Nursing home bedroom: single bed background right, window floral curtains, family photo frames on windowsill, radiator right wall, beige carpet.",
+        motion_intensity: 0.33,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman sitting on elderly man's knees in wheelchair. Holding open photo album. Turns pages. Points at a photo. Old man looks at it. His hand moves to her upper thigh. Slowly strokes. She glances at his hand. Looks back at album. Turns another page.",
+        dialogue: "[Woman, soft and unbothered]: 'This is definitely my favourite part of the job.'"
+      },
+      {
+        style: "fixed medium three-quarter shot slightly above, man in blue wheelchair left, woman on his knees right, nursing home bedroom, bed background, floral curtains, family photos windowsill, radiator, beige carpet, no colour grading, candid — extremely short blue nurse uniform hemline top of thighs, deep open cleavage, bare legs visible, no name badge"
+      }
+    ])
+  },
+
+  // ── P17 — Fauteuil roulant · Album photos · MEILLEUR (triangle rouge) ──
+  {
+    niche: 'vieux',
+    subNiche: 'nurse',
+    title: 'P17 — Fauteuil roulant · Album photos · MEILLEUR triangle rouge',
+    isBest: true,
+    sortOrder: 42,
+    outfitText: 'extremely short blue nurse uniform hemline top of thighs, bare legs visible, deep open cleavage',
+    speakerLine: "This is definitely my favourite part of the job.",
+    phraseVariations: [
+      "I could do this all day. Genuinely.",
+      "You know, most of my patients don't appreciate me this much.",
+      "This is the part of the job they definitely didn't cover in training.",
+      "I have to be honest — this shift is going much better than expected.",
+      "People always ask me why I love this job. I never know quite what to say.",
+      "Some residents are just naturally better at making me feel appreciated.",
+      "I don't know what it is about this room, but I always feel very comfortable here.",
+      "Between us? This is the best part of my day.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, slightly above, three-quarter angle. Elderly man in blue wheelchair left, nurse sitting on his knees right. Nursing home bedroom: single bed background right, window floral curtains, family photo frames on windowsill, radiator right wall, beige carpet.",
+        motion_intensity: 0.33,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman sitting on elderly man's knees in wheelchair. Open photo album in her hands. Turns pages. Points at photos. He looks. His hand rests on her upper thigh. Slow gentle stroke. She turns another page. Smiles at a photo. He smiles too — not at the photo.",
+        dialogue: "[Woman, soft and unbothered]: 'This is definitely my favourite part of the job.'"
+      },
+      {
+        style: "fixed medium three-quarter shot slightly above, man in blue wheelchair left, woman on his knees right, nursing home bedroom, bed background, floral curtains, family photos windowsill, radiator, beige carpet, no colour grading, candid — extremely short blue nurse uniform hemline top of thighs, bare legs visible, deep open cleavage, small central triangle of red underwear visible in narrow gap between inner thighs seated position not wide not a band, no name badge"
+      }
+    ])
+  },
+
 ]
 
 async function main() {

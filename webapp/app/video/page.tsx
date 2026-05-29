@@ -11,7 +11,7 @@ type RefElement = { id: string; name: string }
 
 type ValidatedPrompt = {
   id: number
-  subNiche: 'conference' | 'sport'
+  subNiche: string   // 'conference' | 'sport' | 'nurse' | 'restaurant'
   title: string
   isBest: boolean
   outfitText: string | null
@@ -20,6 +20,24 @@ type ValidatedPrompt = {
 }
 
 // ─── Outfit pools (doit rester en sync avec video_prompts.py) ─────────────────
+
+// ─── Outfit pools par sous-niche ──────────────────────────────────────────────
+
+const NURSE_OUTFITS = [
+  { label: 'Uniforme blanc deep-V + black heels', value: 'extremely short white nurse uniform deep V-neckline hemline top of thighs, black heels' },
+  { label: 'Uniforme rose pastel + nude heels', value: 'extremely short pastel pink nurse uniform deep open neckline hemline top of thighs, nude heels' },
+  { label: 'Scrubs navy fitted + black heels', value: 'extremely short fitted navy scrubs deep open neckline hemline top of thighs, black heels' },
+  { label: 'Uniforme bleu clair + white heels', value: 'extremely short light blue nurse uniform deep plunging neckline hemline top of thighs, white heels' },
+  { label: 'Uniforme menthe pale + black stilettos', value: 'extremely short pale mint nurse uniform deep V-neckline hemline top of thighs, black stiletto heels' },
+]
+
+const RESTAURANT_OUTFITS = [
+  { label: 'White deep-V bodysuit', value: 'white deep-V bodysuit open neckline generous cleavage' },
+  { label: 'Black fitted low-cut top', value: 'black fitted low-cut top with deep generous cleavage' },
+  { label: 'Cream open-back top deep cleavage', value: 'cream open-back top with deep plunging neckline and generous cleavage' },
+  { label: 'Blush silk blouse deep-V', value: 'blush silk blouse with very low-cut deep cleavage' },
+  { label: 'Cobalt blue deep-V fitted top', value: 'cobalt blue deep V-neck fitted top with generous cleavage' },
+]
 
 const CONF_OUTFITS = [
   { label: 'White deep-V bodysuit + black mini + black heels', value: 'white deep-V bodysuit open neckline, extremely short tight black mini skirt, black stiletto heels' },
@@ -41,10 +59,11 @@ const SPORT_OUTFITS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function SubNicheLabel({ subNiche }: { subNiche: 'conference' | 'sport' }) {
-  return subNiche === 'sport'
-    ? <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400 font-medium">🏃 Sport</span>
-    : <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
+function SubNicheLabel({ subNiche }: { subNiche: string }) {
+  if (subNiche === 'sport') return <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400 font-medium">🏃 Sport</span>
+  if (subNiche === 'nurse') return <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-400 font-medium">🏥 Infirmière</span>
+  if (subNiche === 'restaurant') return <span className="text-xs px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-400 font-medium">🍽️ Restaurant</span>
+  return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -63,6 +82,9 @@ export default function VideoPage() {
   // ── Validated prompts ──
   const [prompts, setPrompts] = useState<ValidatedPrompt[]>([])
   const [loadingPrompts, setLoadingPrompts] = useState(false)
+
+  // ── Niche ──
+  const [niche, setNiche] = useState<'conference_sport' | 'vieux'>('conference_sport')
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation'>('direct')
@@ -102,15 +124,18 @@ export default function VideoPage() {
       .finally(() => setLoadingChars(false))
   }, [])
 
-  // ── Load validated prompts ──
+  // ── Load validated prompts (reload when niche changes) ──
   useEffect(() => {
     setLoadingPrompts(true)
-    fetch('/api/video/validated-prompts?niche=conference_sport')
+    setPrompts([])
+    setSelectedIds(new Set())
+    setVarBaseId(null)
+    fetch(`/api/video/validated-prompts?niche=${niche}`)
       .then(r => r.json())
       .then(data => setPrompts(data.prompts || []))
       .catch(() => {})
       .finally(() => setLoadingPrompts(false))
-  }, [])
+  }, [niche])
 
   // ── Filtrage mode direct ──
   const filteredPrompts = prompts.filter(p =>
@@ -130,7 +155,13 @@ export default function VideoPage() {
   const selectedVarPrompt = prompts.find(p => p.id === varBaseId) ?? null
 
   // ── Outfit pool selon sous-niche du prompt choisi ──
-  const outfitPool = selectedVarPrompt?.subNiche === 'sport' ? SPORT_OUTFITS : CONF_OUTFITS
+  const outfitPool = (() => {
+    const sub = selectedVarPrompt?.subNiche
+    if (sub === 'sport') return SPORT_OUTFITS
+    if (sub === 'nurse') return NURSE_OUTFITS
+    if (sub === 'restaurant') return RESTAURANT_OUTFITS
+    return CONF_OUTFITS
+  })()
 
   // ── Phrases dédiées au prompt sélectionné (depuis DB) ──
   const currentPhrasePool = selectedVarPrompt?.phraseVariations ?? null
@@ -237,13 +268,24 @@ export default function VideoPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-5">
 
-        {/* ── Header ── */}
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🎓🏃</span>
-          <div>
-            <h1 className="text-lg font-bold text-white">Conférence + Sport</h1>
-            <p className="text-xs text-gray-500">Prompts validés — génération directe ou légère variation</p>
-          </div>
+        {/* ── Sélecteur de niche ── */}
+        <div className="flex gap-2 flex-wrap">
+          {([
+            { id: 'conference_sport' as const, emoji: '🎓🏃', label: 'Conférence + Sport' },
+            { id: 'vieux' as const, emoji: '👴', label: 'Vieux' },
+          ]).map(n => (
+            <button
+              key={n.id}
+              onClick={() => { setNiche(n.id); setVarOutfit(''); setVarPhrase('') }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${
+                niche === n.id
+                  ? 'bg-violet-600 border-violet-500 text-white'
+                  : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+              }`}
+            >
+              <span>{n.emoji}</span><span>{n.label}</span>
+            </button>
+          ))}
         </div>
 
         {/* ── Personnage ── */}

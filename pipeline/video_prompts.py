@@ -495,6 +495,24 @@ def _flatten_variables(variables: dict) -> dict:
 #   - Phrase : toujours border/double-sens, défendable en contexte professionnel
 
 VARIATION_OUTFITS: dict[str, list[str]] = {
+    # ── Infirmière (nursing home / hôpital / fauteuil roulant) ──────────────────
+    # La couleur de l'uniforme varie mais le contexte infirmière reste intact.
+    "nurse": [
+        "extremely short white nurse uniform deep V-neckline hemline top of thighs, black heels",
+        "extremely short pastel pink nurse uniform deep open neckline hemline top of thighs, nude heels",
+        "extremely short fitted navy scrubs deep open neckline hemline top of thighs, black heels",
+        "extremely short light blue nurse uniform deep plunging neckline hemline top of thighs, white heels",
+        "extremely short pale mint nurse uniform deep V-neckline hemline top of thighs, black stiletto heels",
+    ],
+    # ── Terrasse restaurant (P7, P8) ────────────────────────────────────────────
+    # Tenue décontractée sexy — pas d'uniforme, décolleté généreux.
+    "restaurant": [
+        "white deep-V bodysuit open neckline generous cleavage",
+        "black fitted low-cut top with deep generous cleavage",
+        "cream open-back top with deep plunging neckline and generous cleavage",
+        "blush silk blouse with very low-cut deep cleavage",
+        "cobalt blue deep V-neck fitted top with generous cleavage",
+    ],
     "conference": [
         "white deep-V bodysuit open neckline, extremely short tight black mini skirt, black stiletto heels",
         "cream silk blouse deep plunging neckline, extremely short tight charcoal mini skirt, nude stiletto heels",
