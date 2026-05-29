@@ -583,6 +583,76 @@ const PROMPTS: PromptSeed[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════════
+  // GOLF
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── P1 — Golf · Jupe + culotte + punchline gâteau · MEILLEUR résultat ──
+  {
+    niche: 'golf',
+    subNiche: 'golf',
+    title: 'P1 — Golf · Swing de dos · Punchline gâteau · MEILLEUR',
+    isBest: true,
+    sortOrder: 10,
+    outfitText: 'very short golf skirt and fitted top',
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from behind on sunny golf course, green grass, natural daylight.",
+        motion_intensity: 0.44,
+        action: "Extremely muscular woman from behind, very short golf skirt and fitted top. Rhythmic hip waggle pre-shot routine. Skirt moves with hips. Athletic confident posture, club drawn back ready.",
+        dialogue: "[Ambient outdoor sound, light breeze]"
+      },
+      {
+        framing: "Same POV, slightly wider — man visible to her left.",
+        motion_intensity: 0.55,
+        action: "Full powerful golf swing with complete rotational follow-through. The forceful rotation combined with a sudden gust of wind lifts the skirt high and keeps it suspended in the air for a long moment before slowly settling back down. Man to her left reacts with wide eyes and jaw dropped.",
+        dialogue: "[Club strikes ball cleanly — no dialogue]"
+      },
+      {
+        framing: "Same behind POV, man clearly visible left.",
+        motion_intensity: 0.38,
+        action: "Man leans slightly forward, stunned and visibly amused.",
+        dialogue: "[Man, casual and stunned]: 'Oh… nice cake.'"
+      },
+      {
+        framing: "Woman turns around — front facing, face visible for first time.",
+        motion_intensity: 0.46,
+        action: "She turns sharply, extremely muscular build fully visible. Expression furious and disbelieving, points at man.",
+        dialogue: "[Woman, offended]: 'What — are you serious?'"
+      },
+      {
+        framing: "Camera pans left — man with hands raised, cake centred in frame.",
+        motion_intensity: 0.50,
+        action: "Man raises both hands innocently. Camera pans smoothly left revealing decorated cake on nearby table.",
+        dialogue: "[Man, deadpan]: 'Oh sorry — I was talking about the cake.'"
+      },
+      {
+        style: "handheld POV, sunny outdoor golf course, warm natural light, light breeze throughout, no colour grading, candid unscripted feel"
+      }
+    ])
+  },
+
+  // ── P6 — Golf · Face caméra · Mec dans cart tombe dans l'étang · V3 PARFAITE ──
+  {
+    niche: 'golf',
+    subNiche: 'golf',
+    title: 'P6 — Golf · Face caméra · Cart tombe dans l\'étang · V3 PARFAITE',
+    isBest: true,
+    sortOrder: 20,
+    outfitText: 'white pleated short golf dress, white Nike sun visor, white sneakers',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed wide shot, camera in front of golfer facing her head-on. Golf course, bright afternoon sun, trimmed green fairway, small calm pond directly behind her to the left. Man in white golf cart sitting and watching from near the pond in background. Pine trees, distant houses.",
+        motion_intensity: 0.55,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate action from frame one. Extremely muscular woman, white pleated short golf dress, white Nike sun visor, white sneakers. Powerful full golf swing directly toward camera — violent rotational follow-through combined with a strong wind gust lifts dress high, holds it suspended briefly — camera angle is front-facing so the lift is visible from the front. Background: man in golf cart is watching her instead of the path — his cart drifts to the edge of the pond, front wheels slip off the grass bank, cart slides nose-first into the water, rolls and flips completely upside down with an explosive splash. Man is thrown into the pond. Golf cart ends wheels-up in the water. Woman completes her swing, turns slightly, sees nothing behind her. Man slowly rises from the waist-deep pond water, drenched, looks directly at the woman with the exact same distracted expression — still watching her despite being soaking wet in a pond.",
+        dialogue: "[Golf course ambiance — club impact — cart crashing into water, large splash — man gasping then quiet staring]"
+      },
+      {
+        style: "fixed wide front-facing shot, bright warm golden sun, green manicured fairway, small pond background, pine trees and residential houses, no colour grading — camera directly in front of golfer, dress lifts from rotational force and wind showing front view. Man in cart crash happens behind her in background. Final image: man waist-deep in pond still staring at woman"
+      }
+    ])
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
   // VIEUX
   // ═══════════════════════════════════════════════════════════════════
 

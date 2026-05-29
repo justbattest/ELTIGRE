@@ -495,6 +495,16 @@ def _flatten_variables(variables: dict) -> dict:
 #   - Phrase : toujours border/double-sens, défendable en contexte professionnel
 
 VARIATION_OUTFITS: dict[str, list[str]] = {
+    # ── Golf ────────────────────────────────────────────────────────────────────
+    # Tenue golf sexy — jupe ultra courte, polo ou robe, chaussures golf.
+    # La couleur varie, le style golf reste.
+    "golf": [
+        "extremely short pink pleated golf skirt, fitted white polo shirt deep open collar, white golf shoes",
+        "extremely short black golf skirt, fitted navy blue polo shirt deep neckline, white spiked golf shoes",
+        "light blue pleated short golf dress deep V-neckline, white sun visor, white sneakers",
+        "extremely short white pleated golf skirt, fitted pink polo shirt open collar, beige golf shoes",
+        "extremely short beige golf skirt, fitted black polo shirt deep open collar, white golf shoes",
+    ],
     # ── Infirmière (nursing home / hôpital / fauteuil roulant) ──────────────────
     # La couleur de l'uniforme varie mais le contexte infirmière reste intact.
     "nurse": [

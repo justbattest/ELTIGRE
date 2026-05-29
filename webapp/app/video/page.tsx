@@ -23,6 +23,14 @@ type ValidatedPrompt = {
 
 // ─── Outfit pools par sous-niche ──────────────────────────────────────────────
 
+const GOLF_OUTFITS = [
+  { label: 'Pink pleated golf skirt + white polo', value: 'extremely short pink pleated golf skirt, fitted white polo shirt deep open collar, white golf shoes' },
+  { label: 'Black golf skirt + navy polo', value: 'extremely short black golf skirt, fitted navy blue polo shirt deep neckline, white spiked golf shoes' },
+  { label: 'Light blue golf dress + visor', value: 'light blue pleated short golf dress deep V-neckline, white sun visor, white sneakers' },
+  { label: 'White golf skirt + pink polo', value: 'extremely short white pleated golf skirt, fitted pink polo shirt open collar, beige golf shoes' },
+  { label: 'Beige golf skirt + black polo', value: 'extremely short beige golf skirt, fitted black polo shirt deep open collar, white golf shoes' },
+]
+
 const NURSE_OUTFITS = [
   { label: 'Uniforme blanc deep-V + black heels', value: 'extremely short white nurse uniform deep V-neckline hemline top of thighs, black heels' },
   { label: 'Uniforme rose pastel + nude heels', value: 'extremely short pastel pink nurse uniform deep open neckline hemline top of thighs, nude heels' },
@@ -61,6 +69,7 @@ const SPORT_OUTFITS = [
 
 function SubNicheLabel({ subNiche }: { subNiche: string }) {
   if (subNiche === 'sport') return <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400 font-medium">🏃 Sport</span>
+  if (subNiche === 'golf') return <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400 font-medium">⛳ Golf</span>
   if (subNiche === 'nurse') return <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-400 font-medium">🏥 Infirmière</span>
   if (subNiche === 'restaurant') return <span className="text-xs px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-400 font-medium">🍽️ Restaurant</span>
   return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
@@ -83,8 +92,8 @@ export default function VideoPage() {
   const [prompts, setPrompts] = useState<ValidatedPrompt[]>([])
   const [loadingPrompts, setLoadingPrompts] = useState(false)
 
-  // ── Niche — 3 onglets séparés ──
-  const [niche, setNiche] = useState<'conference' | 'sport' | 'vieux'>('conference')
+  // ── Niche — 4 onglets séparés ──
+  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux'>('conference')
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation'>('direct')
@@ -133,13 +142,13 @@ export default function VideoPage() {
     setVarOutfit('')
     setVarPhrase('')
     // conference et sport sont dans le même niche DB 'conference_sport', filtrés côté client
-    const dbNiche = niche === 'vieux' ? 'vieux' : 'conference_sport'
+    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : 'conference_sport'
     fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
       .then(data => {
         const all: ValidatedPrompt[] = data.prompts || []
-        // Filtre côté client par subNiche selon l'onglet
-        const filtered = niche === 'vieux'
+        // Filtre côté client par subNiche pour conference/sport ; golf et vieux sont déjà leur propre niche
+        const filtered = (niche === 'vieux' || niche === 'golf')
           ? all
           : all.filter(p => p.subNiche === niche)
         setPrompts(filtered)
@@ -167,6 +176,7 @@ export default function VideoPage() {
   const outfitPool = (() => {
     const sub = selectedVarPrompt?.subNiche
     if (sub === 'sport') return SPORT_OUTFITS
+    if (sub === 'golf') return GOLF_OUTFITS
     if (sub === 'nurse') return NURSE_OUTFITS
     if (sub === 'restaurant') return RESTAURANT_OUTFITS
     return CONF_OUTFITS
@@ -282,6 +292,7 @@ export default function VideoPage() {
           {([
             { id: 'conference' as const, emoji: '🎓', label: 'Conférence' },
             { id: 'sport' as const,      emoji: '🏃', label: 'Sport' },
+            { id: 'golf' as const,       emoji: '⛳', label: 'Golf' },
             { id: 'vieux' as const,      emoji: '👴', label: 'Vieux' },
           ]).map(n => (
             <button
@@ -375,7 +386,7 @@ export default function VideoPage() {
                 <p className="text-xs text-gray-500 mt-0.5">Chaque prompt est généré copie exacte — zéro modification.</p>
               </div>
               <span className="text-xs text-gray-500">
-                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Sport' : '👴 Vieux'}
+                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Sport' : niche === 'golf' ? '⛳ Golf' : '👴 Vieux'}
               </span>
             </div>
 
