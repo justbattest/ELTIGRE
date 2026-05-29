@@ -17,9 +17,98 @@ type PromptSeed = {
   promptJson: string
   outfitText?: string
   speakerLine?: string
+  phraseVariations?: string[]
   isBest?: boolean
   sortOrder?: number
 }
+
+// ─── Phrases per-prompt ───────────────────────────────────────────────────────
+// Chaque groupe = phrases calibrées sur LA scène précise du concept.
+// Principe : 100% défendable dans le contexte professionnel → quand une femme
+// ultra-attractive le dit dans CETTE scène, l'effet est complètement différent.
+
+const PHRASES_INAUGURATION = [
+  "I know exactly what every person in this room came to see today — and I plan to show you everything.",
+  "Today I am putting it all on the table. Nothing is going to be held back.",
+  "I want you to leave here today feeling like you've seen something you have never seen before.",
+  "I've been preparing this for months. I cannot wait to finally expose everything to you.",
+  "This is the moment I stop covering things up. You're going to get the full picture today.",
+  "I hope you all got a good seat — because you're going to want a clear view of everything I'm about to bring.",
+  "By the end of today, none of you are going to be able to look away from me.",
+  "What you see right now is just the beginning. It gets much more impressive from here.",
+]
+
+const PHRASES_AUDITORIUM = [
+  // Cours de débat — elle enseigne l'assurance face au public, angle du bas révèle culotte
+  "In this class, I need you completely comfortable staring directly at me — that's where the work happens.",
+  "I can already see some of you having trouble keeping your eyes where they should be.",
+  "The most important thing about public speaking? Never be embarrassed about what people see.",
+  "I know some of you are struggling to focus right now. Trust me — it only gets more challenging.",
+  "Everyone in this room is going to look at me very differently by the end of today.",
+  "I have never had a class that walked out of here without being completely changed by what they saw.",
+  "Some of you are going to feel very exposed by what I'm about to ask of you.",
+  "The real lesson today is learning how to control yourself when you're completely overwhelmed.",
+]
+
+const PHRASES_CONFERENCE_DISTRACTION = [
+  // Conférence sur la distraction — ironie : le mec derrière elle glisse de sa chaise en la regardant
+  "Gentlemen — learn to control your impulses. That is the foundation of everything I'm teaching today.",
+  "The most dangerous thing in any professional environment? Letting your eyes wander somewhere they shouldn't.",
+  "I have seen this exact same thing happen every single time I speak in a room full of men.",
+  "Focus. I haven't even gotten to the really stimulating part of the presentation yet.",
+  "If you think this is hard to get through, wait until we get to the section on self-control.",
+  "I promise you — the content of this presentation is far more distracting than whatever else caught your attention.",
+  "Every single time. Without exception. Every time I step on this stage, the same thing happens.",
+  "I'm used to this. I've learned to keep going no matter what's happening around me.",
+]
+
+const PHRASES_KINE = [
+  // Kiné examinant un joueur blessé — mains sur abdomen bas/cuisses, questions médicales = double-sens parfait
+  "I need you to tell me exactly where you feel the most tension. Be specific — don't hold anything back.",
+  "Don't be embarrassed. Everything you're feeling is completely normal. Just tell me what's going on down there.",
+  "On a scale of one to ten — how stiff are we talking? I need to know exactly what I'm dealing with.",
+  "I'm going to work my hands down until I find exactly where the issue is.",
+  "I want you completely relaxed. The more tense you are, the harder this is going to be for both of us.",
+  "I've worked with a lot of athletes. Nothing you can say to me is going to surprise me.",
+  "The more you can describe what you're feeling, the better I can position myself to fix it.",
+  "I'm going to apply pressure in a few different areas. You tell me the moment something feels wrong.",
+]
+
+const PHRASES_COACH_PISTE = [
+  // Coach qui se retourne après que l'élève a murmuré un commentaire sur elle
+  "I need all eyes on me right now. Stop looking at each other. Eyes. On. Me.",
+  "Someone in this room is not taking this seriously, and I will find out who it is.",
+  "Every time I turn my back, something happens in this room. That stops today.",
+  "You think I don't notice? I notice everything. Every look. Every reaction. Always.",
+  "One of you is staying after everyone else leaves, and we're working this out one on one.",
+  "I can hear every whisper. Every single comment said in this room reaches me.",
+  "You don't want me to turn around and find out it's you.",
+  "I've been patient. I'm running out of patience very quickly.",
+]
+
+const PHRASES_COOLDOWN = [
+  // Coach tourne le dos aux élèves, se penche jusqu'aux chevilles — élèves sourient
+  "The deeper you push, the better it's going to feel. Don't be afraid to go all the way down.",
+  "Good. Hold it there. All the way down. Don't come back up until I tell you to.",
+  "I need you completely loose before we go any further. Just let everything go.",
+  "Trust me — once you've gone this deep, you're going to want to do it again.",
+  "Copy every single thing I do. Every movement. Don't miss anything.",
+  "Go further than you think you can. That's where the real release happens.",
+  "Eyes on me. If you're not watching exactly what I'm doing, you're doing it wrong.",
+  "Stay open. Stay low. The more committed you are to this position, the more you get out of it.",
+]
+
+const PHRASES_VOLLEYBALL = [
+  // Coach descend en position défensive volleyball dos à la caméra — posture très basse et ouverte
+  "Everyone down low. Wide. Open. Match exactly what I'm showing you.",
+  "I need you completely focused on my form right now — this is the most important position in the game.",
+  "Get your eyes on my backside technique. This is where most teams fall apart.",
+  "Don't look away. The moment you look away, you miss everything.",
+  "I want you low and ready. Completely spread. That's how you win from the back.",
+  "Keep watching. It gets deeper from here.",
+  "Stay in this position as long as you possibly can.",
+  "The team that fully commits to this position wins every single time.",
+]
 
 const PROMPTS: PromptSeed[] = [
 
@@ -36,6 +125,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 10,
     outfitText: 'White fitted shirt open at neckline, extremely tight short black skirt',
     speakerLine: 'Thanks a lot guys for being here for my inauguration day—',
+    phraseVariations: PHRASES_INAUGURATION,
     promptJson: JSON.stringify([
       {
         framing: "Audience POV from first row angled slightly upward toward elevated stage. Real conference room, warm stage lighting, deep red velvet curtain backdrop. Graduation caps blurred foreground. A man in the front row is visibly holding up his phone filming toward the stage.",
@@ -75,6 +165,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 20,
     outfitText: 'Very tight ruched dark mini skirt',
     speakerLine: 'The first thing you learn about today is to ask questions and not be afraid to speak out.',
+    phraseVariations: PHRASES_AUDITORIUM,
     promptJson: JSON.stringify([
       {
         framing: "Single continuous shot — POV from auditorium seat front row angled upward at elevated wooden stage edge. Camera very close to stage — stage lip fills bottom of frame. School auditorium, recessed spotlights, burgundy curtains, projection screen reading 'Speak Up Stand Out — Debate Training 2026 — Greenville High School'. American flag stage left. Teenage boy and adult woman seated immediately beside camera visible in foreground.",
@@ -97,6 +188,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 21,
     outfitText: 'black stilettos, very tight ruched dark mini skirt',
     speakerLine: 'The first thing you learn about today is to ask questions and not be afraid to speak out.',
+    phraseVariations: PHRASES_AUDITORIUM,
     promptJson: JSON.stringify([
       {
         framing: "POV from auditorium seat third row angled upward at elevated wooden stage. School auditorium, recessed spotlights, burgundy curtains, projection screen reading 'Speak Up Stand Out — Debate Training 2026 — Greenville High School'. American flag stage left. Students' heads foreground.",
@@ -130,6 +222,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 22,
     outfitText: 'black stiletto heels. Very tight ruched dark mini skirt',
     speakerLine: 'The first thing you learn about today is to ask questions and not be afraid to speak out.',
+    phraseVariations: PHRASES_AUDITORIUM,
     promptJson: JSON.stringify([
       {
         framing: "POV from auditorium seat third row, camera naturally angled upward toward elevated wooden stage. Institutional school auditorium: recessed ceiling spotlights, burgundy velvet curtains stage sides, large projection screen displaying 'Speak Up Stand Out — Debate Training 2026 — Greenville High School'. American flag stage left. Wooden stage edge visible. Students' heads in foreground.",
@@ -292,6 +385,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 50,
     outfitText: 'tight blue fitted shirt deep open cleavage, very short tight black skirt, black heeled sandals',
     speakerLine: 'Avoid getting distracted by enticing—',
+    phraseVariations: PHRASES_CONFERENCE_DISTRACTION,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, audience POV third row, slightly below elevated stage. Conference room: drop ceiling lights, white projection screen, American flag left, wooden podium right, black stage skirting. Audience heads foreground. Woman centre stage, young man in navy suit on chair behind her.",
@@ -313,6 +407,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 51,
     outfitText: 'tight blue fitted shirt deep open cleavage, very short tight black skirt, black heeled sandals',
     speakerLine: 'Avoid getting distracted by enticing—',
+    phraseVariations: PHRASES_CONFERENCE_DISTRACTION,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, audience POV third row, slightly below elevated stage. Conference room: drop ceiling lights, white projection screen, American flag left, wooden podium right, black stage skirting. Audience heads foreground. Woman centre stage, young man in navy suit on chair behind her.",
@@ -339,6 +434,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 60,
     outfitText: 'tight white crop top with deep cleavage when leaning forward, extremely short tight black athletic shorts',
     speakerLine: 'How about this? Do you think it\'s a sprain or did you tear anything?',
+    phraseVariations: PHRASES_KINE,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, slightly above. Female trainer kneeling over male player lying on artificial green turf, centre frame. Indoor sports facility: blue painted walls, blue bleachers, industrial metal ceiling with overhead lights, white field lines on turf. Other players in maroon EAGLES jerseys seated on folding chairs background. Young woman visible sitting in background chairs.",
@@ -361,6 +457,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 70,
     outfitText: 'tight white low-cut athletic top with deep cleavage, extremely short tight grey athletic shorts very form-fitting back and sides',
     speakerLine: 'Game is coming up and you aren\'t playing right.',
+    phraseVariations: PHRASES_COACH_PISTE,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, at student seated eye level. Coach standing foreground facing students. Indoor athletics facility: red track with white lane lines, artificial green turf beyond, American flag on wall, industrial metal ceiling overhead lights, dark wall panels, double exit doors background.",
@@ -382,6 +479,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 71,
     outfitText: 'tight white deep V-neck athletic top deep cleavage, extremely short tight grey athletic shorts form-fitting',
     speakerLine: 'Game is coming up and you aren\'t playing right.',
+    phraseVariations: PHRASES_COACH_PISTE,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, slightly above seated students. Coach standing foreground. Indoor track: red surface, white lines, green turf background, American flag wall, industrial ceiling lights, double doors.",
@@ -404,6 +502,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 80,
     outfitText: 'tight white deep V-neck athletic top deep cleavage, extremely short tight grey athletic shorts very form-fitting back and sides',
     speakerLine: 'You are doing great — time to cool down those bodies, okay?',
+    phraseVariations: PHRASES_COOLDOWN,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, at student seated eye level. Coach standing foreground facing students. Indoor track facility: brown wooden roof beams with fluorescent strip lights overhead, American flag on left wall, red track white lane lines, green turf field background, bleachers far right, wooden bench foreground, water bottle on floor.",
@@ -425,6 +524,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 81,
     outfitText: 'tight white deep V-neck athletic top deep cleavage, extremely short tight grey athletic shorts extremely form-fitting back and sides',
     speakerLine: 'You are doing great — time to cool down those bodies, okay?',
+    phraseVariations: PHRASES_COOLDOWN,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, at student seated eye level. Coach centre frame facing students. Indoor track: brown wooden roof beams, fluorescent ceiling lights, American flag left wall, red track white lane lines, green turf beyond, bleachers background right, wooden bench and water bottle foreground.",
@@ -446,6 +546,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 82,
     outfitText: 'tight white deep V-neck top deep cleavage, extremely short tight grey athletic shorts form-fitting',
     speakerLine: 'You are doing great — time to cool down those bodies, okay?',
+    phraseVariations: PHRASES_COOLDOWN,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, student seated eye level. Coach foreground facing students. Indoor track: brown wooden roof beams, fluorescent lights, American flag left wall, red track, green turf background, wooden bench foreground.",
@@ -467,6 +568,7 @@ const PROMPTS: PromptSeed[] = [
     sortOrder: 90,
     outfitText: 'tight white deep V-neck crop top deep cleavage, very short tight red volleyball shorts extremely form-fitting back and sides',
     speakerLine: '1 more point guys, stay focused.',
+    phraseVariations: PHRASES_VOLLEYBALL,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot from behind baseline, slightly above seated spectators. Camera captures her back as she moves toward the net. Indoor volleyball gym: polished wooden court floor with court lines, volleyball net mid-court, EAGLES players in maroon jerseys behind net, blue bleachers background. Spectator heads visible in foreground.",
@@ -493,6 +595,8 @@ async function main() {
       where: { title: p.title },
     })
 
+    const phraseVariationsJson = p.phraseVariations ? JSON.stringify(p.phraseVariations) : null
+
     if (existing) {
       await prisma.validatedPrompt.update({
         where: { id: existing.id },
@@ -500,12 +604,13 @@ async function main() {
           promptJson: p.promptJson,
           outfitText: p.outfitText ?? null,
           speakerLine: p.speakerLine ?? null,
+          phraseVariations: phraseVariationsJson,
           isBest: p.isBest ?? false,
           sortOrder: p.sortOrder ?? 0,
         },
       })
       updated++
-      console.log(`  ↻ Updated: ${p.title}`)
+      console.log(`  ↻ Updated: ${p.title} (${p.phraseVariations?.length ?? 0} phrases)`)
     } else {
       await prisma.validatedPrompt.create({
         data: {
@@ -515,6 +620,7 @@ async function main() {
           promptJson: p.promptJson,
           outfitText: p.outfitText ?? null,
           speakerLine: p.speakerLine ?? null,
+          phraseVariations: phraseVariationsJson,
           isBest: p.isBest ?? false,
           sortOrder: p.sortOrder ?? 0,
         },

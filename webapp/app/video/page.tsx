@@ -16,9 +16,10 @@ type ValidatedPrompt = {
   isBest: boolean
   outfitText: string | null
   speakerLine: string | null
+  phraseVariations: string[] | null  // phrases dédiées à ce concept précis
 }
 
-// ─── Variation pools (doit rester en sync avec video_prompts.py) ──────────────
+// ─── Outfit pools (doit rester en sync avec video_prompts.py) ─────────────────
 
 const CONF_OUTFITS = [
   { label: 'White deep-V bodysuit + black mini + black heels', value: 'white deep-V bodysuit open neckline, extremely short tight black mini skirt, black stiletto heels' },
@@ -36,28 +37,6 @@ const SPORT_OUTFITS = [
   { label: 'Pink tank deep-V + black shorts', value: 'tight pink fitted athletic tank top deep open neckline, extremely short tight black athletic shorts extremely form-fitting back and sides' },
   { label: 'White cutout crop + burgundy shorts', value: 'tight white cutout crop top deep cleavage, extremely short tight burgundy athletic shorts very form-fitting' },
   { label: 'Olive deep-V + black shorts', value: 'tight olive green deep V-neck athletic top, extremely short tight black athletic shorts form-fitting back and sides' },
-]
-
-const CONF_PHRASES = [
-  "Today I'm going to show you how to get every eye in the room completely on you.",
-  "There is one thing that separates great leaders from everyone else — knowing exactly what to put out there.",
-  "The most powerful women I know have never been afraid to let it all show.",
-  "If you want them to listen, you first have to make them look.",
-  "Success is about knowing exactly what to reveal — and exactly when to reveal it.",
-  "The number one lesson in leadership? Never underestimate what a confident woman can do in the right position.",
-  "I want every single person in this room to leave here knowing how to make a room stop.",
-  "The secret to owning a room? Make sure they cannot take their eyes off you.",
-  "Your greatest asset isn't what you know — it's knowing exactly what to show.",
-]
-
-const SPORT_PHRASES = [
-  "Give me everything you've got — I want you fully extended by the end of this.",
-  "Push through it. Don't stop until I say so.",
-  "I need you focused on the movement — not on what's around you.",
-  "If you want real results, you're going to have to let yourself go completely.",
-  "Don't hold back. I want to see exactly what your body can do.",
-  "The best athletes I've trained? They always go harder when I'm watching.",
-  "Come on — I need your full commitment right now, nothing held back.",
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -88,18 +67,16 @@ export default function VideoPage() {
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation'>('direct')
 
-  // ── Mode direct : sélection ──
+  // ── Mode direct ──
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
-  const [batchCount, setBatchCount] = useState(1)    // fois par prompt
+  const [batchCount, setBatchCount] = useState(1)
   const [subNicheFilter, setSubNicheFilter] = useState<'all' | 'conference' | 'sport'>('all')
 
-  // ── Mode variation : sélection base ──
-  const [varBaseIds, setVarBaseIds] = useState<Set<number>>(new Set())
-  const [varAllPrompts, setVarAllPrompts] = useState(false)
+  // ── Mode variation : UN seul prompt de base (radio), outfit + phrase ──
+  const [varBaseId, setVarBaseId] = useState<number | null>(null)
   const [varBatchCount, setVarBatchCount] = useState(1)
-  const [varOutfit, setVarOutfit] = useState('')        // '' = aléatoire
-  const [varPhrase, setVarPhrase] = useState('')        // '' = aléatoire
-  const [varSubNiche, setVarSubNiche] = useState<'conference' | 'sport'>('conference')
+  const [varOutfit, setVarOutfit] = useState('')   // '' = aléatoire
+  const [varPhrase, setVarPhrase] = useState('')   // '' = aléatoire
 
   // ── Config commune ──
   const [duration, setDuration] = useState(5)
@@ -135,12 +112,12 @@ export default function VideoPage() {
       .finally(() => setLoadingPrompts(false))
   }, [])
 
-  // ── Filtrage ──
+  // ── Filtrage mode direct ──
   const filteredPrompts = prompts.filter(p =>
     subNicheFilter === 'all' || p.subNiche === subNicheFilter
   )
 
-  // ── Sélection tout / rien ──
+  // ── Select all direct ──
   const toggleSelectAll = useCallback(() => {
     if (selectedIds.size === filteredPrompts.length) {
       setSelectedIds(new Set())
@@ -149,21 +126,26 @@ export default function VideoPage() {
     }
   }, [filteredPrompts, selectedIds.size])
 
-  const toggleSelectVarAll = useCallback(() => {
-    if (varBaseIds.size === prompts.length) {
-      setVarBaseIds(new Set())
-    } else {
-      setVarBaseIds(new Set(prompts.map(p => p.id)))
+  // ── Prompt sélectionné pour variation ──
+  const selectedVarPrompt = prompts.find(p => p.id === varBaseId) ?? null
+
+  // ── Outfit pool selon sous-niche du prompt choisi ──
+  const outfitPool = selectedVarPrompt?.subNiche === 'sport' ? SPORT_OUTFITS : CONF_OUTFITS
+
+  // ── Phrases dédiées au prompt sélectionné (depuis DB) ──
+  const currentPhrasePool = selectedVarPrompt?.phraseVariations ?? null
+
+  // Reset outfit/phrase si on change de prompt
+  const selectVarBase = (id: number) => {
+    if (id !== varBaseId) {
+      setVarBaseId(id)
+      setVarOutfit('')
+      setVarPhrase('')
     }
-  }, [prompts, varBaseIds.size])
+  }
 
-  // ── Outfits disponibles selon sous-niche sélectionnée ──
-  const outfitPool = varSubNiche === 'sport' ? SPORT_OUTFITS : CONF_OUTFITS
-  const phrasePool = varSubNiche === 'sport' ? SPORT_PHRASES : CONF_PHRASES
-
-  // ── Total vidéos à générer ──
   const totalDirect = selectedIds.size * batchCount
-  const totalVar = (varAllPrompts ? prompts.length : varBaseIds.size) * varBatchCount
+  const totalVar = varBaseId ? varBatchCount : 0
 
   // ── Launch ──
   const launch = async () => {
@@ -189,18 +171,14 @@ export default function VideoPage() {
           duration,
         }
       } else {
-        // variation
-        const ids = varAllPrompts
-          ? prompts.map(p => p.id)
-          : Array.from(varBaseIds)
-        if (!ids.length) {
-          setLaunchError('Sélectionner au moins un prompt de base')
+        if (!varBaseId) {
+          setLaunchError('Sélectionner un prompt de base')
           setLaunching(false)
           return
         }
         body = {
           mode: 'variation',
-          validatedPromptIds: ids,
+          validatedPromptIds: [varBaseId],
           batchCount: varBatchCount,
           outfitOverride: varOutfit || null,
           phraseOverride: varPhrase || null,
@@ -259,7 +237,7 @@ export default function VideoPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-5">
 
-        {/* ── Header niche ── */}
+        {/* ── Header ── */}
         <div className="flex items-center gap-3">
           <span className="text-2xl">🎓🏃</span>
           <div>
@@ -296,15 +274,15 @@ export default function VideoPage() {
           )}
         </div>
 
-        {/* ── Durée commune ── */}
+        {/* ── Durée ── */}
         <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 flex items-center gap-6">
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1.5">Durée vidéo : <span className="text-white font-medium">{duration}s</span></label>
-            <input
-              type="range" min={3} max={10} value={duration}
+            <label className="block text-xs text-gray-400 mb-1.5">
+              Durée vidéo : <span className="text-white font-medium">{duration}s</span>
+            </label>
+            <input type="range" min={3} max={10} value={duration}
               onChange={e => setDuration(Number(e.target.value))}
-              className="w-full accent-violet-500"
-            />
+              className="w-full accent-violet-500" />
           </div>
           <div className="text-xs text-gray-500 text-right leading-relaxed">
             <div>9:16 · 1080p</div>
@@ -314,25 +292,21 @@ export default function VideoPage() {
 
         {/* ── Mode tabs ── */}
         <div className="flex gap-2">
-          <button
-            onClick={() => setUiMode('direct')}
+          <button onClick={() => setUiMode('direct')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
               uiMode === 'direct'
                 ? 'bg-violet-600 border-violet-500 text-white'
                 : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
-            }`}
-          >
+            }`}>
             🎯 Directs — prompt exact
           </button>
-          <button
-            onClick={() => setUiMode('variation')}
+          <button onClick={() => setUiMode('variation')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
               uiMode === 'variation'
                 ? 'bg-violet-600 border-violet-500 text-white'
                 : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
-            }`}
-          >
-            🔀 Variations — outfit + phrase
+            }`}>
+            🔀 Variations — outfit + réplique
           </button>
         </div>
 
@@ -350,15 +324,13 @@ export default function VideoPage() {
               </div>
               <div className="flex gap-1.5 shrink-0">
                 {(['all', 'conference', 'sport'] as const).map(f => (
-                  <button
-                    key={f}
+                  <button key={f}
                     onClick={() => { setSubNicheFilter(f); setSelectedIds(new Set()) }}
                     className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
                       subNicheFilter === f
                         ? 'bg-violet-600 border-violet-500 text-white'
                         : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'
-                    }`}
-                  >
+                    }`}>
                     {f === 'all' ? 'Tous' : f === 'conference' ? '🎓 Conf.' : '🏃 Sport'}
                   </button>
                 ))}
@@ -367,20 +339,16 @@ export default function VideoPage() {
 
             {/* Sélect tout */}
             <div className="px-5 py-3 border-b border-gray-800 flex items-center justify-between">
-              <button
-                onClick={toggleSelectAll}
-                className="text-xs text-violet-400 hover:text-violet-300 transition"
-              >
+              <button onClick={toggleSelectAll} className="text-xs text-violet-400 hover:text-violet-300 transition">
                 {selectedIds.size === filteredPrompts.length && filteredPrompts.length > 0
-                  ? '☑ Tout désélectionner'
-                  : '☐ Tout sélectionner'}
+                  ? '☑ Tout désélectionner' : '☐ Tout sélectionner'}
               </button>
               <span className="text-xs text-gray-500">
                 {selectedIds.size} / {filteredPrompts.length} sélectionné{selectedIds.size > 1 ? 's' : ''}
               </span>
             </div>
 
-            {/* Liste prompts */}
+            {/* Liste */}
             <div className="divide-y divide-gray-800/60">
               {loadingPrompts ? (
                 <div className="p-6 text-center text-xs text-gray-500">Chargement des prompts...</div>
@@ -388,24 +356,16 @@ export default function VideoPage() {
                 <div className="p-6 text-center text-xs text-gray-500">Aucun prompt pour cette niche.</div>
               ) : (
                 filteredPrompts.map(p => (
-                  <label
-                    key={p.id}
-                    className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                      selectedIds.has(p.id) ? 'bg-violet-600/10' : 'hover:bg-gray-800/40'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(p.id)}
-                      onChange={() => {
-                        setSelectedIds(prev => {
-                          const next = new Set(prev)
-                          next.has(p.id) ? next.delete(p.id) : next.add(p.id)
-                          return next
-                        })
-                      }}
-                      className="accent-violet-500 w-4 h-4 shrink-0"
-                    />
+                  <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
+                    selectedIds.has(p.id) ? 'bg-violet-600/10' : 'hover:bg-gray-800/40'
+                  }`}>
+                    <input type="checkbox" checked={selectedIds.has(p.id)}
+                      onChange={() => setSelectedIds(prev => {
+                        const next = new Set(prev)
+                        next.has(p.id) ? next.delete(p.id) : next.add(p.id)
+                        return next
+                      })}
+                      className="accent-violet-500 w-4 h-4 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm text-gray-100 truncate">
@@ -415,9 +375,7 @@ export default function VideoPage() {
                         <SubNicheLabel subNiche={p.subNiche} />
                       </div>
                       {p.speakerLine && (
-                        <p className="text-xs text-gray-500 mt-0.5 truncate italic">
-                          &ldquo;{p.speakerLine}&rdquo;
-                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
                       )}
                     </div>
                   </label>
@@ -428,31 +386,24 @@ export default function VideoPage() {
             {/* Batch count + CTA */}
             <div className="p-5 border-t border-gray-800 space-y-4">
               <div>
-                <p className="text-xs text-gray-400 mb-2">Générer <span className="text-white font-medium">×{batchCount}</span> fois chaque prompt sélectionné</p>
+                <p className="text-xs text-gray-400 mb-2">
+                  Générer <span className="text-white font-medium">×{batchCount}</span> fois chaque prompt sélectionné
+                </p>
                 <div className="flex gap-2">
                   {[1, 2, 3, 5].map(n => (
-                    <button
-                      key={n}
-                      onClick={() => setBatchCount(n)}
+                    <button key={n} onClick={() => setBatchCount(n)}
                       className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition ${
                         batchCount === n
                           ? 'bg-violet-600 border-violet-500 text-white'
                           : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
-                      }`}
-                    >
-                      ×{n}
-                    </button>
+                      }`}>×{n}</button>
                   ))}
                 </div>
               </div>
-
               {launchError && <p className="text-sm text-red-400">{launchError}</p>}
-
-              <button
-                onClick={launch}
+              <button onClick={launch}
                 disabled={launching || !selectedElementId || selectedIds.size === 0}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
-              >
+                className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition">
                 {launching
                   ? '⏳ Lancement...'
                   : `▶ Générer ${totalDirect} vidéo${totalDirect > 1 ? 's' : ''} — ${selectedIds.size} prompt${selectedIds.size > 1 ? 's' : ''} × ${batchCount} →`}
@@ -463,182 +414,172 @@ export default function VideoPage() {
 
         {/* ════════════════════════════════════════════════════════════
             MODE VARIATIONS
+            Flow : 1) Sélectionner LE prompt de base (radio)
+                   2) Les répliques dédiées à CE concept apparaissent
+                   3) Choisir outfit + réplique (ou aléatoire)
+                   4) Batch count → Lancer
         ════════════════════════════════════════════════════════════ */}
         {uiMode === 'variation' && (
           <div className="space-y-4">
 
-            {/* Info box */}
+            {/* Info */}
             <div className="bg-amber-950/30 border border-amber-800/50 rounded-xl px-4 py-3">
-              <p className="text-xs text-amber-300 font-medium mb-1">Variations ultra-légères uniquement</p>
-              <p className="text-xs text-amber-400/80">
-                Seuls l&apos;outfit et la réplique sont remplacés — jamais la structure du prompt. 🔴 Culotte rouge : toujours fixe.
+              <p className="text-xs text-amber-300 font-medium mb-0.5">Variations ultra-légères — structure du prompt intacte</p>
+              <p className="text-xs text-amber-400/70">
+                Seuls l&apos;outfit et la réplique changent. Répliques calibrées sur LE contexte exact du concept. 🔴 Culotte rouge : toujours fixe.
               </p>
             </div>
 
-            {/* Sous-niche pour les pools */}
-            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Type de variation</p>
-              <div className="flex gap-2">
-                {(['conference', 'sport'] as const).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => { setVarSubNiche(s); setVarOutfit(''); setVarPhrase('') }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
-                      varSubNiche === s
-                        ? 'bg-violet-600 border-violet-500 text-white'
-                        : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
-                    }`}
-                  >
-                    {s === 'conference' ? '🎓 Conférence' : '🏃 Sport/Coach'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Outfit */}
-            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Outfit</p>
-                <span className="text-xs text-gray-600">🔴 Culotte rouge — toujours fixe</span>
-              </div>
-              <div className="grid grid-cols-1 gap-2">
-                <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition ${
-                  varOutfit === '' ? 'border-violet-500 bg-violet-600/10 text-white' : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-                }`}>
-                  <input type="radio" name="outfit" value="" checked={varOutfit === ''} onChange={() => setVarOutfit('')} className="accent-violet-500" />
-                  <span className="text-sm">🎲 Aléatoire (pool validé)</span>
-                </label>
-                {outfitPool.map(o => (
-                  <label key={o.value} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition ${
-                    varOutfit === o.value ? 'border-violet-500 bg-violet-600/10 text-white' : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-                  }`}>
-                    <input type="radio" name="outfit" value={o.value} checked={varOutfit === o.value} onChange={() => setVarOutfit(o.value)} className="accent-violet-500" />
-                    <span className="text-sm">{o.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Phrase */}
-            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Réplique (si le prompt en a une)</p>
-              <div className="grid grid-cols-1 gap-2">
-                <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition ${
-                  varPhrase === '' ? 'border-violet-500 bg-violet-600/10 text-white' : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-                }`}>
-                  <input type="radio" name="phrase" value="" checked={varPhrase === ''} onChange={() => setVarPhrase('')} className="accent-violet-500" />
-                  <span className="text-sm">🎲 Aléatoire (pool validé)</span>
-                </label>
-                {phrasePool.map(ph => (
-                  <label key={ph} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition ${
-                    varPhrase === ph ? 'border-violet-500 bg-violet-600/10 text-white' : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-                  }`}>
-                    <input type="radio" name="phrase" value={ph} checked={varPhrase === ph} onChange={() => setVarPhrase(ph)} className="accent-violet-500 mt-0.5 shrink-0" />
-                    <span className="text-sm italic">&ldquo;{ph}&rdquo;</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Sélection prompts de base */}
+            {/* ── ÉTAPE 1 : Sélectionner le concept de base ── */}
             <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-              <div className="p-5 border-b border-gray-800">
-                <p className="text-sm font-semibold text-white mb-1">Prompts de base</p>
-                <p className="text-xs text-gray-500">La variation est appliquée à chaque prompt sélectionné.</p>
+              <div className="px-5 py-4 border-b border-gray-800">
+                <p className="text-sm font-semibold text-white">① Choisir le concept de base</p>
+                <p className="text-xs text-gray-500 mt-0.5">Les répliques et l&apos;outfit pool s&apos;adaptent automatiquement au concept sélectionné.</p>
               </div>
-
-              {/* Toggle tout */}
-              <div className="px-5 py-3 border-b border-gray-800 flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={varAllPrompts}
-                    onChange={e => setVarAllPrompts(e.target.checked)}
-                    className="accent-violet-500 w-4 h-4"
-                  />
-                  <span className="text-xs text-violet-400">Tous les prompts validés ({prompts.length})</span>
-                </label>
-                {!varAllPrompts && (
-                  <button onClick={toggleSelectVarAll} className="text-xs text-gray-500 hover:text-gray-300 transition">
-                    {varBaseIds.size === prompts.length ? 'Désélectionner tout' : 'Sélectionner tout'}
-                  </button>
-                )}
-              </div>
-
-              {/* Liste */}
-              {!varAllPrompts && (
-                <div className="divide-y divide-gray-800/60 max-h-64 overflow-y-auto">
-                  {loadingPrompts ? (
-                    <div className="p-4 text-center text-xs text-gray-500">Chargement...</div>
-                  ) : (
-                    prompts.map(p => (
-                      <label key={p.id} className={`flex items-center gap-3 px-5 py-2.5 cursor-pointer transition ${
-                        varBaseIds.has(p.id) ? 'bg-violet-600/10' : 'hover:bg-gray-800/40'
-                      }`}>
-                        <input
-                          type="checkbox"
-                          checked={varBaseIds.has(p.id)}
-                          onChange={() => setVarBaseIds(prev => {
-                            const next = new Set(prev)
-                            next.has(p.id) ? next.delete(p.id) : next.add(p.id)
-                            return next
-                          })}
-                          className="accent-violet-500 w-4 h-4 shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-100 truncate">
-                              {p.isBest && <span className="text-yellow-400 mr-1">★</span>}
-                              {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
-                            </span>
-                            <SubNicheLabel subNiche={p.subNiche} />
-                          </div>
-                          {p.speakerLine && (
-                            <p className="text-xs text-gray-600 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
+              <div className="divide-y divide-gray-800/60 max-h-72 overflow-y-auto">
+                {loadingPrompts ? (
+                  <div className="p-4 text-center text-xs text-gray-500">Chargement...</div>
+                ) : (
+                  prompts.map(p => (
+                    <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
+                      varBaseId === p.id ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                    }`}>
+                      <input type="radio" name="varBase" value={p.id}
+                        checked={varBaseId === p.id}
+                        onChange={() => selectVarBase(p.id)}
+                        className="accent-violet-500 w-4 h-4 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-gray-100">
+                            {p.isBest && <span className="text-yellow-400 mr-1">★</span>}
+                            {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
+                          </span>
+                          <SubNicheLabel subNiche={p.subNiche} />
+                          {!p.phraseVariations && (
+                            <span className="text-xs text-gray-600 italic">outfit uniquement</span>
                           )}
                         </div>
-                      </label>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* Nb variations par prompt + CTA */}
-              <div className="p-5 border-t border-gray-800 space-y-4">
-                <div>
-                  <p className="text-xs text-gray-400 mb-2">
-                    <span className="text-white font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} par prompt
-                  </p>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 5].map(n => (
-                      <button
-                        key={n}
-                        onClick={() => setVarBatchCount(n)}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition ${
-                          varBatchCount === n
-                            ? 'bg-violet-600 border-violet-500 text-white'
-                            : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
-                        }`}
-                      >
-                        ×{n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {launchError && <p className="text-sm text-red-400">{launchError}</p>}
-
-                <button
-                  onClick={launch}
-                  disabled={launching || !selectedElementId || (!varAllPrompts && varBaseIds.size === 0)}
-                  className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  {launching
-                    ? '⏳ Lancement...'
-                    : `▶ Générer ${totalVar} variation${totalVar > 1 ? 's' : ''} →`}
-                </button>
+                        {p.speakerLine && varBaseId !== p.id && (
+                          <p className="text-xs text-gray-600 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
+                        )}
+                      </div>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
+
+            {/* ── ÉTAPE 2 : Répliques dédiées (seulement si prompt sélectionné avec phrases) ── */}
+            {varBaseId && currentPhrasePool && (
+              <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-800">
+                  <p className="text-sm font-semibold text-white">② Réplique</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {currentPhrasePool.length} répliques calibrées sur ce concept précis.
+                    En mode aléatoire, elles tournent sans répétition.
+                  </p>
+                </div>
+                <div className="divide-y divide-gray-800/40 max-h-80 overflow-y-auto">
+                  {/* Aléatoire */}
+                  <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
+                    varPhrase === '' ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                  }`}>
+                    <input type="radio" name="phrase" value=""
+                      checked={varPhrase === ''}
+                      onChange={() => setVarPhrase('')}
+                      className="accent-violet-500 w-4 h-4 shrink-0" />
+                    <span className="text-sm text-gray-200">🎲 Aléatoire — cycle sans répétition</span>
+                  </label>
+                  {/* Phrases dédiées */}
+                  {currentPhrasePool.map((ph, i) => (
+                    <label key={i} className={`flex items-start gap-3 px-5 py-3 cursor-pointer transition ${
+                      varPhrase === ph ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                    }`}>
+                      <input type="radio" name="phrase" value={ph}
+                        checked={varPhrase === ph}
+                        onChange={() => setVarPhrase(ph)}
+                        className="accent-violet-500 w-4 h-4 shrink-0 mt-0.5" />
+                      <span className="text-sm italic text-gray-300">&ldquo;{ph}&rdquo;</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── ÉTAPE 3 : Outfit ── */}
+            {varBaseId && (
+              <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {currentPhrasePool ? '③' : '②'} Outfit
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">Pool adapté à la niche du concept.</p>
+                  </div>
+                  <span className="text-xs text-gray-600">🔴 Culotte rouge — fixe</span>
+                </div>
+                <div className="divide-y divide-gray-800/40">
+                  <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
+                    varOutfit === '' ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                  }`}>
+                    <input type="radio" name="outfit" value=""
+                      checked={varOutfit === ''}
+                      onChange={() => setVarOutfit('')}
+                      className="accent-violet-500 w-4 h-4 shrink-0" />
+                    <span className="text-sm text-gray-200">🎲 Aléatoire — cycle sans répétition</span>
+                  </label>
+                  {outfitPool.map(o => (
+                    <label key={o.value} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
+                      varOutfit === o.value ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                    }`}>
+                      <input type="radio" name="outfit" value={o.value}
+                        checked={varOutfit === o.value}
+                        onChange={() => setVarOutfit(o.value)}
+                        className="accent-violet-500 w-4 h-4 shrink-0" />
+                      <span className="text-sm text-gray-300">{o.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Batch count + CTA ── */}
+            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
+              <div>
+                <p className="text-xs text-gray-400 mb-2">
+                  Générer <span className="text-white font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} de ce concept
+                  {varBatchCount > 1 && currentPhrasePool && (
+                    <span className="text-gray-600"> — répliques et outfits différents à chaque fois</span>
+                  )}
+                </p>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 5, 10].map(n => (
+                    <button key={n} onClick={() => setVarBatchCount(n)}
+                      className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition ${
+                        varBatchCount === n
+                          ? 'bg-violet-600 border-violet-500 text-white'
+                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                      }`}>×{n}</button>
+                  ))}
+                </div>
+              </div>
+
+              {!varBaseId && (
+                <p className="text-xs text-gray-600 italic">← Sélectionner un concept de base pour continuer</p>
+              )}
+              {launchError && <p className="text-sm text-red-400">{launchError}</p>}
+
+              <button onClick={launch}
+                disabled={launching || !selectedElementId || !varBaseId}
+                className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                {launching
+                  ? '⏳ Lancement...'
+                  : varBaseId
+                    ? `▶ Générer ${totalVar} variation${totalVar > 1 ? 's' : ''} →`
+                    : '▶ Lancer →'}
+              </button>
+            </div>
+
           </div>
         )}
 

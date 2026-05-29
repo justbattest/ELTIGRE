@@ -108,7 +108,8 @@ model ValidatedPrompt {
   title       String
   promptJson  String   @map("prompt_json") @db.Text
   outfitText  String?  @map("outfit_text") @db.Text   // exact substring à remplacer pour variation outfit
-  speakerLine String?  @map("speaker_line") @db.Text  // exact texte de la réplique féminine à remplacer
+  speakerLine      String?  @map("speaker_line") @db.Text       // exact texte de la réplique féminine à remplacer
+  phraseVariations String?  @map("phrase_variations") @db.Text  // JSON array de phrases dédiées à ce concept
   isBest      Boolean  @default(false) @map("is_best")
   isActive    Boolean  @default(true) @map("is_active")
   sortOrder   Int      @default(0) @map("sort_order")

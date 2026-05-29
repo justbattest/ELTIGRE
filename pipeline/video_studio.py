@@ -20,7 +20,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from pipeline.video_prompts import generate_batch, apply_variation, pick_variation_outfit, pick_variation_phrase
+from pipeline.video_prompts import generate_batch, apply_variation, pick_variation_outfit, pick_variation_phrase  # noqa: F401
 
 MAX_CONCURRENT = 1  # Seedance 2.0 : 1 seul job vidéo à la fois (concurrent_jobs_limit)
 
@@ -154,15 +154,18 @@ async def run_validated_studio(
             outfit_text = item.get("outfitText")
             speaker_line = item.get("speakerLine")
 
-            # Outfit : override explicite OU aléatoire dans le pool
+            # Outfit : override explicite OU aléatoire dans le pool (sans répétitions)
             new_outfit = outfit_override or pick_variation_outfit(sub_niche, used_outfits)
             used_outfits.append(new_outfit)
 
-            # Phrase : override explicite OU aléatoire (seulement si le prompt a une réplique)
+            # Phrase : depuis le pool DÉDIÉ à ce prompt (phraseVariations en DB)
+            # Override explicite > aléatoire dans le pool du prompt > rien si pas de pool
             new_phrase = None
-            if speaker_line:
-                new_phrase = phrase_override or pick_variation_phrase(sub_niche, used_phrases)
-                used_phrases.append(new_phrase)
+            phrase_pool: list[str] = item.get("phraseVariations") or []
+            if speaker_line and (phrase_override or phrase_pool):
+                new_phrase = phrase_override or pick_variation_phrase(phrase_pool, used_phrases)
+                if new_phrase:
+                    used_phrases.append(new_phrase)
 
             prompt_json = apply_variation(
                 prompt_json=prompt_json,

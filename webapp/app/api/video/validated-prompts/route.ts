@@ -22,11 +22,18 @@ export async function GET(req: NextRequest) {
       subNiche: true,
       title: true,
       isBest: true,
-      outfitText: true,   // exposé pour affichage dans le mode variations
-      speakerLine: true,  // exposé pour affichage dans le mode variations
+      outfitText: true,        // exposé pour affichage dans le mode variations
+      speakerLine: true,       // exposé pour affichage dans le mode variations
+      phraseVariations: true,  // JSON array — parsé avant envoi
       // promptJson intentionnellement omis
     },
   })
 
-  return NextResponse.json({ prompts })
+  // Parser phraseVariations JSON avant envoi au client
+  const parsed = prompts.map(p => ({
+    ...p,
+    phraseVariations: p.phraseVariations ? JSON.parse(p.phraseVariations) as string[] : null,
+  }))
+
+  return NextResponse.json({ prompts: parsed })
 }

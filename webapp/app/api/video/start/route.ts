@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     const dbPrompts = await prisma.validatedPrompt.findMany({
       where: { id: { in: validatedPromptIds }, isActive: true },
       orderBy: { sortOrder: 'asc' },
-      select: { id: true, title: true, promptJson: true, outfitText: true, speakerLine: true, subNiche: true },
+      select: { id: true, title: true, promptJson: true, outfitText: true, speakerLine: true, subNiche: true, phraseVariations: true },
     })
 
     if (!dbPrompts.length) {
@@ -74,12 +74,14 @@ export async function POST(req: NextRequest) {
 
     // Construire la liste des jobs : chaque prompt × batchCount
     const validatedPrompts = dbPrompts.flatMap(p => {
+      const phraseVariations = p.phraseVariations ? JSON.parse(p.phraseVariations) : null
       return Array.from({ length: batchCount }, (_, i) => ({
         id: p.id,
         title: p.title,
         promptJson: p.promptJson,
         outfitText: p.outfitText,
         speakerLine: p.speakerLine,
+        phraseVariations,   // tableau de phrases dédiées à ce concept
         subNiche: p.subNiche,
         repeatIndex: i,
       }))

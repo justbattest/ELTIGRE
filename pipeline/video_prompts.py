@@ -513,32 +513,6 @@ VARIATION_OUTFITS: dict[str, list[str]] = {
     ],
 }
 
-VARIATION_PHRASES: dict[str, list[str]] = {
-    "conference": [
-        "Today I'm going to show you how to get every eye in the room completely on you.",
-        "There is one thing that separates great leaders from everyone else — knowing exactly what to put out there.",
-        "The most powerful women I know have never been afraid to let it all show.",
-        "If you want them to listen, you first have to make them look.",
-        "Success is about knowing exactly what to reveal — and exactly when to reveal it.",
-        "The number one lesson in leadership? Never underestimate what a confident woman can do in the right position.",
-        "I want every single person in this room to leave here knowing how to make a room stop.",
-        "The secret to owning a room? Make sure they cannot take their eyes off you.",
-        "Your greatest asset isn't what you know — it's knowing exactly what to show.",
-        "The key to influence? Walk in fully exposed to scrutiny and own it completely.",
-    ],
-    "sport": [
-        "Give me everything you've got — I want you fully extended by the end of this.",
-        "Push through it. Don't stop until I say so.",
-        "I need you focused on the movement — not on what's around you.",
-        "If you want real results, you're going to have to let yourself go completely.",
-        "Don't hold back. I want to see exactly what your body can do.",
-        "The best athletes I've trained? They always go harder when I'm watching.",
-        "Come on — I need your full commitment right now, nothing held back.",
-        "Stay with me. Eyes forward. Give me one more — all the way down.",
-    ],
-}
-
-
 def apply_variation(
     prompt_json: str,
     outfit_text: str | None = None,
@@ -587,14 +561,19 @@ def pick_variation_outfit(sub_niche: str, used: list[str] | None = None) -> str:
     return random.choice(pool)
 
 
-def pick_variation_phrase(sub_niche: str, used: list[str] | None = None) -> str:
-    """Tire une phrase de variation en évitant les répétitions si possible."""
-    pool = VARIATION_PHRASES.get(sub_niche, VARIATION_PHRASES["conference"])
+def pick_variation_phrase(phrase_pool: list[str], used: list[str] | None = None) -> str:
+    """Tire une phrase depuis le pool dédié au prompt (sans répétitions si possible).
+
+    phrase_pool : liste de phrases spécifiques au concept (depuis phraseVariations en DB)
+    used        : phrases déjà utilisées dans ce batch (pour éviter les répétitions)
+    """
+    if not phrase_pool:
+        return ""
     if used:
-        remaining = [p for p in pool if p not in used]
+        remaining = [p for p in phrase_pool if p not in used]
         if remaining:
             return random.choice(remaining)
-    return random.choice(pool)
+    return random.choice(phrase_pool)
 
 
 def generate_batch(
