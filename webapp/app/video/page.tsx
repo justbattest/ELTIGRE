@@ -83,8 +83,8 @@ export default function VideoPage() {
   const [prompts, setPrompts] = useState<ValidatedPrompt[]>([])
   const [loadingPrompts, setLoadingPrompts] = useState(false)
 
-  // ── Niche ──
-  const [niche, setNiche] = useState<'conference_sport' | 'vieux'>('conference_sport')
+  // ── Niche — 3 onglets séparés ──
+  const [niche, setNiche] = useState<'conference' | 'sport' | 'vieux'>('conference')
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation'>('direct')
@@ -92,7 +92,7 @@ export default function VideoPage() {
   // ── Mode direct ──
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [batchCount, setBatchCount] = useState(1)
-  const [subNicheFilter, setSubNicheFilter] = useState<'all' | 'conference' | 'sport'>('all')
+  // subNicheFilter supprimé — l'onglet niche fait déjà le filtrage
 
   // ── Mode variation : UN seul prompt de base (radio), outfit + phrase ──
   const [varBaseId, setVarBaseId] = useState<number | null>(null)
@@ -124,23 +124,32 @@ export default function VideoPage() {
       .finally(() => setLoadingChars(false))
   }, [])
 
-  // ── Load validated prompts (reload when niche changes) ──
+  // ── Load validated prompts (reload au changement d'onglet) ──
   useEffect(() => {
     setLoadingPrompts(true)
     setPrompts([])
     setSelectedIds(new Set())
     setVarBaseId(null)
-    fetch(`/api/video/validated-prompts?niche=${niche}`)
+    setVarOutfit('')
+    setVarPhrase('')
+    // conference et sport sont dans le même niche DB 'conference_sport', filtrés côté client
+    const dbNiche = niche === 'vieux' ? 'vieux' : 'conference_sport'
+    fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
-      .then(data => setPrompts(data.prompts || []))
+      .then(data => {
+        const all: ValidatedPrompt[] = data.prompts || []
+        // Filtre côté client par subNiche selon l'onglet
+        const filtered = niche === 'vieux'
+          ? all
+          : all.filter(p => p.subNiche === niche)
+        setPrompts(filtered)
+      })
       .catch(() => {})
       .finally(() => setLoadingPrompts(false))
   }, [niche])
 
-  // ── Filtrage mode direct ──
-  const filteredPrompts = prompts.filter(p =>
-    subNicheFilter === 'all' || p.subNiche === subNicheFilter
-  )
+  // Mode direct : tous les prompts de l'onglet (plus de sub-filtre, l'onglet fait déjà le travail)
+  const filteredPrompts = prompts
 
   // ── Select all direct ──
   const toggleSelectAll = useCallback(() => {
@@ -268,15 +277,16 @@ export default function VideoPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-5">
 
-        {/* ── Sélecteur de niche ── */}
+        {/* ── Sélecteur de niche — 3 onglets séparés ── */}
         <div className="flex gap-2 flex-wrap">
           {([
-            { id: 'conference_sport' as const, emoji: '🎓🏃', label: 'Conférence + Sport' },
-            { id: 'vieux' as const, emoji: '👴', label: 'Vieux' },
+            { id: 'conference' as const, emoji: '🎓', label: 'Conférence' },
+            { id: 'sport' as const,      emoji: '🏃', label: 'Sport' },
+            { id: 'vieux' as const,      emoji: '👴', label: 'Vieux' },
           ]).map(n => (
             <button
               key={n.id}
-              onClick={() => { setNiche(n.id); setVarOutfit(''); setVarPhrase('') }}
+              onClick={() => setNiche(n.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${
                 niche === n.id
                   ? 'bg-violet-600 border-violet-500 text-white'
@@ -364,19 +374,9 @@ export default function VideoPage() {
                 <p className="text-sm font-semibold text-white">Prompts validés</p>
                 <p className="text-xs text-gray-500 mt-0.5">Chaque prompt est généré copie exacte — zéro modification.</p>
               </div>
-              <div className="flex gap-1.5 shrink-0">
-                {(['all', 'conference', 'sport'] as const).map(f => (
-                  <button key={f}
-                    onClick={() => { setSubNicheFilter(f); setSelectedIds(new Set()) }}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
-                      subNicheFilter === f
-                        ? 'bg-violet-600 border-violet-500 text-white'
-                        : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'
-                    }`}>
-                    {f === 'all' ? 'Tous' : f === 'conference' ? '🎓 Conf.' : '🏃 Sport'}
-                  </button>
-                ))}
-              </div>
+              <span className="text-xs text-gray-500">
+                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Sport' : '👴 Vieux'}
+              </span>
             </div>
 
             {/* Sélect tout */}
