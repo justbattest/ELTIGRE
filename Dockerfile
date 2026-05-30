@@ -34,6 +34,7 @@ RUN python3 -m venv venv && \
 
 # ── Pipeline Python ───────────────────────────────────────────────────────────
 COPY pipeline/ pipeline/
+COPY skills/ skills/
 
 # ── Next.js webapp ────────────────────────────────────────────────────────────
 COPY webapp/ webapp/
