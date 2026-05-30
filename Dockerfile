@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Higgsfield CLI ────────────────────────────────────────────────────────────
-RUN npm install -g higgsfield
+RUN npm install -g @higgsfield/cli
 
 # ── Répertoire de travail ─────────────────────────────────────────────────────
 WORKDIR /app
