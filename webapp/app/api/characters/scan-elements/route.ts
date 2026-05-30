@@ -51,7 +51,26 @@ export async function GET() {
     const items: { id: string; name: string; type: string; status: string; thumbnail_url?: string }[] =
       (data.items ?? []).filter((i: { status: string }) => i.status === 'completed')
 
-    return NextResponse.json({ elements: items })
+    // ── Sauvegarder automatiquement en DB ───────────────────────────────────
+    // Merge avec les éléments existants (évite de perdre les entrées manuelles)
+    const existing: { id: string; name: string }[] = creds?.referenceElements
+      ? JSON.parse(creds.referenceElements)
+      : []
+
+    const scanned = items.map(i => ({ id: i.id, name: i.name }))
+
+    // Déduplique par id : les éléments scannés écrasent les existants si même id
+    const merged = [
+      ...scanned,
+      ...existing.filter(e => !scanned.some(s => s.id === e.id)),
+    ]
+
+    await prisma.userCredentials.update({
+      where: { userId: session.user.id },
+      data: { referenceElements: JSON.stringify(merged) },
+    })
+
+    return NextResponse.json({ elements: merged, scanned: scanned.length })
 
   } catch (e) {
     return NextResponse.json({ error: `Erreur réseau: ${String(e).slice(0, 200)}` }, { status: 500 })
