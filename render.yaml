@@ -1,0 +1,35 @@
+# render.yaml — Configuration Render.com pour emma-content-pipeline
+# Deploy via : Render Dashboard → New → Blueprint (pointer sur ce repo)
+
+services:
+  - type: web
+    name: emma-pipeline
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/auth/session
+    plan: standard          # 2 GB RAM, 1 vCPU — minimum pour Python subprocesses
+    region: frankfurt       # Colocalisé avec Supabase eu-west-1
+    numInstances: 1         # ⚠️ NE PAS augmenter — runningProcesses en mémoire
+
+    envVars:
+      # ── Base de données Supabase ──────────────────────────────────────────
+      - key: DATABASE_URL
+        sync: false         # À renseigner manuellement dans le dashboard Render
+      - key: DIRECT_URL
+        sync: false
+
+      # ── Auth NextAuth ─────────────────────────────────────────────────────
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false         # Ex: https://emma-pipeline.onrender.com
+
+      # ── Chiffrement AES-256 (MÊME valeur que .env.local) ─────────────────
+      - key: SECRET_KEY
+        sync: false         # ⚠️ CRITIQUE : doit être identique à la valeur locale
+
+      # ── Google OAuth2 (Drive) ─────────────────────────────────────────────
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

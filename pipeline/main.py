@@ -61,9 +61,7 @@ async def main():
     drive_folder_id = os.environ.get("DRIVE_FOLDER_ID")            # ID dossier Drive (optionnel)
     session_cookie = os.environ.get("INSTAGRAM_SESSION_COOKIE")    # Cookie session Instagram (optionnel)
 
-    if not apify_key:
-        print(json.dumps({"type": "error", "message": "APIFY_KEY manquant"}), flush=True)
-        sys.exit(1)
+    # apify_key peut être None — c'est un fallback optionnel (instagrapi/instaloader en priorité)
     if not anthropic_key:
         print(json.dumps({"type": "error", "message": "ANTHROPIC_KEY manquant"}), flush=True)
         sys.exit(1)

@@ -160,6 +160,25 @@ grep "\[run:RUN_ID" /tmp/nextjs.log | grep -v "prisma\|SELECT\|UPDATE"
 
 ---
 
+## Déploiement Render.com
+
+**Fichiers déploiement** : `Dockerfile` + `render.yaml` à la racine.
+
+**Env vars sur Render (7 à configurer manuellement)** :
+- `DATABASE_URL`, `DIRECT_URL` — même valeur que `.env.local` (Supabase)
+- `NEXTAUTH_SECRET` — même valeur que `.env.local`
+- `NEXTAUTH_URL` — `https://[app].onrender.com` ← DIFFÉRENT du local
+- `SECRET_KEY` — **EXACTEMENT** la même valeur que `.env.local` (sinon tous les tokens DB sont invalides)
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — depuis Google Console
+
+**Étape Google Console** : Ajouter `https://[app].onrender.com/api/google-auth/callback` dans les Redirect URIs autorisés.
+
+**Plan Render** : Standard (2 GB RAM). Ne pas activer l'autoscaling (runningProcesses en mémoire Node.js).
+
+**Instagram en datacenter** : Les IPs Render (cloud) peuvent être bloquées par Instagram. Cookie de session frais = meilleure chance. Apify = fallback si besoin.
+
+---
+
 ## Ce qui NE marche pas / points d'attention
 
 - `"ceiling fan"` dans les prompts → bug visuel IA, à bannir
