@@ -127,8 +127,9 @@ export default function VideoPage() {
   const [launchSuccess, setLaunchSuccess] = useState('')
 
   // ── Load characters ──
-  useEffect(() => {
+  const loadChars = () => {
     setLoadingChars(true)
+    setCharsError('')
     fetch('/api/characters')
       .then(r => r.json())
       .then(data => {
@@ -141,7 +142,27 @@ export default function VideoPage() {
       })
       .catch(e => setCharsError(String(e)))
       .finally(() => setLoadingChars(false))
-  }, [])
+  }
+
+  useEffect(() => { loadChars() }, [])
+
+  // ── Scan Reference Elements depuis Higgsfield ──
+  const [scanning, setScanning] = useState(false)
+  const scanFromHiggsfield = async () => {
+    setScanning(true)
+    setCharsError('')
+    try {
+      const res = await fetch('/api/characters/scan-elements')
+      const data = await res.json()
+      if (!res.ok) { setCharsError(data.error || 'Scan échoué'); return }
+      // Recharger la liste après scan
+      loadChars()
+    } catch (e) {
+      setCharsError(String(e))
+    } finally {
+      setScanning(false)
+    }
+  }
 
   // ── Load validated prompts (reload au changement d'onglet) ──
   useEffect(() => {
@@ -326,13 +347,22 @@ export default function VideoPage() {
 
         {/* ── Personnage ── */}
         <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-          <p className="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wider">Personnage</p>
-          {loadingChars ? (
-            <p className="text-xs text-gray-500">Chargement...</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Personnage</p>
+            <button
+              onClick={scanFromHiggsfield}
+              disabled={scanning || loadingChars}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-gray-800 border border-gray-700 text-gray-300 hover:border-violet-500 hover:text-violet-300 disabled:opacity-50 transition"
+            >
+              {scanning ? '⏳ Scan...' : '🔍 Scanner Higgsfield'}
+            </button>
+          </div>
+          {loadingChars || scanning ? (
+            <p className="text-xs text-gray-500">{scanning ? 'Scan en cours...' : 'Chargement...'}</p>
           ) : charsError ? (
             <p className="text-xs text-red-400">{charsError}</p>
           ) : refElements.length === 0 ? (
-            <p className="text-xs text-gray-500">Aucun Reference Element. Vérifiez vos credentials Higgsfield.</p>
+            <p className="text-xs text-gray-500">Aucun Reference Element trouvé. Clique sur "Scanner Higgsfield" pour charger tes personnages.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {refElements.map(e => (
