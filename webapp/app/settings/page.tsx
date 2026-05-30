@@ -270,21 +270,6 @@ export default function SettingsPage() {
         </h1>
 
         <div className="space-y-6">
-          {/* Apify */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-3 text-gray-200">Apify API Key</h2>
-            <input
-              type="password"
-              value={apifyKey}
-              onChange={(e) => setApifyKey(e.target.value)}
-              placeholder="apify_api_xxxxxxxxxxxxxxxx"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
-            />
-            <p className="text-gray-500 text-xs mt-1.5">
-              apify.com → Account → Integrations → API Token
-            </p>
-          </div>
-
           {/* Instagram Session Cookie */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <h2 className="font-medium mb-1 text-gray-200">
@@ -625,7 +610,6 @@ export default function SettingsPage() {
           {testResults && (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-2">
               {([
-                { key: 'apify', label: 'Apify' },
                 { key: 'anthropic', label: 'Anthropic' },
                 { key: 'higgsfield', label: 'Higgsfield' },
                 { key: 'kling', label: 'Kling AI' },
