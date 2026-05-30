@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -57,6 +56,14 @@ const CONF_OUTFITS = [
   { label: 'Black SKIMS sheer deep-V + navy mini + black heels', value: 'black SKIMS sheer fitted long-sleeve deep-V, extremely short tight dark navy mini skirt, black stiletto heels' },
 ]
 
+const METEO_OUTFITS = [
+  { label: 'Blue lace wrap dress (studio)', value: 'blue navy semi-transparent lace overlay bodice, blue navy wrap mini skirt with lace ribbon tie' },
+  { label: 'Red fitted blazer mini dress', value: 'fitted red blazer mini dress, very short hemline, deep open neckline' },
+  { label: 'White fitted pencil dress', value: 'white fitted pencil mini dress, very short hemline, deep V neckline' },
+  { label: 'Camel blazer + nude mini', value: 'camel fitted blazer, extremely short nude beige mini skirt, open neckline' },
+  { label: 'Storm halter-neck dress', value: 'extremely short brown halter-neck mini dress rhinestone floral pattern, black bra visible deep V neckline' },
+]
+
 const SPORT_OUTFITS = [
   { label: 'Black deep-V crop + black shorts', value: 'tight black deep V-neck crop top deep cleavage, extremely short tight black athletic shorts very form-fitting back and sides' },
   { label: 'Navy athletic top + grey shorts', value: 'tight navy fitted athletic top deep v-neckline, extremely short tight grey athletic shorts form-fitting back and sides' },
@@ -68,10 +75,12 @@ const SPORT_OUTFITS = [
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function SubNicheLabel({ subNiche }: { subNiche: string }) {
-  if (subNiche === 'sport') return <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400 font-medium">🏃 Sport</span>
+  if (subNiche === 'sport') return <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400 font-medium">🏃 Coach</span>
   if (subNiche === 'golf') return <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400 font-medium">⛳ Golf</span>
   if (subNiche === 'nurse') return <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-400 font-medium">🏥 Infirmière</span>
   if (subNiche === 'restaurant') return <span className="text-xs px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-400 font-medium">🍽️ Restaurant</span>
+  if (subNiche === 'meteo') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">📺 Météo</span>
+  if (subNiche === 'reporter') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">🌪️ Reporter</span>
   return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
 }
 
@@ -79,7 +88,7 @@ function SubNicheLabel({ subNiche }: { subNiche: string }) {
 
 export default function VideoPage() {
   useSession()
-  const router = useRouter()
+
 
   // ── Characters ──
   const [refElements, setRefElements] = useState<RefElement[]>([])
@@ -93,7 +102,7 @@ export default function VideoPage() {
   const [loadingPrompts, setLoadingPrompts] = useState(false)
 
   // ── Niche — 4 onglets séparés ──
-  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux'>('conference')
+  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo'>('conference')
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation'>('direct')
@@ -115,6 +124,7 @@ export default function VideoPage() {
   // ── Launch state ──
   const [launching, setLaunching] = useState(false)
   const [launchError, setLaunchError] = useState('')
+  const [launchSuccess, setLaunchSuccess] = useState('')
 
   // ── Load characters ──
   useEffect(() => {
@@ -142,13 +152,13 @@ export default function VideoPage() {
     setVarOutfit('')
     setVarPhrase('')
     // conference et sport sont dans le même niche DB 'conference_sport', filtrés côté client
-    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : 'conference_sport'
+    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : 'conference_sport'
     fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
       .then(data => {
         const all: ValidatedPrompt[] = data.prompts || []
         // Filtre côté client par subNiche pour conference/sport ; golf et vieux sont déjà leur propre niche
-        const filtered = (niche === 'vieux' || niche === 'golf')
+        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo')
           ? all
           : all.filter(p => p.subNiche === niche)
         setPrompts(filtered)
@@ -179,6 +189,7 @@ export default function VideoPage() {
     if (sub === 'golf') return GOLF_OUTFITS
     if (sub === 'nurse') return NURSE_OUTFITS
     if (sub === 'restaurant') return RESTAURANT_OUTFITS
+    if (sub === 'meteo' || sub === 'reporter') return METEO_OUTFITS
     return CONF_OUTFITS
   })()
 
@@ -249,7 +260,10 @@ export default function VideoPage() {
         setLaunching(false)
         return
       }
-      router.push('/en-cours')
+      // Succès — rester sur la page pour pouvoir relancer immédiatement
+      setLaunching(false)
+      setLaunchSuccess('Run lancé ✓')
+      setTimeout(() => setLaunchSuccess(''), 3000)
     } catch (e) {
       setLaunchError(String(e))
       setLaunching(false)
@@ -291,9 +305,10 @@ export default function VideoPage() {
         <div className="flex gap-2 flex-wrap">
           {([
             { id: 'conference' as const, emoji: '🎓', label: 'Conférence' },
-            { id: 'sport' as const,      emoji: '🏃', label: 'Sport' },
+            { id: 'sport' as const,      emoji: '🏃', label: 'Coach' },
             { id: 'golf' as const,       emoji: '⛳', label: 'Golf' },
             { id: 'vieux' as const,      emoji: '👴', label: 'Vieux' },
+            { id: 'meteo' as const,      emoji: '📺', label: 'Météo' },
           ]).map(n => (
             <button
               key={n.id}
@@ -386,7 +401,7 @@ export default function VideoPage() {
                 <p className="text-xs text-gray-500 mt-0.5">Chaque prompt est généré copie exacte — zéro modification.</p>
               </div>
               <span className="text-xs text-gray-500">
-                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Sport' : niche === 'golf' ? '⛳ Golf' : '👴 Vieux'}
+                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Météo' : '👴 Vieux'}
               </span>
             </div>
 
@@ -454,6 +469,12 @@ export default function VideoPage() {
                 </div>
               </div>
               {launchError && <p className="text-sm text-red-400">{launchError}</p>}
+              {launchSuccess && (
+                <p className="text-sm text-emerald-400 flex items-center gap-2">
+                  {launchSuccess}
+                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ En cours</a>
+                </p>
+              )}
               <button onClick={launch}
                 disabled={launching || !selectedElementId || selectedIds.size === 0}
                 className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition">
@@ -621,6 +642,12 @@ export default function VideoPage() {
                 <p className="text-xs text-gray-600 italic">← Sélectionner un concept de base pour continuer</p>
               )}
               {launchError && <p className="text-sm text-red-400">{launchError}</p>}
+              {launchSuccess && (
+                <p className="text-sm text-emerald-400 flex items-center gap-2">
+                  {launchSuccess}
+                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ En cours</a>
+                </p>
+              )}
 
               <button onClick={launch}
                 disabled={launching || !selectedElementId || !varBaseId}

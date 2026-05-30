@@ -376,6 +376,141 @@ const PROMPTS: PromptSeed[] = [
     ])
   },
 
+  // ── P28 — Stage mic below · Beige underwear · "Great leaders" ──
+  {
+    niche: 'conference_sport',
+    subNiche: 'conference',
+    title: 'P28 — Stage mic · Below angle · Beige underwear · "Great leaders"',
+    isBest: false,
+    sortOrder: 85,
+    outfitText: 'beige ribbed knit top open neckline, extremely short dark charcoal pencil mini skirt',
+    speakerLine: 'Great leaders know how to read a room.',
+    phraseVariations: [
+      "Great leaders know how to read a room.",
+      "A great leader doesn't just speak — they make every single person in that room feel seen.",
+      "Authority isn't about volume. It's about knowing exactly when to say nothing at all.",
+      "The leaders who leave the biggest mark? They're always the ones paying the most attention.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Single continuous shot — audience POV from first row angled upward toward elevated stage. Camera below stage level looking straight up. Warm stage lighting, deep red velvet curtain backdrop. Graduation caps blurred foreground. Man in front row visibly holding phone aimed toward stage.",
+        motion_intensity: 0.4,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Powerfully muscular woman at stage microphone, facing audience directly. beige ribbed knit top open neckline, extremely short dark charcoal pencil mini skirt clinging to every muscle — fabric under extreme tension from her athletic build, hemline riding very high. Because the camera is below stage level looking straight up, a narrow central triangular glimpse of nude beige underwear is visible from this upward angle between her inner thighs — not from the side, not a wide band, just the narrow central triangle of nude beige fabric visible from directly below. Man in front row has phone raised and aimed upward at the stage. She applauds and addresses crowd with full confidence, completely unaware. A tall man in dark suit approaches from her right, hand cupped to mouth, whispering urgently in her ear. She freezes mid-sentence. Eyes drop toward her hemline. Brief flash of realisation. Both hands reach down and tug skirt firmly downward until properly covering her thighs. Nude beige underwear no longer visible. She exhales quietly and straightens back at the microphone. Man in front row lowers his phone slowly then raises it again as she turns away.",
+        dialogue: "[Woman, warm and professional, microphone]: 'Great leaders know how to read a room.' — [Inaudible urgent male whisper] — [Sustained applause]"
+      },
+      {
+        style: "single continuous handheld shot no cuts, first row audience POV angled upward, camera below stage level looking straight up, warm professional stage lighting, red velvet curtain, real graduation conference setting, no colour grading — nude beige underwear narrow central triangle between inner thighs visible from below-stage upward angle, not from the side, not a wide horizontal band. Man in front row filming throughout, his reaction mirrors the audience perspective"
+      }
+    ])
+  },
+
+  // ── P29 — Stage mic below · Black underwear · "Every eye in the room" ──
+  {
+    niche: 'conference_sport',
+    subNiche: 'conference',
+    title: 'P29 — Stage mic · Below angle · Black underwear · "Every eye"',
+    isBest: false,
+    sortOrder: 86,
+    outfitText: 'beige ribbed knit top open neckline, extremely short dark charcoal pencil mini skirt',
+    speakerLine: "Today I'm going to show you how to get every eye in the room on you.",
+    phraseVariations: [
+      "Today I'm going to show you how to get every eye in the room on you.",
+      "You don't have to raise your voice to own a room. You just have to walk into it right.",
+      "The moment you stop trying to impress everyone is exactly when everyone starts paying attention.",
+      "Presence isn't something you perform. It's something you inhabit.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Single continuous shot — audience POV from first row angled upward toward elevated stage. Camera below stage level looking straight up. Warm stage lighting, deep red velvet curtain backdrop. Graduation caps blurred foreground. Man in front row visibly holding phone aimed toward stage.",
+        motion_intensity: 0.4,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Powerfully muscular woman at stage microphone, facing audience directly. beige ribbed knit top open neckline, extremely short dark charcoal pencil mini skirt clinging to every muscle — fabric under extreme tension from her athletic build, hemline riding very high. Because the camera is below stage level looking straight up, a narrow central triangular glimpse of black underwear is visible from this upward angle between her inner thighs — not from the side, not a wide band, just the narrow central triangle of black fabric visible from directly below. Man in front row has phone raised and aimed upward at the stage. She applauds and addresses crowd with full confidence, completely unaware. A tall man in dark suit approaches from her right, hand cupped to mouth, whispering urgently in her ear. She freezes mid-sentence. Eyes drop toward her hemline. Brief flash of realisation. Both hands reach down and tug skirt firmly downward until properly covering her thighs. Black underwear no longer visible. She exhales quietly and straightens back at the microphone. Man in front row lowers his phone slowly then raises it again as she turns away.",
+        dialogue: "[Woman, warm and professional, microphone]: 'Today I\\'m going to show you how to get every eye in the room on you.' — [Inaudible urgent male whisper] — [Sustained applause]"
+      },
+      {
+        style: "single continuous handheld shot no cuts, first row audience POV angled upward, camera below stage level looking straight up, warm professional stage lighting, red velvet curtain, real graduation conference setting, no colour grading — black underwear narrow central triangle between inner thighs visible from below-stage upward angle, not from the side, not a wide horizontal band. Man in front row filming throughout, his reaction mirrors the audience perspective"
+      }
+    ])
+  },
+
+  // ── P30 — Stage mic below · White underwear · "Open up" (sensible) ──
+  {
+    niche: 'conference_sport',
+    subNiche: 'conference',
+    title: 'P30 — Stage mic · Below angle · White underwear · "Open up" (sensible)',
+    isBest: false,
+    sortOrder: 87,
+    outfitText: 'black fitted top deep v-neckline, extremely short dark brown leather-look mini skirt',
+    speakerLine: 'The most important skill? Knowing exactly when to open up.',
+    phraseVariations: [
+      "The most important skill? Knowing exactly when to open up.",
+      "The best professionals know what to reveal — and exactly when to reveal it.",
+      "In this industry, showing the right thing at exactly the right moment — that's the whole game.",
+      "Vulnerability is not weakness. Knowing when to be vulnerable — that's the real skill.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Single continuous shot — audience POV from first row angled upward toward elevated stage. Camera below stage level looking straight up. Warm stage lighting, deep red velvet curtain backdrop. Graduation caps blurred foreground. Man in front row visibly holding phone aimed toward stage.",
+        motion_intensity: 0.4,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Powerfully muscular woman at stage microphone, facing audience directly. black fitted top deep v-neckline, extremely short dark brown leather-look mini skirt clinging to every muscle — fabric under extreme tension from her athletic build, hemline riding very high. Because the camera is below stage level looking straight up, a narrow central triangular glimpse of white underwear is visible from this upward angle between her inner thighs — not from the side, not a wide band, just the narrow central triangle of white fabric visible from directly below. Man in front row has phone raised and aimed upward at the stage. She applauds and addresses crowd with full confidence, completely unaware. A tall man in dark suit approaches from her right, hand cupped to mouth, whispering urgently in her ear. She freezes mid-sentence. Eyes drop toward her hemline. Brief flash of realisation. Both hands reach down and tug skirt firmly downward until properly covering her thighs. White underwear no longer visible. She exhales quietly and straightens back at the microphone. Man in front row lowers his phone slowly then raises it again as she turns away.",
+        dialogue: "[Woman, warm and professional, microphone]: 'The most important skill? Knowing exactly when to open up.' — [Inaudible urgent male whisper] — [Sustained applause]"
+      },
+      {
+        style: "single continuous handheld shot no cuts, first row audience POV angled upward, camera below stage level looking straight up, warm professional stage lighting, red velvet curtain, real graduation conference setting, no colour grading — white underwear narrow central triangle between inner thighs visible from below-stage upward angle, not from the side, not a wide horizontal band. Man in front row filming throughout, his reaction mirrors the audience perspective"
+      }
+    ])
+  },
+
+  // ── P31 — Auditorium · Cream blouse · Dos au public · Wrist grab ──
+  {
+    niche: 'conference_sport',
+    subNiche: 'conference',
+    title: 'P31 — Auditorium · Cream blouse · Dos au public · Wrist grab copine',
+    isBest: false,
+    sortOrder: 88,
+    outfitText: 'cream silk blouse unbuttoned slightly at the neckline, extremely short dark charcoal pencil mini skirt',
+    speakerLine: 'Give me that right now.',
+    phraseVariations: [
+      "Give me that right now.",
+      "Seriously? Give it here.",
+      "Put that down. Right now.",
+      "Delete that. Now.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "CONTINUOUS SINGLE SHOT NO CUTS — audience POV from second row, camera angled slightly upward toward elevated stage. Camera close enough that the woman on stage fills most of the frame. School auditorium: wooden podium left, American flag with gold eagle stand beside it, deep burgundy velvet curtains, wooden stage floor. Stage edge visible at bottom of frame. Students visible in foreground first and second row. Young man front row centre filming with phone. Girlfriend seated immediately to his right in the same first row.",
+        motion_intensity: 0.46,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Extremely muscular woman on elevated stage, cream silk blouse unbuttoned slightly at the neckline, extremely short dark charcoal pencil mini skirt that barely covers her lower body — skirt hemline sitting naturally just below the waist, fabric stretched taut across powerful muscular physique. black stiletto heels. She stands beside the wooden podium talking quietly to the man in blue suit. Then she turns her body to face the podium, rotating her back toward the audience — as she completes the rotation and leans slightly forward toward the podium, the extremely short skirt rises high enough that her bare muscular lower physique and the white underwear central area become visible from behind — not a band not wide, just the narrow central triangular area of white fabric visible at the back between her thighs, natural result of the skirt being too short combined with the forward lean. She leans slightly forward engaged in conversation, back fully to audience, completely unaware. Young man front row raises phone and films her from behind — Girlfriend immediately beside him in the same row turns sharply and grabs his wrist sharply and pulls phone down. He raises his hand slowly to his cheek, turns around to face the students behind him with a stunned expression. Students in surrounding rows erupt — laughing, covering mouths, nudging each other.",
+        dialogue: "[Girlfriend, sharp]: 'Give me that right now.' — [Eruption of laughter and reaction from surrounding students]"
+      },
+      {
+        style: "single continuous handheld shot no cuts, second row audience POV angled slightly upward, close to stage — woman fills most of frame, warm wooden stage floor, wooden podium, American flag gold eagle stand, deep burgundy curtains, no colour grading, candid unscripted feel — white underwear narrow central triangle visible between thighs from behind, not wide not a band, skirt too short combined with forward lean. Girlfriend seated in same first row immediately beside the young man. Students in multiple rows visible and reacting"
+      }
+    ])
+  },
+
+  // ── P32 — Conférence assise · Harvard panel · White underwear ──
+  {
+    niche: 'conference_sport',
+    subNiche: 'conference',
+    title: 'P32 — Harvard panel assis · White underwear · Variante P4',
+    isBest: false,
+    sortOrder: 89,
+    outfitText: 'white fitted crop blazer open neckline, extremely short dark charcoal pencil mini skirt',
+    speakerLine: null,
+    phraseVariations: null,
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot — first row audience POV, camera at floor level angled upward toward elevated stage. Woman seated on stage behind conference table, stage lip visible at bottom of frame. Long dark wood table on elevated stage, black folding chairs, American flag on stand left, large white projection screen reading 'Harvard Executive Education — Spring Leadership Forum'. Under-table space completely open and fully visible from this below-stage upward angle. Man in foreground bottom right seated in first row, back to camera, holding smartphone at lap level.",
+        motion_intensity: 0.38,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Extremely muscular woman seated behind conference table on elevated stage, white fitted crop blazer open neckline, extremely short dark charcoal pencil mini skirt riding up naturally in seated position. Her knees are relaxed and apart, and because the camera is below stage level looking upward into the open under-table space, white underwear is visible as a small central triangular area between her thighs — not from the side, not a wide band, just the narrow central triangle of white fabric visible from this below-stage upward angle into the open under-table space, knees apart in natural seated position. Man in dark navy suit already leaning slightly beside her — bends closer to her ear and whispers. She looks downward toward her own lap — expression coquettish and self-aware, a slight knowing look. Man in foreground performs a slow casual wide panning movement with his smartphone, sweeping deliberately left then back right — appearing to film the whole room, before the pan settles back aimed at the under-table space. She reaches down and tugs skirt hem firmly downward pressing knees together — white no longer visible.",
+        dialogue: "[Man in suit, low whisper directly in her ear]: 'We can see your panties.' — [Woman glances down, expression coquettish and slightly amused, no words] — [Man in foreground, barely audible satisfied murmur]: 'Fuck yeah, I\\'ve got a good one.'"
+      },
+      {
+        style: "fixed medium single continuous shot no cuts, camera at floor level angled upward from first row below stage, stage lip at bottom of frame, harsh institutional fluorescent lighting, shadow under table making white underwear visible by contrast, American flag left, white projection screen behind, no colour grading, candid feel — white underwear narrow central triangle only between thighs, not wide not a band, visible from below-stage upward angle into open under-table space, not visible from the side. All three characters visible in same frame throughout"
+      }
+    ])
+  },
+
   // ── P24 — Conférence · Mec glisse de sa chaise · PARFAIT 10/10 ──
   {
     niche: 'conference_sport',
@@ -648,6 +783,135 @@ const PROMPTS: PromptSeed[] = [
       },
       {
         style: "fixed wide front-facing shot, bright warm golden sun, green manicured fairway, small pond background, pine trees and residential houses, no colour grading — camera directly in front of golfer, dress lifts from rotational force and wind showing front view. Man in cart crash happens behind her in background. Final image: man waist-deep in pond still staring at woman"
+      }
+    ])
+  },
+
+  // ── P27 — Golf · Flagstick pull · Birdie misunderstanding ──
+  {
+    niche: 'golf',
+    subNiche: 'golf',
+    title: 'P27 — Golf · Flagstick pull · Birdie misunderstanding',
+    isBest: false,
+    sortOrder: 30,
+    outfitText: 'cream fitted polo shirt unbuttoned at the top, extremely short tight light blue golf skirt, white spiked golf shoes',
+    speakerLine: null,
+    phraseVariations: null,
+    promptJson: JSON.stringify([
+      {
+        framing: "Single continuous shot — POV from behind, close to the hole on the green. Flagstick in hole just ahead. Flagstick visible in background with a small bird perched on it throughout. Man standing respectfully to the side watching.",
+        motion_intensity: 0.42,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Extremely muscular athletic woman on the green, cream fitted polo shirt unbuttoned at the top, extremely short tight light blue golf skirt, white spiked golf shoes. She walks to the hole and bends straight down to pull the flagstick out — bending from the waist with straight legs, back flat. From behind her, as she bends fully forward to grab the flag, the extremely short skirt rides up completely — nude beige underwear fully visible from behind. She grasps the flagstick and straightens slowly, pulling it out. Man beside the green watched this entire motion. His jaw is slightly open. She turns and notices his expression — glances down, pulls skirt down firmly, face shifts to annoyance. He says his line. She stares at him. He gestures toward the small bird on the flagstick and delivers his clarification.",
+        dialogue: "[Man, genuinely impressed, glancing past her]: 'Oh… beautiful birdie.' — [Woman, irritated]: 'Excuse me?' — [Man, pointing at the flagstick, completely sincere]: 'The birdie — that bird on the flag. Look.'"
+      },
+      {
+        style: "single continuous handheld shot no cuts, POV from behind on putting green, warm natural golf course light, nude beige underwear fully visible from behind during full forward bend to retrieve flagstick — natural result of extremely short skirt and deep forward bend, no colour grading, candid unscripted feel. Man and small bird on the flagstick visible in same frame throughout."
+      }
+    ])
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // MÉTÉO
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── P33 — Météo Studio · John noue le ruban · Jupe s'ouvre · MEILLEUR ──
+  {
+    niche: 'meteo',
+    subNiche: 'meteo',
+    title: 'P33 — Météo Studio · John noue le ruban · Jupe s\'ouvre · MEILLEUR',
+    isBest: true,
+    sortOrder: 10,
+    outfitText: 'blue navy semi-transparent lace overlay bodice, blue navy wrap mini skirt with lace ribbon tie',
+    speakerLine: null,
+    phraseVariations: null,
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, camera directly facing presenter. She stands left of centre frame. Weather map fills right two-thirds of background: Florida coastline, city temperature labels Jacksonville 88°, Daytona Beach 84°, Palm Bay 89°, Miami 89°, animated green and blue weather overlay. American flag far right edge. Yellow-green ambient studio glow far left. Light grey studio floor.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman presenting weather to camera, remote in right hand. Her wrap skirt has a lace ribbon that needs fastening at the waist. Black-gloved hand enters frame left at waist level. As John attempts to thread the ribbon he routes it downward in the wrong direction — the wrap skirt shifts and opens during this moment. She reacts immediately, left hand grabbing the skirt. She glances down with a surprised expression. Speaks her line. Points upward to her waist with her left hand. John's gloved hand follows her direction upward and correctly ties the ribbon at waist level. Skirt settles. She smiles. Laughs to camera.",
+        dialogue: "[Presenter, professional, to camera]: 'Thank you, John.' — [Skirt shifts, surprised]: 'See — oh — no. Just go here, John.' — [Pointing to waist]: 'Yes, right here. Just the lace. Thank you so much.' — [Laughing]: 'Didn\\'t you know that?'"
+      },
+      {
+        style: "fixed medium shot left of centre, Florida weather map right background animated temperature labels, American flag far right, yellow-green studio ambient glow far left, light grey floor, no colour grading, broadcast TV quality — blue navy semi-transparent lace overlay bodice, blue navy wrap mini skirt with lace ribbon tie, long straight blonde hair, black platform heels, lavalier mic chest, remote right hand. Black-gloved hand frame left throughout, moving from lower to upper position across the scene"
+      }
+    ])
+  },
+
+  // ── P34 — Météo Studio · John tire sur le lacet · Jupe menace de tomber ──
+  {
+    niche: 'meteo',
+    subNiche: 'meteo',
+    title: 'P34 — Météo Studio · John tire le lacet · Jupe menace de tomber',
+    isBest: false,
+    sortOrder: 11,
+    outfitText: 'blue navy semi-transparent lace bodice, blue navy wrap mini skirt lace ribbon tie waist',
+    speakerLine: null,
+    phraseVariations: null,
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, camera facing presenter. She stands left of centre. Florida weather map fills right background: Jacksonville 88°, Daytona Beach 84°, Palm Bay 89°, Miami 89°, green blue animated overlay. American flag right edge. Yellow-green studio glow far left. Light grey floor.",
+        motion_intensity: 0.38,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman at camera, remote in right hand, left hand at waist holding skirt ribbon. Speaks first line warmly to camera. Black-gloved hand enters frame left. Reaches ribbon. Routes it downward incorrectly instead of around waist. Wrap skirt opens and shifts. Her left hand grabs skirt hem. Her expression shifts — surprised, eyes drop down. Speaks second line while looking down then back at camera. Raises left hand pointing clearly to her waist. Gloved hand corrects upward. Ties ribbon at waist. Skirt settles. She looks back to camera. Wide smile. Delivers third line. Laughs openly.",
+        dialogue: "[Presenter, warm professional]: 'Thank you, John.' — [Eyes drop, surprised as skirt shifts]: 'See — oh — no. Just go here, John.' — [Pointing to waist, still amused]: 'Yes, right here. Just the lace. Thank you so much.' — [Laughing directly to camera]: 'Didn\\'t you know that?'"
+      },
+      {
+        style: "fixed medium shot left of centre, Florida weather map right background temperature labels animated overlay, American flag right edge, yellow-green studio glow far left, light grey floor, no colour grading, broadcast TV — blue navy semi-transparent lace bodice, blue navy wrap mini skirt lace ribbon tie waist, long straight blonde hair, black platform heels, lavalier mic, remote right hand. Black-gloved hand visible frame left, position descends then rises across scene duration"
+      }
+    ])
+  },
+
+  // ── P35 — Reporter storm · Please stay home · Culotte rouge (version originale) ──
+  {
+    niche: 'meteo',
+    subNiche: 'reporter',
+    title: 'P35 — Reporter storm · Please stay home · Culotte rouge (originale)',
+    isBest: false,
+    sortOrder: 20,
+    outfitText: 'extremely short brown halter-neck mini dress hemline top of thighs rhinestone floral pattern, black bra visible deep V neckline',
+    speakerLine: "Please stay home if you need any help. It's not safe to go outside. You really need to stay home. We are getting information—",
+    phraseVariations: [
+      "Please stay home if you need any help. It's not safe to go outside. You really need to stay home. We are getting information—",
+      "Do not go outside under any circumstances. Conditions are life-threatening. Please remain indoors.",
+      "Authorities are urging all residents to shelter in place immediately. This storm is extremely dangerous.",
+      "If you are thinking about going out right now — don't. Stay where you are. We'll keep you updated.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, slightly handheld — camera shaking subtly from wind gusts throughout. Camera at eye level facing presenter directly. She centred in frame. Outdoors night storm: dark overcast sky, palm tree upper left fronds thrashing, metal mesh waterfront railing behind her, rain droplets visible in air, rough sea waves beyond railing. Wind audible and physically affecting everything in frame.",
+        motion_intensity: 0.50,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in storm, microphone right hand, left hand gesturing urgently. Rain landing on her dress creating visible wet patches. Hair whipping across her face — she brushes it aside without breaking speech. Delivers lines with genuine urgency. Intermittent strong wind gusts briefly flick the short wet dress hem upward for split-second moments — each gust reveals only a brief corner glimpse of red at the centre between her thighs before the hem immediately falls back. Not sustained, not wide — only fleeting glimpses during the strongest gusts. She continues completely unaware.",
+        dialogue: "[Reporter, urgent and serious, strong wind ambient rain sound]: 'Please stay home if you need any help. It\\'s not safe to go outside. You really need to stay home. We are getting information—'"
+      },
+      {
+        style: "slightly handheld news camera slight wind shake, outdoors night storm, dark overcast sky, rain droplets visible in air, palm fronds thrashing upper left, metal mesh railing, rough sea waves beyond, no colour grading, authentic storm news broadcast look — slight video grain, natural exposure, no cinematic polish, candid news footage feel — extremely short brown halter-neck mini dress hemline top of thighs rhinestone floral pattern, wet rain-stained patches on fabric, black bra visible deep V neckline, long dark brown wavy hair blowing and wet, large drop earrings, watch left wrist, black handheld mic. Red underwear visible only as brief fleeting corner glimpse in narrow central gap during wind gusts, not sustained, not wide, immediately covered again each time"
+      }
+    ])
+  },
+
+  // ── P36 — Reporter storm · DÉLUGE · Culotte beige nude · MEILLEURE ──
+  {
+    niche: 'meteo',
+    subNiche: 'reporter',
+    title: 'P36 — Reporter storm · DÉLUGE · Culotte beige nude · MEILLEURE',
+    isBest: true,
+    sortOrder: 21,
+    outfitText: 'extremely short brown halter-neck mini dress fully rain-soaked and clinging to body rhinestone pattern visible through wet fabric, black bra showing through soaked fabric',
+    speakerLine: "Please stay home if you need any help. It's not safe to go outside. You really need to stay home.",
+    phraseVariations: [
+      "Please stay home if you need any help. It's not safe to go outside. You really need to stay home.",
+      "Do not go outside under any circumstances. Conditions are life-threatening. Please remain indoors.",
+      "Authorities are urging all residents to shelter in place immediately. This storm is extremely dangerous.",
+      "If you are thinking about going out right now — don't. Stay where you are. We'll keep you updated.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, heavily handheld — camera shaking continuously from violent wind gusts and rain impact. Camera at eye level facing presenter directly. She centred in frame. Outdoors extreme night storm: heavy dark overcast sky illuminated by periodic lightning flashes, palm tree upper left fronds thrashing violently, metal mesh waterfront railing behind her, sheets of torrential rain filling air, rain-blurred rough sea beyond railing. Continuous roar of howling wind, hammering rain on microphone, rolling thunder.",
+        motion_intensity: 0.53,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in violent storm, microphone in right hand, left hand and forearm pressed firmly down against dress hem against her thigh throughout entire shot — deliberately holding dress down. Dress fully rain-soaked, fabric heavy and clinging to body. Hair completely plastered and whipping constantly. Rain landing continuously on face and shoulders without pause. Lightning flash briefly illuminates scene in white — thunder rolls immediately after. She leans forward into wind resistance, delivering lines with maximum urgency. During one extremely powerful sustained gust, even with her left hand pressed firmly down, the heavy wet dress hem flutters barely one centimetre — for a single instant only the faintest trace of nude beige fabric is glimpsed at the very inner thigh edge before the saturated heavy dress snaps immediately back down. She continues completely unaware, left hand pressing dress back down.",
+        dialogue: "[Reporter, shouting over continuous storm roar, rain hammering microphone, wind howl]: 'Please stay home if you need any help. It\\'s not safe to go outside.' — [Lightning flash, thunder rolls] — 'You really need to stay home. We are getting information—'"
+      },
+      {
+        style: "heavily handheld news camera continuous violent wind shake, outdoors extreme night storm, heavy dark sky with periodic lightning flash white burst illumination, sheets of torrential rain filling frame, palm fronds thrashing violently upper left, metal mesh railing, rain-blurred sea beyond, no colour grading — slight video grain, natural exposure, emergency news broadcast look, no cinematic polish — extremely short brown halter-neck mini dress fully rain-soaked and clinging to body rhinestone pattern visible through wet fabric, black bra showing through soaked fabric, long dark brown wavy hair completely plastered and wind-blown, large drop earrings, watch left wrist, black handheld mic. Left forearm pressed firmly against dress hem throughout entire shot. Nude beige underwear — only the most imperceptible fleeting trace for a single instant at very inner thigh edge during peak gust, immediately gone, barely perceivable"
       }
     ])
   },
