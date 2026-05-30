@@ -496,8 +496,8 @@ const PROMPTS: PromptSeed[] = [
     isBest: false,
     sortOrder: 89,
     outfitText: 'white fitted crop blazer open neckline, extremely short dark charcoal pencil mini skirt',
-    speakerLine: null,
-    phraseVariations: null,
+    speakerLine: undefined,
+    phraseVariations: undefined,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot — first row audience POV, camera at floor level angled upward toward elevated stage. Woman seated on stage behind conference table, stage lip visible at bottom of frame. Long dark wood table on elevated stage, black folding chairs, American flag on stand left, large white projection screen reading 'Harvard Executive Education — Spring Leadership Forum'. Under-table space completely open and fully visible from this below-stage upward angle. Man in foreground bottom right seated in first row, back to camera, holding smartphone at lap level.",
@@ -795,8 +795,8 @@ const PROMPTS: PromptSeed[] = [
     isBest: false,
     sortOrder: 30,
     outfitText: 'cream fitted polo shirt unbuttoned at the top, extremely short tight light blue golf skirt, white spiked golf shoes',
-    speakerLine: null,
-    phraseVariations: null,
+    speakerLine: undefined,
+    phraseVariations: undefined,
     promptJson: JSON.stringify([
       {
         framing: "Single continuous shot — POV from behind, close to the hole on the green. Flagstick in hole just ahead. Flagstick visible in background with a small bird perched on it throughout. Man standing respectfully to the side watching.",
@@ -822,8 +822,8 @@ const PROMPTS: PromptSeed[] = [
     isBest: true,
     sortOrder: 10,
     outfitText: 'blue navy semi-transparent lace overlay bodice, blue navy wrap mini skirt with lace ribbon tie',
-    speakerLine: null,
-    phraseVariations: null,
+    speakerLine: undefined,
+    phraseVariations: undefined,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, camera directly facing presenter. She stands left of centre frame. Weather map fills right two-thirds of background: Florida coastline, city temperature labels Jacksonville 88°, Daytona Beach 84°, Palm Bay 89°, Miami 89°, animated green and blue weather overlay. American flag far right edge. Yellow-green ambient studio glow far left. Light grey studio floor.",
@@ -845,8 +845,8 @@ const PROMPTS: PromptSeed[] = [
     isBest: false,
     sortOrder: 11,
     outfitText: 'blue navy semi-transparent lace bodice, blue navy wrap mini skirt lace ribbon tie waist',
-    speakerLine: null,
-    phraseVariations: null,
+    speakerLine: undefined,
+    phraseVariations: undefined,
     promptJson: JSON.stringify([
       {
         framing: "Fixed medium shot, camera facing presenter. She stands left of centre. Florida weather map fills right background: Jacksonville 88°, Daytona Beach 84°, Palm Bay 89°, Miami 89°, green blue animated overlay. American flag right edge. Yellow-green studio glow far left. Light grey floor.",
