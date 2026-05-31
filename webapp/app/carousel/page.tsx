@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { NavBar } from '@/components/NavBar'
+import { PageWrapper } from '@/components/PageWrapper'
 
 type CarouselEvent =
   | { type: 'info'; msg: string; image_count?: number }
@@ -199,52 +201,9 @@ export default function CarouselPage() {
   const pct = totalCarousels > 0 ? Math.round((completedCarousels / totalCarousels) * 100) : 0
 
   return (
-    <div className="min-h-screen">
-      {/* Nav */}
-      <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950 z-20">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🐯</span>
-          <span className="font-semibold text-white">EL TIGRE FACTORY</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/kpi" className="text-gray-400 hover:text-white transition text-sm">📊 KPI</Link>
-          <Link href="/settings" className="text-gray-400 hover:text-white transition text-sm">⚙️ Settings</Link>
-        </div>
-      </nav>
-
-      {/* Tab bar */}
-      <div className="border-b border-gray-800 px-6 bg-gray-950 sticky top-[57px] z-10">
-        <div className="flex gap-0 -mb-px">
-          <Link href="/" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🔄 Scraping
-          </Link>
-          <Link href="/studio" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            ✨ Prompt Studio
-          </Link>
-          <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500">
-            🃏 Carousels
-          </div>
-          <Link href="/video" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🎬 Vidéos
-          </Link>
-          <Link href="/motion-control" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🎭 Motion Control
-          </Link>
-          <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🖼 Bulk Edit
-          </Link>
-          <Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🧪 Prompt Lab
-          </Link>
-          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🧹 Metadata Opti
-          </Link>
-          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            ⏳ En cours
-          </Link>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[#09090b]">
+      <NavBar />
+      <PageWrapper>
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
 
         {/* ── Config ─────────────────────────────────────────────────────── */}
@@ -494,6 +453,7 @@ export default function CarouselPage() {
           </div>
         )}
       </div>
+      </PageWrapper>
     </div>
   )
 }

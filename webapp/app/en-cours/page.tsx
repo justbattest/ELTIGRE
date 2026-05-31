@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { NavBar } from '@/components/NavBar'
+import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -502,59 +504,9 @@ export default function EnCoursPage() {
   const doneBatch   = batchRuns.filter(r =>  r.done)
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      {/* Nav */}
-      <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950 z-20">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🐯</span>
-          <span className="font-semibold text-white">EL TIGRE FACTORY</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/kpi" className="text-gray-400 hover:text-white transition text-sm">📊 KPI</Link>
-          <Link href="/settings" className="text-gray-400 hover:text-white transition text-sm">⚙️ Settings</Link>
-        </div>
-      </nav>
-
-      {/* Tab bar */}
-      <div className="border-b border-gray-800 px-6 bg-gray-950 sticky top-[57px] z-10">
-        <div className="flex gap-0 -mb-px">
-          <Link href="/" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🔄 Scraping
-          </Link>
-          <Link href="/studio" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            ✨ Prompt Studio
-          </Link>
-          <Link href="/carousel" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🃏 Carousels
-          </Link>
-          <Link href="/video" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🎬 Vidéos
-          </Link>
-          <Link href="/motion-control" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🎭 Motion Control
-          </Link>
-          <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🖼 Bulk Edit
-          </Link>
-          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🧹 Metadata Opti
-          </Link><Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🧪 Prompt Lab
-          </Link>
-          <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 flex items-center gap-2">
-            ⏳ En cours
-            {(activeRuns.length + activeBatch.length) > 0 && (
-              <span className="bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                {activeRuns.length + activeBatch.length}
-              </span>
-            )}
-          </div>
-          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🧹 Metadata Opti
-          </Link>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[#09090b] text-zinc-100">
+      <NavBar />
+      <PageWrapper>
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
         {loading && (
           <div className="flex items-center gap-3 text-gray-500">
@@ -609,6 +561,7 @@ export default function EnCoursPage() {
           </div>
         )}
       </div>
+      </PageWrapper>
     </div>
   )
 }

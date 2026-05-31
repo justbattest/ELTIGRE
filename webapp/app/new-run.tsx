@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { NavBar } from '@/components/NavBar'
+import { PageWrapper } from '@/components/PageWrapper'
 
 type SoulChar = { id: string; name: string; type: string; status: string }
 type RefElement = { id: string; name: string }
@@ -151,87 +153,12 @@ export default function NewRunPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Nav */}
-      <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950 z-20">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🐯</span>
-          <span className="font-semibold text-white">EL TIGRE FACTORY</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/kpi" className="text-gray-400 hover:text-white transition text-sm">
-            📊 KPI
-          </Link>
-          <Link href="/settings" className="text-gray-400 hover:text-white transition text-sm">
-            ⚙️ Settings
-          </Link>
-          <span className="text-gray-600 text-sm">{session?.user?.email}</span>
-          <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="text-gray-500 hover:text-gray-300 text-sm transition"
-          >
-            Déco
-          </button>
-        </div>
-      </nav>
-
-      {/* Tab bar */}
-      <div className="border-b border-gray-800 px-6 bg-gray-950 sticky top-[57px] z-10">
-        <div className="flex gap-0 -mb-px">
-          <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500">
-            🔄 Scraping
-          </div>
-          <Link
-            href="/studio"
-            className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition"
-          >
-            ✨ Prompt Studio
-          </Link>
-          <Link
-            href="/carousel"
-            className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition"
-          >
-            🃏 Carousels
-          </Link>
-          <Link
-            href="/video"
-            className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition"
-          >
-            🎬 Vidéos
-          </Link>
-          <Link
-            href="/motion-control"
-            className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition"
-          >
-            🎭 Motion Control
-          </Link>
-          <Link
-            href="/bulk-edit"
-            className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition"
-          >
-            🖼 Bulk Edit
-          </Link>
-          <Link
-            href="/prompt-lab"
-            className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition"
-          >
-            🧪 Prompt Lab
-          </Link>
-          <Link
-            href="/en-cours"
-            className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition"
-          >
-            ⏳ En cours
-          </Link>
-          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            🧹 Metadata Opti
-          </Link>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[#09090b]">
+      <NavBar />
+      <PageWrapper>
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
         {/* Profils Instagram */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-medium text-gray-200">Profils Instagram</h2>
             <div className="flex items-center gap-2">
@@ -288,7 +215,7 @@ export default function NewRunPage() {
         </div>
 
         {/* Personnages */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-medium text-gray-200">Personnage</h2>
             <button
@@ -367,7 +294,7 @@ export default function NewRunPage() {
         </div>
 
         {/* Modèle & Format */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
           <h2 className="font-medium mb-3 text-gray-200">Modèle & Format</h2>
 
           {/* Modèle */}
@@ -455,6 +382,7 @@ export default function NewRunPage() {
           {launching ? '⏳ Lancement...' : '🚀 Lancer'}
         </button>
       </div>
+      </PageWrapper>
     </div>
   )
 }

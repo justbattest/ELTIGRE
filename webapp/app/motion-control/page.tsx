@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { NavBar } from '@/components/NavBar'
+import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -300,53 +302,9 @@ export default function MotionControlPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-
-      {/* Top nav */}
-      <nav className="sticky top-0 z-20 bg-gray-950 border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🐯</span>
-          <span className="font-semibold text-white">EL TIGRE FACTORY</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/kpi" className="text-gray-400 hover:text-white transition text-sm">📊 KPI</Link>
-          <Link href="/settings" className="text-gray-400 hover:text-white transition text-sm">⚙️ Settings</Link>
-        </div>
-      </nav>
-
-      {/* Tab bar */}
-      <div className="border-b border-gray-800 px-6 bg-gray-950 sticky top-[57px] z-10">
-        <div className="flex gap-0 -mb-px overflow-x-auto">
-          <Link href="/" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            🔄 Scraping
-          </Link>
-          <Link href="/studio" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            ✨ Prompt Studio
-          </Link>
-          <Link href="/carousel" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            🃏 Carousels
-          </Link>
-          <Link href="/video" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            🎬 Vidéos
-          </Link>
-          <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 whitespace-nowrap">
-            🎭 Motion Control
-          </div>
-          <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            🖼 Bulk Edit
-          </Link>
-          <Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            🧪 Prompt Lab
-          </Link>
-          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            🧹 Metadata Opti
-          </Link>
-          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
-            ⏳ En cours
-          </Link>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[#09090b] text-white">
+      <NavBar />
+      <PageWrapper>
       {/* Content */}
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
 
@@ -471,6 +429,7 @@ export default function MotionControlPage() {
         )}
 
       </div>
+      </PageWrapper>
     </div>
   )
 }

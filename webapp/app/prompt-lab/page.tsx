@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
+import { NavBar } from '@/components/NavBar'
+import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -257,33 +259,9 @@ export default function PromptLabPage() {
   const isRunning = generating
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-
-      {/* ── Nav ── */}
-      <div className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950 z-20">
-        <span className="text-violet-400 font-bold text-lg">🐯 EL TIGRE FACTORY</span>
-        <div className="flex gap-3 text-sm">
-          <Link href="/kpi" className="text-gray-400 hover:text-white transition">📊 KPI</Link>
-          <Link href="/settings" className="text-gray-400 hover:text-white transition">⚙️ Settings</Link>
-        </div>
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className="border-b border-gray-800 px-6">
-        <div className="flex gap-0 -mb-px overflow-x-auto">
-          {[
-            ['/', '🔄 Scraping'], ['/studio', '✨ Prompt Studio'], ['/carousel', '🃏 Carousels'],
-            ['/video', '🎬 Vidéos'], ['/motion-control', '🎭 Motion Control'],
-            ['/bulk-edit', '🖼 Bulk Edit'],
-          ].map(([href, label]) => (
-            <Link key={href} href={href} className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">{label}</Link>
-          ))}
-          <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 whitespace-nowrap">🧪 Prompt Lab</div>
-          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">🧹 Metadata Opti</Link>
-          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">⏳ En cours</Link>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[#09090b] text-white">
+      <NavBar />
+      <PageWrapper>
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-5">
 
         <div>
@@ -509,6 +487,7 @@ export default function PromptLabPage() {
           </div>
         </div>
       )}
+      </PageWrapper>
     </div>
   )
 }
