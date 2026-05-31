@@ -24,11 +24,11 @@ type FileResult = {
 
 /**
  * Taille de chunk pour l'upload HTTP (phase 1).
- * Photos iPhone 17 Pro = 15-50MB chacune → on envoie 1 fichier à la fois en séquentiel
- * pour éviter de dépasser la limite Railway (~100MB par requête).
- * Plus lent qu'en parallèle mais 100% fiable sur les gros fichiers.
+ * Photos iPhone 17 Pro = 15-50MB chacune → chunks de 3 max (3×15MB = 45MB < limite Railway 100MB).
+ * Les chunks sont envoyés en PARALLÈLE par groupes de UPLOAD_CONCURRENCY pour rester rapide.
  */
-const UPLOAD_CHUNK_SIZE = 1
+const UPLOAD_CHUNK_SIZE = 3
+const UPLOAD_CONCURRENCY = 4  // 4 chunks en parallèle = 12 fichiers simultanément
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
@@ -183,10 +183,11 @@ export default function MetadataPage() {
         chunks.push(entries.slice(i, i + UPLOAD_CHUNK_SIZE))
       }
 
-      // Séquentiel (1 fichier à la fois) — photos iPhone peuvent faire 15-50MB,
-      // l'envoi parallèle de 10 simultanément dépasse la limite Railway → Load failed.
-      for (const chunk of chunks) {
-        if (abort.signal.aborted) break
+      // Envoi par vagues de UPLOAD_CONCURRENCY chunks en parallèle.
+      // Chaque chunk = 3 fichiers max → ~45MB par requête (sous la limite Railway de ~100MB).
+      // Plus rapide que le séquentiel, plus fiable que tout en parallèle.
+      const uploadChunk = async (chunk: FileEntry[]) => {
+        if (abort.signal.aborted) return
         const form = new FormData()
         form.append('runId', runId)
         chunk.forEach(e => form.append('files', e.file))
@@ -194,6 +195,10 @@ export default function MetadataPage() {
         const data = await res.json()
         if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
         setUploadedFiles(prev => prev + data.savedCount)
+      }
+      for (let i = 0; i < chunks.length; i += UPLOAD_CONCURRENCY) {
+        if (abort.signal.aborted) break
+        await Promise.all(chunks.slice(i, i + UPLOAD_CONCURRENCY).map(uploadChunk))
       }
 
       if (abort.signal.aborted || !runId) return
@@ -320,9 +325,9 @@ export default function MetadataPage() {
                     {imgCount > 0 && <span>{imgCount} photo{imgCount > 1 ? 's' : ''}</span>}
                     {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
                     {videoCount > 0 && <span>{videoCount} vidéo{videoCount > 1 ? 's' : ''}</span>}
-                    {entries.length > 1 && (
+                    {entries.length > UPLOAD_CHUNK_SIZE && (
                       <span className="text-gray-600 ml-2">
-                        · envoyé 1 par 1 vers le serveur, dans 1 dossier Drive
+                        · envoyé en {nChunks} tranches de {UPLOAD_CHUNK_SIZE}, dans 1 dossier Drive
                       </span>
                     )}
                   </span>
