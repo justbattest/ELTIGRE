@@ -168,8 +168,8 @@ export default function BulkEditPage() {
           <Link href="/video" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">🎬 Vidéos</Link>
           <Link href="/motion-control" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">🎭 Motion Control</Link>
           <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 whitespace-nowrap">🖼 Bulk Edit</div>
-          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">⏳ En cours</Link>
           <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">🧹 Metadata Opti</Link>
+          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">⏳ En cours</Link>
         </div>
       </div>
 

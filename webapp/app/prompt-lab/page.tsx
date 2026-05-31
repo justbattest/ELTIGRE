@@ -54,6 +54,8 @@ export default function PromptLabPage() {
   const [saveAuthor, setSaveAuthor] = useState('')
   const [saveDescription, setSaveDescription] = useState('')
   const [saveCategoryKey, setSaveCategoryKey] = useState<string>('conference')
+  const [customNiche, setCustomNiche] = useState('')
+  const [customLabel, setCustomLabel] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState('')
 
@@ -229,6 +231,8 @@ export default function PromptLabPage() {
           authorName: saveAuthor.trim(),
           userDescription: saveDescription.trim(),
           categoryKey: saveCategoryKey,
+          customNiche: saveCategoryKey === 'custom' ? customNiche : undefined,
+          customLabel: saveCategoryKey === 'custom' ? customLabel : undefined,
         }),
       })
       const data = await res.json()
@@ -275,8 +279,8 @@ export default function PromptLabPage() {
             <Link key={href} href={href} className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">{label}</Link>
           ))}
           <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 whitespace-nowrap">🧪 Prompt Lab</div>
-          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">⏳ En cours</Link>
           <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">🧹 Metadata Opti</Link>
+          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">⏳ En cours</Link>
         </div>
       </div>
 
@@ -467,9 +471,21 @@ export default function PromptLabPage() {
                   {CATEGORIES.map(c => (
                     <option key={c.key} value={c.key}>{c.label}</option>
                   ))}
+                  <option value="custom">➕ Nouvelle catégorie...</option>
                 </select>
               </div>
             </div>
+
+            {saveCategoryKey === 'custom' && (
+              <div className="space-y-2 p-3 bg-gray-800 rounded-xl">
+                <input type="text" value={customLabel} onChange={e => setCustomLabel(e.target.value)}
+                  placeholder="Nom de la catégorie (ex: Cuisine, Voiture...)"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 text-sm" />
+                <input type="text" value={customNiche} onChange={e => setCustomNiche(e.target.value)}
+                  placeholder="Clé interne (ex: cuisine, voiture — sans espaces)"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 text-sm font-mono" />
+              </div>
+            )}
 
             {saveSuccess && (
               <p className={`text-sm ${saveSuccess.startsWith('✅') ? 'text-emerald-400' : 'text-red-400'}`}>{saveSuccess}</p>

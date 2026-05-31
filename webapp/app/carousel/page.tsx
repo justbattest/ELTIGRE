@@ -236,11 +236,11 @@ export default function CarouselPage() {
           <Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
             🧪 Prompt Lab
           </Link>
-          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
-            ⏳ En cours
-          </Link>
           <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
             🧹 Metadata Opti
+          </Link>
+          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
+            ⏳ En cours
           </Link>
         </div>
       </div>

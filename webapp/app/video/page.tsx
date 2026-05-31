@@ -319,8 +319,8 @@ export default function VideoPage() {
           <Link href="/motion-control" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🎭 Motion Control</Link>
           <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🖼 Bulk Edit</Link>
           <Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🧪 Prompt Lab</Link>
-          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">⏳ En cours</Link>
           <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🧹 Metadata Opti</Link>
+          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">⏳ En cours</Link>
         </div>
       </div>
 
@@ -484,7 +484,20 @@ export default function VideoPage() {
                         <p className="text-xs text-gray-500 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
                       )}
                       {p.authorName && (
-                        <p className="text-xs text-violet-400/60 mt-0.5">by {p.authorName}</p>
+                        <div className="flex items-center justify-between mt-0.5">
+                          <p className="text-xs text-violet-400/60">by {p.authorName}</p>
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault()
+                              if (!confirm('Supprimer ce prompt ?')) return
+                              await fetch(`/api/video/validated-prompts/${p.id}`, { method: 'DELETE' })
+                              setPrompts(prev => prev.filter(x => x.id !== p.id))
+                              setSelectedIds(prev => { const s = new Set(prev); s.delete(p.id); return s })
+                            }}
+                            className="text-gray-700 hover:text-red-400 transition text-xs"
+                            title="Supprimer ce prompt communautaire"
+                          >🗑</button>
+                        </div>
                       )}
                     </div>
                   </label>
