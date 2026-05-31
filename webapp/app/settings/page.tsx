@@ -410,7 +410,7 @@ export default function SettingsPage() {
               </button>
             </div>
             <p className="text-gray-500 text-xs mb-3">
-              UUIDs de tes personnages pour Seedream/Nano Banana. Le bouton les détecte automatiquement.
+              UUIDs de tes personnages Higgsfield — utilisés pour les images (Nano Banana) ET les vidéos (Seedance 2.0). Le bouton détecte tous tes Reference Elements automatiquement.
             </p>
             {scanError && (
               <p className="text-xs text-amber-400 mb-2">{scanError}</p>

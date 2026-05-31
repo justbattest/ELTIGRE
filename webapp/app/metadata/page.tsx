@@ -24,10 +24,10 @@ type FileResult = {
 
 /**
  * Taille de chunk pour l'upload HTTP (phase 1).
- * 50 × 3 MB avg = ~150 MB par requête — confortable pour Node.js sans OOM.
+ * 5 × 3 MB avg = ~15 MB par requête — Railway a une limite de body ~50 MB.
  * Tous les chunks vont dans le MÊME dossier Drive (un seul run).
  */
-const UPLOAD_CHUNK_SIZE = 50
+const UPLOAD_CHUNK_SIZE = 5
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
