@@ -50,6 +50,7 @@ async def generate_video(
     from pipeline.generator import run_higgsfield_for_user
 
     # Le tag <<<element_id>>> préfixe le prompt JSON (même pattern que seedream/nanobanana)
+    print(json.dumps({"type": "info", "msg": f"[DEBUG] element_id utilisé: {element_id}"}), flush=True)
     full_prompt = f"<<<{element_id}>>> {prompt_json}"
 
     cmd = [
