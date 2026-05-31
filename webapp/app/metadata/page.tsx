@@ -24,10 +24,10 @@ type FileResult = {
 
 /**
  * Taille de chunk pour l'upload HTTP (phase 1).
- * 5 × 3 MB avg = ~15 MB par requête — Railway a une limite de body ~50 MB.
- * Tous les chunks vont dans le MÊME dossier Drive (un seul run).
+ * 10 × 3 MB avg = ~30 MB par requête — safe pour Railway.
+ * Tous les chunks sont envoyés EN PARALLÈLE avec Promise.all → ultra rapide même sur Railway.
  */
-const UPLOAD_CHUNK_SIZE = 5
+const UPLOAD_CHUNK_SIZE = 10
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
@@ -174,27 +174,25 @@ export default function MetadataPage() {
     abortRef.current = abort
 
     try {
-      // ── Phase 1 : upload de tous les fichiers par chunks ────────────────────
-      let runId = ''
+      // ── Phase 1 : upload de tous les fichiers par chunks EN PARALLÈLE ─────────
+      // runId généré côté client → tous les chunks partagent le même dossier tmp
+      const runId = `metadata_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
       const chunks: FileEntry[][] = []
       for (let i = 0; i < entries.length; i += UPLOAD_CHUNK_SIZE) {
         chunks.push(entries.slice(i, i + UPLOAD_CHUNK_SIZE))
       }
 
-      for (const chunk of chunks) {
+      // Promise.all → tous les chunks partent en même temps → latence réseau minimale
+      await Promise.all(chunks.map(async (chunk) => {
         if (abort.signal.aborted) return
-
         const form = new FormData()
+        form.append('runId', runId)
         chunk.forEach(e => form.append('files', e.file))
-        if (runId) form.append('runId', runId)
-
         const res  = await fetch('/api/metadata/upload', { method: 'POST', body: form, signal: abort.signal })
         const data = await res.json()
         if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
-
-        runId = data.runId  // garder le runId retourné (identique après le 1er chunk)
-        setUploadedFiles(data.totalSaved)
-      }
+        setUploadedFiles(prev => prev + data.savedCount)
+      }))
 
       if (abort.signal.aborted || !runId) return
 

@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type RefElement = { id: string; name: string }
+type RefElement = { id: string; name: string; type?: string }
 
 type ValidatedPrompt = {
   id: number
@@ -376,6 +376,8 @@ export default function VideoPage() {
                   }`}
                 >
                   {e.name}
+                  {e.type === 'soul_2' && <span className="ml-1 text-emerald-400 text-xs">🎬</span>}
+                  {e.type === 'soul_cinematic' && <span className="ml-1 text-gray-500 text-xs">🖼</span>}
                 </button>
               ))}
             </div>

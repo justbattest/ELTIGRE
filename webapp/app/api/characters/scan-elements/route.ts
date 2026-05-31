@@ -57,7 +57,7 @@ export async function GET() {
       ? JSON.parse(creds.referenceElements)
       : []
 
-    const scanned = items.map(i => ({ id: i.id, name: i.name }))
+    const scanned = items.map(i => ({ id: i.id, name: i.name, type: i.type }))
 
     // Déduplique par id : les éléments scannés écrasent les existants si même id
     const merged = [
