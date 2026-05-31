@@ -24,11 +24,10 @@ type FileResult = {
 
 /**
  * Taille de chunk pour l'upload HTTP (phase 1).
- * Photos iPhone 17 Pro = 15-50MB chacune → chunks de 3 max (3×15MB = 45MB < limite Railway 100MB).
- * Les chunks sont envoyés en PARALLÈLE par groupes de UPLOAD_CONCURRENCY pour rester rapide.
+ * Identique à Bulk Edit : CHUNK_SIZE=10, Promise.all sur tous les chunks simultanément.
+ * C'est ce pattern qui garantit la rapidité.
  */
-const UPLOAD_CHUNK_SIZE = 3
-const UPLOAD_CONCURRENCY = 4  // 4 chunks en parallèle = 12 fichiers simultanément
+const UPLOAD_CHUNK_SIZE = 10
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
@@ -176,17 +175,23 @@ export default function MetadataPage() {
 
     try {
       // ── Phase 1 : upload de tous les fichiers par chunks EN PARALLÈLE ─────────
-      // runId généré côté client → tous les chunks partagent le même dossier tmp
+      // Même pattern que Bulk Edit : Promise.all sur tous les chunks simultanément.
       const runId = `metadata_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+
+      // Enregistrer immédiatement le run en mémoire → visible dans En cours dès maintenant
+      await fetch('/api/metadata/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId, fileCount: entries.length }),
+      }).catch(() => {}) // fire-and-forget, pas bloquant
+
       const chunks: FileEntry[][] = []
       for (let i = 0; i < entries.length; i += UPLOAD_CHUNK_SIZE) {
         chunks.push(entries.slice(i, i + UPLOAD_CHUNK_SIZE))
       }
 
-      // Envoi par vagues de UPLOAD_CONCURRENCY chunks en parallèle.
-      // Chaque chunk = 3 fichiers max → ~45MB par requête (sous la limite Railway de ~100MB).
-      // Plus rapide que le séquentiel, plus fiable que tout en parallèle.
-      const uploadChunk = async (chunk: FileEntry[]) => {
+      // Tous les chunks partent en même temps → latence minimale (identique à Bulk Edit)
+      await Promise.all(chunks.map(async (chunk) => {
         if (abort.signal.aborted) return
         const form = new FormData()
         form.append('runId', runId)
@@ -195,11 +200,7 @@ export default function MetadataPage() {
         const data = await res.json()
         if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
         setUploadedFiles(prev => prev + data.savedCount)
-      }
-      for (let i = 0; i < chunks.length; i += UPLOAD_CONCURRENCY) {
-        if (abort.signal.aborted) break
-        await Promise.all(chunks.slice(i, i + UPLOAD_CONCURRENCY).map(uploadChunk))
-      }
+      }))
 
       if (abort.signal.aborted || !runId) return
 

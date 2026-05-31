@@ -9,6 +9,8 @@ export type MetadataRunState = {
   characterName: string
   startedAt: number
   userId: string
+  uploading?: boolean   // true pendant Phase 1 (avant démarrage Python)
+  totalFiles?: number   // nombre total de fichiers attendus
 }
 
 export const metadataRuns: Map<string, MetadataRunState> = new Map()

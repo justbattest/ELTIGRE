@@ -48,13 +48,16 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Initialiser le slot SSE en mémoire
+  // Mettre à jour le slot SSE (créé par /api/metadata/init, ou nouveau si init a été sauté)
+  const existing = metadataRuns.get(runId)
   metadataRuns.set(runId, {
-    events: [],
+    events: existing?.events ?? [],
     done: false,
     characterName: characterName || '',
-    startedAt: Date.now(),
+    startedAt: existing?.startedAt ?? Date.now(),
     userId: session.user.id,
+    uploading: false,
+    totalFiles: existing?.totalFiles,
   })
 
   const pythonPath  = path.join(process.cwd(), '..', 'venv', 'bin', 'python')
