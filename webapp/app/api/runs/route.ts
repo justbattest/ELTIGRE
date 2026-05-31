@@ -46,6 +46,8 @@ export async function GET(req: NextRequest) {
     ...r,
     runType: VIDEO_MODELS.includes(r.modelSetting ?? '')
       ? 'video'
+      : r.modelSetting === 'bulk_edit'
+      ? 'bulk_edit'
       : (r.inputProfiles && r.inputProfiles !== '[]')
       ? 'scraping'
       : 'studio',

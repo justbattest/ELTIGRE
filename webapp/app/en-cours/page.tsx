@@ -8,7 +8,7 @@ import Link from 'next/link'
 type RunMeta = {
   id: string
   status: string
-  runType: 'video' | 'studio' | 'scraping'
+  runType: 'video' | 'studio' | 'scraping' | 'bulk_edit'
   modelSetting: string | null
   totalPosts: number | null
   completedPosts: number | null
@@ -275,8 +275,8 @@ function RunCard({ run }: { run: RunMeta }) {
   const isRunning = status === 'running'
 
   const isMotionControl = run.modelSetting === 'kling_motion_control'
-  const typeIcon = run.runType === 'video' ? (isMotionControl ? '🎭' : '🎬') : run.runType === 'studio' ? '✨' : '🔄'
-  const typeLabel = run.runType === 'video' ? (isMotionControl ? 'Motion Control' : 'Vidéos') : run.runType === 'studio' ? 'Prompt Studio' : 'Scraping'
+  const typeIcon = run.runType === 'video' ? (isMotionControl ? '🎭' : '🎬') : run.runType === 'bulk_edit' ? '🖼' : run.runType === 'studio' ? '✨' : '🔄'
+  const typeLabel = run.runType === 'video' ? (isMotionControl ? 'Motion Control' : 'Vidéos') : run.runType === 'bulk_edit' ? 'Bulk Edit' : run.runType === 'studio' ? 'Prompt Studio' : 'Scraping'
   const gridCols = run.runType === 'video'
     ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
     : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6'

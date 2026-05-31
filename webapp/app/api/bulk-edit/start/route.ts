@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
   })
   const higgsToken = decryptIfPresent(creds?.higgsFieldToken)
   if (!higgsToken) return NextResponse.json({ error: 'Higgsfield token requis' }, { status: 400 })
+  const higgsRefreshToken = decryptIfPresent(creds?.higgsFieldRefreshToken) || ''
   const googleRefreshToken = creds?.googleRefreshToken || null
   const driveFolderId = creds?.driveFolderId || null
 
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
       inputProfiles: '[]',
       maxPosts: imageFiles.length,
       selectedElementId: elementId || null,
-      modelSetting: 'seedream_v4_5',
+      modelSetting: 'bulk_edit',
       aspectRatio: '1:1',
       quality,
       status: 'running',
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
       env: {
         ...process.env,
         HIGGSFIELD_TOKEN: higgsToken,
+        ...(higgsRefreshToken ? { HIGGSFIELD_REFRESH_TOKEN: higgsRefreshToken } : {}),
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
         ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
         DRIVE_NICHE: 'bulk_edit',

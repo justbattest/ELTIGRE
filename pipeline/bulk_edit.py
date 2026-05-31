@@ -31,6 +31,7 @@ async def run_bulk_edit(
     element_id: str,
     quality: str,
     user_token: str,
+    refresh_token: str = "",
 ) -> None:
     drive = init_drive_uploader_from_env()
 
@@ -69,12 +70,13 @@ async def run_bulk_edit(
             "--prompt", prompt_full,
             "--image", str(img_path),
             "--quality", quality,
+            "--aspect-ratio", "9:16",
             "--wait",
             "--wait-timeout", "10m",
         ]
 
         try:
-            url = await run_higgsfield_for_user(user_token, cmd, timeout=660)
+            url = await run_higgsfield_for_user(user_token, cmd, timeout=660, refresh_token=refresh_token)
             url = url.strip()
             completed += 1
 
@@ -151,6 +153,8 @@ def main():
         print(json.dumps({"type": "error", "message": "HIGGSFIELD_TOKEN manquant"}), flush=True)
         sys.exit(1)
 
+    refresh = os.environ.get("HIGGSFIELD_REFRESH_TOKEN", "")
+
     asyncio.run(run_bulk_edit(
         run_id=args.run_id,
         images_dir=args.images_dir,
@@ -158,6 +162,7 @@ def main():
         element_id=args.element_id,
         quality=args.quality,
         user_token=token,
+        refresh_token=refresh,
     ))
 
 

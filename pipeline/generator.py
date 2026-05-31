@@ -74,18 +74,19 @@ def build_cmd(
 
 # ─── Isolation per-user via HOME trick ───────────────────────────────────────
 
-async def run_higgsfield_for_user(user_token: str, cmd_args: list, timeout: int = 600) -> str:
+async def run_higgsfield_for_user(user_token: str, cmd_args: list, timeout: int = 600, refresh_token: str = "") -> str:
     """Lance une commande Higgsfield CLI avec un HOME isolé pour cet utilisateur.
 
     Chaque appel crée un répertoire temporaire unique → les credentials ne se mélangent jamais.
     Le répertoire est automatiquement supprimé après l'appel (même en cas d'erreur).
+    refresh_token : si fourni, le CLI peut auto-renouveler le token → évite Session expired sur les longs runs.
     """
     with tempfile.TemporaryDirectory(prefix="hf_") as tmp_home:
         # Écrire les credentials de cet user dans son HOME isolé
         creds_dir = Path(tmp_home) / ".config" / "higgsfield"
         creds_dir.mkdir(parents=True)
         (creds_dir / "credentials.json").write_text(
-            json.dumps({"access_token": user_token, "refresh_token": ""})
+            json.dumps({"access_token": user_token, "refresh_token": refresh_token})
         )
 
         env = {**os.environ, "HOME": tmp_home}

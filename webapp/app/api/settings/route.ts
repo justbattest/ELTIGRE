@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     klingAccessKey,
     klingSecretKey,
     higgsFieldToken,
+    higgsFieldRefreshToken,
     defaultModel,
     defaultAspectRatio,
     defaultQuality,
@@ -96,6 +97,9 @@ export async function POST(req: NextRequest) {
   }
   if (higgsFieldToken) {
     data.higgsFieldToken = encrypt(higgsFieldToken)
+  }
+  if (higgsFieldRefreshToken) {
+    data.higgsFieldRefreshToken = encrypt(higgsFieldRefreshToken)
   }
   if (defaultModel) data.defaultModel = defaultModel
   if (defaultAspectRatio) data.defaultAspectRatio = defaultAspectRatio
