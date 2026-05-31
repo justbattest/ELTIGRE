@@ -18,9 +18,9 @@ export default function BulkEditPage() {
   const [entries, setEntries] = useState<FileEntry[]>([])
   const [dragging, setDragging] = useState(false)
 
-  // ── Personnages ──
+  // ── Personnages (pour dossier Drive uniquement) ──
   const [refElements, setRefElements] = useState<RefElement[]>([])
-  const [selectedElementId, setSelectedElementId] = useState('')
+  const [selectedCharName, setSelectedCharName] = useState('')
   const [loadingChars, setLoadingChars] = useState(false)
 
   // ── Config ──
@@ -115,7 +115,7 @@ export default function BulkEditPage() {
         body: JSON.stringify({
           uploadRunId: runId,
           prompt: prompt.trim(),
-          elementId: selectedElementId,
+          characterName: selectedCharName,
           quality,
         }),
         signal: abort.signal,
@@ -180,29 +180,28 @@ export default function BulkEditPage() {
           <p className="text-gray-400 text-sm mt-1">Glisse tes images, entre un prompt, et relance Seedream sur chaque photo d&apos;un coup.</p>
         </div>
 
-        {/* ── Personnage (optionnel) ── */}
+        {/* ── Dossier Drive ── */}
         <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-          <p className="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wider">
-            Personnage <span className="text-gray-600 font-normal normal-case">(optionnel — préfixe :::id::: dans le prompt)</span>
-          </p>
+          <p className="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wider">Dossier Drive</p>
+          <p className="text-xs text-gray-600 mb-3">Organise les résultats dans le bon sous-dossier Drive. Pas d&apos;impact sur la génération.</p>
           {loadingChars ? (
             <p className="text-xs text-gray-500">Chargement...</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setSelectedElementId('')}
+                onClick={() => setSelectedCharName('')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                  !selectedElementId ? 'bg-violet-600 border-violet-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-violet-600'
+                  !selectedCharName ? 'bg-violet-600 border-violet-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-violet-600'
                 }`}
               >
                 Aucun
               </button>
-              {refElements.filter(e => !e.type || e.type === 'soul_cinematic').map(e => (
+              {refElements.map(e => (
                 <button
                   key={e.id}
-                  onClick={() => setSelectedElementId(selectedElementId === e.id ? '' : e.id)}
+                  onClick={() => setSelectedCharName(selectedCharName === e.name ? '' : e.name)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                    selectedElementId === e.id ? 'bg-violet-600 border-violet-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                    selectedCharName === e.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
                   }`}
                 >
                   {e.name}

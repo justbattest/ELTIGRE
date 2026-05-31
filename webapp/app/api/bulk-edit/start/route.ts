@@ -84,7 +84,6 @@ export async function POST(req: NextRequest) {
       '--run-id', run.id,
       '--images-dir', imagesDir,
       '--prompt', prompt,
-      '--element-id', elementId,
       '--quality', quality,
     ],
     {

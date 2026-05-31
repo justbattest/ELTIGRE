@@ -50,8 +50,9 @@ async def run_bulk_edit(
     completed = 0
     failed = 0
 
-    # Prompt avec ou sans préfixe personnage
-    prompt_full = f"<<<{element_id}>>> {prompt}" if element_id else prompt
+    # Prompt direct — pas de préfixe <<<element_id>>> pour le bulk edit i2i
+    # (l'image source --image suffit comme référence, le personnage sert juste au dossier Drive)
+    prompt_full = prompt
 
     for i, img_path in enumerate(images):
         shortcode = f"edit_{i + 1}"
