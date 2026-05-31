@@ -332,6 +332,12 @@ export default function MotionControlPage() {
           <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 whitespace-nowrap">
             🎭 Motion Control
           </div>
+          <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
+            🖼 Bulk Edit
+          </Link>
+          <Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
+            🧪 Prompt Lab
+          </Link>
           <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">
             🧹 Metadata Opti
           </Link>
