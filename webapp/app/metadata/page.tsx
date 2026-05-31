@@ -423,6 +423,15 @@ export default function MetadataPage() {
                 <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm rounded-lg p-3">{error}</div>
               )}
 
+              {isRunning && (
+                <button
+                  onClick={() => { abortRef.current?.abort(); resetAll() }}
+                  className="w-full bg-red-900/40 hover:bg-red-900/60 border border-red-800 text-red-400 hover:text-red-300 text-sm rounded-lg py-2.5 transition"
+                >
+                  ✕ Annuler
+                </button>
+              )}
+
               {isDone && (
                 <button onClick={resetAll} className="w-full bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg py-2.5 transition">
                   + Nouveau batch
