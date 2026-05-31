@@ -315,6 +315,7 @@ export default function VideoPage() {
           <Link href="/carousel" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🃏 Carousels</Link>
           <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500">🎬 Vidéos</div>
           <Link href="/motion-control" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🎭 Motion Control</Link>
+          <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🖼 Bulk Edit</Link>
           <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">⏳ En cours</Link>
           <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🧹 Metadata Opti</Link>
         </div>
