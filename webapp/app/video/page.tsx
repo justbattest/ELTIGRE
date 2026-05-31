@@ -16,6 +16,8 @@ type ValidatedPrompt = {
   outfitText: string | null
   speakerLine: string | null
   phraseVariations: string[] | null  // phrases dédiées à ce concept précis
+  authorName: string | null          // auteur (prompts communautaires)
+  userDescription: string | null     // description courte du concept
 }
 
 // ─── Outfit pools (doit rester en sync avec video_prompts.py) ─────────────────
@@ -316,6 +318,7 @@ export default function VideoPage() {
           <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500">🎬 Vidéos</div>
           <Link href="/motion-control" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🎭 Motion Control</Link>
           <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🖼 Bulk Edit</Link>
+          <Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🧪 Prompt Lab</Link>
           <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">⏳ En cours</Link>
           <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">🧹 Metadata Opti</Link>
         </div>
@@ -475,8 +478,13 @@ export default function VideoPage() {
                         </span>
                         <SubNicheLabel subNiche={p.subNiche} />
                       </div>
-                      {p.speakerLine && (
+                      {p.userDescription ? (
+                        <p className="text-xs text-gray-500 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
+                      ) : p.speakerLine && (
                         <p className="text-xs text-gray-500 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
+                      )}
+                      {p.authorName && (
+                        <p className="text-xs text-violet-400/60 mt-0.5">by {p.authorName}</p>
                       )}
                     </div>
                   </label>
@@ -566,8 +574,13 @@ export default function VideoPage() {
                             <span className="text-xs text-gray-600 italic">outfit uniquement</span>
                           )}
                         </div>
-                        {p.speakerLine && varBaseId !== p.id && (
+                        {p.userDescription ? (
+                          <p className="text-xs text-gray-600 truncate italic mt-0.5">&ldquo;{p.userDescription}&rdquo;</p>
+                        ) : p.speakerLine && varBaseId !== p.id && (
                           <p className="text-xs text-gray-600 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
+                        )}
+                        {p.authorName && (
+                          <p className="text-xs text-violet-400/60 mt-0.5">by {p.authorName}</p>
                         )}
                       </div>
                     </label>

@@ -536,6 +536,9 @@ export default function EnCoursPage() {
           <Link href="/bulk-edit" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
             🖼 Bulk Edit
           </Link>
+          <Link href="/prompt-lab" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition">
+            🧪 Prompt Lab
+          </Link>
           <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 flex items-center gap-2">
             ⏳ En cours
             {(activeRuns.length + activeBatch.length) > 0 && (

@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
       outfitText: true,        // exposé pour affichage dans le mode variations
       speakerLine: true,       // exposé pour affichage dans le mode variations
       phraseVariations: true,  // JSON array — parsé avant envoi
+      authorName: true,        // auteur du prompt (communautaire)
+      userDescription: true,   // description courte du concept
       // promptJson intentionnellement omis
     },
   })

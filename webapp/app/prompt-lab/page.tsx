@@ -1,0 +1,498 @@
+'use client'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type HistoryEntry = {
+  id: string
+  timestamp: string   // HH:MM
+  description: string
+  analysisText: string
+  promptJson: string  // JSON stringifié extrait du stream
+  previews: string[]  // premières images (base64 thumbnails)
+}
+
+const CATEGORIES = [
+  { key: 'conference', label: '🎓 Conférence' },
+  { key: 'sport',      label: '🏃 Coach' },
+  { key: 'golf',       label: '⛳ Golf' },
+  { key: 'nurse',      label: '🏥 Vieux — Infirmière' },
+  { key: 'restaurant', label: '🍽️ Vieux — Restaurant' },
+  { key: 'meteo',      label: '📺 Météo' },
+  { key: 'reporter',   label: '🌪️ Météo — Reporter' },
+] as const
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function PromptLabPage() {
+  useSession()
+
+  // ── Images ──
+  const [images, setImages] = useState<{ file: File; preview: string; base64: string }[]>([])
+  const [dragging, setDragging] = useState(false)
+
+  // ── Description ──
+  const [description, setDescription] = useState('')
+
+  // ── Génération ──
+  const [generating, setGenerating] = useState(false)
+  const [analysisText, setAnalysisText] = useState('')
+  const [promptJson, setPromptJson] = useState('')   // JSON extrait après ---JSON---
+  const [error, setError] = useState('')
+  const analysisRef = useRef<HTMLDivElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  // ── Historique session ──
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [viewingEntry, setViewingEntry] = useState<HistoryEntry | null>(null)
+
+  // ── Dialog Save ──
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [saveAuthor, setSaveAuthor] = useState('')
+  const [saveDescription, setSaveDescription] = useState('')
+  const [saveCategoryKey, setSaveCategoryKey] = useState<string>('conference')
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState('')
+
+  // ── Charger historique depuis localStorage ──
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('prompt-lab-history')
+      if (raw) setHistory(JSON.parse(raw))
+    } catch { /* ignore */ }
+  }, [])
+
+  const saveHistory = (entries: HistoryEntry[]) => {
+    setHistory(entries)
+    try { localStorage.setItem('prompt-lab-history', JSON.stringify(entries.slice(0, 20))) } catch { /* ignore */ }
+  }
+
+  // ── Drag & drop ────────────────────────────────────────────────────────────
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise(res => {
+      const reader = new FileReader()
+      reader.onload = e => res(e.target?.result as string)
+      reader.readAsDataURL(file)
+    })
+
+  const addFiles = useCallback(async (files: FileList | File[]) => {
+    const arr = Array.from(files).filter(f => f.type.startsWith('image/'))
+    const newImages = await Promise.all(arr.map(async f => ({
+      file: f,
+      preview: URL.createObjectURL(f),
+      base64: await toBase64(f),
+    })))
+    setImages(prev => [...prev, ...newImages].slice(0, 10))
+  }, [])
+
+  const onDragOver  = (e: React.DragEvent) => { e.preventDefault(); setDragging(true) }
+  const onDragLeave = () => setDragging(false)
+  const onDrop      = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files) }
+
+  const removeImage = (i: number) => setImages(prev => {
+    URL.revokeObjectURL(prev[i].preview)
+    return prev.filter((_, idx) => idx !== i)
+  })
+
+  // ── Génération streaming ───────────────────────────────────────────────────
+  const generate = async () => {
+    if (!images.length) return setError('Uploade au moins un screenshot.')
+    if (!description.trim()) return setError('Décris la scène.')
+
+    setError('')
+    setAnalysisText('')
+    setPromptJson('')
+    setGenerating(true)
+    setViewingEntry(null)
+
+    const abort = new AbortController()
+    abortRef.current = abort
+
+    let fullText = ''
+    let jsonStarted = false
+    let jsonBuffer = ''
+
+    try {
+      const res = await fetch('/api/prompt-lab/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: images.map(i => i.base64),
+          description,
+        }),
+        signal: abort.signal,
+      })
+
+      if (!res.ok || !res.body) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d.error || `HTTP ${res.status}`)
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const raw = decoder.decode(value)
+        const lines = raw.split('\n')
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const data = line.slice(6)
+          if (data === '[DONE]') break
+          try {
+            const chunk = JSON.parse(data)
+            if (chunk.error) throw new Error(chunk.error)
+            if (chunk.text) {
+              fullText += chunk.text
+
+              // Détecter la séparation ---JSON---
+              if (!jsonStarted && fullText.includes('---JSON---')) {
+                jsonStarted = true
+                const parts = fullText.split('---JSON---')
+                setAnalysisText(parts[0].trim())
+                jsonBuffer = parts[1] || ''
+              } else if (jsonStarted) {
+                jsonBuffer += chunk.text
+              } else {
+                setAnalysisText(fullText)
+              }
+
+              // Auto-scroll
+              if (analysisRef.current) {
+                analysisRef.current.scrollTop = analysisRef.current.scrollHeight
+              }
+            }
+          } catch (parseErr) {
+            if ((parseErr as Error).message !== 'Unexpected end of JSON input') throw parseErr
+          }
+        }
+      }
+
+      // Extraire le JSON final
+      if (jsonBuffer.trim()) {
+        const jsonStr = jsonBuffer.trim()
+        try {
+          JSON.parse(jsonStr)  // Valider
+          setPromptJson(jsonStr)
+
+          // Ajouter à l'historique
+          const entry: HistoryEntry = {
+            id: Date.now().toString(),
+            timestamp: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }),
+            description: description.slice(0, 80),
+            analysisText: fullText.split('---JSON---')[0]?.trim() || '',
+            promptJson: jsonStr,
+            previews: images.slice(0, 3).map(i => i.preview),
+          }
+          saveHistory([entry, ...history])
+        } catch {
+          setError('Le JSON généré est invalide — réessaie.')
+        }
+      }
+
+    } catch (e) {
+      if (!abort.signal.aborted) setError(String(e))
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const stopGeneration = () => {
+    abortRef.current?.abort()
+    setGenerating(false)
+  }
+
+  // ── Save dialog ────────────────────────────────────────────────────────────
+  const openSaveDialog = (json?: string) => {
+    const j = json || promptJson
+    if (!j) return
+    setPromptJson(j)
+    setSaveDescription(description.slice(0, 80))
+    setSaveSuccess('')
+    setShowSaveDialog(true)
+  }
+
+  const saveToVideo = async () => {
+    if (!saveAuthor.trim() || !saveDescription.trim() || !promptJson) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/prompt-lab/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          promptJson,
+          authorName: saveAuthor.trim(),
+          userDescription: saveDescription.trim(),
+          categoryKey: saveCategoryKey,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error)
+      setSaveSuccess(`✅ "${data.title}" ajouté à l'onglet Vidéos !`)
+      setTimeout(() => setShowSaveDialog(false), 2500)
+    } catch (e) {
+      setSaveSuccess(`❌ ${String(e)}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── Revoir une entrée historique ───────────────────────────────────────────
+  const reviewEntry = (entry: HistoryEntry) => {
+    setViewingEntry(entry)
+    setAnalysisText(entry.analysisText)
+    setPromptJson(entry.promptJson)
+    setGenerating(false)
+  }
+
+  const isRunning = generating
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+
+      {/* ── Nav ── */}
+      <div className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950 z-20">
+        <span className="text-violet-400 font-bold text-lg">🐯 EL TIGRE FACTORY</span>
+        <div className="flex gap-3 text-sm">
+          <Link href="/kpi" className="text-gray-400 hover:text-white transition">📊 KPI</Link>
+          <Link href="/settings" className="text-gray-400 hover:text-white transition">⚙️ Settings</Link>
+        </div>
+      </div>
+
+      {/* ── Tabs ── */}
+      <div className="border-b border-gray-800 px-6">
+        <div className="flex gap-0 -mb-px overflow-x-auto">
+          {[
+            ['/', '🔄 Scraping'], ['/studio', '✨ Prompt Studio'], ['/carousel', '🃏 Carousels'],
+            ['/video', '🎬 Vidéos'], ['/motion-control', '🎭 Motion Control'],
+            ['/bulk-edit', '🖼 Bulk Edit'],
+          ].map(([href, label]) => (
+            <Link key={href} href={href} className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">{label}</Link>
+          ))}
+          <div className="px-5 py-3 text-sm font-medium text-white border-b-2 border-violet-500 whitespace-nowrap">🧪 Prompt Lab</div>
+          <Link href="/en-cours" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">⏳ En cours</Link>
+          <Link href="/metadata" className="px-5 py-3 text-sm font-medium text-gray-400 hover:text-white border-b-2 border-transparent hover:border-gray-600 transition whitespace-nowrap">🧹 Metadata Opti</Link>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-5">
+
+        <div>
+          <h1 className="text-xl font-bold">🧪 Prompt Lab</h1>
+          <p className="text-gray-400 text-sm mt-1">Upload des screenshots d&apos;une vidéo à reproduire + décris la scène → Claude génère le prompt Seedance parfait.</p>
+        </div>
+
+        {/* ── Upload screenshots ── */}
+        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
+          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Screenshots de la vidéo <span className="text-gray-600 font-normal normal-case">(1–10 frames, dans l&apos;ordre)</span></p>
+
+          <div
+            onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+            onClick={() => document.getElementById('pl-file-input')?.click()}
+            className={`rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition ${dragging ? 'border-violet-500 bg-violet-900/10' : 'border-gray-700 hover:border-gray-600'}`}
+          >
+            <input id="pl-file-input" type="file" multiple accept="image/*" className="hidden"
+              onChange={e => { if (e.target.files) addFiles(e.target.files) }} />
+            <p className="text-gray-400 text-sm">
+              {images.length > 0 ? `${images.length} frame${images.length > 1 ? 's' : ''} — clique ou glisse pour en ajouter` : 'Glisse tes screenshots ici ou clique'}
+            </p>
+            <p className="text-gray-600 text-xs mt-1">JPG · PNG · WEBP · max 10 images</p>
+          </div>
+
+          {images.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {images.map((img, i) => (
+                <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute top-0.5 left-1 text-xs text-white bg-black/50 rounded px-1">{i + 1}</div>
+                  <button onClick={() => removeImage(i)}
+                    className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Description ── */}
+        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+          <p className="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wider">Description de la scène</p>
+          <textarea
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Décris ce qui se passe : tenue de la femme, actions, dialogue exact, réactions des autres personnes, ambiance (indoor/outdoor/nuit/jour), effets voulus (culotte visible, jupe qui se lève, distraction)..."
+            rows={4}
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm resize-none"
+          />
+        </div>
+
+        {/* ── Bouton générer ── */}
+        <div className="flex gap-3">
+          <button
+            onClick={generate}
+            disabled={isRunning || !images.length || !description.trim()}
+            className="flex-1 py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {isRunning ? '⏳ Analyse en cours...' : '🔍 Analyser & Générer le prompt'}
+          </button>
+          {isRunning && (
+            <button onClick={stopGeneration} className="px-5 py-3 rounded-xl font-semibold text-white bg-red-700 hover:bg-red-600 transition">Stop</button>
+          )}
+        </div>
+
+        {error && <p className="text-sm text-red-400">{error}</p>}
+
+        {/* ── Zone streaming / résultat ── */}
+        {(analysisText || promptJson) && (
+          <div className="space-y-4">
+            {viewingEntry && (
+              <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-2 text-xs text-amber-400">
+                📋 Historique {viewingEntry.timestamp} — {viewingEntry.description.slice(0, 60)}
+              </div>
+            )}
+
+            {/* Analyse */}
+            {analysisText && (
+              <div className="bg-gray-900 rounded-2xl border border-gray-800">
+                <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Analyse Claude</p>
+                  {isRunning && <span className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />}
+                </div>
+                <div
+                  ref={analysisRef}
+                  className="px-5 pb-4 max-h-80 overflow-y-auto text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
+                >
+                  {analysisText}
+                  {isRunning && !promptJson && <span className="inline-block w-1.5 h-4 bg-violet-400 ml-0.5 animate-pulse" />}
+                </div>
+              </div>
+            )}
+
+            {/* Prompt JSON */}
+            {promptJson && (
+              <div className="bg-gray-900 rounded-2xl border border-violet-800/50">
+                <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                  <p className="text-xs text-violet-400 font-medium uppercase tracking-wider">🎬 Prompt Seedance généré</p>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(promptJson) }}
+                    className="text-xs text-gray-500 hover:text-gray-300 transition"
+                  >
+                    Copier
+                  </button>
+                </div>
+                <pre className="px-5 pb-4 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">
+                  {(() => { try { return JSON.stringify(JSON.parse(promptJson), null, 2) } catch { return promptJson } })()}
+                </pre>
+                <div className="px-5 pb-4">
+                  <button
+                    onClick={() => openSaveDialog()}
+                    className="w-full py-2.5 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition text-sm"
+                  >
+                    💾 Save to Video
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Historique session ── */}
+        {history.length > 0 && (
+          <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+            <p className="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wider">Historique session ({history.length})</p>
+            <div className="space-y-2">
+              {history.map(entry => (
+                <div key={entry.id} className="flex items-center gap-3 bg-gray-800 rounded-xl px-3 py-2">
+                  <div className="flex gap-1">
+                    {entry.previews.slice(0, 3).map((p, i) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={i} src={p} alt="" className="w-8 h-8 rounded object-cover" />
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-300 truncate">{entry.description}</p>
+                    <p className="text-xs text-gray-600">{entry.timestamp}</p>
+                  </div>
+                  <button onClick={() => reviewEntry(entry)} className="text-xs text-violet-400 hover:text-violet-300 transition whitespace-nowrap">Revoir</button>
+                  <button onClick={() => openSaveDialog(entry.promptJson)} className="text-xs text-emerald-400 hover:text-emerald-300 transition whitespace-nowrap">Sauvegarder</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* ── Dialog Save to Video ── */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md space-y-4">
+            <h2 className="font-bold text-lg">💾 Save to Video</h2>
+            <p className="text-xs text-gray-500">Ce prompt apparaîtra dans l&apos;onglet Vidéos avec ton nom.</p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Ton prénom / pseudo</label>
+                <input
+                  type="text"
+                  value={saveAuthor}
+                  onChange={e => setSaveAuthor(e.target.value)}
+                  placeholder="Alexandre"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Description courte du concept</label>
+                <input
+                  type="text"
+                  value={saveDescription}
+                  onChange={e => setSaveDescription(e.target.value.slice(0, 80))}
+                  placeholder="Femme dos au public, culotte visible, copine réagit..."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
+                />
+                <p className="text-xs text-gray-600 mt-0.5">{saveDescription.length}/80</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Catégorie</label>
+                <select
+                  value={saveCategoryKey}
+                  onChange={e => setSaveCategoryKey(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-violet-500 transition text-sm"
+                >
+                  {CATEGORIES.map(c => (
+                    <option key={c.key} value={c.key}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {saveSuccess && (
+              <p className={`text-sm ${saveSuccess.startsWith('✅') ? 'text-emerald-400' : 'text-red-400'}`}>{saveSuccess}</p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSaveDialog(false)}
+                className="flex-1 py-2 rounded-xl text-sm text-gray-400 bg-gray-800 hover:bg-gray-700 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={saveToVideo}
+                disabled={saving || !saveAuthor.trim() || !saveDescription.trim()}
+                className="flex-1 py-2 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition text-sm"
+              >
+                {saving ? '⏳ Sauvegarde...' : 'Sauvegarder →'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
