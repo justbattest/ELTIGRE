@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { compressImage } from '@/lib/compress-image'
 
 type FileEntry = { file: File; preview: string }
 type RefElement = { id: string; name: string; type?: string }
@@ -28,7 +29,7 @@ export default function BulkEditPage() {
   const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('high')
 
   // ── State lancement ──
-  const [phase, setPhase] = useState<'idle' | 'uploading' | 'launching'>('idle')
+  const [phase, setPhase] = useState<'idle' | 'compressing' | 'uploading' | 'launching'>('idle')
   const [uploadedCount, setUploadedCount] = useState(0)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -80,18 +81,26 @@ export default function BulkEditPage() {
 
     setError('')
     setSuccess('')
-    setPhase('uploading')
+    setPhase('compressing')
     setUploadedCount(0)
 
     const abort = new AbortController()
     abortRef.current = abort
 
     try {
-      // Phase 1 — upload chunks en parallèle
+      // Phase 0 — compression locale (navigateur, ~2-5s)
+      const compressedEntries = await Promise.all(
+        entries.map(async (e) => ({ ...e, file: await compressImage(e.file) }))
+      )
+
+      if (abort.signal.aborted) return
+
+      // Phase 1 — upload chunks en parallèle (safe après compression ~2MB/img)
+      setPhase('uploading')
       const runId = `metadata_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
       const chunks: FileEntry[][] = []
-      for (let i = 0; i < entries.length; i += UPLOAD_CHUNK_SIZE) {
-        chunks.push(entries.slice(i, i + UPLOAD_CHUNK_SIZE))
+      for (let i = 0; i < compressedEntries.length; i += UPLOAD_CHUNK_SIZE) {
+        chunks.push(compressedEntries.slice(i, i + UPLOAD_CHUNK_SIZE))
       }
 
       await Promise.all(chunks.map(async (chunk) => {
@@ -278,6 +287,14 @@ export default function BulkEditPage() {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── Compression locale ── */}
+        {phase === 'compressing' && (
+          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex items-center gap-3">
+            <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
+            <p className="text-sm text-gray-300">🗜 Compression des images… (quelques secondes)</p>
           </div>
         )}
 

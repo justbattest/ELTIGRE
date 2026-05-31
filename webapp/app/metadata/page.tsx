@@ -4,6 +4,7 @@ import { useCallback, useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { compressImage } from '@/lib/compress-image'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -23,12 +24,11 @@ type FileResult = {
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 /**
- * Upload avec sliding window : CHUNK_SIZE petits + concurrence limitée.
- * Évite l'OOM (Railway tue le container si trop de gros fichiers en RAM simultanément).
- * Sliding window = dès qu'une requête finit, la suivante démarre → aucun délai entre groupes.
+ * Compression client-side → les photos passent de 30MB à ~2MB avant l'envoi.
+ * CHUNK_SIZE=10 est safe après compression (10 × 2MB = 20MB par requête).
+ * Promise.all sur tous les chunks = vitesse maximale, identique à Bulk Edit.
  */
-const UPLOAD_CHUNK_SIZE  = 2   // 2 fichiers × ~30MB = ~60MB par requête
-const UPLOAD_CONCURRENCY = 3   // 3 requêtes max en parallèle = ~180MB serveur max
+const UPLOAD_CHUNK_SIZE = 10
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
@@ -86,7 +86,7 @@ export default function MetadataPage() {
   // ── État du run ─────────────────────────────────────────────────────────────
 
   // Phase 1 — envoi des fichiers sur le serveur
-  const [phase,        setPhase]        = useState<'idle' | 'uploading' | 'processing' | 'done'>('idle')
+  const [phase,        setPhase]        = useState<'idle' | 'compressing' | 'uploading' | 'processing' | 'done'>('idle')
   const [uploadedFiles, setUploadedFiles] = useState(0)   // fichiers arrivés sur serveur
 
   // Phase 2 — traitement Python + upload Drive
@@ -165,7 +165,7 @@ export default function MetadataPage() {
     if (entries.length === 0) { setError('Ajoute au moins un fichier.'); return }
 
     setError('')
-    setPhase('uploading')
+    setPhase('compressing')
     setUploadedFiles(0)
     setTotal(entries.length)
     setCompleted(0)
@@ -175,26 +175,33 @@ export default function MetadataPage() {
     abortRef.current = abort
 
     try {
+      // ── Phase 0 : compression locale (100% dans le navigateur, ~2-5s) ──────────
+      // Réduit chaque image de 20-50MB à ~2MB. Qualité JPEG 92% + max 4096px.
+      // Visuellement identique, mais ÷10 à ÷20 en taille → plus d'OOM sur Railway.
+      const compressedEntries = await Promise.all(
+        entries.map(async (e) => ({ ...e, file: await compressImage(e.file) }))
+      )
+
+      if (abort.signal.aborted) return
+
       // ── Phase 1 : upload de tous les fichiers par chunks EN PARALLÈLE ─────────
-      // Même pattern que Bulk Edit : Promise.all sur tous les chunks simultanément.
+      setPhase('uploading')
       const runId = `metadata_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
       // Enregistrer immédiatement le run en mémoire → visible dans En cours dès maintenant
       await fetch('/api/metadata/init', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ runId, fileCount: entries.length }),
+        body: JSON.stringify({ runId, fileCount: compressedEntries.length }),
       }).catch(() => {}) // fire-and-forget, pas bloquant
 
       const chunks: FileEntry[][] = []
-      for (let i = 0; i < entries.length; i += UPLOAD_CHUNK_SIZE) {
-        chunks.push(entries.slice(i, i + UPLOAD_CHUNK_SIZE))
+      for (let i = 0; i < compressedEntries.length; i += UPLOAD_CHUNK_SIZE) {
+        chunks.push(compressedEntries.slice(i, i + UPLOAD_CHUNK_SIZE))
       }
 
-      // Sliding window : max UPLOAD_CONCURRENCY requêtes simultanées.
-      // Dès qu'une finit → la suivante démarre immédiatement (pas de pause entre groupes).
-      // Évite l'OOM Railway sans sacrifier la vitesse.
-      const uploadChunk = async (chunk: FileEntry[]) => {
+      // Tous les chunks en parallèle — après compression ~20MB max simultané, safe
+      await Promise.all(chunks.map(async (chunk) => {
         if (abort.signal.aborted) return
         const form = new FormData()
         form.append('runId', runId)
@@ -203,18 +210,7 @@ export default function MetadataPage() {
         const data = await res.json()
         if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
         setUploadedFiles(prev => prev + data.savedCount)
-      }
-
-      const running = new Set<Promise<void>>()
-      for (const chunk of chunks) {
-        if (abort.signal.aborted) break
-        const p: Promise<void> = uploadChunk(chunk).finally(() => running.delete(p))
-        running.add(p)
-        if (running.size >= UPLOAD_CONCURRENCY) {
-          await Promise.race(running)   // attend la plus rapide puis continue
-        }
-      }
-      await Promise.all(running)  // attend les dernières en cours
+      }))
 
       if (abort.signal.aborted || !runId) return
 
@@ -250,7 +246,7 @@ export default function MetadataPage() {
   const uploadPct  = total > 0 ? Math.round((uploadedFiles  / total) * 100) : 0
   const processPct = total > 0 ? Math.round((completed      / total) * 100) : 0
 
-  const isRunning = phase === 'uploading' || phase === 'processing'
+  const isRunning = phase === 'compressing' || phase === 'uploading' || phase === 'processing'
   const isDone    = phase === 'done'
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -399,7 +395,16 @@ export default function MetadataPage() {
           <div className="space-y-5">
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-5">
 
+              {/* Phase 0 — compression locale */}
+              {phase === 'compressing' && (
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <span>🗜 Compression des images… (traitement local, quelques secondes)</span>
+                </div>
+              )}
+
               {/* Phase 1 — envoi serveur */}
+              {phase !== 'compressing' && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-medium text-gray-400">
@@ -414,6 +419,7 @@ export default function MetadataPage() {
                   />
                 </div>
               </div>
+              )}
 
               {/* Phase 2 — nettoyage + Drive */}
               <div>
