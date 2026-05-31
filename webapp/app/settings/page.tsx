@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 
-type RefElement = { id: string; name: string }
+type RefElement = { id: string; name: string; type?: string }
 
 type TestResults = {
   apify?: { ok: boolean; message: string }
@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [referenceElements, setReferenceElements] = useState<RefElement[]>([])
   const [newElementId, setNewElementId] = useState('')
   const [newElementName, setNewElementName] = useState('')
+  const [newElementType, setNewElementType] = useState<'soul_2' | 'soul_cinematic'>('soul_2')
 
   const [klingAccessKey, setKlingAccessKey] = useState('')
   const [klingSecretKey, setKlingSecretKey] = useState('')
@@ -206,7 +207,7 @@ export default function SettingsPage() {
     if (!newElementId.trim() || !newElementName.trim()) return
     setReferenceElements([
       ...referenceElements,
-      { id: newElementId.trim(), name: newElementName.trim() },
+      { id: newElementId.trim(), name: newElementName.trim(), type: newElementType },
     ])
     setNewElementId('')
     setNewElementName('')
@@ -409,8 +410,9 @@ export default function SettingsPage() {
                 {scanning ? '⏳ Scan...' : '🔍 Scanner depuis Higgsfield'}
               </button>
             </div>
-            <p className="text-gray-500 text-xs mb-3">
-              UUIDs de tes personnages Higgsfield — utilisés pour les images (Nano Banana) ET les vidéos (Seedance 2.0). Le bouton détecte tous tes Reference Elements automatiquement.
+            <p className="text-gray-500 text-xs mb-1">
+              🖼 <strong className="text-gray-400">Images (Nano Banana)</strong> — détectés automatiquement par le bouton Scanner.<br/>
+              🎬 <strong className="text-gray-400">Vidéos (Seedance)</strong> — à ajouter manuellement : ouvre <strong className="text-gray-400">app.higgsfield.ai → Elements → Characters</strong>, active DevTools (F12) → Network, clique ton personnage → copie l&apos;UUID dans l&apos;URL de la requête <code className="text-violet-400">/reference-elements/UUID-ICI</code>.
             </p>
             {scanError && (
               <p className="text-xs text-amber-400 mb-2">{scanError}</p>
@@ -424,9 +426,11 @@ export default function SettingsPage() {
                     key={el.id}
                     className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2"
                   >
-                    <div>
+                    <div className="flex items-center gap-2">
                       <span className="text-white text-sm font-medium">{el.name}</span>
-                      <span className="text-gray-500 text-xs ml-2 font-mono">{el.id.substring(0, 8)}…</span>
+                      {el.type === 'soul_2' && <span className="text-emerald-400 text-xs">🎬 Vidéo</span>}
+                      {el.type === 'soul_cinematic' && <span className="text-gray-500 text-xs">🖼 Image</span>}
+                      <span className="text-gray-600 text-xs font-mono">{el.id.substring(0, 8)}…</span>
                     </div>
                     <button
                       onClick={() => removeElement(el.id)}
@@ -440,21 +444,29 @@ export default function SettingsPage() {
             )}
 
             {/* Ajouter un élément */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <input
                 type="text"
                 value={newElementName}
                 onChange={(e) => setNewElementName(e.target.value)}
-                placeholder="Nom (ex: Emma Cinema)"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
+                placeholder="Nom (ex: NINA HYBRID)"
+                className="flex-1 min-w-[120px] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
               />
               <input
                 type="text"
                 value={newElementId}
                 onChange={(e) => setNewElementId(e.target.value)}
-                placeholder="UUID"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm font-mono"
+                placeholder="UUID (ex: 0dbe364b-...)"
+                className="flex-1 min-w-[180px] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm font-mono"
               />
+              <select
+                value={newElementType}
+                onChange={(e) => setNewElementType(e.target.value as 'soul_2' | 'soul_cinematic')}
+                className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+              >
+                <option value="soul_2">🎬 Vidéo (Seedance)</option>
+                <option value="soul_cinematic">🖼 Image (Nano Banana)</option>
+              </select>
               <button
                 onClick={addElement}
                 className="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-3 py-1.5 text-sm transition"
