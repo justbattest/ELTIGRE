@@ -70,7 +70,7 @@ async def run_bulk_edit(
             "--prompt", prompt_full,
             "--image", str(img_path),
             "--quality", quality,
-            "--aspect-ratio", "9:16",
+            "--aspect_ratio", "9:16",
             "--wait",
             "--wait-timeout", "10m",
         ]
