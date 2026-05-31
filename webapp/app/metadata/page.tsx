@@ -264,8 +264,8 @@ export default function MetadataPage() {
           <>
             {/* Sélecteur personnage */}
             {characters.length > 0 && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <p className="text-xs text-gray-500 mb-2">Personnage (dossier Drive)</p>
+              <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4">
+                <p className="text-xs text-zinc-500 mb-2">Personnage (dossier Drive)</p>
                 <div className="flex flex-wrap gap-2">
                   {characters.map(c => (
                     <button
@@ -273,8 +273,8 @@ export default function MetadataPage() {
                       onClick={() => setSelectedCharacterName(c.name)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedCharacterName === c.name
-                          ? 'bg-cyan-600 border-cyan-500 text-white'
-                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-cyan-600'
+                          ? 'bg-gradient-to-br from-violet-600 to-violet-500 border-violet-500 text-white'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
                       }`}
                     >
                       {c.name}
@@ -289,12 +289,12 @@ export default function MetadataPage() {
               onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                dragging ? 'border-cyan-400 bg-cyan-900/20' : 'border-gray-700 hover:border-gray-500 bg-gray-900/50'
+                dragging ? 'border-violet-400 bg-violet-900/20' : 'border-white/[0.08] hover:border-white/[0.20] bg-zinc-900/40'
               }`}
             >
               <div className="text-4xl mb-3">🧹</div>
-              <p className="text-gray-300 font-medium">Glisse tes photos &amp; vidéos ici</p>
-              <p className="text-gray-500 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · quantité illimitée · tout arrive dans 1 seul dossier Drive</p>
+              <p className="text-zinc-300 font-medium">Glisse tes photos &amp; vidéos ici</p>
+              <p className="text-zinc-500 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · quantité illimitée · tout arrive dans 1 seul dossier Drive</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -309,12 +309,12 @@ export default function MetadataPage() {
             {entries.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-zinc-400">
                     {imgCount > 0 && <span>{imgCount} photo{imgCount > 1 ? 's' : ''}</span>}
                     {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
                     {videoCount > 0 && <span>{videoCount} vidéo{videoCount > 1 ? 's' : ''}</span>}
                     {entries.length > UPLOAD_CHUNK_SIZE && (
-                      <span className="text-gray-600 ml-2">
+                      <span className="text-zinc-600 ml-2">
                         · envoyé en {nChunks} tranches de {UPLOAD_CHUNK_SIZE}, dans 1 dossier Drive
                       </span>
                     )}
@@ -330,7 +330,7 @@ export default function MetadataPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={entry.preview} alt="" className="w-full h-full object-cover rounded-md" />
                       ) : (
-                        <div className="w-full h-full bg-gray-800 rounded-md flex items-center justify-center">
+                        <div className="w-full h-full bg-black/40 rounded-md flex items-center justify-center">
                           <span className="text-lg">🎬</span>
                         </div>
                       )}
@@ -345,10 +345,10 @@ export default function MetadataPage() {
             )}
 
             {/* Infos */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-1.5">
-              <p className="text-[10px] text-gray-500">🖼️ <strong className="text-gray-400">Images</strong> — EXIF iPhone 17 Pro (iOS 26.x, GPS, ISO uniques) · ICC Display P3 · DQT Apple</p>
-              <p className="text-[10px] text-gray-500">🎬 <strong className="text-gray-400">Vidéos</strong> — com.apple.quicktime.* · handler Core Media Video · strip Kling/Lavf</p>
-              <p className="text-[10px] text-gray-500">📂 <strong className="text-gray-400">Drive</strong> — <code className="text-cyan-400">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 seul dossier, tous les fichiers dedans</p>
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4 space-y-1.5">
+              <p className="text-[10px] text-zinc-500">🖼️ <strong className="text-zinc-400">Images</strong> — EXIF iPhone 17 Pro (iOS 26.x, GPS, ISO uniques) · ICC Display P3 · DQT Apple</p>
+              <p className="text-[10px] text-zinc-500">🎬 <strong className="text-zinc-400">Vidéos</strong> — com.apple.quicktime.* · handler Core Media Video · strip Kling/Lavf</p>
+              <p className="text-[10px] text-zinc-500">📂 <strong className="text-zinc-400">Drive</strong> — <code className="text-violet-400">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 seul dossier, tous les fichiers dedans</p>
             </div>
 
             {error && (
@@ -358,7 +358,7 @@ export default function MetadataPage() {
             <button
               onClick={launch}
               disabled={entries.length === 0}
-              className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+              className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
             >
               {entries.length === 0
                 ? '🧹 Ajoute des fichiers pour commencer'
@@ -370,12 +370,12 @@ export default function MetadataPage() {
         {/* ── Progression (running + done) ────────────────────────────────── */}
         {(isRunning || isDone) && (
           <div className="space-y-5">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-5">
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-5">
 
               {/* Phase 0 — compression locale */}
               {phase === 'compressing' && (
-                <div className="flex items-center gap-3 text-xs text-gray-400">
-                  <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                <div className="flex items-center gap-3 text-xs text-zinc-400">
+                  <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
                   <span>🗜 Compression des images… (traitement local, quelques secondes)</span>
                 </div>
               )}
@@ -384,12 +384,12 @@ export default function MetadataPage() {
               {phase !== 'compressing' && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-400">
+                  <span className="text-xs font-medium text-zinc-400">
                     {phase === 'uploading' ? '⬆️ Envoi vers le serveur…' : '⬆️ Fichiers reçus'}
                   </span>
-                  <span className="text-xs text-gray-500">{uploadedFiles}/{total}</span>
+                  <span className="text-xs text-zinc-500">{uploadedFiles}/{total}</span>
                 </div>
-                <div className="bg-gray-800 rounded-full h-1.5">
+                <div className="bg-white/[0.05] rounded-full h-1.5">
                   <div
                     className={`h-1.5 rounded-full transition-all duration-300 ${phase === 'uploading' ? 'bg-blue-500' : 'bg-blue-800'}`}
                     style={{ width: `${uploadPct}%` }}
@@ -401,17 +401,17 @@ export default function MetadataPage() {
               {/* Phase 2 — nettoyage + Drive */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-400">
+                  <span className="text-xs font-medium text-zinc-400">
                     {phase === 'uploading'   ? '⏳ En attente…'
                     : isDone && !error       ? '✅ Nettoyage terminé !'
                     : phase === 'processing' ? '🧹 Nettoyage + upload Drive…'
                     : '❌ Erreur'}
                   </span>
-                  <span className="text-xs text-gray-500">{completed}/{total}</span>
+                  <span className="text-xs text-zinc-500">{completed}/{total}</span>
                 </div>
-                <div className="bg-gray-800 rounded-full h-1.5">
+                <div className="bg-white/[0.05] rounded-full h-1.5">
                   <div
-                    className="bg-cyan-500 h-1.5 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-violet-500 to-cyan-400 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${processPct}%` }}
                   />
                 </div>
@@ -431,7 +431,7 @@ export default function MetadataPage() {
               )}
 
               {isDone && (
-                <button onClick={resetAll} className="w-full bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg py-2.5 transition">
+                <button onClick={resetAll} className="w-full bg-white/[0.08] hover:bg-white/[0.08] text-white text-sm rounded-lg py-2.5 transition">
                   + Nouveau batch
                 </button>
               )}
@@ -440,26 +440,26 @@ export default function MetadataPage() {
             {/* Résultats fichier par fichier */}
             {results.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-2">
+                <h3 className="text-sm font-medium text-zinc-400 mb-2">
                   Fichiers traités ({results.length}/{total})
                 </h3>
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
                   {results.map((r, i) => (
                     <div
                       key={i}
-                      className={`bg-gray-900 border rounded-xl px-3 py-2 flex items-center justify-between gap-2 ${
-                        r.error ? 'border-red-900/50' : 'border-gray-800'
+                      className={`bg-zinc-900/60 border rounded-xl px-3 py-2 flex items-center justify-between gap-2 ${
+                        r.error ? 'border-red-900/50' : 'border-white/[0.07]'
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-sm shrink-0">{r.isVideo ? '🎬' : '🖼️'}</span>
-                        <span className="text-xs text-gray-300 truncate">{r.filename}</span>
+                        <span className="text-xs text-zinc-300 truncate">{r.filename}</span>
                       </div>
                       {r.error ? (
                         <span className="text-[10px] text-red-400 shrink-0 ml-2">❌ {r.error.slice(0, 40)}</span>
                       ) : r.driveUrl ? (
                         <a href={r.driveUrl} target="_blank" rel="noopener noreferrer"
-                           className="text-[10px] text-cyan-400 hover:text-cyan-300 transition shrink-0 ml-2">
+                           className="text-[10px] text-violet-400 hover:text-violet-300 transition shrink-0 ml-2">
                           Drive →
                         </a>
                       ) : null}

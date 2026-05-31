@@ -110,7 +110,7 @@ function Chip({
         border transition-all duration-150 select-none
         ${selected
           ? 'border-violet-500 bg-violet-950 text-white ring-1 ring-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.25)]'
-          : 'border-gray-700 bg-gray-900 text-gray-300 hover:border-gray-500 hover:text-white'
+          : 'border-white/[0.08] bg-zinc-900/60 text-zinc-300 hover:border-white/[0.20] hover:text-white'
         }
       `}
     >
@@ -198,11 +198,11 @@ function CategorySection({
             onChange={(e) => setCustomVal(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder={`autre ${label.toLowerCase()}...`}
-            className="h-[34px] bg-gray-900 border border-gray-700 rounded-full px-3 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-violet-500 transition w-36"
+            className="h-[34px] bg-black/40 border border-white/[0.08] rounded-full px-3 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition w-36"
           />
           <button
             onClick={handleAdd}
-            className="h-[34px] px-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full text-xs text-gray-400 hover:text-white transition whitespace-nowrap"
+            className="h-[34px] px-3 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-xs text-zinc-400 hover:text-white transition whitespace-nowrap"
           >
             + ajouter
           </button>
@@ -223,7 +223,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
     card.model === 'nano_banana_2' ? 'bg-orange-600' : 'bg-gray-600'
 
   return (
-    <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-gray-900 border border-gray-800 group">
+    <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900/60 border border-white/[0.07] group">
       {/* Skeleton */}
       {(card.status === 'pending' || card.status === 'generating') && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-800 animate-pulse">
@@ -550,7 +550,7 @@ export default function StudioPage() {
       <div className="flex min-h-[calc(100vh-113px)]">
 
         {/* LEFT — config panel */}
-        <div className="w-72 shrink-0 border-r border-gray-800 p-5 space-y-5 sticky top-[113px] self-start max-h-[calc(100vh-113px)] overflow-y-auto">
+        <div className="w-72 shrink-0 border-r border-white/[0.07] p-5 space-y-5 sticky top-[113px] self-start max-h-[calc(100vh-113px)] overflow-y-auto">
 
           {/* Character */}
           <div className="space-y-3">
@@ -580,7 +580,7 @@ export default function StudioPage() {
                       className={`px-2.5 py-1 rounded-lg text-xs transition border ${
                         selectedSoulId === c.id
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
                       }`}
                     >
                       {c.name}
@@ -601,7 +601,7 @@ export default function StudioPage() {
                       className={`px-2.5 py-1 rounded-lg text-xs transition border ${
                         selectedElementId === e.id
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
                       }`}
                     >
                       {e.name}
@@ -613,19 +613,19 @@ export default function StudioPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-800" />
+          <div className="border-t border-white/[0.07]" />
 
           {/* Format */}
           <div className="space-y-2">
-            <h3 className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">⚙️ Format</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">⚙️ Format</h3>
             <div className="grid grid-cols-3 gap-1.5">
               {/* Model */}
               <div className="col-span-3">
-                <label className="text-[10px] text-gray-600 block mb-1">Modèle</label>
+                <label className="text-[10px] text-zinc-600 block mb-1">Modèle</label>
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
                 >
                   <option value="auto">Auto (cascade)</option>
                   <option value="soul_cinematic">Soul Cinema</option>
@@ -635,11 +635,11 @@ export default function StudioPage() {
               </div>
               {/* Aspect */}
               <div>
-                <label className="text-[10px] text-gray-600 block mb-1">Format</label>
+                <label className="text-[10px] text-zinc-600 block mb-1">Format</label>
                 <select
                   value={aspectRatio}
                   onChange={(e) => setAspectRatio(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
                 >
                   <option value="2:3">2:3</option>
                   <option value="1:1">1:1</option>
@@ -649,11 +649,11 @@ export default function StudioPage() {
               </div>
               {/* Quality */}
               <div className="col-span-2">
-                <label className="text-[10px] text-gray-600 block mb-1">Qualité</label>
+                <label className="text-[10px] text-zinc-600 block mb-1">Qualité</label>
                 <select
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
                 >
                   <option value="2k">2K</option>
                   <option value="4k">4K</option>
@@ -664,7 +664,7 @@ export default function StudioPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-800" />
+          <div className="border-t border-white/[0.07]" />
 
           {/* Error */}
           {launchError && (
@@ -675,7 +675,7 @@ export default function StudioPage() {
 
           {/* Count selector */}
           <div className="space-y-2">
-            <label className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">
+            <label className="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">
               Nombre de générations
             </label>
             <div className="flex items-center gap-2">
@@ -685,7 +685,7 @@ export default function StudioPage() {
                 max={50}
                 value={count}
                 onChange={(e) => setCount(Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
-                className="w-14 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-violet-500 transition"
+                className="w-14 bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
               />
               <input
                 type="range"
@@ -695,7 +695,7 @@ export default function StudioPage() {
                 onChange={(e) => setCount(Number(e.target.value))}
                 className="flex-1 accent-violet-500 h-1.5"
               />
-              <span className="text-xs text-gray-500 w-6 text-right">{count}</span>
+              <span className="text-xs text-zinc-500 w-6 text-right">{count}</span>
             </div>
           </div>
 
@@ -721,7 +721,7 @@ export default function StudioPage() {
             <button
               onClick={() => launch('random_full')}
               disabled={launching}
-              className="w-full border-2 border-dashed border-gray-700 hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-gray-400 hover:text-white font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full border-2 border-dashed border-white/[0.08] hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 hover:text-white font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
             >
               <span>🎲</span>
               <span>{count} prompt{count > 1 ? 's' : ''} · full aléatoire</span>
@@ -744,18 +744,18 @@ export default function StudioPage() {
 
           {/* Stats bar si sélection non nulle */}
           {totalSelected > 0 && (
-            <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-900/50 border border-gray-800 rounded-xl px-4 py-2.5">
+            <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900/40 border border-white/[0.07] rounded-xl px-4 py-2.5">
               <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
               <span>
                 <span className="text-white font-medium">{totalSelected}</span> option{totalSelected > 1 ? 's' : ''} sélectionnée{totalSelected > 1 ? 's' : ''}
               </span>
-              <span className="text-gray-600">·</span>
+              <span className="text-zinc-600">·</span>
               <span>
                 {Object.values(selections).filter(arr => arr.length > 0).length} catégorie{Object.values(selections).filter(arr => arr.length > 0).length > 1 ? 's' : ''} actives
               </span>
               <button
                 onClick={() => setSelections(emptySelections())}
-                className="ml-auto text-gray-600 hover:text-gray-300 transition"
+                className="ml-auto text-zinc-600 hover:text-zinc-300 transition"
               >
                 tout effacer
               </button>
@@ -765,7 +765,7 @@ export default function StudioPage() {
           {/* Grid chips par catégorie */}
           <div className="grid grid-cols-1 gap-5">
             {(Object.keys(CHIPS) as (keyof Selections)[]).map((cat) => (
-              <div key={cat} className="bg-gray-900/40 border border-gray-800/60 rounded-xl p-4">
+              <div key={cat} className="bg-zinc-900/30 border border-white/[0.06] rounded-xl p-4">
                 <CategorySection
                   catKey={cat}
                   selections={selections}
@@ -782,38 +782,38 @@ export default function StudioPage() {
 
       {/* Results section */}
       {cards.length > 0 && (
-        <div ref={resultsRef} className="border-t border-gray-800 bg-gray-950/80">
+        <div ref={resultsRef} className="border-t border-white/[0.07] bg-zinc-950/80">
           {/* Stats bar */}
-          <div className="px-6 py-4 flex items-center gap-4 border-b border-gray-800/50">
+          <div className="px-6 py-4 flex items-center gap-4 border-b border-white/[0.06]">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400" />
               <span className="text-sm font-semibold text-white">{runStats.completed}</span>
               <span className="text-xs text-gray-500">complétées</span>
             </div>
-            <div className="w-px h-4 bg-gray-800" />
+            <div className="w-px h-4 bg-white/[0.06]" />
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-red-400" />
               <span className="text-sm font-semibold text-white">{runStats.failed}</span>
-              <span className="text-xs text-gray-500">échouées</span>
+              <span className="text-xs text-zinc-500">échouées</span>
             </div>
-            <div className="w-px h-4 bg-gray-800" />
+            <div className="w-px h-4 bg-white/[0.06]" />
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">{runStats.total} total</span>
+              <span className="text-xs text-zinc-500">{runStats.total} total</span>
             </div>
-            <div className="w-px h-4 bg-gray-800" />
+            <div className="w-px h-4 bg-white/[0.06]" />
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-zinc-500">
                 ⏱ {Math.floor(runStats.elapsed / 60)}:{String(runStats.elapsed % 60).padStart(2, '0')}
               </span>
             </div>
             {/* Progress bar */}
-            <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
                 style={{ width: `${runStats.total > 0 ? (runStats.completed / runStats.total) * 100 : 0}%` }}
               />
             </div>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-zinc-500">
               {runStats.total > 0 ? Math.round((runStats.completed / runStats.total) * 100) : 0}%
             </span>
 

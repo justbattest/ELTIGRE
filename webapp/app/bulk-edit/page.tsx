@@ -164,13 +164,13 @@ export default function BulkEditPage() {
 
         <div>
           <h1 className="text-xl font-bold">🖼 Bulk Edit — Seedream 4.5</h1>
-          <p className="text-gray-400 text-sm mt-1">Glisse tes images, entre un prompt, et relance Seedream sur chaque photo d&apos;un coup.</p>
+          <p className="text-zinc-400 text-sm mt-1">Glisse tes images, entre un prompt, et relance Seedream sur chaque photo d&apos;un coup.</p>
         </div>
 
         {/* ── Dossier Drive ── */}
-        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-          <p className="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wider">Dossier Drive</p>
-          <p className="text-xs text-gray-600 mb-3">Organise les résultats dans le bon sous-dossier Drive. Pas d&apos;impact sur la génération.</p>
+        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
+          <p className="text-xs text-zinc-400 mb-1 font-medium uppercase tracking-wider">Dossier Drive</p>
+          <p className="text-xs text-zinc-600 mb-3">Organise les résultats dans le bon sous-dossier Drive. Pas d&apos;impact sur la génération.</p>
           {loadingChars ? (
             <p className="text-xs text-gray-500">Chargement...</p>
           ) : (
@@ -178,7 +178,7 @@ export default function BulkEditPage() {
               <button
                 onClick={() => setSelectedCharName('')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                  !selectedCharName ? 'bg-violet-600 border-violet-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-violet-600'
+                  !selectedCharName ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-violet-500/50'
                 }`}
               >
                 Aucun
@@ -188,7 +188,7 @@ export default function BulkEditPage() {
                   key={e.id}
                   onClick={() => setSelectedCharName(selectedCharName === e.name ? '' : e.name)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                    selectedCharName === e.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                    selectedCharName === e.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
                   }`}
                 >
                   {e.name}
@@ -199,23 +199,23 @@ export default function BulkEditPage() {
         </div>
 
         {/* ── Prompt ── */}
-        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Prompt (appliqué à toutes les images)</p>
+        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] space-y-3">
+          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Prompt (appliqué à toutes les images)</p>
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             placeholder="Ex: Ultra-realistic, soft natural light, keep the identity, improve skin texture..."
             rows={3}
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm resize-none"
+            className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none"
           />
           <div className="flex items-center gap-3">
-            <p className="text-xs text-gray-500">Qualité :</p>
+            <p className="text-xs text-zinc-500">Qualité :</p>
             {(['low', 'medium', 'high'] as const).map(q => (
               <button
                 key={q}
                 onClick={() => setQuality(q)}
                 className={`px-3 py-1 rounded-lg text-xs font-medium border transition ${
-                  quality === q ? 'bg-violet-600 border-violet-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+                  quality === q ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-white/[0.20]'
                 }`}
               >
                 {q}
@@ -230,7 +230,7 @@ export default function BulkEditPage() {
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           className={`rounded-2xl border-2 border-dashed p-8 text-center transition cursor-pointer ${
-            dragging ? 'border-violet-500 bg-violet-900/10' : 'border-gray-700 hover:border-gray-600'
+            dragging ? 'border-violet-500 bg-violet-900/10' : 'border-white/[0.08] hover:border-white/[0.20]'
           }`}
           onClick={() => document.getElementById('bulk-file-input')?.click()}
         >
@@ -242,19 +242,19 @@ export default function BulkEditPage() {
             className="hidden"
             onChange={onFileInput}
           />
-          <p className="text-gray-400 text-sm">
+          <p className="text-zinc-400 text-sm">
             {entries.length > 0
               ? `${entries.length} image${entries.length > 1 ? 's' : ''} sélectionnée${entries.length > 1 ? 's' : ''} — clique ou glisse pour en ajouter`
               : 'Glisse tes images ici ou clique pour sélectionner'}
           </p>
-          <p className="text-gray-600 text-xs mt-1">JPG, PNG, WEBP</p>
+          <p className="text-zinc-600 text-xs mt-1">JPG, PNG, WEBP</p>
         </div>
 
         {/* ── Grid aperçu ── */}
         {entries.length > 0 && (
           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
             {entries.map((e, i) => (
-              <div key={i} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-800">
+              <div key={i} className="relative group aspect-square rounded-lg overflow-hidden bg-black/40">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={e.preview} alt="" className="w-full h-full object-cover" />
                 <button
@@ -270,20 +270,20 @@ export default function BulkEditPage() {
 
         {/* ── Compression locale ── */}
         {phase === 'compressing' && (
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex items-center gap-3">
+          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07] flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
-            <p className="text-sm text-gray-300">🗜 Compression des images… (quelques secondes)</p>
+            <p className="text-sm text-zinc-300">🗜 Compression des images… (quelques secondes)</p>
           </div>
         )}
 
         {/* ── Progress upload ── */}
         {phase === 'uploading' && (
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07]">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-300">⬆️ Envoi vers le serveur...</p>
-              <p className="text-sm text-gray-400">{uploadedCount}/{entries.length}</p>
+              <p className="text-sm text-zinc-300">⬆️ Envoi vers le serveur...</p>
+              <p className="text-sm text-zinc-400">{uploadedCount}/{entries.length}</p>
             </div>
-            <div className="w-full bg-gray-800 rounded-full h-1.5">
+            <div className="w-full bg-white/[0.05] rounded-full h-1.5">
               <div
                 className="bg-blue-500 h-1.5 rounded-full transition-all"
                 style={{ width: `${entries.length ? (uploadedCount / entries.length) * 100 : 0}%` }}
@@ -293,8 +293,8 @@ export default function BulkEditPage() {
         )}
 
         {phase === 'launching' && (
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
-            <p className="text-sm text-gray-300">🚀 Lancement du batch...</p>
+          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07]">
+            <p className="text-sm text-zinc-300">🚀 Lancement du batch...</p>
           </div>
         )}
 
@@ -312,7 +312,7 @@ export default function BulkEditPage() {
           <button
             onClick={launch}
             disabled={isRunning || !entries.length || !prompt.trim()}
-            className="flex-1 py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {isRunning ? '⏳ En cours...' : `🖼 Lancer Seedream sur ${entries.length} image${entries.length !== 1 ? 's' : ''}`}
           </button>

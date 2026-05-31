@@ -81,31 +81,31 @@ function ConceptRow({ concept, onRemove }: { concept: Concept; onRemove: () => v
   }[concept.status]
 
   return (
-    <div className={`flex items-center gap-3 bg-gray-900 border rounded-xl p-3 transition ${
+    <div className={`flex items-center gap-3 bg-zinc-900/60 border rounded-xl p-3 transition ${
       concept.status === 'submitted' ? 'border-emerald-800' :
       concept.status === 'error' ? 'border-red-800' :
-      ok ? 'border-gray-700' : 'border-yellow-800/50'
+      ok ? 'border-white/[0.08]' : 'border-yellow-800/50'
     }`}>
       {/* Image preview */}
-      <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+      <div className="w-14 h-14 rounded-lg overflow-hidden bg-black/40 flex-shrink-0">
         {concept.imgPreview
           ? <img src={concept.imgPreview} alt="" className="w-full h-full object-cover" /> // eslint-disable-line @next/next/no-img-element
-          : <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">📷</div>
+          : <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">📷</div>
         }
       </div>
 
       {/* Video preview */}
-      <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+      <div className="w-14 h-14 rounded-lg overflow-hidden bg-black/40 flex-shrink-0">
         {concept.vidPreview
           ? <video src={concept.vidPreview} className="w-full h-full object-cover" muted playsInline autoPlay loop />
-          : <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">🎬</div>
+          : <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">🎬</div>
         }
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white truncate">{concept.folderName}</p>
-        <p className="text-xs text-gray-500 mt-0.5">
+        <p className="text-xs text-zinc-500 mt-0.5">
           {!concept.image && !concept.video ? '⚠️ Image + vidéo manquantes'
            : !concept.image ? '⚠️ Image manquante'
            : !concept.video ? '⚠️ Vidéo manquante'
@@ -186,7 +186,7 @@ function AddZone({ onAdd, disabled }: { onAdd: (concepts: Concept[]) => void; di
   return (
     <div
       className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition select-none
-        ${disabled ? 'opacity-40 cursor-not-allowed' : dragging ? 'border-violet-400 bg-violet-900/20' : 'border-gray-700 hover:border-gray-500 bg-gray-900/40'}`}
+        ${disabled ? 'opacity-40 cursor-not-allowed' : dragging ? 'border-violet-400 bg-violet-900/20' : 'border-white/[0.08] hover:border-white/[0.20] bg-zinc-900/40'}`}
       onClick={() => !disabled && inputRef.current?.click()}
       onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragging(true) }}
       onDragLeave={() => setDragging(false)}
@@ -203,9 +203,9 @@ function AddZone({ onAdd, disabled }: { onAdd: (concepts: Concept[]) => void; di
         onChange={handleInputChange}
       />
       <p className="text-3xl mb-2">📁</p>
-      <p className="text-sm font-medium text-gray-300">Glisse tes dossiers ici</p>
-      <p className="text-xs text-gray-500 mt-1">Autant de dossiers que tu veux — chaque dossier = 1 image + 1 vidéo</p>
-      <p className="text-xs text-gray-600 mt-1">ou clique pour sélectionner</p>
+      <p className="text-sm font-medium text-zinc-300">Glisse tes dossiers ici</p>
+      <p className="text-xs text-zinc-500 mt-1">Autant de dossiers que tu veux — chaque dossier = 1 image + 1 vidéo</p>
+      <p className="text-xs text-zinc-600 mt-1">ou clique pour sélectionner</p>
     </div>
   )
 }
@@ -310,7 +310,7 @@ export default function MotionControlPage() {
 
         <div>
           <h1 className="text-2xl font-bold text-white">🎭 Motion Control — Batch</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-zinc-400 text-sm mt-1">
             Seedream v4.5 → 4 variantes d&apos;outfit · Kling 3.0 Motion Control · Tout s&apos;exécute en arrière-plan
           </p>
         </div>
@@ -330,7 +330,7 @@ export default function MotionControlPage() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                     selectedElementId === e.id
                       ? 'bg-violet-600 border-violet-500 text-white'
-                      : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500'
+                      : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
                   } disabled:opacity-50`}
                 >
                   {e.name}
@@ -352,7 +352,7 @@ export default function MotionControlPage() {
         {concepts.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
                 {concepts.length} concept{concepts.length > 1 ? 's' : ''} · {readyConcepts.length} prêt{readyConcepts.length > 1 ? 's' : ''}
               </span>
               {!launching && (
@@ -381,13 +381,13 @@ export default function MotionControlPage() {
         {/* Submit progress */}
         {submitProgress && (
           <div className="space-y-2">
-            <div className="flex justify-between text-xs text-gray-400">
+            <div className="flex justify-between text-xs text-zinc-400">
               <span>Soumission des runs…</span>
               <span>{submitProgress.done}/{submitProgress.total}</span>
             </div>
-            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
               <div
-                className="h-full bg-violet-500 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full transition-all duration-300"
                 style={{ width: `${(submitProgress.done / submitProgress.total) * 100}%` }}
               />
             </div>
@@ -406,7 +406,7 @@ export default function MotionControlPage() {
           onClick={handleLaunch}
           disabled={!canLaunch}
           className="w-full py-4 rounded-xl font-semibold text-base transition
-            bg-violet-600 hover:bg-violet-500 text-white
+            bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 text-white
             disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {launching ? (
@@ -423,7 +423,7 @@ export default function MotionControlPage() {
 
         {/* Info */}
         {readyConcepts.length > 0 && !launching && (
-          <p className="text-xs text-center text-gray-600">
+          <p className="text-xs text-center text-zinc-600">
             Chaque batch génère 4 outfits via Seedream + 4 vidéos via Kling · Tout tourne en arrière-plan
           </p>
         )}

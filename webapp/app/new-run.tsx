@@ -160,16 +160,16 @@ export default function NewRunPage() {
         {/* Profils Instagram */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-medium text-gray-200">Profils Instagram</h2>
+            <h2 className="font-medium text-zinc-100">Profils Instagram</h2>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">Max posts total :</label>
+              <label className="text-xs text-zinc-500">Max posts total :</label>
               <input
                 type="number"
                 value={maxPosts}
                 onChange={(e) => setMaxPosts(Number(e.target.value))}
                 min={5}
                 max={500}
-                className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-sm focus:outline-none focus:border-violet-500"
+                className="w-16 bg-black/40 border border-white/[0.08] rounded px-2 py-1 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
               />
             </div>
           </div>
@@ -180,13 +180,13 @@ export default function NewRunPage() {
             onChange={(e) => handlePasteInput(e.target.value)}
             placeholder={"Colle ici tous tes liens Instagram d'un coup :\nhttps://www.instagram.com/username1/\nhttps://www.instagram.com/username2/\n...\n\n(séparés par des sauts de ligne, virgules ou espaces)"}
             rows={4}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm resize-none font-mono"
+            className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none font-mono"
           />
 
           {/* Profils parsés — chips supprimables */}
           {profiles.filter(p => p.trim()).length > 0 && (
             <div>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-xs text-zinc-500 mb-2">
                 {profiles.filter(p => p.trim()).length} profil{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} détecté{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} :
               </p>
               <div className="flex flex-wrap gap-2">
@@ -197,12 +197,12 @@ export default function NewRunPage() {
                   return (
                     <span
                       key={i}
-                      className="flex items-center gap-1 bg-gray-800 border border-gray-700 rounded-full px-3 py-1 text-xs text-gray-200"
+                      className="flex items-center gap-1 bg-white/[0.05] border border-white/[0.08] rounded-full px-3 py-1 text-xs text-zinc-100"
                     >
                       @{username}
                       <button
                         onClick={() => removeProfile(i)}
-                        className="text-gray-500 hover:text-red-400 transition ml-1 leading-none"
+                        className="text-zinc-500 hover:text-red-400 transition ml-1 leading-none"
                       >
                         ✕
                       </button>
@@ -217,7 +217,7 @@ export default function NewRunPage() {
         {/* Personnages */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-medium text-gray-200">Personnage</h2>
+            <h2 className="font-medium text-zinc-100">Personnage</h2>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
@@ -234,7 +234,7 @@ export default function NewRunPage() {
           )}
 
           {soulChars.length === 0 && refElements.length === 0 ? (
-            <p className="text-gray-500 text-sm">
+            <p className="text-zinc-500 text-sm">
               Cliquez &quot;Charger depuis Higgsfield&quot; pour voir vos personnages.
             </p>
           ) : (
@@ -242,7 +242,7 @@ export default function NewRunPage() {
               {/* Soul Characters */}
               {soulChars.length > 0 && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className="text-xs text-zinc-500 mb-2">
                     Soul Character (Soul Cinema) :
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -253,7 +253,7 @@ export default function NewRunPage() {
                         className={`px-3 py-1.5 rounded-lg text-sm transition border ${
                           selectedSoulId === c.id
                             ? 'bg-violet-600 border-violet-500 text-white'
-                            : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                            : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
                         }`}
                       >
                         {c.name}
@@ -269,7 +269,7 @@ export default function NewRunPage() {
               {/* Reference Elements — uniquement si mode non soul_cinematic */}
               {refElements.length > 0 && model !== 'soul_cinematic' && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className="text-xs text-zinc-500 mb-2">
                     Reference Element (Seedream / Nano Banana) :
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -280,7 +280,7 @@ export default function NewRunPage() {
                         className={`px-3 py-1.5 rounded-lg text-sm transition border ${
                           selectedElementId === e.id
                             ? 'bg-violet-600 border-violet-500 text-white'
-                            : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                            : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
                         }`}
                       >
                         {e.name}
@@ -295,7 +295,7 @@ export default function NewRunPage() {
 
         {/* Modèle & Format */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
-          <h2 className="font-medium mb-3 text-gray-200">Modèle & Format</h2>
+          <h2 className="font-medium mb-3 text-zinc-100">Modèle & Format</h2>
 
           {/* Modèle */}
           <div className="space-y-2 mb-4">
@@ -326,7 +326,7 @@ export default function NewRunPage() {
                   onChange={() => setModel(opt.value)}
                   className="sr-only"
                 />
-                <span className="text-sm text-gray-300">{opt.label}</span>
+                <span className="text-sm text-zinc-300">{opt.label}</span>
                 {opt.badge && (
                   <span className="text-xs bg-violet-900 text-violet-300 px-2 py-0.5 rounded-full">
                     {opt.badge}
@@ -339,11 +339,11 @@ export default function NewRunPage() {
           {/* Format & Qualité */}
           <div className="flex gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Format</label>
+              <label className="block text-xs text-zinc-500 mb-1">Format</label>
               <select
                 value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value)}
-                className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                className="bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
               >
                 <option value="2:3">2:3</option>
                 <option value="1:1">1:1</option>
@@ -352,11 +352,11 @@ export default function NewRunPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Qualité</label>
+              <label className="block text-xs text-zinc-500 mb-1">Qualité</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
-                className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                className="bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
               >
                 <option value="2k">2K</option>
                 <option value="4k">4K</option>
@@ -377,7 +377,7 @@ export default function NewRunPage() {
         <button
           onClick={launch}
           disabled={launching}
-          className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-violet-800 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3.5 text-lg transition"
+          className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:bg-violet-800 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3.5 text-lg transition"
         >
           {launching ? '⏳ Lancement...' : '🚀 Lancer'}
         </button>

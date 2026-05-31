@@ -29,6 +29,25 @@ export default function CarouselPage() {
   // ── Personnage (pour le dossier Drive) ────────────────────────────────────
   const [refElements, setRefElements] = useState<{ id: string; name: string }[]>([])
   const [selectedCharacterName, setSelectedCharacterName] = useState('')
+  const [loadingChars, setLoadingChars] = useState(false)
+
+  const loadCharacters = async () => {
+    setLoadingChars(true)
+    try {
+      await fetch('/api/characters/scan-elements', { method: 'POST' }).catch(() => {})
+      const res = await fetch('/api/characters')
+      const data = await res.json()
+      const elements: { id: string; name: string }[] = data.referenceElements || []
+      const souls: { id: string; name: string }[] = data.soulCharacters || []
+      const all = [...elements, ...souls]
+      setRefElements(all)
+      if (all.length && !selectedCharacterName) setSelectedCharacterName(all[0].name)
+    } catch {
+      // silencieux
+    } finally {
+      setLoadingChars(false)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/characters')
@@ -209,10 +228,19 @@ export default function CarouselPage() {
         {/* ── Config ─────────────────────────────────────────────────────── */}
         {!runId && (
           <>
-            {/* Personnage Drive */}
-            {refElements.length > 0 && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <p className="text-xs text-gray-500 mb-2">Personnage (dossier Drive)</p>
+            {/* Personnage (dossier Drive) — toujours visible */}
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-zinc-400">Personnage (dossier Drive)</p>
+                <button
+                  onClick={loadCharacters}
+                  disabled={loadingChars}
+                  className="text-xs text-violet-400 hover:text-violet-300 transition disabled:opacity-50"
+                >
+                  {loadingChars ? '⏳ Scan...' : '↺ Scanner depuis Higgsfield'}
+                </button>
+              </div>
+              {refElements.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {refElements.map(e => (
                     <button
@@ -221,15 +249,22 @@ export default function CarouselPage() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedCharacterName === e.name
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-violet-500/50 hover:text-white'
                       }`}
                     >
                       {e.name}
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <input
+                  value={selectedCharacterName}
+                  onChange={e => setSelectedCharacterName(e.target.value)}
+                  placeholder="Nom du dossier Drive (ex: EMMA)"
+                  className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                />
+              )}
+            </div>
 
             {/* Zone drag & drop */}
             <div
@@ -240,12 +275,12 @@ export default function CarouselPage() {
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                 dragging
                   ? 'border-violet-400 bg-violet-900/20'
-                  : 'border-gray-700 hover:border-gray-500 bg-gray-900/50'
+                  : 'border-white/[0.08] hover:border-white/[0.20] bg-zinc-900/40'
               }`}
             >
               <div className="text-4xl mb-3">🖼️</div>
-              <p className="text-gray-300 font-medium">Glisse tes images ici</p>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-zinc-300 font-medium">Glisse tes images ici</p>
+              <p className="text-zinc-500 text-sm mt-1">
                 ou clique pour sélectionner · JPG, PNG, WebP acceptés
               </p>
               <input
@@ -262,7 +297,7 @@ export default function CarouselPage() {
             {files.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-zinc-400">
                     {files.length} image{files.length > 1 ? 's' : ''} sélectionnée{files.length > 1 ? 's' : ''}
                     {files.length >= 4 && (
                       <span className="text-violet-400 ml-2">
@@ -301,12 +336,12 @@ export default function CarouselPage() {
             )}
 
             {/* Réglages */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
-              <h2 className="text-sm font-medium text-gray-200">Réglages</h2>
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-4">
+              <h2 className="text-sm font-medium text-zinc-100">Réglages</h2>
 
               {/* Max carousels */}
               <div>
-                <label className="text-[10px] text-gray-500 uppercase tracking-widest">
+                <label className="text-[10px] text-zinc-500 uppercase tracking-widest">
                   Nombre max de carousels
                 </label>
                 <div className="flex items-center gap-3 mt-2">
@@ -316,7 +351,7 @@ export default function CarouselPage() {
                     max={200}
                     value={maxCarousels}
                     onChange={e => setMaxCarousels(Math.min(200, Math.max(1, Number(e.target.value))))}
-                    className="w-16 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-violet-500"
+                    className="w-16 bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                   />
                   <input
                     type="range"
@@ -326,22 +361,22 @@ export default function CarouselPage() {
                     onChange={e => setMaxCarousels(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
                   />
-                  <span className="text-xs text-gray-500 w-10 text-right">{maxCarousels} max</span>
+                  <span className="text-xs text-zinc-500 w-10 text-right">{maxCarousels} max</span>
                 </div>
-                <p className="text-[10px] text-gray-600 mt-1">
+                <p className="text-[10px] text-zinc-600 mt-1">
                   Chaque carousel = 4 photos · combinaisons uniques · EXIF iPhone 17 Pro unique par instance
                 </p>
               </div>
 
               {/* Infos */}
-              <div className="bg-gray-800/50 rounded-lg p-3 space-y-1">
-                <p className="text-[10px] text-gray-500">
+              <div className="bg-zinc-900/40 rounded-lg p-3 space-y-1">
+                <p className="text-[10px] text-zinc-500">
                   ✅ EXIF strippé + iPhone 17 Pro fake (datetime + GPS + ISO uniques par image/carousel)
                 </p>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-zinc-500">
                   ✅ Micro-crop + micro-noise par instance → aucun fichier binaire identique
                 </p>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-zinc-500">
                   ✅ Upload organisé dans Drive : <code className="text-violet-400">carousel_N/1.jpg … 4.jpg</code>
                 </p>
               </div>
@@ -358,7 +393,7 @@ export default function CarouselPage() {
             <button
               onClick={launch}
               disabled={files.length < 4 || uploading}
-              className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+              className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
             >
               {uploading
                 ? '⏳ Upload en cours...'
@@ -372,12 +407,12 @@ export default function CarouselPage() {
         {/* ── Progression ────────────────────────────────────────────────── */}
         {runId && (
           <div className="space-y-5">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-medium text-gray-200">
+                <h2 className="font-medium text-zinc-100">
                   {done && !error ? '✅ Carousels générés !' : done && error ? '❌ Erreur' : '⏳ Génération en cours...'}
                 </h2>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-zinc-500">
                   {imageCount} images · C({imageCount},4) = {combinationsPossible.toLocaleString()} combos possibles
                 </span>
               </div>
@@ -385,14 +420,14 @@ export default function CarouselPage() {
               {/* Barre de progression */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-zinc-400">
                     {completedCarousels} / {totalCarousels || '...'} carousels
                   </span>
-                  <span className="text-xs text-gray-500">{pct}%</span>
+                  <span className="text-xs text-zinc-500">{pct}%</span>
                 </div>
-                <div className="bg-gray-800 rounded-full h-2">
+                <div className="bg-white/[0.05] rounded-full h-2">
                   <div
-                    className="bg-violet-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-violet-500 to-cyan-400 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -408,7 +443,7 @@ export default function CarouselPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={resetAll}
-                    className="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg py-2.5 transition"
+                    className="flex-1 bg-white/[0.08] hover:bg-white/[0.08] text-white text-sm rounded-lg py-2.5 transition"
                   >
                     + Nouveau batch
                   </button>
@@ -419,23 +454,23 @@ export default function CarouselPage() {
             {/* Liens Drive */}
             {carouselDriveLinks.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-3">
+                <h3 className="text-sm font-medium text-zinc-400 mb-3">
                   Carousels prêts ({carouselDriveLinks.length})
                 </h3>
                 <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                   {carouselDriveLinks.map(({ n, urls }) => (
                     <div
                       key={n}
-                      className="bg-gray-900 border border-gray-800 rounded-xl p-3 flex items-center justify-between"
+                      className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-3 flex items-center justify-between"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500 w-20">carousel_{n}</span>
+                        <span className="text-xs text-zinc-500 w-20">carousel_{n}</span>
                         <div className="flex gap-1">
                           {urls.map((_, i) => (
                             <div key={i} className="w-2 h-2 rounded-full bg-violet-500 opacity-80" />
                           ))}
                         </div>
-                        <span className="text-[10px] text-gray-600">{urls.length} photos</span>
+                        <span className="text-[10px] text-zinc-600">{urls.length} photos</span>
                       </div>
                       <a
                         href={urls[0]}

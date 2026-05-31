@@ -86,7 +86,7 @@ function BankButton({ gen }: { gen: Generation }) {
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Note (optionnel)"
-            className="flex-1 text-[10px] bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-white placeholder-gray-600 focus:outline-none"
+            className="flex-1 text-[10px] bg-black/40 border border-white/[0.08] rounded px-1.5 py-0.5 text-white placeholder-zinc-600 focus:outline-none"
             onKeyDown={e => e.key === 'Enter' && save()}
           />
           <button
@@ -124,7 +124,6 @@ function VideoCard({ gen }: { gen: Generation }) {
   const rankDisplay = gen.sourceRank !== null ? gen.sourceRank + 1 : gen.id
   const scene = gen.sceneDescription || `Vidéo #${rankDisplay}`
 
-  // Formater le prompt JSON pour l'affichage
   const promptFormatted = (() => {
     if (!gen.promptUsed) return null
     try { return JSON.stringify(JSON.parse(gen.promptUsed), null, 2) }
@@ -132,68 +131,67 @@ function VideoCard({ gen }: { gen: Generation }) {
   })()
 
   return (
-    <div className="bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
-      <div className="relative bg-gray-950 aspect-[9/16]">
+    <div className="bg-zinc-900/80 rounded-2xl overflow-hidden border border-white/[0.07] shadow-xl group">
+      <div className="relative bg-zinc-950 aspect-[9/16]">
         {isComplete && gen.generatedImageUrl ? (
-          <video
-            ref={videoRef}
-            src={gen.generatedImageUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          />
+          <>
+            <video
+              ref={videoRef}
+              src={gen.generatedImageUrl}
+              autoPlay loop muted playsInline
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-end justify-center pb-3">
+              <a
+                href={gen.generatedImageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs px-3 py-1.5 rounded-full hover:bg-white/20"
+              >
+                ↗ Ouvrir
+              </a>
+            </div>
+          </>
         ) : isFailed ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 px-3">
             <span className="text-3xl">❌</span>
-            <span className="text-xs text-gray-500">Échec</span>
+            <span className="text-xs text-zinc-500">Échec</span>
             {gen.fallbackReason && (
-              <span className="text-[10px] text-red-400 text-center leading-tight">
-                {gen.fallbackReason}
-              </span>
+              <span className="text-[10px] text-red-400 text-center leading-tight">{gen.fallbackReason}</span>
             )}
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-            <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs text-gray-500">
-              {gen.generationStatus === 'processing' ? 'Génération...' : 'En attente...'}
+          <div className="w-full h-full relative flex flex-col items-center justify-center gap-3">
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-zinc-900 via-violet-950/20 to-zinc-900" />
+            <div className="relative w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <span className="relative text-xs text-zinc-500">
+              {gen.generationStatus === 'processing' ? 'Génération…' : 'En attente…'}
             </span>
           </div>
         )}
+        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-[10px] text-zinc-300 px-1.5 py-0.5 rounded-md border border-white/10">
+          #{rankDisplay}
+        </div>
       </div>
-      <div className="p-3 space-y-1">
-        <p className="text-xs font-medium text-white truncate">{scene}</p>
-        <p className="text-[10px] text-gray-500">{gen.modelUsed || 'kling_motion_control'} · #{rankDisplay}</p>
-        {isComplete && gen.generatedImageUrl && (
-          <a
-            href={gen.generatedImageUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[10px] text-violet-400 hover:text-violet-300 transition"
-          >
-            ↗ Ouvrir
-          </a>
-        )}
+      <div className="p-3 space-y-1.5">
+        <p className="text-xs font-medium text-zinc-100 truncate">{scene}</p>
+        <p className="text-[10px] text-zinc-500">{gen.modelUsed || 'seedance_2_0'}</p>
         {isComplete && promptFormatted && (
           <div>
             <button
               onClick={() => setShowPrompt(p => !p)}
-              className="text-[10px] text-gray-500 hover:text-gray-300 transition"
+              className="text-[10px] text-zinc-600 hover:text-zinc-400 transition"
             >
-              {showPrompt ? '▲ Masquer prompt' : '👁 Voir prompt'}
+              {showPrompt ? '▲ Masquer' : '👁 Prompt'}
             </button>
             {showPrompt && (
-              <pre className="mt-1.5 text-[9px] text-gray-400 bg-gray-950 border border-gray-800 rounded p-2 overflow-auto max-h-40 whitespace-pre-wrap leading-relaxed">
+              <pre className="mt-1.5 text-[9px] text-zinc-400 bg-black/40 border border-white/[0.06] rounded-lg p-2 overflow-auto max-h-40 whitespace-pre-wrap leading-relaxed">
                 {promptFormatted}
               </pre>
             )}
           </div>
         )}
-        {isComplete && gen.promptUsed && (
-          <BankButton gen={gen} />
-        )}
+        {isComplete && gen.promptUsed && <BankButton gen={gen} />}
       </div>
     </div>
   )
@@ -207,23 +205,39 @@ function ImageCard({ gen }: { gen: Generation }) {
   const rankDisplay = gen.sourceRank !== null ? gen.sourceRank + 1 : gen.id
 
   return (
-    <div className="bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
-      <div className="relative bg-gray-950 aspect-square">
+    <div className="bg-zinc-900/80 rounded-2xl overflow-hidden border border-white/[0.07] shadow-xl group">
+      <div className="relative bg-zinc-950 aspect-square">
         {isComplete && gen.generatedImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={gen.generatedImageUrl} alt="" className="w-full h-full object-cover" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={gen.generatedImageUrl} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-end justify-center pb-3">
+              <a
+                href={gen.generatedImageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs px-3 py-1.5 rounded-full hover:bg-white/20"
+              >
+                ↗ Ouvrir
+              </a>
+            </div>
+          </>
         ) : isFailed ? (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-2xl">❌</span>
           </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-full h-full relative flex items-center justify-center">
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-zinc-900 via-violet-950/20 to-zinc-900" />
+            <div className="relative w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
+        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-[10px] text-zinc-300 px-1.5 py-0.5 rounded-md border border-white/10">
+          #{rankDisplay}
+        </div>
       </div>
       <div className="p-2">
-        <p className="text-[10px] text-gray-500">{gen.modelUsed || '—'} · #{rankDisplay}</p>
+        <p className="text-[10px] text-zinc-500">{gen.modelUsed || '—'} · #{rankDisplay}</p>
       </div>
     </div>
   )
@@ -286,13 +300,13 @@ function RunCard({ run }: { run: RunMeta }) {
   const createdAt = new Date(run.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 space-y-4">
+    <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span>{typeIcon}</span>
           <span className="font-semibold text-white text-sm">{typeLabel}</span>
-          <span className="text-xs text-gray-500">· {createdAt}</span>
+          <span className="text-xs text-zinc-500">· {createdAt}</span>
         </div>
         <div className="flex items-center gap-2">
           {isRunning && (
@@ -321,16 +335,16 @@ function RunCard({ run }: { run: RunMeta }) {
 
       {/* Barre de progression */}
       <div className="space-y-1">
-        <div className="flex justify-between text-xs text-gray-400">
+        <div className="flex justify-between text-xs text-zinc-400">
           <span>
             {completed} / {total} · {failed > 0 ? `${failed} échec${failed > 1 ? 's' : ''}` : ''}
           </span>
           <span>{Math.round((completed / Math.max(total, 1)) * 100)}%</span>
         </div>
-        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              status === 'failed' ? 'bg-red-500' : 'bg-violet-500'
+              status === 'failed' ? 'bg-red-500' : 'bg-gradient-to-r from-violet-500 to-cyan-400'
             }`}
             style={{ width: `${(completed / Math.max(total, 1)) * 100}%` }}
           />
@@ -414,7 +428,7 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
   const textColor = run.runType === 'metadata' ? 'text-cyan-400' : 'text-violet-400'
 
   return (
-    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 space-y-3">
+    <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <span>{icon}</span>
@@ -441,11 +455,11 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
       </div>
 
       <div className="space-y-1">
-        <div className="flex justify-between text-xs text-gray-400">
+        <div className="flex justify-between text-xs text-zinc-400">
           <span>{completed} / {total || '?'} fichiers</span>
           <span>{pct}%</span>
         </div>
-        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${hasError ? 'bg-red-500' : barColor}`}
             style={{ width: `${pct}%` }}
@@ -522,7 +536,7 @@ export default function EnCoursPage() {
               <Link href="/video" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition">
                 🎬 Générer des vidéos
               </Link>
-              <Link href="/studio" className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm font-medium transition">
+              <Link href="/studio" className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] text-zinc-300 rounded-lg text-sm font-medium transition">
                 ✨ Prompt Studio
               </Link>
             </div>

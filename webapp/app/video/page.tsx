@@ -317,7 +317,7 @@ export default function VideoPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${
                 niche === n.id
                   ? 'bg-violet-600 border-violet-500 text-white'
-                  : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+                  : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
               }`}
             >
               <span>{n.emoji}</span><span>{n.label}</span>
@@ -326,23 +326,23 @@ export default function VideoPage() {
         </div>
 
         {/* ── Personnage ── */}
-        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Personnage</p>
+            <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Personnage</p>
             <button
               onClick={scanFromHiggsfield}
               disabled={scanning || loadingChars}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-gray-800 border border-gray-700 text-gray-300 hover:border-violet-500 hover:text-violet-300 disabled:opacity-50 transition"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-white/[0.05] border border-white/[0.08] text-zinc-300 hover:border-violet-500 hover:text-violet-300 disabled:opacity-50 transition"
             >
               {scanning ? '⏳ Scan...' : '🔍 Scanner Higgsfield'}
             </button>
           </div>
           {loadingChars || scanning ? (
-            <p className="text-xs text-gray-500">{scanning ? 'Scan en cours...' : 'Chargement...'}</p>
+            <p className="text-xs text-zinc-500">{scanning ? 'Scan en cours...' : 'Chargement...'}</p>
           ) : charsError ? (
             <p className="text-xs text-red-400">{charsError}</p>
           ) : refElements.length === 0 ? (
-            <p className="text-xs text-gray-500">Aucun Reference Element trouvé. Clique sur "Scanner Higgsfield" pour charger tes personnages.</p>
+            <p className="text-xs text-zinc-500">Aucun Reference Element trouvé. Clique sur "Scanner Higgsfield" pour charger tes personnages.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {refElements.map(e => (
@@ -352,7 +352,7 @@ export default function VideoPage() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                     selectedElementId === e.id
                       ? 'bg-violet-600 border-violet-500 text-white'
-                      : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                      : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
                   }`}
                 >
                   {e.name}
@@ -365,16 +365,16 @@ export default function VideoPage() {
         </div>
 
         {/* ── Durée ── */}
-        <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 flex items-center gap-6">
+        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] flex items-center gap-6">
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1.5">
+            <label className="block text-xs text-zinc-400 mb-1.5">
               Durée vidéo : <span className="text-white font-medium">{duration}s</span>
             </label>
             <input type="range" min={3} max={10} value={duration}
               onChange={e => setDuration(Number(e.target.value))}
               className="w-full accent-violet-500" />
           </div>
-          <div className="text-xs text-gray-500 text-right leading-relaxed">
+          <div className="text-xs text-zinc-500 text-right leading-relaxed">
             <div>9:16 · 720p</div>
             <div>Seedance 2.0</div>
           </div>
@@ -386,7 +386,7 @@ export default function VideoPage() {
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
               uiMode === 'direct'
                 ? 'bg-violet-600 border-violet-500 text-white'
-                : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+                : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
             }`}>
             🎯 Directs — prompt exact
           </button>
@@ -394,7 +394,7 @@ export default function VideoPage() {
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
               uiMode === 'variation'
                 ? 'bg-violet-600 border-violet-500 text-white'
-                : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+                : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
             }`}>
             🔀 Variations — outfit + réplique
           </button>
@@ -404,40 +404,40 @@ export default function VideoPage() {
             MODE DIRECTS
         ════════════════════════════════════════════════════════════ */}
         {uiMode === 'direct' && (
-          <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
 
             {/* Header + filtres */}
-            <div className="p-5 border-b border-gray-800 flex items-center justify-between gap-4">
+            <div className="p-5 border-b border-white/[0.07] flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-white">Prompts validés</p>
-                <p className="text-xs text-gray-500 mt-0.5">Chaque prompt est généré copie exacte — zéro modification.</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Chaque prompt est généré copie exacte — zéro modification.</p>
               </div>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-zinc-500">
                 {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Météo' : '👴 Vieux'}
               </span>
             </div>
 
             {/* Sélect tout */}
-            <div className="px-5 py-3 border-b border-gray-800 flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-white/[0.07] flex items-center justify-between">
               <button onClick={toggleSelectAll} className="text-xs text-violet-400 hover:text-violet-300 transition">
                 {selectedIds.size === filteredPrompts.length && filteredPrompts.length > 0
                   ? '☑ Tout désélectionner' : '☐ Tout sélectionner'}
               </button>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-zinc-500">
                 {selectedIds.size} / {filteredPrompts.length} sélectionné{selectedIds.size > 1 ? 's' : ''}
               </span>
             </div>
 
             {/* Liste */}
-            <div className="divide-y divide-gray-800/60">
+            <div className="divide-y divide-white/[0.06]">
               {loadingPrompts ? (
-                <div className="p-6 text-center text-xs text-gray-500">Chargement des prompts...</div>
+                <div className="p-6 text-center text-xs text-zinc-500">Chargement des prompts...</div>
               ) : filteredPrompts.length === 0 ? (
-                <div className="p-6 text-center text-xs text-gray-500">Aucun prompt pour cette niche.</div>
+                <div className="p-6 text-center text-xs text-zinc-500">Aucun prompt pour cette niche.</div>
               ) : (
                 filteredPrompts.map(p => (
                   <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                    selectedIds.has(p.id) ? 'bg-violet-600/10' : 'hover:bg-gray-800/40'
+                    selectedIds.has(p.id) ? 'bg-violet-600/10' : 'hover:bg-white/[0.03]'
                   }`}>
                     <input type="checkbox" checked={selectedIds.has(p.id)}
                       onChange={() => setSelectedIds(prev => {
@@ -448,16 +448,16 @@ export default function VideoPage() {
                       className="accent-violet-500 w-4 h-4 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-gray-100 truncate">
+                        <span className="text-sm text-zinc-100 truncate">
                           {p.isBest && <span className="text-yellow-400 mr-1">★</span>}
                           {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
                         </span>
                         <SubNicheLabel subNiche={p.subNiche} />
                       </div>
                       {p.userDescription ? (
-                        <p className="text-xs text-gray-500 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
+                        <p className="text-xs text-zinc-500 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
                       ) : p.speakerLine && (
-                        <p className="text-xs text-gray-500 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
+                        <p className="text-xs text-zinc-500 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
                       )}
                       {p.authorName && (
                         <div className="flex items-center justify-between mt-0.5">
@@ -482,9 +482,9 @@ export default function VideoPage() {
             </div>
 
             {/* Batch count + CTA */}
-            <div className="p-5 border-t border-gray-800 space-y-4">
+            <div className="p-5 border-t border-white/[0.07] space-y-4">
               <div>
-                <p className="text-xs text-gray-400 mb-2">
+                <p className="text-xs text-zinc-400 mb-2">
                   Générer <span className="text-white font-medium">×{batchCount}</span> fois chaque prompt sélectionné
                 </p>
                 <div className="flex gap-2">
@@ -493,7 +493,7 @@ export default function VideoPage() {
                       className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition ${
                         batchCount === n
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
                       }`}>×{n}</button>
                   ))}
                 </div>
@@ -507,7 +507,7 @@ export default function VideoPage() {
               )}
               <button onClick={launch}
                 disabled={launching || !selectedElementId || selectedIds.size === 0}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition">
                 {launching
                   ? '⏳ Lancement...'
                   : `▶ Générer ${totalDirect} vidéo${totalDirect > 1 ? 's' : ''} — ${selectedIds.size} prompt${selectedIds.size > 1 ? 's' : ''} × ${batchCount} →`}
@@ -535,18 +535,18 @@ export default function VideoPage() {
             </div>
 
             {/* ── ÉTAPE 1 : Sélectionner le concept de base ── */}
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-800">
+            <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/[0.07]">
                 <p className="text-sm font-semibold text-white">① Choisir le concept de base</p>
-                <p className="text-xs text-gray-500 mt-0.5">Les répliques et l&apos;outfit pool s&apos;adaptent automatiquement au concept sélectionné.</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Les répliques et l&apos;outfit pool s&apos;adaptent automatiquement au concept sélectionné.</p>
               </div>
-              <div className="divide-y divide-gray-800/60 max-h-72 overflow-y-auto">
+              <div className="divide-y divide-white/[0.06] max-h-72 overflow-y-auto">
                 {loadingPrompts ? (
-                  <div className="p-4 text-center text-xs text-gray-500">Chargement...</div>
+                  <div className="p-4 text-center text-xs text-zinc-500">Chargement...</div>
                 ) : (
                   prompts.map(p => (
                     <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                      varBaseId === p.id ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                      varBaseId === p.id ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
                     }`}>
                       <input type="radio" name="varBase" value={p.id}
                         checked={varBaseId === p.id}
@@ -554,19 +554,19 @@ export default function VideoPage() {
                         className="accent-violet-500 w-4 h-4 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-gray-100">
+                          <span className="text-sm text-zinc-100">
                             {p.isBest && <span className="text-yellow-400 mr-1">★</span>}
                             {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
                           </span>
                           <SubNicheLabel subNiche={p.subNiche} />
                           {!p.phraseVariations && (
-                            <span className="text-xs text-gray-600 italic">outfit uniquement</span>
+                            <span className="text-xs text-zinc-600 italic">outfit uniquement</span>
                           )}
                         </div>
                         {p.userDescription ? (
-                          <p className="text-xs text-gray-600 truncate italic mt-0.5">&ldquo;{p.userDescription}&rdquo;</p>
+                          <p className="text-xs text-zinc-600 truncate italic mt-0.5">&ldquo;{p.userDescription}&rdquo;</p>
                         ) : p.speakerLine && varBaseId !== p.id && (
-                          <p className="text-xs text-gray-600 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
+                          <p className="text-xs text-zinc-600 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
                         )}
                         {p.authorName && (
                           <p className="text-xs text-violet-400/60 mt-0.5">by {p.authorName}</p>
@@ -580,35 +580,35 @@ export default function VideoPage() {
 
             {/* ── ÉTAPE 2 : Répliques dédiées (seulement si prompt sélectionné avec phrases) ── */}
             {varBaseId && currentPhrasePool && (
-              <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-800">
+              <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
+                <div className="px-5 py-4 border-b border-white/[0.07]">
                   <p className="text-sm font-semibold text-white">② Réplique</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-zinc-500 mt-0.5">
                     {currentPhrasePool.length} répliques calibrées sur ce concept précis.
                     En mode aléatoire, elles tournent sans répétition.
                   </p>
                 </div>
-                <div className="divide-y divide-gray-800/40 max-h-80 overflow-y-auto">
+                <div className="divide-y divide-white/[0.06] max-h-80 overflow-y-auto">
                   {/* Aléatoire */}
                   <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                    varPhrase === '' ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                    varPhrase === '' ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
                   }`}>
                     <input type="radio" name="phrase" value=""
                       checked={varPhrase === ''}
                       onChange={() => setVarPhrase('')}
                       className="accent-violet-500 w-4 h-4 shrink-0" />
-                    <span className="text-sm text-gray-200">🎲 Aléatoire — cycle sans répétition</span>
+                    <span className="text-sm text-zinc-200">🎲 Aléatoire — cycle sans répétition</span>
                   </label>
                   {/* Phrases dédiées */}
                   {currentPhrasePool.map((ph, i) => (
                     <label key={i} className={`flex items-start gap-3 px-5 py-3 cursor-pointer transition ${
-                      varPhrase === ph ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                      varPhrase === ph ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
                     }`}>
                       <input type="radio" name="phrase" value={ph}
                         checked={varPhrase === ph}
                         onChange={() => setVarPhrase(ph)}
                         className="accent-violet-500 w-4 h-4 shrink-0 mt-0.5" />
-                      <span className="text-sm italic text-gray-300">&ldquo;{ph}&rdquo;</span>
+                      <span className="text-sm italic text-zinc-300">&ldquo;{ph}&rdquo;</span>
                     </label>
                   ))}
                 </div>
@@ -617,35 +617,35 @@ export default function VideoPage() {
 
             {/* ── ÉTAPE 3 : Outfit ── */}
             {varBaseId && (
-              <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
+              <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
+                <div className="px-5 py-4 border-b border-white/[0.07] flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-white">
                       {currentPhrasePool ? '③' : '②'} Outfit
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">Pool adapté à la niche du concept.</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">Pool adapté à la niche du concept.</p>
                   </div>
-                  <span className="text-xs text-gray-600">🔴 Culotte rouge — fixe</span>
+                  <span className="text-xs text-zinc-600">🔴 Culotte rouge — fixe</span>
                 </div>
-                <div className="divide-y divide-gray-800/40">
+                <div className="divide-y divide-white/[0.06]">
                   <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                    varOutfit === '' ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                    varOutfit === '' ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
                   }`}>
                     <input type="radio" name="outfit" value=""
                       checked={varOutfit === ''}
                       onChange={() => setVarOutfit('')}
                       className="accent-violet-500 w-4 h-4 shrink-0" />
-                    <span className="text-sm text-gray-200">🎲 Aléatoire — cycle sans répétition</span>
+                    <span className="text-sm text-zinc-200">🎲 Aléatoire — cycle sans répétition</span>
                   </label>
                   {outfitPool.map(o => (
                     <label key={o.value} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                      varOutfit === o.value ? 'bg-violet-600/15' : 'hover:bg-gray-800/40'
+                      varOutfit === o.value ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
                     }`}>
                       <input type="radio" name="outfit" value={o.value}
                         checked={varOutfit === o.value}
                         onChange={() => setVarOutfit(o.value)}
                         className="accent-violet-500 w-4 h-4 shrink-0" />
-                      <span className="text-sm text-gray-300">{o.label}</span>
+                      <span className="text-sm text-zinc-300">{o.label}</span>
                     </label>
                   ))}
                 </div>
@@ -653,12 +653,12 @@ export default function VideoPage() {
             )}
 
             {/* ── Batch count + CTA ── */}
-            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-4">
+            <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] space-y-4">
               <div>
-                <p className="text-xs text-gray-400 mb-2">
+                <p className="text-xs text-zinc-400 mb-2">
                   Générer <span className="text-white font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} de ce concept
                   {varBatchCount > 1 && currentPhrasePool && (
-                    <span className="text-gray-600"> — répliques et outfits différents à chaque fois</span>
+                    <span className="text-zinc-600"> — répliques et outfits différents à chaque fois</span>
                   )}
                 </p>
                 <div className="flex gap-2">
@@ -667,14 +667,14 @@ export default function VideoPage() {
                       className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition ${
                         varBatchCount === n
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-violet-600'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
                       }`}>×{n}</button>
                   ))}
                 </div>
               </div>
 
               {!varBaseId && (
-                <p className="text-xs text-gray-600 italic">← Sélectionner un concept de base pour continuer</p>
+                <p className="text-xs text-zinc-600 italic">← Sélectionner un concept de base pour continuer</p>
               )}
               {launchError && <p className="text-sm text-red-400">{launchError}</p>}
               {launchSuccess && (
@@ -686,7 +686,7 @@ export default function VideoPage() {
 
               <button onClick={launch}
                 disabled={launching || !selectedElementId || !varBaseId}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition">
                 {launching
                   ? '⏳ Lancement...'
                   : varBaseId
