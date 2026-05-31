@@ -26,7 +26,6 @@ export default function BulkEditPage() {
   // ── Config ──
   const [prompt, setPrompt] = useState('')
   const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('high')
-  const [unlimitedMode, setUnlimitedMode] = useState(false)
 
   // ── State lancement ──
   const [phase, setPhase] = useState<'idle' | 'uploading' | 'launching'>('idle')
@@ -118,7 +117,6 @@ export default function BulkEditPage() {
           prompt: prompt.trim(),
           elementId: selectedElementId,
           quality,
-          concurrency: unlimitedMode ? 8 : 1,
         }),
         signal: abort.signal,
       })
@@ -224,7 +222,7 @@ export default function BulkEditPage() {
             rows={3}
             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm resize-none"
           />
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
             <p className="text-xs text-gray-500">Qualité :</p>
             {(['low', 'medium', 'high'] as const).map(q => (
               <button
@@ -237,24 +235,6 @@ export default function BulkEditPage() {
                 {q}
               </button>
             ))}
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                onClick={() => setUnlimitedMode(v => !v)}
-                className={`flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-medium border transition ${
-                  unlimitedMode
-                    ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
-                    : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-600'
-                }`}
-              >
-                <span>⚡ Unlimited</span>
-                <span className={`w-7 h-4 rounded-full relative transition-colors ${unlimitedMode ? 'bg-yellow-500' : 'bg-gray-600'}`}>
-                  <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${unlimitedMode ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
-                </span>
-              </button>
-              {unlimitedMode && (
-                <span className="text-xs text-yellow-400/70">8 simultanés · plan Unlimited requis</span>
-              )}
-            </div>
           </div>
         </div>
 

@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
     elementId = '',
     quality = 'high',
     characterName = '',
-    concurrency = 1,   // 1 = standard, 8 = unlimited plan
   } = body
 
   if (!uploadRunId) return NextResponse.json({ error: 'uploadRunId requis' }, { status: 400 })
@@ -86,7 +85,6 @@ export async function POST(req: NextRequest) {
       '--prompt', prompt,
       '--element-id', elementId,
       '--quality', quality,
-      '--concurrency', String(Math.min(Math.max(1, concurrency), 24)),
     ],
     {
       cwd: path.join(process.cwd(), '..'),
