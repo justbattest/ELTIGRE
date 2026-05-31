@@ -23,11 +23,12 @@ type FileResult = {
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 /**
- * Taille de chunk pour l'upload HTTP (phase 1).
- * Identique à Bulk Edit : CHUNK_SIZE=10, Promise.all sur tous les chunks simultanément.
- * C'est ce pattern qui garantit la rapidité.
+ * Upload avec sliding window : CHUNK_SIZE petits + concurrence limitée.
+ * Évite l'OOM (Railway tue le container si trop de gros fichiers en RAM simultanément).
+ * Sliding window = dès qu'une requête finit, la suivante démarre → aucun délai entre groupes.
  */
-const UPLOAD_CHUNK_SIZE = 10
+const UPLOAD_CHUNK_SIZE  = 2   // 2 fichiers × ~30MB = ~60MB par requête
+const UPLOAD_CONCURRENCY = 3   // 3 requêtes max en parallèle = ~180MB serveur max
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
@@ -190,8 +191,10 @@ export default function MetadataPage() {
         chunks.push(entries.slice(i, i + UPLOAD_CHUNK_SIZE))
       }
 
-      // Tous les chunks partent en même temps → latence minimale (identique à Bulk Edit)
-      await Promise.all(chunks.map(async (chunk) => {
+      // Sliding window : max UPLOAD_CONCURRENCY requêtes simultanées.
+      // Dès qu'une finit → la suivante démarre immédiatement (pas de pause entre groupes).
+      // Évite l'OOM Railway sans sacrifier la vitesse.
+      const uploadChunk = async (chunk: FileEntry[]) => {
         if (abort.signal.aborted) return
         const form = new FormData()
         form.append('runId', runId)
@@ -200,7 +203,18 @@ export default function MetadataPage() {
         const data = await res.json()
         if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
         setUploadedFiles(prev => prev + data.savedCount)
-      }))
+      }
+
+      const running = new Set<Promise<void>>()
+      for (const chunk of chunks) {
+        if (abort.signal.aborted) break
+        const p: Promise<void> = uploadChunk(chunk).finally(() => running.delete(p))
+        running.add(p)
+        if (running.size >= UPLOAD_CONCURRENCY) {
+          await Promise.race(running)   // attend la plus rapide puis continue
+        }
+      }
+      await Promise.all(running)  // attend les dernières en cours
 
       if (abort.signal.aborted || !runId) return
 
