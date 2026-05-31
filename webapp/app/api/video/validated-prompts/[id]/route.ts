@@ -5,12 +5,13 @@ import { prisma } from '@/lib/prisma'
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  const id = Number(params.id)
+  const { id: idStr } = await params
+  const id = Number(idStr)
   if (isNaN(id)) return NextResponse.json({ error: 'ID invalide' }, { status: 400 })
 
   const prompt = await prisma.validatedPrompt.findUnique({
