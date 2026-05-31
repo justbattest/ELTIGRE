@@ -31,6 +31,7 @@ async def run_bulk_edit(
     element_id: str,
     quality: str,
     user_token: str,
+    concurrency: int = 1,
 ) -> None:
     drive = init_drive_uploader_from_env()
 
@@ -52,7 +53,11 @@ async def run_bulk_edit(
     # Prompt avec ou sans préfixe personnage
     prompt_full = f"<<<{element_id}>>> {prompt}" if element_id else prompt
 
-    for i, img_path in enumerate(images):
+    # Semaphore : 1 en standard, N en unlimited (ex: 8)
+    sem = asyncio.Semaphore(concurrency)
+
+    async def generate_one(i: int, img_path: Path):
+        nonlocal completed, failed
         shortcode = f"edit_{i + 1}"
 
         print(json.dumps({
@@ -73,60 +78,63 @@ async def run_bulk_edit(
             "--wait-timeout", "10m",
         ]
 
-        try:
-            url = await run_higgsfield_for_user(user_token, cmd, timeout=660)
-            url = url.strip()
-            completed += 1
+        async with sem:
+            try:
+                url = await run_higgsfield_for_user(user_token, cmd, timeout=660)
+                url = url.strip()
+                completed += 1
 
-            print(json.dumps({
-                "type": "generation",
-                "shortcode": shortcode,
-                "status": "complete",
-                "url": url,
-                "model": "seedream_v4_5",
-                "fallback": False,
-                "prompt": prompt_full,
-                "scene": img_path.name,
-                "rank": i,
-                "slide_index": 0,
-                "local_image_path": str(img_path),
-                "likes": 0,
-                "comments": 0,
-                "caption": "",
-                "post_url": "",
-            }), flush=True)
+                print(json.dumps({
+                    "type": "generation",
+                    "shortcode": shortcode,
+                    "status": "complete",
+                    "url": url,
+                    "model": "seedream_v4_5",
+                    "fallback": False,
+                    "prompt": prompt_full,
+                    "scene": img_path.name,
+                    "rank": i,
+                    "slide_index": 0,
+                    "local_image_path": str(img_path),
+                    "likes": 0,
+                    "comments": 0,
+                    "caption": "",
+                    "post_url": "",
+                }), flush=True)
 
-            # Upload Drive (non-bloquant)
-            if drive:
-                asyncio.create_task(
-                    drive.upload_generation(
-                        run_id=run_id,
-                        shortcode=shortcode,
-                        local_image_path=str(img_path),
-                        generated_image_url=url,
-                        rank=i,
+                if drive:
+                    asyncio.create_task(
+                        drive.upload_generation(
+                            run_id=run_id,
+                            shortcode=shortcode,
+                            local_image_path=str(img_path),
+                            generated_image_url=url,
+                            rank=i,
+                        )
                     )
-                )
 
-        except asyncio.TimeoutError:
-            failed += 1
-            print(json.dumps({
-                "type": "generation",
-                "shortcode": shortcode,
-                "status": "failed",
-                "error": "TIMEOUT",
-                "rank": i,
-            }), flush=True)
+            except asyncio.TimeoutError:
+                failed += 1
+                print(json.dumps({
+                    "type": "generation",
+                    "shortcode": shortcode,
+                    "status": "failed",
+                    "error": "TIMEOUT",
+                    "rank": i,
+                }), flush=True)
 
-        except Exception as e:
-            failed += 1
-            print(json.dumps({
-                "type": "generation",
-                "shortcode": shortcode,
-                "status": "failed",
-                "error": str(e)[:300],
-                "rank": i,
-            }), flush=True)
+            except Exception as e:
+                failed += 1
+                print(json.dumps({
+                    "type": "generation",
+                    "shortcode": shortcode,
+                    "status": "failed",
+                    "error": str(e)[:300],
+                    "rank": i,
+                }), flush=True)
+
+    # Lancer toutes les tâches (séquentiel si sem=1, parallèle si sem>1)
+    await asyncio.gather(*[generate_one(i, img) for i, img in enumerate(images)])
 
     print(json.dumps({
         "type": "done",
@@ -145,6 +153,8 @@ def main():
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--element-id", default="", help="Soul cinematic element ID (optionnel)")
     parser.add_argument("--quality", default="high", choices=["low", "medium", "high"])
+    parser.add_argument("--concurrency", type=int, default=1,
+                        help="Nombre de générations simultanées (1=standard, 8=unlimited plan)")
     args = parser.parse_args()
 
     token = os.environ.get("HIGGSFIELD_TOKEN")
@@ -159,6 +169,7 @@ def main():
         element_id=args.element_id,
         quality=args.quality,
         user_token=token,
+        concurrency=max(1, min(args.concurrency, 24)),  # clamp 1-24
     ))
 
 
