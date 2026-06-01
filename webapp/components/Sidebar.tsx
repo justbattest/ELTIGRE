@@ -28,6 +28,7 @@ const GROUPS = [
       { label: 'Prompt Studio', href: '/studio' },
       { label: 'Bulk Edit', href: '/bulk-edit' },
     ],
+    separate: false,
   },
   {
     key: 'video',
@@ -40,10 +41,11 @@ const GROUPS = [
       { label: 'Prompt Lab', href: '/prompt-lab' },
       { label: 'Motion Control', href: '/motion-control' },
     ],
+    separate: false,
   },
-  { key: 'carousel', icon: LayoutGrid, label: 'CARROUSEL', href: '/carousel', pages: ['/carousel'], subTabs: [] },
-  { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata', pages: ['/metadata'], subTabs: [] },
-  { key: 'en-cours', icon: Timer,      label: 'EN COURS',  href: '/en-cours', pages: ['/en-cours'], subTabs: [] },
+  { key: 'carousel', icon: LayoutGrid, label: 'CARROUSEL', href: '/carousel', pages: ['/carousel'], subTabs: [], separate: false },
+  { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata', pages: ['/metadata'], subTabs: [], separate: false  },
+  { key: 'en-cours', icon: Timer,      label: 'EN COURS',  href: '/en-cours', pages: ['/en-cours'], subTabs: [], separate: true },
 ]
 
 export function Sidebar() {
@@ -101,6 +103,9 @@ export function Sidebar() {
           const Icon = group.icon
           return (
             <div key={group.key}>
+              {group.separate && (
+                <div className="my-3 mx-1 border-t border-white/[0.05]" />
+              )}
               <Link
                 href={group.href}
                 className={`flex items-center gap-3 px-3 py-[10px] rounded-xl transition-all duration-150 ${
