@@ -7,9 +7,9 @@ export function IntroShader() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    if (!sessionStorage.getItem('tigre_intro')) {
+    if (!sessionStorage.getItem('los_tigres_v2')) {
       setVisible(true)
-      sessionStorage.setItem('tigre_intro', '1')
+      sessionStorage.setItem('los_tigres_v2', '1')
       const t = setTimeout(() => setVisible(false), 1800)
       return () => clearTimeout(t)
     }

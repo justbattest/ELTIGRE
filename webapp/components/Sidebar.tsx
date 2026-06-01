@@ -133,35 +133,24 @@ export function Sidebar() {
                 )}
               </Link>
 
-              {/* Sub-tabs */}
-              <AnimatePresence>
-                {isActive && group.subTabs.length > 1 && !collapsed && (
-                  <motion.div
-                    key={`sub-${group.key}`}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="ml-[14px] mt-1 mb-1 pl-4 border-l border-white/[0.06] space-y-0.5">
-                      {group.subTabs.map(tab => (
-                        <Link
-                          key={tab.href}
-                          href={tab.href}
-                          className={`flex items-center px-3 py-[7px] rounded-lg text-[11px] transition-colors ${
-                            pathname === tab.href
-                              ? 'text-white bg-white/[0.07]'
-                              : 'text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.03]'
-                          }`}
-                        >
-                          {tab.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Sub-tabs — pas d'animation (sidebar re-créée à chaque nav) */}
+              {isActive && group.subTabs.length > 1 && !collapsed && (
+                <div className="ml-[14px] mt-1 mb-1 pl-4 border-l border-white/[0.06] space-y-0.5">
+                  {group.subTabs.map(tab => (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      className={`flex items-center px-3 py-[7px] rounded-lg text-[11px] transition-colors ${
+                        pathname === tab.href
+                          ? 'text-white bg-white/[0.07]'
+                          : 'text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.03]'
+                      }`}
+                    >
+                      {tab.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           )
         })}
