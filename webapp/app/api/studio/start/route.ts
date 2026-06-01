@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       aspectRatio,
       quality,
       status: 'running',
+      resourceGroup: 'soul_cinematic', // occupe le slot → Scraping détecte la concurrence
     },
   })
 

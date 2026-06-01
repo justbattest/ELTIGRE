@@ -14,7 +14,7 @@ export type ResourceGroup = 'soul_cinematic' | 'seedance' | 'independent'
 /** Heal zombie runs — runs marqués 'running' depuis >20min sans processus actif */
 async function healZombies(): Promise<void> {
   try {
-    const cutoff = new Date(Date.now() - 20 * 60 * 1000) // 20 minutes
+    const cutoff = new Date(Date.now() - 3 * 60 * 1000) // 3 minutes
     const zombies = await prisma.run.findMany({
       where: { status: 'running', createdAt: { lt: cutoff } },
       select: { id: true, resourceGroup: true },

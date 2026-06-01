@@ -83,7 +83,10 @@ export async function POST(req: NextRequest) {
 
   const resourceGroup: ResourceGroup = 'soul_cinematic'
 
-  // Créer le run en DB
+  // Vérifier la disponibilité AVANT de créer le run
+  // (si on crée d'abord avec status='running', canStartNow se bloquerait lui-même)
+  const canStart = await canStartNow(resourceGroup)
+
   const run = await prisma.run.create({
     data: {
       userId: session.user.id,
@@ -94,15 +97,12 @@ export async function POST(req: NextRequest) {
       modelSetting: model,
       aspectRatio,
       quality,
-      status: 'running',
+      status: canStart ? 'running' : 'queued',
       resourceGroup,
     },
   })
 
   const workDir = path.join(process.cwd(), '..', 'temp', run.id)
-
-  // Vérifier si le groupe de ressources est disponible
-  const canStart = await canStartNow(resourceGroup)
 
   if (!canStart) {
     // Queue ce run — stocker les params pour le démarrer plus tard
