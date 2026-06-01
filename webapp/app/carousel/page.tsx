@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
+import { compressImage } from '@/lib/compress-image'
 
 type CarouselEvent =
   | { type: 'info'; msg: string; image_count?: number }
@@ -135,8 +136,11 @@ export default function CarouselPage() {
     setError('')
     setUploading(true)
 
+    // Compression client-side avant envoi (photos iPhone = 15-50MB → ~2MB après)
+    const compressedFiles = await Promise.all(files.map(f => compressImage(f)))
+
     const form = new FormData()
-    files.forEach(f => form.append('images', f))
+    compressedFiles.forEach(f => form.append('images', f))
     form.append('maxCarousels', String(maxCarousels))
     if (selectedCharacterName) form.append('characterName', selectedCharacterName)
 
@@ -418,7 +422,7 @@ export default function CarouselPage() {
               {uploading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                  Upload en cours...
+                  Compression + Upload en cours...
                 </span>
               ) : files.length < 4
                 ? `Ajouter au moins ${4 - files.length} image${4 - files.length > 1 ? 's' : ''} de plus`
