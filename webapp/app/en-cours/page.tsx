@@ -536,12 +536,21 @@ export default function EnCoursPage() {
     setLoading(false)
   }
 
+  // Polling queue — déclenche le démarrage des runs en attente
+  const queuePollInterval = useRef<ReturnType<typeof setInterval> | null>(null)
+
   useEffect(() => {
     load()
-    // Recheck toutes les 10s pour capter les nouveaux runs lancés depuis d'autres onglets
     refreshInterval.current = setInterval(load, 10_000)
+
+    // Vérifie la queue toutes les 20s — démarre les runs queued si slot libre + heal zombies
+    const pollQueue = () => fetch('/api/queue/check').catch(() => {})
+    pollQueue() // check immédiat au montage
+    queuePollInterval.current = setInterval(pollQueue, 20_000)
+
     return () => {
       if (refreshInterval.current) clearInterval(refreshInterval.current)
+      if (queuePollInterval.current) clearInterval(queuePollInterval.current)
     }
   }, [])
 

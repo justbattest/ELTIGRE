@@ -11,13 +11,51 @@ import * as path from 'path'
 
 export type ResourceGroup = 'soul_cinematic' | 'seedance' | 'independent'
 
+/** Heal zombie runs — runs marqués 'running' depuis >20min sans processus actif */
+async function healZombies(): Promise<void> {
+  try {
+    const cutoff = new Date(Date.now() - 20 * 60 * 1000) // 20 minutes
+    const zombies = await prisma.run.findMany({
+      where: { status: 'running', createdAt: { lt: cutoff } },
+      select: { id: true, resourceGroup: true },
+    })
+    for (const z of zombies) {
+      // Si aucun process Node actif pour ce run → zombie
+      if (!runningProcesses.has(z.id)) {
+        await prisma.run.update({ where: { id: z.id }, data: { status: 'failed' } }).catch(() => {})
+        console.log(`[resource-queue] Healed zombie run ${z.id}`)
+      }
+    }
+  } catch { /* silencieux */ }
+}
+
 /** Vérifie si un groupe peut démarrer maintenant */
 export async function canStartNow(group: ResourceGroup): Promise<boolean> {
   if (group === 'independent') return true
   const running = await prisma.run.findFirst({
     where: { status: 'running', resourceGroup: group }
   })
-  return !running
+  if (!running) return true
+  // Si le run "running" n'a pas de processus actif → zombie → laisser démarrer
+  if (!runningProcesses.has(running.id)) {
+    await prisma.run.update({ where: { id: running.id }, data: { status: 'failed' } }).catch(() => {})
+    return true
+  }
+  return false
+}
+
+/**
+ * Scan global — appelé périodiquement ou au démarrage.
+ * Heal les zombies et démarre les runs en queue si le slot est libre.
+ */
+export async function scanAndStartQueued(): Promise<void> {
+  await healZombies()
+  for (const group of ['soul_cinematic', 'seedance'] as ResourceGroup[]) {
+    const free = await canStartNow(group)
+    if (free) {
+      await onRunComplete(group)
+    }
+  }
 }
 
 /**
