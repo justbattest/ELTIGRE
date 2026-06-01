@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -302,11 +302,12 @@ export default function MotionControlPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b] text-white">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
+      <div className="max-w-2xl mx-auto px-8 py-10 space-y-8">
 
         <div>
           <h1 className="text-2xl font-bold text-white">🎭 Motion Control — Batch</h1>
@@ -430,6 +431,7 @@ export default function MotionControlPage() {
 
       </div>
       </PageWrapper>
+      </main>
     </div>
   )
 }

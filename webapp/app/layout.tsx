@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { IntroShader } from "@/components/IntroShader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +21,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="min-h-full bg-gray-950 text-gray-100"><Providers>{children}</Providers></body>
+      <body className="min-h-full text-gray-100">
+        <Providers>
+          <IntroShader />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

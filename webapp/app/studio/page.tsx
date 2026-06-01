@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -543,8 +543,9 @@ export default function StudioPage() {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b]">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
       {/* Main content */}
       <div className="flex min-h-[calc(100vh-113px)]">
@@ -837,6 +838,7 @@ export default function StudioPage() {
         </div>
       )}
       </PageWrapper>
+      </main>
     </div>
   )
 }

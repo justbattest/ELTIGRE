@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 type SoulChar = { id: string; name: string; type: string; status: string }
@@ -153,10 +153,11 @@ export default function NewRunPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b]">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
-      <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-2xl mx-auto px-8 py-8 space-y-6">
         {/* Profils Instagram */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
@@ -383,6 +384,7 @@ export default function NewRunPage() {
         </button>
       </div>
       </PageWrapper>
+      </main>
     </div>
   )
 }

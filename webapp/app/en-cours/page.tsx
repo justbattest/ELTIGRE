@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -518,10 +518,11 @@ export default function EnCoursPage() {
   const doneBatch   = batchRuns.filter(r =>  r.done)
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b] text-zinc-100">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto px-8 py-8 space-y-8">
         {loading && (
           <div className="flex items-center gap-3 text-gray-500">
             <div className="w-5 h-5 border-2 border-gray-600 border-t-violet-500 rounded-full animate-spin" />
@@ -576,6 +577,7 @@ export default function EnCoursPage() {
         )}
       </div>
       </PageWrapper>
+      </main>
     </div>
   )
 }

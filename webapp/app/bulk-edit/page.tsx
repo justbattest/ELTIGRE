@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { compressImage } from '@/lib/compress-image'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 type FileEntry = { file: File; preview: string }
@@ -157,10 +157,11 @@ export default function BulkEditPage() {
   const isRunning = phase !== 'idle'
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b] text-white">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-5">
+      <div className="max-w-4xl mx-auto px-8 py-8 space-y-5">
 
         <div>
           <h1 className="text-xl font-bold">🖼 Bulk Edit — Seedream 4.5</h1>
@@ -328,6 +329,7 @@ export default function BulkEditPage() {
 
       </div>
       </PageWrapper>
+      </main>
     </div>
   )
 }

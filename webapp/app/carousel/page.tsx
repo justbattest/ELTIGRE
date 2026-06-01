@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 type CarouselEvent =
@@ -220,10 +220,11 @@ export default function CarouselPage() {
   const pct = totalCarousels > 0 ? Math.round((completedCarousels / totalCarousels) * 100) : 0
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b]">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
         {/* ── Config ─────────────────────────────────────────────────────── */}
         {!runId && (
@@ -243,26 +244,35 @@ export default function CarouselPage() {
               {refElements.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {refElements.map(e => (
-                    <button
-                      key={e.id}
-                      onClick={() => setSelectedCharacterName(e.name)}
+                    <button key={e.id} onClick={() => setSelectedCharacterName(e.name)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedCharacterName === e.name
                           ? 'bg-violet-600 border-violet-500 text-white'
                           : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-violet-500/50 hover:text-white'
-                      }`}
-                    >
+                      }`}>
                       {e.name}
                     </button>
                   ))}
                 </div>
               ) : (
-                <input
-                  value={selectedCharacterName}
-                  onChange={e => setSelectedCharacterName(e.target.value)}
-                  placeholder="Nom du dossier Drive (ex: EMMA)"
-                  className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
-                />
+                <div className="space-y-2">
+                  <input
+                    value={selectedCharacterName}
+                    onChange={e => setSelectedCharacterName(e.target.value)}
+                    placeholder="Nom du dossier Drive (ex: EMMA)"
+                    className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                  />
+                  <button
+                    onClick={loadCharacters}
+                    disabled={loadingChars}
+                    className="w-full py-2.5 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-zinc-400 hover:text-white hover:border-violet-500/40 hover:bg-violet-600/10 transition disabled:opacity-40"
+                  >
+                    {loadingChars ? '⏳ Scan en cours...' : '↺ Charger mes personnages depuis Higgsfield'}
+                  </button>
+                  <p className="text-[10px] text-zinc-700 text-center">
+                    Ou tapez directement un nom de dossier Drive ci-dessus
+                  </p>
+                </div>
               )}
             </div>
 
@@ -489,6 +499,7 @@ export default function CarouselPage() {
         )}
       </div>
       </PageWrapper>
+      </main>
     </div>
   )
 }

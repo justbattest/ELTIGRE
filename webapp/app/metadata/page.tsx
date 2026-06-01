@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { compressImage } from '@/lib/compress-image'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -254,10 +254,11 @@ export default function MetadataPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b]">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
         {/* ── Config (idle uniquement) ────────────────────────────────────── */}
         {phase === 'idle' && (
@@ -472,6 +473,7 @@ export default function MetadataPage() {
         )}
       </div>
       </PageWrapper>
+      </main>
     </div>
   )
 }

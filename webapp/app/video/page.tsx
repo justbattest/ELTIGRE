@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -297,10 +297,11 @@ export default function VideoPage() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100">
-      <NavBar />
+    <div className="flex min-h-screen bg-[#09090b] text-zinc-100">
+      <Sidebar />
+      <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-5">
+      <div className="max-w-4xl mx-auto px-8 py-8 space-y-5">
 
         {/* ── Sélecteur de niche — 3 onglets séparés ── */}
         <div className="flex gap-2 flex-wrap">
@@ -700,6 +701,7 @@ export default function VideoPage() {
 
       </div>
       </PageWrapper>
+      </main>
     </div>
   )
 }
