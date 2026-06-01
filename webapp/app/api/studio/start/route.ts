@@ -11,6 +11,7 @@ import { spawn } from 'child_process'
 import * as path from 'path'
 import { runningProcesses, writePidFile, deletePidFile } from '@/app/api/run/route'
 import { handlePipelineEvent } from '@/lib/pipeline-events'
+import { onRunComplete } from '@/lib/resource-queue'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -137,6 +138,8 @@ export async function POST(req: NextRequest) {
         data: { status: code === 0 ? 'completed' : 'failed' },
       })
     }
+    // Déclencher le prochain run soul_cinematic en queue
+    await onRunComplete('soul_cinematic')
   })
 
   return NextResponse.json({ runId: run.id })
