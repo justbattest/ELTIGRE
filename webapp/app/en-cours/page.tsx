@@ -300,7 +300,8 @@ function RunCard({ run }: { run: RunMeta }) {
   const createdAt = new Date(run.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] p-5 space-y-4">
+    <div className={`relative rounded-2xl overflow-hidden ${isRunning ? 'p-[1px] bg-gradient-to-br from-violet-500/30 via-transparent to-cyan-500/20' : 'border border-white/[0.07]'}`}>
+      <div className={`rounded-[inherit] ${isRunning ? 'bg-zinc-950' : 'bg-zinc-900/60'} p-5 space-y-4`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -311,8 +312,8 @@ function RunCard({ run }: { run: RunMeta }) {
         <div className="flex items-center gap-2">
           {isRunning && (
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 text-xs text-violet-400">
-                <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-violet-300 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
                 En cours
               </span>
               <button
@@ -320,15 +321,21 @@ function RunCard({ run }: { run: RunMeta }) {
                 disabled={stopping}
                 className="text-xs px-2 py-0.5 rounded-md bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-800/50 transition disabled:opacity-50"
               >
-                {stopping ? '⏳' : '⏹ Stop'}
+                {stopping ? (
+                  <svg className="w-3 h-3 animate-spin inline" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                ) : '⏹ Stop'}
               </button>
             </div>
           )}
           {status === 'completed' && (
-            <span className="text-xs text-emerald-400">✅ Terminé</span>
+            <span className="text-[11px] font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+              Terminé
+            </span>
           )}
           {status === 'failed' && (
-            <span className="text-xs text-red-400">❌ Échec</span>
+            <span className="text-[11px] font-medium text-red-300 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full">
+              Échec
+            </span>
           )}
         </div>
       </div>
@@ -341,9 +348,9 @@ function RunCard({ run }: { run: RunMeta }) {
           </span>
           <span>{Math.round((completed / Math.max(total, 1)) * 100)}%</span>
         </div>
-        <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+        <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${
+            className={`h-full rounded-full transition-all duration-700 ${
               status === 'failed' ? 'bg-red-500' : 'bg-gradient-to-r from-violet-500 to-cyan-400'
             }`}
             style={{ width: `${(completed / Math.max(total, 1)) * 100}%` }}
@@ -369,6 +376,7 @@ function RunCard({ run }: { run: RunMeta }) {
           Préparation des générations…
         </div>
       )}
+      </div>
     </div>
   )
 }

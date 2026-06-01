@@ -321,7 +321,12 @@ export default function PromptLabPage() {
             disabled={isRunning || !images.length || !description.trim()}
             className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            {isRunning ? '⏳ Analyse en cours...' : '🔍 Analyser & Générer le prompt'}
+            {isRunning ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+              Analyse en cours...
+            </span>
+          ) : 'Analyser & Générer le prompt'}
           </button>
           {isRunning && (
             <button onClick={stopGeneration} className="px-5 py-3 rounded-xl font-semibold text-white bg-red-700 hover:bg-red-600 transition">Stop</button>
@@ -482,7 +487,12 @@ export default function PromptLabPage() {
                 disabled={saving || !saveAuthor.trim() || !saveDescription.trim()}
                 className="flex-1 py-2 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition text-sm"
               >
-                {saving ? '⏳ Sauvegarde...' : 'Sauvegarder →'}
+                {saving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                    Sauvegarde...
+                  </span>
+                ) : 'Sauvegarder'}
               </button>
             </div>
           </div>

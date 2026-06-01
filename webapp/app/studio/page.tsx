@@ -561,7 +561,10 @@ export default function StudioPage() {
               disabled={loadingChars}
               className="w-full text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50 transition flex items-center justify-center gap-1.5 py-1.5 border border-violet-900/50 rounded-lg hover:border-violet-700 bg-violet-950/20"
             >
-              {loadingChars ? '⏳' : '↻'} Charger depuis Higgsfield
+              {loadingChars ? (
+              <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+            ) : null}
+            Charger depuis Higgsfield
             </button>
 
             {charsError && (

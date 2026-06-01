@@ -362,8 +362,8 @@ export default function MetadataPage() {
               className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
             >
               {entries.length === 0
-                ? '🧹 Ajoute des fichiers pour commencer'
-                : `🧹 Nettoyer et uploader ${entries.length} fichier${entries.length > 1 ? 's' : ''} → 1 dossier Drive`}
+                ? 'Ajoute des fichiers pour commencer'
+                : `Nettoyer et uploader ${entries.length} fichier${entries.length > 1 ? 's' : ''} — 1 dossier Drive`}
             </button>
           </>
         )}

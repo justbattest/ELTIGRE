@@ -238,7 +238,12 @@ export default function CarouselPage() {
                   disabled={loadingChars}
                   className="text-xs text-violet-400 hover:text-violet-300 transition disabled:opacity-50"
                 >
-                  {loadingChars ? '⏳ Scan...' : '↺ Scanner depuis Higgsfield'}
+                  {loadingChars ? (
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                      Scan en cours...
+                    </span>
+                  ) : 'Scanner depuis Higgsfield'}
                 </button>
               </div>
               {refElements.length > 0 ? (
@@ -267,7 +272,12 @@ export default function CarouselPage() {
                     disabled={loadingChars}
                     className="w-full py-2.5 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-zinc-400 hover:text-white hover:border-violet-500/40 hover:bg-violet-600/10 transition disabled:opacity-40"
                   >
-                    {loadingChars ? '⏳ Scan en cours...' : '↺ Charger mes personnages depuis Higgsfield'}
+                    {loadingChars ? (
+                      <span className="flex items-center justify-center gap-1.5">
+                        <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                        Scan en cours...
+                      </span>
+                    ) : 'Charger depuis Higgsfield'}
                   </button>
                   <p className="text-[10px] text-zinc-700 text-center">
                     Ou tapez directement un nom de dossier Drive ci-dessus
@@ -405,11 +415,14 @@ export default function CarouselPage() {
               disabled={files.length < 4 || uploading}
               className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
             >
-              {uploading
-                ? '⏳ Upload en cours...'
-                : files.length < 4
-                ? `🃏 Ajouter au moins ${4 - files.length} image${4 - files.length > 1 ? 's' : ''} de plus`
-                : `🃏 Générer ${maxCarousels > 0 ? `jusqu'à ${maxCarousels}` : ''} carousels`}
+              {uploading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                  Upload en cours...
+                </span>
+              ) : files.length < 4
+                ? `Ajouter au moins ${4 - files.length} image${4 - files.length > 1 ? 's' : ''} de plus`
+                : `Générer ${maxCarousels > 0 ? `jusqu'à ${maxCarousels}` : ''} carousels`}
             </button>
           </>
         )}
@@ -420,7 +433,7 @@ export default function CarouselPage() {
             <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-medium text-zinc-100">
-                  {done && !error ? '✅ Carousels générés !' : done && error ? '❌ Erreur' : '⏳ Génération en cours...'}
+                  {done && !error ? 'Carousels générés !' : done && error ? 'Erreur' : 'Génération en cours...'}
                 </h2>
                 <span className="text-xs text-zinc-500">
                   {imageCount} images · C({imageCount},4) = {combinationsPossible.toLocaleString()} combos possibles

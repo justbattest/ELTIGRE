@@ -10,7 +10,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "EL TIGRE FACTORY",
+  title: "LOS TIGRES FACTORY",
   description: "Pipeline automatisé de génération de contenu",
 };
 

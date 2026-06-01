@@ -335,7 +335,12 @@ export default function VideoPage() {
               disabled={scanning || loadingChars}
               className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-white/[0.05] border border-white/[0.08] text-zinc-300 hover:border-violet-500 hover:text-violet-300 disabled:opacity-50 transition"
             >
-              {scanning ? '⏳ Scan...' : '🔍 Scanner Higgsfield'}
+              {scanning ? (
+                <>
+                  <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                  Scan en cours...
+                </>
+              ) : 'Scanner depuis Higgsfield'}
             </button>
           </div>
           {loadingChars || scanning ? (
@@ -438,15 +443,26 @@ export default function VideoPage() {
               ) : (
                 filteredPrompts.map(p => (
                   <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                    selectedIds.has(p.id) ? 'bg-violet-600/10' : 'hover:bg-white/[0.03]'
+                    selectedIds.has(p.id) ? 'bg-violet-600/[0.07] border-l-2 border-violet-500' : 'hover:bg-white/[0.03] border-l-2 border-transparent'
                   }`}>
-                    <input type="checkbox" checked={selectedIds.has(p.id)}
-                      onChange={() => setSelectedIds(prev => {
+                    <div
+                      className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition ${
+                        selectedIds.has(p.id)
+                          ? 'bg-violet-600 border-violet-500'
+                          : 'bg-white/[0.03] border-white/[0.15]'
+                      }`}
+                      onClick={() => setSelectedIds(prev => {
                         const next = new Set(prev)
                         next.has(p.id) ? next.delete(p.id) : next.add(p.id)
                         return next
                       })}
-                      className="accent-violet-500 w-4 h-4 shrink-0" />
+                    >
+                      {selectedIds.has(p.id) && (
+                        <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M2 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm text-zinc-100 truncate">
@@ -488,13 +504,13 @@ export default function VideoPage() {
                 <p className="text-xs text-zinc-400 mb-2">
                   Générer <span className="text-white font-medium">×{batchCount}</span> fois chaque prompt sélectionné
                 </p>
-                <div className="flex gap-2">
+                <div className="flex bg-white/[0.03] border border-white/[0.07] rounded-xl p-1 gap-1">
                   {[1, 2, 3, 5].map(n => (
                     <button key={n} onClick={() => setBatchCount(n)}
-                      className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition ${
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
                         batchCount === n
-                          ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
+                          ? 'bg-violet-600 text-white shadow-sm'
+                          : 'text-zinc-500 hover:text-zinc-200'
                       }`}>×{n}</button>
                   ))}
                 </div>
@@ -509,9 +525,12 @@ export default function VideoPage() {
               <button onClick={launch}
                 disabled={launching || !selectedElementId || selectedIds.size === 0}
                 className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                {launching
-                  ? '⏳ Lancement...'
-                  : `▶ Générer ${totalDirect} vidéo${totalDirect > 1 ? 's' : ''} — ${selectedIds.size} prompt${selectedIds.size > 1 ? 's' : ''} × ${batchCount} →`}
+                {launching ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                    Lancement en cours...
+                  </span>
+                ) : `Générer ${totalDirect} vidéo${totalDirect > 1 ? 's' : ''} — ${selectedIds.size} prompt${selectedIds.size > 1 ? 's' : ''} × ${batchCount}`}
               </button>
             </div>
           </div>
@@ -688,11 +707,14 @@ export default function VideoPage() {
               <button onClick={launch}
                 disabled={launching || !selectedElementId || !varBaseId}
                 className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                {launching
-                  ? '⏳ Lancement...'
-                  : varBaseId
-                    ? `▶ Générer ${totalVar} variation${totalVar > 1 ? 's' : ''} →`
-                    : '▶ Lancer →'}
+                {launching ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                    Lancement en cours...
+                  </span>
+                ) : varBaseId
+                    ? `Générer ${totalVar} variation${totalVar > 1 ? 's' : ''}`
+                    : 'Lancer'}
               </button>
             </div>
 

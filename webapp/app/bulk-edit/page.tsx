@@ -230,8 +230,8 @@ export default function BulkEditPage() {
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
-          className={`rounded-2xl border-2 border-dashed p-8 text-center transition cursor-pointer ${
-            dragging ? 'border-violet-500 bg-violet-900/10' : 'border-white/[0.08] hover:border-white/[0.20]'
+          className={`rounded-2xl border-2 border-dashed p-12 text-center transition cursor-pointer ${
+            dragging ? 'border-violet-500 bg-violet-900/10' : 'border-white/[0.08] hover:border-white/[0.20] bg-zinc-900/20'
           }`}
           onClick={() => document.getElementById('bulk-file-input')?.click()}
         >
@@ -243,12 +243,15 @@ export default function BulkEditPage() {
             className="hidden"
             onChange={onFileInput}
           />
-          <p className="text-zinc-400 text-sm">
+          <svg className="w-12 h-12 text-zinc-700 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <p className="text-zinc-300 font-medium text-sm">
             {entries.length > 0
               ? `${entries.length} image${entries.length > 1 ? 's' : ''} sélectionnée${entries.length > 1 ? 's' : ''} — clique ou glisse pour en ajouter`
               : 'Glisse tes images ici ou clique pour sélectionner'}
           </p>
-          <p className="text-zinc-600 text-xs mt-1">JPG, PNG, WEBP</p>
+          <p className="text-zinc-600 text-xs mt-2">JPG · PNG · WEBP</p>
         </div>
 
         {/* ── Grid aperçu ── */}
@@ -315,7 +318,12 @@ export default function BulkEditPage() {
             disabled={isRunning || !entries.length || !prompt.trim()}
             className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            {isRunning ? '⏳ En cours...' : `🖼 Lancer Seedream sur ${entries.length} image${entries.length !== 1 ? 's' : ''}`}
+            {isRunning ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+              En cours...
+            </span>
+          ) : `Lancer Seedream sur ${entries.length} image${entries.length !== 1 ? 's' : ''}`}
           </button>
           {isRunning && (
             <button

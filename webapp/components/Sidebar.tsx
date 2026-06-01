@@ -4,11 +4,22 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ImageIcon,
+  VideoIcon,
+  LayoutGrid,
+  Wand2,
+  Timer,
+  Settings,
+  BarChart2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 
 const GROUPS = [
   {
     key: 'image',
-    emoji: '📸',
+    icon: ImageIcon,
     label: 'IMAGE',
     href: '/',
     pages: ['/', '/studio', '/bulk-edit', '/image'],
@@ -20,7 +31,7 @@ const GROUPS = [
   },
   {
     key: 'video',
-    emoji: '🎬',
+    icon: VideoIcon,
     label: 'VIDEO',
     href: '/video',
     pages: ['/video', '/prompt-lab', '/motion-control'],
@@ -30,9 +41,9 @@ const GROUPS = [
       { label: 'Motion Control', href: '/motion-control' },
     ],
   },
-  { key: 'carousel', emoji: '🃏', label: 'CARROUSEL', href: '/carousel', pages: ['/carousel'], subTabs: [] },
-  { key: 'metadata', emoji: '🧹', label: 'METADATA', href: '/metadata', pages: ['/metadata'], subTabs: [] },
-  { key: 'en-cours', emoji: '⏳', label: 'EN COURS', href: '/en-cours', pages: ['/en-cours'], subTabs: [] },
+  { key: 'carousel', icon: LayoutGrid, label: 'CARROUSEL', href: '/carousel', pages: ['/carousel'], subTabs: [] },
+  { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata', pages: ['/metadata'], subTabs: [] },
+  { key: 'en-cours', icon: Timer,      label: 'EN COURS',  href: '/en-cours', pages: ['/en-cours'], subTabs: [] },
 ]
 
 export function Sidebar() {
@@ -48,7 +59,10 @@ export function Sidebar() {
     >
       {/* ── Logo ──────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-[18px] border-b border-white/[0.05] shrink-0">
-        <span className="text-[26px] leading-none shrink-0">🐯</span>
+        {/* Tiger icon — minimal SVG */}
+        <svg viewBox="0 0 24 24" className="w-6 h-6 shrink-0 text-violet-400" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1 14.5v-3l-2 1-1-1.732 2-1.155L8 9.5l1.5-.866L12 11l2.5-2.366L16 9.5l-2 2.113 2 1.155L15 14.5l-2-1v3h-2z"/>
+        </svg>
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -60,7 +74,7 @@ export function Sidebar() {
               className="min-w-0"
             >
               <p className="text-[13px] font-bold text-white whitespace-nowrap tracking-wide leading-tight">
-                EL TIGRE
+                LOS TIGRES
               </p>
               <p className="text-[9px] text-zinc-500 whitespace-nowrap tracking-[0.2em] uppercase leading-tight">
                 Factory
@@ -73,12 +87,10 @@ export function Sidebar() {
           className="ml-auto shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.05] transition"
           title={collapsed ? 'Expand' : 'Collapse'}
         >
-          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-            {collapsed
-              ? <path d="M5 3l6 5-6 5V3z" />
-              : <path d="M11 3L5 8l6 5V3z" />
-            }
-          </svg>
+          {collapsed
+            ? <ChevronRight size={14} />
+            : <ChevronLeft size={14} />
+          }
         </button>
       </div>
 
@@ -86,6 +98,7 @@ export function Sidebar() {
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
         {GROUPS.map(group => {
           const isActive = group.key === activeGroup.key
+          const Icon = group.icon
           return (
             <div key={group.key}>
               <Link
@@ -96,7 +109,7 @@ export function Sidebar() {
                     : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
                 }`}
               >
-                <span className="text-[18px] leading-none shrink-0">{group.emoji}</span>
+                <Icon size={17} strokeWidth={1.75} className="shrink-0" />
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span
@@ -105,7 +118,7 @@ export function Sidebar() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.1 }}
-                      className="text-[11px] font-semibold tracking-[0.12em] whitespace-nowrap uppercase"
+                      className="text-[11px] font-semibold tracking-[0.1em] whitespace-nowrap uppercase"
                     >
                       {group.label}
                     </motion.span>
@@ -160,7 +173,7 @@ export function Sidebar() {
           href="/settings"
           className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition"
         >
-          <span className="text-[17px] leading-none shrink-0">⚙️</span>
+          <Settings size={16} strokeWidth={1.75} className="shrink-0" />
           <AnimatePresence>
             {!collapsed && (
               <motion.span
@@ -179,7 +192,7 @@ export function Sidebar() {
           href="/kpi"
           className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition"
         >
-          <span className="text-[17px] leading-none shrink-0">📊</span>
+          <BarChart2 size={16} strokeWidth={1.75} className="shrink-0" />
           <AnimatePresence>
             {!collapsed && (
               <motion.span

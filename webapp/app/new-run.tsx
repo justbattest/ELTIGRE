@@ -161,16 +161,19 @@ export default function NewRunPage() {
         {/* Profils Instagram */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-medium text-zinc-100">Profils Instagram</h2>
+            <div>
+              <h2 className="text-base font-semibold text-white">Profils Instagram</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">Colle tes liens Instagram — séparés par des sauts de ligne</p>
+            </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-zinc-500">Max posts total :</label>
+              <label className="text-xs text-zinc-500">Max posts :</label>
               <input
                 type="number"
                 value={maxPosts}
                 onChange={(e) => setMaxPosts(Number(e.target.value))}
                 min={5}
                 max={500}
-                className="w-16 bg-black/40 border border-white/[0.08] rounded px-2 py-1 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                className="w-16 bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
               />
             </div>
           </div>
@@ -180,8 +183,8 @@ export default function NewRunPage() {
             value={pasteInput}
             onChange={(e) => handlePasteInput(e.target.value)}
             placeholder={"Colle ici tous tes liens Instagram d'un coup :\nhttps://www.instagram.com/username1/\nhttps://www.instagram.com/username2/\n...\n\n(séparés par des sauts de ligne, virgules ou espaces)"}
-            rows={4}
-            className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none font-mono"
+            rows={5}
+            className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none font-mono"
           />
 
           {/* Profils parsés — chips supprimables */}
@@ -203,9 +206,9 @@ export default function NewRunPage() {
                       @{username}
                       <button
                         onClick={() => removeProfile(i)}
-                        className="text-zinc-500 hover:text-red-400 transition ml-1 leading-none"
+                        className="text-zinc-500 hover:text-red-400 transition ml-1 leading-none text-sm"
                       >
-                        ✕
+                        ×
                       </button>
                     </span>
                   )
@@ -222,9 +225,12 @@ export default function NewRunPage() {
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
-              className="text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50 transition flex items-center gap-1"
+              className="text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50 transition flex items-center gap-1.5"
             >
-              {loadingChars ? '⏳' : '↻'} Charger depuis Higgsfield
+              {loadingChars ? (
+                <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+              ) : null}
+              Charger depuis Higgsfield
             </button>
           </div>
 
@@ -244,23 +250,21 @@ export default function NewRunPage() {
               {soulChars.length > 0 && (
                 <div>
                   <p className="text-xs text-zinc-500 mb-2">
-                    Soul Character (Soul Cinema) :
+                    Soul Character :
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {soulChars.map((c) => (
                       <button
                         key={c.id}
                         onClick={() => { setSelectedSoulId(c.id); setSelectedSoulName(c.name) }}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition border ${
+                        className={`px-4 py-3 rounded-xl border text-left transition ${
                           selectedSoulId === c.id
-                            ? 'bg-violet-600 border-violet-500 text-white'
-                            : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
+                            ? 'bg-violet-600/20 border-violet-500/60 text-white'
+                            : 'bg-white/[0.03] border-white/[0.07] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
                         }`}
                       >
-                        {c.name}
-                        <span className="ml-1.5 text-xs opacity-60">
-                          {c.type === 'soul_cinematic' ? 'Cinema' : 'V2'}
-                        </span>
+                        <p className="text-sm font-medium">{c.name}</p>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">{c.type === 'soul_cinematic' ? 'Cinema' : 'Soul v2'}</p>
                       </button>
                     ))}
                   </div>
@@ -271,20 +275,21 @@ export default function NewRunPage() {
               {refElements.length > 0 && model !== 'soul_cinematic' && (
                 <div>
                   <p className="text-xs text-zinc-500 mb-2">
-                    Reference Element (Seedream / Nano Banana) :
+                    Reference Element :
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {refElements.map((e) => (
                       <button
                         key={e.id}
                         onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition border ${
+                        className={`px-4 py-3 rounded-xl border text-left transition ${
                           selectedElementId === e.id
-                            ? 'bg-violet-600 border-violet-500 text-white'
-                            : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
+                            ? 'bg-violet-600/20 border-violet-500/60 text-white'
+                            : 'bg-white/[0.03] border-white/[0.07] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
                         }`}
                       >
-                        {e.name}
+                        <p className="text-sm font-medium">{e.name}</p>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">Seedream / Nano Banana</p>
                       </button>
                     ))}
                   </div>
@@ -299,52 +304,39 @@ export default function NewRunPage() {
           <h2 className="font-medium mb-3 text-zinc-100">Modèle & Format</h2>
 
           {/* Modèle */}
-          <div className="space-y-2 mb-4">
-            {[
-              { value: 'auto', label: 'Auto (Soul Cinema → Seedream → Nano Banana)', badge: 'Recommandé' },
-              { value: 'soul_cinematic', label: 'Soul Cinema uniquement', badge: null },
-              { value: 'seedream_v4_5', label: 'Seedream 4.5 uniquement', badge: null },
-              { value: 'nano_banana_2', label: 'Nano Banana Pro uniquement', badge: null },
-            ].map((opt) => (
-              <label
-                key={opt.value}
-                className="flex items-center gap-3 cursor-pointer group"
-              >
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition ${
-                    model === opt.value ? 'border-violet-500' : 'border-gray-600'
+          <div className="mb-4">
+            <label className="block text-xs text-zinc-500 mb-2">Modèle</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'auto', label: 'Auto (cascade)', badge: 'Recommandé' },
+                { value: 'soul_cinematic', label: 'Soul Cinema', badge: null },
+                { value: 'seedream_v4_5', label: 'Seedream 4.5', badge: null },
+                { value: 'nano_banana_2', label: 'Nano Banana Pro', badge: null },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setModel(opt.value)}
+                  className={`px-3 py-2.5 rounded-xl border text-left transition ${
+                    model === opt.value
+                      ? 'bg-violet-600/20 border-violet-500/60 text-white'
+                      : 'bg-white/[0.03] border-white/[0.07] text-zinc-400 hover:border-white/[0.15]'
                   }`}
                 >
-                  {model === opt.value && (
-                    <div className="w-2 h-2 rounded-full bg-violet-500" />
-                  )}
-                </div>
-                <input
-                  type="radio"
-                  name="model"
-                  value={opt.value}
-                  checked={model === opt.value}
-                  onChange={() => setModel(opt.value)}
-                  className="sr-only"
-                />
-                <span className="text-sm text-zinc-300">{opt.label}</span>
-                {opt.badge && (
-                  <span className="text-xs bg-violet-900 text-violet-300 px-2 py-0.5 rounded-full">
-                    {opt.badge}
-                  </span>
-                )}
-              </label>
-            ))}
+                  <p className="text-xs font-medium">{opt.label}</p>
+                  {opt.badge && <span className="text-[10px] text-violet-400">{opt.badge}</span>}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Format & Qualité */}
           <div className="flex gap-3">
             <div>
-              <label className="block text-xs text-zinc-500 mb-1">Format</label>
+              <label className="block text-xs text-zinc-500 mb-1.5">Format</label>
               <select
                 value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value)}
-                className="bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                className="bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
               >
                 <option value="2:3">2:3</option>
                 <option value="1:1">1:1</option>
@@ -353,11 +345,11 @@ export default function NewRunPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-1">Qualité</label>
+              <label className="block text-xs text-zinc-500 mb-1.5">Qualité</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
-                className="bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                className="bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
               >
                 <option value="2k">2K</option>
                 <option value="4k">4K</option>
@@ -378,9 +370,14 @@ export default function NewRunPage() {
         <button
           onClick={launch}
           disabled={launching}
-          className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:bg-violet-800 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3.5 text-lg transition"
+          className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-xl hover:shadow-violet-500/20 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-4 text-base transition-all duration-200"
         >
-          {launching ? '⏳ Lancement...' : '🚀 Lancer'}
+          {launching ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+              Lancement en cours...
+            </span>
+          ) : 'Lancer'}
         </button>
       </div>
       </PageWrapper>

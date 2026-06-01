@@ -418,7 +418,7 @@ export default function MotionControlPage() {
           ) : readyConcepts.length === 0 ? (
             'Glisse des dossiers pour démarrer'
           ) : (
-            `▶ Générer ${totalVideos} vidéos (${readyConcepts.length} batch${readyConcepts.length > 1 ? 'es' : ''} × 4) →`
+            `Générer ${totalVideos} vidéos (${readyConcepts.length} batch${readyConcepts.length > 1 ? 'es' : ''} × 4)`
           )}
         </button>
 

@@ -66,7 +66,7 @@ export function IntroShader() {
             </motion.span>
 
             <h1 className="text-[22px] font-bold tracking-[0.35em] text-white uppercase">
-              EL TIGRE FACTORY
+              LOS TIGRES FACTORY
             </h1>
 
             <motion.p

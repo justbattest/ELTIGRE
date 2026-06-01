@@ -7,7 +7,7 @@ export default function ImagePage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 bg-gray-950 z-20">
-        <span className="text-violet-400 font-bold text-lg">🐯 EL TIGRE FACTORY</span>
+        <span className="text-violet-400 font-bold text-lg">🐯 LOS TIGRES FACTORY</span>
         <div className="flex gap-3 text-sm">
           <Link href="/kpi" className="text-gray-400 hover:text-white transition">📊 KPI</Link>
           <Link href="/settings" className="text-gray-400 hover:text-white transition">⚙️ Settings</Link>
