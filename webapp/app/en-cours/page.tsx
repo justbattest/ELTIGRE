@@ -247,7 +247,7 @@ function ImageCard({ gen }: { gen: Generation }) {
 
 function RunCard({ run }: { run: RunMeta }) {
   const [data, setData] = useState<SSEPayload | null>(null)
-  const [done, setDone] = useState(run.status !== 'running')
+  const [done, setDone] = useState(run.status !== 'running' && run.status !== 'queued')
   const [stopping, setStopping] = useState(false)
 
   const handleStop = async () => {
@@ -268,6 +268,8 @@ function RunCard({ run }: { run: RunMeta }) {
   // Reconnect SSE si le run est encore actif
   useEffect(() => {
     if (done) return
+    // Pas de SSE pour les runs en attente — on attend qu'ils passent à 'running' via le polling
+    if ((data?.status ?? run.status) === 'queued') return
     const es = new EventSource(`/api/run/${run.id}/stream`)
     es.onmessage = (e) => {
       try {
@@ -281,7 +283,7 @@ function RunCard({ run }: { run: RunMeta }) {
     }
     es.onerror = () => es.close()
     return () => es.close()
-  }, [run.id, done])
+  }, [run.id, done, data?.status, run.status])
 
   const gens = data?.generations ?? []
   const total = data?.totalPosts ?? run.totalPosts ?? 0
@@ -289,6 +291,7 @@ function RunCard({ run }: { run: RunMeta }) {
   const failed = data?.failedPosts ?? run.failedPosts ?? 0
   const status = data?.status ?? run.status
   const isRunning = status === 'running'
+  const isQueued = status === 'queued'
 
   const isMotionControl = run.modelSetting === 'kling_motion_control'
   const typeIcon = run.runType === 'video' ? (isMotionControl ? '🎭' : '🎬') : run.runType === 'bulk_edit' ? '🖼' : run.runType === 'studio' ? '✨' : '🔄'
@@ -300,8 +303,8 @@ function RunCard({ run }: { run: RunMeta }) {
   const createdAt = new Date(run.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden ${isRunning ? 'p-[1px] bg-gradient-to-br from-violet-500/30 via-transparent to-cyan-500/20' : 'border border-white/[0.07]'}`}>
-      <div className={`rounded-[inherit] ${isRunning ? 'bg-zinc-950' : 'bg-zinc-900/60'} p-5 space-y-4`}>
+    <div className={`relative rounded-2xl overflow-hidden ${(isRunning || isQueued) ? 'p-[1px] bg-gradient-to-br from-violet-500/30 via-transparent to-cyan-500/20' : 'border border-white/[0.07]'}`}>
+      <div className={`rounded-[inherit] ${(isRunning || isQueued) ? 'bg-zinc-950' : 'bg-zinc-900/60'} p-5 space-y-4`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -310,6 +313,22 @@ function RunCard({ run }: { run: RunMeta }) {
           <span className="text-xs text-zinc-500">· {createdAt}</span>
         </div>
         <div className="flex items-center gap-2">
+          {isQueued && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-medium text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
+                En attente
+              </span>
+              <button
+                onClick={handleStop}
+                disabled={stopping}
+                className="text-xs px-2 py-0.5 rounded-md bg-amber-900/40 hover:bg-amber-800/60 text-amber-400 border border-amber-800/50 transition disabled:opacity-50"
+              >
+                {stopping ? (
+                  <svg className="w-3 h-3 animate-spin inline" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                ) : 'Annuler'}
+              </button>
+            </div>
+          )}
           {isRunning && (
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 text-[11px] font-medium text-violet-300 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 rounded-full">
@@ -370,6 +389,12 @@ function RunCard({ run }: { run: RunMeta }) {
       )}
 
       {/* Placeholders si aucune génération en DB */}
+      {gens.length === 0 && isQueued && (
+        <div className="flex items-center gap-3 text-sm text-gray-500">
+          <div className="w-4 h-4 border-2 border-amber-800 border-t-amber-400 rounded-full animate-spin" />
+          En attente d&apos;un slot disponible…
+        </div>
+      )}
       {gens.length === 0 && isRunning && (
         <div className="flex items-center gap-3 text-sm text-gray-500">
           <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
@@ -520,8 +545,8 @@ export default function EnCoursPage() {
     }
   }, [])
 
-  const activeRuns  = runs.filter(r => r.status === 'running')
-  const recentRuns  = runs.filter(r => r.status !== 'running')
+  const activeRuns  = runs.filter(r => r.status === 'running' || r.status === 'queued')
+  const recentRuns  = runs.filter(r => r.status !== 'running' && r.status !== 'queued')
   const activeBatch = batchRuns.filter(r => !r.done)
   const doneBatch   = batchRuns.filter(r =>  r.done)
 

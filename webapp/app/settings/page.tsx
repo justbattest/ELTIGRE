@@ -7,7 +7,6 @@ import Link from 'next/link'
 type RefElement = { id: string; name: string; type?: string }
 
 type TestResults = {
-  apify?: { ok: boolean; message: string }
   anthropic?: { ok: boolean; message: string }
   higgsfield?: { ok: boolean; message: string }
   kling?: { ok: boolean; message: string }
@@ -19,7 +18,6 @@ type HiggsAuthState = 'idle' | 'starting' | 'waiting' | 'approved' | 'error'
 export default function SettingsPage() {
   const { data: session } = useSession()
 
-  const [apifyKey, setApifyKey] = useState('')
   const [anthropicKey, setAnthropicKey] = useState('')
   const [instagramSessionCookie, setInstagramSessionCookie] = useState('')
   const [defaultModel, setDefaultModel] = useState('auto')
@@ -55,7 +53,6 @@ export default function SettingsPage() {
     fetch('/api/settings')
       .then((r) => r.json())
       .then((data) => {
-        setApifyKey(data.apifyApiKey || '')
         setAnthropicKey(data.anthropicApiKey || '')
         setInstagramSessionCookie(data.instagramSessionCookie || '')
         setDefaultModel(data.defaultModel || 'auto')
@@ -113,7 +110,6 @@ export default function SettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          apifyApiKey: apifyKey,
           anthropicApiKey: anthropicKey,
           klingAccessKey,
           klingSecretKey,

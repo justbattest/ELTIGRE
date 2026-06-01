@@ -58,6 +58,8 @@ model Run {
   completedPosts    Int?         @default(0) @map("completed_posts")
   failedPosts       Int?         @default(0) @map("failed_posts")
   fallbackCount     Int?         @default(0) @map("fallback_count")
+  resourceGroup     String?      @map("resource_group")
+  queuedParams      Json?        @map("queued_params")
   generations       Generation[]
   user              User?        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 

@@ -11,6 +11,7 @@ import { spawn } from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
 import { handlePipelineEvent } from '@/lib/pipeline-events'
+import { canStartNow, onRunComplete, type ResourceGroup } from '@/lib/resource-queue'
 
 /** Écrit /tmp/run_<id>.pid pour que le stop puisse tuer le process même après un hot-reload. */
 export function writePidFile(runId: string, pid: number | undefined) {
@@ -80,6 +81,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Credentials incomplets (Anthropic + Higgsfield requis). Vérifier les Settings.' }, { status: 400 })
   }
 
+  const resourceGroup: ResourceGroup = 'soul_cinematic'
+
   // Créer le run en DB
   const run = await prisma.run.create({
     data: {
@@ -92,10 +95,47 @@ export async function POST(req: NextRequest) {
       aspectRatio,
       quality,
       status: 'running',
+      resourceGroup,
     },
   })
 
   const workDir = path.join(process.cwd(), '..', 'temp', run.id)
+
+  // Vérifier si le groupe de ressources est disponible
+  const canStart = await canStartNow(resourceGroup)
+
+  if (!canStart) {
+    // Queue ce run — stocker les params pour le démarrer plus tard
+    const queuedParams = {
+      scriptModule: 'pipeline.main',
+      args: [
+        '--profiles', JSON.stringify(profiles),
+        '--max-posts', String(maxPosts),
+        '--soul-id', soulId,
+        '--element-id', elementId,
+        '--model', model,
+        '--aspect-ratio', aspectRatio,
+        '--quality', quality,
+        '--work-dir', workDir,
+      ],
+      env: {
+        ...(apifyKey ? { APIFY_KEY: apifyKey } : {}),
+        ANTHROPIC_KEY: anthropicKey || '',
+        HIGGSFIELD_TOKEN: higgsToken || '',
+        ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
+        ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
+        ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),
+        ...(process.env.GOOGLE_CLIENT_SECRET ? { GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET } : {}),
+        ...(instagramSessionCookie ? { INSTAGRAM_SESSION_COOKIE: instagramSessionCookie } : {}),
+        ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
+      },
+    }
+    await prisma.run.update({
+      where: { id: run.id },
+      data: { status: 'queued', queuedParams },
+    })
+    return NextResponse.json({ runId: run.id, queued: true, message: 'Run en attente — démarrera automatiquement' })
+  }
 
   // Lancer le pipeline Python en subprocess
   const pythonPath = path.join(process.cwd(), '..', 'venv', 'bin', 'python')
@@ -168,6 +208,7 @@ export async function POST(req: NextRequest) {
         data: { status: code === 0 ? 'completed' : 'failed' },
       })
     }
+    await onRunComplete(resourceGroup)
   })
 
   return NextResponse.json({ runId: run.id })
