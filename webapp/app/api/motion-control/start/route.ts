@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Higgsfield token requis.' }, { status: 400 })
   }
 
-  // Kling v3 via Higgsfield /chains/motion-control — plus besoin des clés Kling AI
+  const higgsRefreshToken = decryptIfPresent(creds?.higgsFieldRefreshToken) || ''
   const googleRefreshToken = creds?.googleRefreshToken || null
   const driveFolderId = creds?.driveFolderId || null
 
@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       env: {
         ...process.env,
         HIGGSFIELD_TOKEN: higgsToken,
+        ...(higgsRefreshToken ? { HIGGSFIELD_REFRESH_TOKEN: higgsRefreshToken } : {}),
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
         ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
         ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),

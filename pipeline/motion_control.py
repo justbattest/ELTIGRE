@@ -305,54 +305,35 @@ async def generate_motion_video(
     kling_secret_key: str = "",
     timeout: int = 900,
     prompt: str | None = None,
+    refresh_token: str = "",
 ) -> dict:
-    """Phase 2 : Kling v3.0 Motion Control via Higgsfield /chains/motion-control.
+    """Phase 2 : Kling v3.0 Motion Control via CLI higgsfield generate create kling3_0.
 
-    Plus besoin de kling_access_key/kling_secret_key — utilise le user_token Higgsfield.
+    Utilise le CLI (gestion auth automatique avec hf_ token) plutôt que l'API HTTP
+    qui exige un Clerk JWT de courte durée inaccessible depuis le pipeline.
     """
-    from pipeline.kling_api import upload_video_for_kling
-
     try:
         print(json.dumps({
             "type": "warn",
-            "msg": f"[{shortcode}] Upload image + vidéo vers Higgsfield CDN…"
+            "msg": f"[{shortcode}] Kling v3 Motion Control via CLI (kling3_0 --image --video)…"
         }), flush=True)
 
-        video_upload_coro = upload_video_for_kling(user_token, concept_video_path)
+        # Le CLI accepte les chemins locaux ET les URLs CDN directement
+        cmd = [
+            "higgsfield", "generate", "create", "kling3_0",
+            "--image", image_source,
+            "--video", concept_video_path,
+            "--wait",
+            "--wait-timeout", "15m",
+        ]
 
-        if image_source.startswith("http://") or image_source.startswith("https://"):
-            image_cdn_url = image_source
-            video_cdn_url = await video_upload_coro
-        else:
-            video_cdn_url, image_cdn_url = await asyncio.gather(
-                video_upload_coro,
-                upload_video_for_kling(user_token, image_source),
-            )
-
-        print(json.dumps({
-            "type": "warn",
-            "msg": f"[{shortcode}] Upload OK — POST /chains/motion-control (Kling v3)…"
-        }), flush=True)
-
-        chain = await _create_motion_control_higgsfield(
-            user_token=user_token,
-            image_cdn_url=image_cdn_url,
-            video_cdn_url=video_cdn_url,
+        result_url = await run_higgsfield_for_user(
+            user_token, cmd, timeout=timeout, refresh_token=refresh_token
         )
-        job_id = chain["job_id"]
 
-        print(json.dumps({
-            "type": "warn",
-            "msg": f"[{shortcode}] Kling v3 job={job_id[:8]}… — polling…"
-        }), flush=True)
-
-        result_url = await _poll_motion_control_higgsfield(
-            user_token=user_token,
-            job_id=job_id,
-            shortcode=shortcode,
-            timeout=timeout,
-        )
-        return {"url": result_url}
+        if result_url and result_url.strip():
+            return {"url": result_url.strip()}
+        return {"url": None, "error": "EMPTY_RESULT_KLING_V3"}
 
     except asyncio.TimeoutError:
         return {"url": None, "error": "TIMEOUT_KLING_V3_MC"}
@@ -370,6 +351,7 @@ async def process_one_outfit(
     concept_image: str,
     concept_video: str,
     drive,
+    refresh_token: str = "",
 ) -> None:
     """Traite un outfit de bout en bout : Seedream → Kling v3 MC → Drive.
 
@@ -448,6 +430,7 @@ async def process_one_outfit(
         concept_video_path=concept_video,
         shortcode=shortcode,
         prompt=kling_prompt,
+        refresh_token=refresh_token,
     )
 
     if not kling_result.get("url"):
@@ -492,6 +475,7 @@ async def run_motion_control(
     user_token: str,
     concept_image: str,
     concept_video: str,
+    refresh_token: str = "",
 ) -> None:
     """Orchestre la génération de 4 vidéos Motion Control en parallèle.
 
@@ -512,6 +496,7 @@ async def run_motion_control(
             concept_image=concept_image,
             concept_video=concept_video,
             drive=drive,
+            refresh_token=refresh_token,
         )
         for i, style in enumerate(OUTFIT_STYLES)
     ]
@@ -547,11 +532,13 @@ def main():
         print(json.dumps({"type": "error", "message": f"Vidéo concept introuvable: {args.concept_video}"}), flush=True)
         sys.exit(1)
 
+    refresh_token = os.environ.get("HIGGSFIELD_REFRESH_TOKEN", "")
     asyncio.run(run_motion_control(
         run_id=args.run_id,
         user_token=user_token,
         concept_image=args.concept_image,
         concept_video=args.concept_video,
+        refresh_token=refresh_token,
     ))
 
 
