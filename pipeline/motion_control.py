@@ -1,10 +1,10 @@
 """
-Motion Control — génération batch de 4 vidéos Kling 3.0 Motion Control.
+Motion Control — génération batch de 4 vidéos Kling v3.0 Motion Control.
 
 Flow par outfit (4 en parallèle) :
 1. Seedream v4.5 img2img : change UNIQUEMENT l'outfit sur l'image concept uploadée
    (pose, angle, fond, éclairage, visage, corps restent identiques)
-2. Kling 3.0 Motion Control (API officielle) : applique la motion de la vidéo de référence
+2. Kling v3.0 Motion Control via Higgsfield /chains/motion-control (Clerk JWT)
 3. Upload Drive → Motion Control/<run_id>/mc_<i+1>.mp4
 
 Events JSON stdout (même protocole que video_studio.py / studio.py).
@@ -163,128 +163,199 @@ async def generate_outfit_image(
         return {"url": None, "error": str(e)[:300]}
 
 
-async def _resolve_image_url(user_token: str, image_source: str, shortcode: str) -> str:
-    """Retourne une URL publique pour l'image.
 
-    - Si c'est déjà une URL (http/https) : retourne directement — Kling la fetch lui-même.
-    - Si c'est un chemin local : uploade via Higgsfield CDN → URL publique.
-    Évite totalement le Base64 qui fait exploser la taille du payload.
+def _extract_uuid_from_cdn_url(url: str) -> str:
+    """Extrait l'UUID Higgsfield depuis une URL CDN.
+    Ex: https://d2ol7oe51mr4n9.cloudfront.net/user_XXX/UUID.mp4 → UUID
     """
+    filename = url.split("/")[-1]
+    name = filename.rsplit(".", 1)[0]
+    name = name.replace("_resize", "")
+    return name
+
+
+async def _resolve_image_url(user_token: str, image_source: str, shortcode: str) -> str:
+    """Retourne une URL CDN pour l'image (upload si chemin local)."""
     if image_source.startswith("http://") or image_source.startswith("https://"):
         return image_source
-
-    # Fichier local → upload pour obtenir une URL CDN
     from pipeline.kling_api import upload_video_for_kling
-    print(json.dumps({
-        "type": "warn",
-        "msg": f"[{shortcode}] Upload image concept vers Higgsfield CDN…"
-    }), flush=True)
     return await upload_video_for_kling(user_token, image_source)
+
+
+async def _create_motion_control_higgsfield(
+    user_token: str,
+    image_cdn_url: str,
+    video_cdn_url: str,
+) -> dict:
+    """POST /chains/motion-control via Higgsfield (Kling v3).
+    Retourne {job_id, job_set_id}.
+    """
+    image_uuid = _extract_uuid_from_cdn_url(image_cdn_url)
+    video_uuid = _extract_uuid_from_cdn_url(video_cdn_url)
+
+    payload = {
+        "params": {
+            "mode": "std",
+            "medias": [
+                {
+                    "role": "video",
+                    "data": {"id": video_uuid, "type": "video_input", "url": video_cdn_url},
+                },
+                {
+                    "role": "image",
+                    "data": {"id": image_uuid, "type": "media_input", "url": image_cdn_url},
+                },
+            ],
+            "height": 1280,
+            "width": 720,
+            "background_source": "input_video",
+            "model_name": "kling-v3",
+        },
+        "use_unlim": False,
+        "use_free_gens": False,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+        "Origin": "https://higgsfield.ai",
+        "Referer": "https://higgsfield.ai/",
+        "User-Agent": "higgsfield-cli/0.1.40",
+    }
+
+    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+        resp = await client.post(
+            "https://fnf.higgsfield.ai/chains/motion-control",
+            json=payload,
+            headers=headers,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+    job_sets = data.get("job_sets", [])
+    if not job_sets:
+        raise Exception(f"No job_sets in response: {data}")
+    job_set = job_sets[0]
+    jobs = job_set.get("jobs", [])
+    if not jobs:
+        raise Exception(f"No jobs in job_set: {job_set}")
+
+    return {"job_id": jobs[0]["id"], "job_set_id": job_set["id"]}
+
+
+async def _poll_motion_control_higgsfield(
+    user_token: str,
+    job_id: str,
+    shortcode: str,
+    timeout: int = 900,
+    interval: int = 12,
+) -> str:
+    """Poll GET /jobs/{job_id} jusqu'à status=complete. Retourne l'URL vidéo."""
+    headers = {
+        "Authorization": f"Bearer {user_token}",
+        "Accept": "*/*",
+        "Origin": "https://higgsfield.ai",
+        "Referer": "https://higgsfield.ai/",
+        "User-Agent": "higgsfield-cli/0.1.40",
+    }
+
+    start = asyncio.get_event_loop().time()
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+        while True:
+            if asyncio.get_event_loop().time() - start > timeout:
+                raise asyncio.TimeoutError(f"Kling v3 MC timeout {timeout}s")
+
+            resp = await client.get(
+                f"https://fnf.higgsfield.ai/jobs/{job_id}",
+                headers=headers,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            status = data.get("status", "")
+
+            if status == "complete":
+                for key in ("result", "results"):
+                    val = data.get(key)
+                    if isinstance(val, dict):
+                        url = val.get("url") or val.get("video_url")
+                        if url:
+                            return url
+                    elif isinstance(val, list) and val:
+                        url = val[0].get("url") or val[0].get("video_url")
+                        if url:
+                            return url
+                raise Exception(f"Job complete mais pas d'URL: {data}")
+            elif status in ("failed", "error", "cancelled"):
+                raise Exception(f"Kling v3 MC job {status}: {data}")
+
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"[{shortcode}] Kling v3 job {job_id[:8]}… status={status}"
+            }), flush=True)
+            await asyncio.sleep(interval)
 
 
 async def generate_motion_video(
     user_token: str,
-    image_source: str,           # URL Seedream OU chemin local concept image (fallback)
+    image_source: str,
     concept_video_path: str,
     shortcode: str,
-    kling_access_key: str,
-    kling_secret_key: str,
+    kling_access_key: str = "",
+    kling_secret_key: str = "",
     timeout: int = 900,
     prompt: str | None = None,
 ) -> dict:
-    """Phase 2 : Kling 3.0 Motion Control (API officielle).
+    """Phase 2 : Kling v3.0 Motion Control via Higgsfield /chains/motion-control.
 
-    Les soumissions Kling sont sérialisées via _KLING_SUBMIT_LOCK — une à la fois.
-    Le polling se fait en parallèle une fois le task_id obtenu.
+    Plus besoin de kling_access_key/kling_secret_key — utilise le user_token Higgsfield.
     """
-    from pipeline.kling_api import upload_video_for_kling, create_motion_control_task, poll_motion_control_task
+    from pipeline.kling_api import upload_video_for_kling
 
     try:
-        # Upload vidéo de référence + résolution image (parallèle, pas de lock nécessaire)
         print(json.dumps({
             "type": "warn",
-            "msg": f"[{shortcode}] Upload vidéo de référence vers Higgsfield CDN…"
+            "msg": f"[{shortcode}] Upload image + vidéo vers Higgsfield CDN…"
         }), flush=True)
-        video_url, image_url = await asyncio.gather(
-            upload_video_for_kling(user_token, concept_video_path),
-            _resolve_image_url(user_token, image_source, shortcode),
+
+        video_upload_coro = upload_video_for_kling(user_token, concept_video_path)
+
+        if image_source.startswith("http://") or image_source.startswith("https://"):
+            image_cdn_url = image_source
+            video_cdn_url = await video_upload_coro
+        else:
+            video_cdn_url, image_cdn_url = await asyncio.gather(
+                video_upload_coro,
+                upload_video_for_kling(user_token, image_source),
+            )
+
+        print(json.dumps({
+            "type": "warn",
+            "msg": f"[{shortcode}] Upload OK — POST /chains/motion-control (Kling v3)…"
+        }), flush=True)
+
+        chain = await _create_motion_control_higgsfield(
+            user_token=user_token,
+            image_cdn_url=image_cdn_url,
+            video_cdn_url=video_cdn_url,
         )
+        job_id = chain["job_id"]
+
         print(json.dumps({
             "type": "warn",
-            "msg": f"[{shortcode}] Vidéo référence uploadée ✅ → {video_url[:80]}…"
+            "msg": f"[{shortcode}] Kling v3 job={job_id[:8]}… — polling…"
         }), flush=True)
 
-        # ── Soumission sérialisée (un seul appel Kling à la fois) ─────────────
-        task_id: str | None = None
-        lock = _get_kling_lock()
-
-        async with lock:
-            print(json.dumps({
-                "type": "warn",
-                "msg": f"[{shortcode}] Attente du verrou Kling (soumissions sérialisées)…"
-            }), flush=True)
-
-            for attempt in range(8):
-                try:
-                    print(json.dumps({
-                        "type": "warn",
-                        "msg": f"[{shortcode}] Soumission Kling (tentative {attempt + 1})…"
-                    }), flush=True)
-                    task_id = await create_motion_control_task(
-                        access_key=kling_access_key,
-                        secret_key=kling_secret_key,
-                        image_source=image_url,
-                        video_url=video_url,
-                        mode="std",
-                        prompt=prompt,
-                    )
-                    print(json.dumps({
-                        "type": "warn",
-                        "msg": f"[{shortcode}] Kling task_id={task_id} ✅ — verrou relâché, polling en cours…"
-                    }), flush=True)
-                    # Pause courte après succès avant de relâcher le verrou
-                    await asyncio.sleep(10)
-                    break
-                except Exception as e:
-                    err = str(e) or repr(e)
-                    print(json.dumps({
-                        "type": "warn",
-                        "msg": f"[{shortcode}] Erreur Kling (tentative {attempt + 1}): {err[:200]}"
-                    }), flush=True)
-                    # Erreurs non-retriables : solde insuffisant, auth, compte invalide
-                    NO_RETRY_CODES = ("1102", "1101", "401", "403")
-                    if any(code in err for code in NO_RETRY_CODES):
-                        print(json.dumps({
-                            "type": "warn",
-                            "msg": f"[{shortcode}] Erreur Kling non-retriable (solde/auth) — abandon."
-                        }), flush=True)
-                        return {"url": None, "error": f"Kling: {err}"[:300]}
-                    # Rate limit transitoire → retry avec backoff
-                    if "429" in err or "1302" in err or "1303" in err or "rate" in err.lower():
-                        wait = 45 * (attempt + 1)
-                        print(json.dumps({
-                            "type": "warn",
-                            "msg": f"[{shortcode}] Rate limit Kling — retry dans {wait}s…"
-                        }), flush=True)
-                        await asyncio.sleep(wait)
-                        continue
-                    # Autre erreur inconnue → sortir immédiatement
-                    return {"url": None, "error": f"{type(e).__name__}: {err}"[:300]}
-
-        if not task_id:
-            return {"url": None, "error": "Kling rate limit — max retries (8) atteint"}
-
-        # ── Polling en parallèle (verrou déjà relâché) ─────────────────────────
-        result_url = await poll_motion_control_task(
-            access_key=kling_access_key,
-            secret_key=kling_secret_key,
-            task_id=task_id,
+        result_url = await _poll_motion_control_higgsfield(
+            user_token=user_token,
+            job_id=job_id,
+            shortcode=shortcode,
             timeout=timeout,
         )
         return {"url": result_url}
 
     except asyncio.TimeoutError:
-        return {"url": None, "error": "TIMEOUT_KLING_MC"}
+        return {"url": None, "error": "TIMEOUT_KLING_V3_MC"}
     except Exception as e:
         return {"url": None, "error": f"{type(e).__name__}: {str(e) or repr(e)}"[:300]}
 
@@ -298,11 +369,9 @@ async def process_one_outfit(
     user_token: str,
     concept_image: str,
     concept_video: str,
-    kling_access_key: str,
-    kling_secret_key: str,
     drive,
 ) -> None:
-    """Traite un outfit de bout en bout : Seedream → Kling MC → Drive.
+    """Traite un outfit de bout en bout : Seedream → Kling v3 MC → Drive.
 
     Si Seedream échoue, on passe directement l'image concept à Kling MC
     avec un prompt d'outfit en fallback.
@@ -378,8 +447,6 @@ async def process_one_outfit(
         image_source=image_source,
         concept_video_path=concept_video,
         shortcode=shortcode,
-        kling_access_key=kling_access_key,
-        kling_secret_key=kling_secret_key,
         prompt=kling_prompt,
     )
 
@@ -425,13 +492,10 @@ async def run_motion_control(
     user_token: str,
     concept_image: str,
     concept_video: str,
-    kling_access_key: str,
-    kling_secret_key: str,
 ) -> None:
     """Orchestre la génération de 4 vidéos Motion Control en parallèle.
 
-    Seedream tourne en parallèle (4 simultanés).
-    Kling est sérialisé via un semaphore (1 à la fois) pour éviter le 429.
+    Seedream (4 simultanés) + Kling v3 via Higgsfield /chains/motion-control.
     """
     from pipeline.drive_uploader import init_drive_uploader_from_env
     drive = init_drive_uploader_from_env()
@@ -447,8 +511,6 @@ async def run_motion_control(
             user_token=user_token,
             concept_image=concept_image,
             concept_video=concept_video,
-            kling_access_key=kling_access_key,
-            kling_secret_key=kling_secret_key,
             drive=drive,
         )
         for i, style in enumerate(OUTFIT_STYLES)
@@ -477,12 +539,6 @@ def main():
         print(json.dumps({"type": "error", "message": "HIGGSFIELD_TOKEN manquant"}), flush=True)
         sys.exit(1)
 
-    kling_access_key = os.environ.get("KLING_ACCESS_KEY")
-    kling_secret_key = os.environ.get("KLING_SECRET_KEY")
-    if not kling_access_key or not kling_secret_key:
-        print(json.dumps({"type": "error", "message": "KLING_ACCESS_KEY et KLING_SECRET_KEY requis pour Kling Motion Control."}), flush=True)
-        sys.exit(1)
-
     if not Path(args.concept_image).exists():
         print(json.dumps({"type": "error", "message": f"Image concept introuvable: {args.concept_image}"}), flush=True)
         sys.exit(1)
@@ -496,8 +552,6 @@ def main():
         user_token=user_token,
         concept_image=args.concept_image,
         concept_video=args.concept_video,
-        kling_access_key=kling_access_key,
-        kling_secret_key=kling_secret_key,
     ))
 
 
