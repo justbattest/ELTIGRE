@@ -318,10 +318,16 @@ async def generate_motion_video(
             "msg": f"[{shortcode}] Kling v3 Motion Control via CLI (kling3_0 --image --video)…"
         }), flush=True)
 
-        # Le CLI accepte les chemins locaux ET les URLs CDN directement
+        # CLI --image accepte UUID ou chemin local, PAS une URL CDN complète
+        # → extraire l'UUID depuis l'URL CDN si nécessaire
+        if image_source.startswith("http://") or image_source.startswith("https://"):
+            image_input = _extract_uuid_from_cdn_url(image_source)
+        else:
+            image_input = image_source  # chemin local → OK tel quel
+
         cmd = [
             "higgsfield", "generate", "create", "kling3_0",
-            "--image", image_source,
+            "--image", image_input,
             "--video", concept_video_path,
             "--wait",
             "--wait-timeout", "15m",
