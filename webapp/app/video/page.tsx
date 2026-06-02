@@ -109,7 +109,8 @@ export default function VideoPage() {
   const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo'>('conference')
 
   // ── UI mode ──
-  const [uiMode, setUiMode] = useState<'direct' | 'variation'>('direct')
+  const [uiMode, setUiMode] = useState<'direct' | 'variation' | 'random'>('direct')
+  const [randomCount, setRandomCount] = useState(5)
 
   // ── Mode direct ──
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -295,6 +296,50 @@ export default function VideoPage() {
     }
   }
 
+  // ── Launch Random ──
+  const launchRandom = async () => {
+    if (!selectedElementId) return setLaunchError('Sélectionner un personnage.')
+    if (filteredPrompts.length === 0) return setLaunchError('Aucun prompt disponible pour cette niche.')
+
+    setLaunchError('')
+    setLaunchSuccess('')
+    setLaunching(true)
+
+    // Fisher-Yates shuffle
+    const shuffled = [...filteredPrompts]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    const picked = shuffled.slice(0, Math.min(randomCount, shuffled.length))
+    const ids = picked.map(p => p.id)
+
+    try {
+      const res = await fetch('/api/video/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'direct',
+          validatedPromptIds: ids,
+          batchCount: 1,
+          elementId: selectedElementId,
+          characterName: selectedElementName,
+          duration,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setLaunchError(data.error || 'Erreur lors du lancement')
+      } else {
+        setLaunchSuccess(`✓ ${ids.length} vidéo${ids.length > 1 ? 's' : ''} lancée${ids.length > 1 ? 's' : ''} — prompts aléatoires`)
+      }
+    } catch {
+      setLaunchError('Erreur réseau')
+    } finally {
+      setLaunching(false)
+    }
+  }
+
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen bg-[#09090b] text-zinc-100">
@@ -403,6 +448,16 @@ export default function VideoPage() {
                 : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
             }`}>
             🔀 Variations — outfit + réplique
+          </button>
+          <button
+            onClick={() => setUiMode('random')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+              uiMode === 'random'
+                ? 'bg-violet-600/20 text-white border border-violet-500/40'
+                : 'text-zinc-500 hover:text-zinc-200 bg-white/[0.03] border border-white/[0.07]'
+            }`}
+          >
+            🎲 Aléatoire
           </button>
         </div>
 
@@ -718,6 +773,56 @@ export default function VideoPage() {
               </button>
             </div>
 
+          </div>
+        )}
+
+        {/* ── Mode Aléatoire ─────────────────────────────────────── */}
+        {uiMode === 'random' && (
+          <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-2xl overflow-hidden">
+            <div className="p-5 border-b border-white/[0.06]">
+              <p className="text-sm font-semibold text-white">Génération aléatoire</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Tire {randomCount} prompt{randomCount > 1 ? 's' : ''} au hasard dans la niche sélectionnée et génère 1 vidéo par prompt.
+              </p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <p className="text-xs text-zinc-400 mb-2">
+                  Nombre de vidéos : <span className="text-white font-medium">{randomCount}</span>
+                  {filteredPrompts.length > 0 && (
+                    <span className="text-zinc-600 ml-1">({filteredPrompts.length} prompts disponibles)</span>
+                  )}
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={1}
+                    max={Math.min(20, Math.max(filteredPrompts.length, 1))}
+                    value={randomCount}
+                    onChange={e => setRandomCount(Number(e.target.value))}
+                    className="flex-1 accent-violet-500"
+                  />
+                  <span className="text-sm font-semibold text-white w-8 text-right">{randomCount}</span>
+                </div>
+              </div>
+              {launchError && <p className="text-sm text-red-400">{launchError}</p>}
+              {launchSuccess && (
+                <p className="text-sm text-emerald-400 flex items-center gap-2">
+                  {launchSuccess}
+                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ En cours</a>
+                </p>
+              )}
+              <button
+                onClick={launchRandom}
+                disabled={launching || !selectedElementId || filteredPrompts.length === 0}
+                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {launching
+                  ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Lancement...</span>
+                  : `🎲 Générer ${Math.min(randomCount, filteredPrompts.length)} vidéo${Math.min(randomCount, filteredPrompts.length) > 1 ? 's' : ''} aléatoires`
+                }
+              </button>
+            </div>
           </div>
         )}
 

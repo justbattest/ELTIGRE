@@ -80,6 +80,56 @@ const CHIPS: Record<keyof Selections, string[]> = {
   ],
 }
 
+// ─── Données niche ───────────────────────────────────────────────────────────
+
+type NicheKey = 'conference' | 'sport' | 'golf' | 'vieux' | 'meteo'
+
+const NICHE_LABELS: Record<NicheKey, string> = {
+  conference: '🎓 Conférence',
+  sport: '🏃 Coach',
+  golf: '⛳ Golf',
+  vieux: '👴 Vieux',
+  meteo: '📺 Météo',
+}
+
+const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>> = {
+  conference: {
+    lieu: ['Conference room corporate', 'Stage main screen', 'Meeting room glass walls', 'TEDx red stage', 'Hotel ballroom conference'],
+    activite: ['Presenting at podium', 'Speaking at microphone', 'Gesturing to slides', 'Taking notes laptop', 'Networking handshake'],
+    outfit: ['Fitted blazer power suit', 'Silk blouse tailored pants', 'Professional wrap dress', 'Structured blazer pencil skirt'],
+    shotType: ['Candid waist-up', 'Selfie chest-up', 'Mirror full-body'],
+    colorGrade: ['Cool airy', 'Warm morning', 'Office fluorescent'],
+  },
+  sport: {
+    lieu: ['SoulCycle LA', 'Pilates West Hollywood', 'Equinox NYC', 'Gym mirror wall', 'Rooftop workout'],
+    activite: ['Post-set barbell', 'Mid-stride run', 'Yoga warrior pose', 'Jump rope cardio', 'Stretching cool-down'],
+    outfit: ['Alo full black', 'Lululemon grey', 'Nike crop + leggings', 'Gymshark neon'],
+    shotType: ['Mirror full-body', 'Candid waist-up', 'Selfie chest-up'],
+    colorGrade: ['Cool airy', 'High contrast sport'],
+  },
+  golf: {
+    lieu: ['Golf course fairway', 'Club putting green', 'Golf cart path', 'Clubhouse terrace', 'Driving range'],
+    activite: ['Mid golf swing', 'Putting stance', 'Walking fairway bag', 'Checking scorecard'],
+    outfit: ['Pink pleated golf skirt + white polo', 'Black golf skirt + navy polo', 'Light blue golf dress + visor', 'White golf skirt + pink polo'],
+    shotType: ['Candid waist-up', 'Mirror full-body', 'Candid full-body'],
+    colorGrade: ['Golden hour', 'Warm morning', 'Cool airy'],
+  },
+  vieux: {
+    lieu: ['Modern hospital corridor', 'Restaurant chic interior', 'Nursing home lounge', 'Medical office desk'],
+    activite: ['Helping elderly patient', 'Carrying chart clipboard', 'Serving dessert elegantly', 'Walking bright corridor'],
+    outfit: ['Uniforme blanc deep-V + black heels', 'Uniforme rose pastel + nude heels', 'White deep-V bodysuit', 'Black fitted low-cut top'],
+    shotType: ['Candid waist-up', 'Selfie chest-up', 'Candid full-body'],
+    colorGrade: ['Warm morning', 'Office fluorescent', 'Cool airy'],
+  },
+  meteo: {
+    lieu: ['TV studio news desk', 'Weather green screen studio', 'Outdoor storm reporter', 'News anchor modern set'],
+    activite: ['Pointing at weather map', 'Live reporting rain storm', 'Holding mic wind reporting', 'Reading teleprompter'],
+    outfit: ['Blue lace wrap dress', 'Red fitted blazer mini dress', 'White fitted pencil dress', 'Camel blazer + nude mini'],
+    shotType: ['Candid waist-up', 'Selfie chest-up', 'Vlog POV'],
+    colorGrade: ['Cool airy', 'Office fluorescent', 'Golden hour'],
+  },
+}
+
 const CATEGORY_LABELS: Record<keyof Selections, { emoji: string; label: string; multi: boolean }> = {
   lieu:       { emoji: '📍', label: 'LIEU',                   multi: true },
   activite:   { emoji: '🏃', label: 'ACTIVITÉ',               multi: true },
@@ -329,6 +379,11 @@ export default function StudioPage() {
   // Nombre de générations (1-50)
   const [count, setCount] = useState(10)
 
+  // Mode studio
+  const [studioMode, setStudioMode] = useState<'selection' | 'niche'>('selection')
+  const [selectedNiche, setSelectedNiche] = useState<NicheKey>('conference')
+  const [nicheCount, setNicheCount] = useState(8)
+
   // État génération
   const [launching, setLaunching] = useState(false)
   const [launchError, setLaunchError] = useState('')
@@ -530,6 +585,59 @@ export default function StudioPage() {
     }
   }
 
+  const launchNiche = async () => {
+    if (!selectedSoulId) return setLaunchError('Sélectionner un Soul Character.')
+
+    setLaunchError('')
+    setLaunching(true)
+    setActiveRunId(null)
+    setCards([])
+    setRunStats({ completed: 0, failed: 0, total: nicheCount, elapsed: 0 })
+
+    // Build selections with ALL niche chips selected (each image will randomly pick from them)
+    const nichePool = NICHE_CHIPS[selectedNiche]
+    const nicheSelections: Selections = {
+      lieu: nichePool.lieu || [],
+      activite: nichePool.activite || [],
+      outfit: nichePool.outfit || [],
+      bijoux: [],
+      background: nichePool.background || [],
+      shotType: nichePool.shotType || [],
+      colorGrade: nichePool.colorGrade || [],
+      features: [],
+    }
+
+    try {
+      const res = await fetch('/api/studio/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selections: nicheSelections,
+          mode: 'batch_config',
+          count: nicheCount,
+          soulId: selectedSoulId,
+          elementId: selectedElementId,
+          characterName: selectedSoulName || selectedElementName,
+          model,
+          aspectRatio,
+          quality,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setLaunchError(data.error || 'Erreur lors du lancement')
+        setLaunching(false)
+      } else {
+        setActiveRunId(data.runId)
+        connectSSE(data.runId, nicheCount)
+        setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+      }
+    } catch (e) {
+      setLaunchError(String(e))
+      setLaunching(false)
+    }
+  }
+
   const resetBatch = () => {
     if (sseRef.current) sseRef.current.close()
     if (timerRef.current) clearInterval(timerRef.current)
@@ -703,33 +811,72 @@ export default function StudioPage() {
             </div>
           </div>
 
+          {/* Mode toggle */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setStudioMode('selection')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition ${
+                studioMode === 'selection'
+                  ? 'bg-violet-600/20 text-white border-violet-500/40'
+                  : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200'
+              }`}
+            >
+              ✨ Ma sélection
+            </button>
+            <button
+              onClick={() => setStudioMode('niche')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition ${
+                studioMode === 'niche'
+                  ? 'bg-violet-600/20 text-white border-violet-500/40'
+                  : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200'
+              }`}
+            >
+              🎯 Par niche
+            </button>
+          </div>
+
           {/* CTA Buttons */}
           <div className="space-y-2">
-            {/* Dans ma sélection */}
-            <button
-              onClick={() => launch('batch_config')}
-              disabled={launching}
-              className="w-full relative overflow-hidden bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3 text-sm transition-all duration-200 shadow-lg shadow-violet-900/30"
-            >
-              {launching ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Génération...
-                </span>
-              ) : (
-                <>🎨 {count} prompt{count > 1 ? 's' : ''} · ma sélection</>
-              )}
-            </button>
+            {studioMode === 'selection' ? (
+              <>
+                {/* Dans ma sélection */}
+                <button
+                  onClick={() => launch('batch_config')}
+                  disabled={launching}
+                  className="w-full relative overflow-hidden bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3 text-sm transition-all duration-200 shadow-lg shadow-violet-900/30"
+                >
+                  {launching ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Génération...
+                    </span>
+                  ) : (
+                    <>🎨 {count} prompt{count > 1 ? 's' : ''} · ma sélection</>
+                  )}
+                </button>
 
-            {/* Random full */}
-            <button
-              onClick={() => launch('random_full')}
-              disabled={launching}
-              className="w-full border-2 border-dashed border-white/[0.08] hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 hover:text-white font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <span>🎲</span>
-              <span>{count} prompt{count > 1 ? 's' : ''} · full aléatoire</span>
-            </button>
+                {/* Random full */}
+                <button
+                  onClick={() => launch('random_full')}
+                  disabled={launching}
+                  className="w-full border-2 border-dashed border-white/[0.08] hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 hover:text-white font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <span>🎲</span>
+                  <span>{count} prompt{count > 1 ? 's' : ''} · full aléatoire</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={launchNiche}
+                disabled={launching || !selectedSoulId}
+                className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-4 transition-all duration-200"
+              >
+                {launching
+                  ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Lancement...</span>
+                  : `🎯 Générer ${nicheCount} image${nicheCount > 1 ? 's' : ''} ${NICHE_LABELS[selectedNiche]}`
+                }
+              </button>
+            )}
           </div>
 
           {/* Reset si run actif */}
@@ -747,7 +894,7 @@ export default function StudioPage() {
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
 
           {/* Stats bar si sélection non nulle */}
-          {totalSelected > 0 && (
+          {studioMode === 'selection' && totalSelected > 0 && (
             <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900/40 border border-white/[0.07] rounded-xl px-4 py-2.5">
               <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
               <span>
@@ -767,20 +914,73 @@ export default function StudioPage() {
           )}
 
           {/* Grid chips par catégorie */}
-          <div className="grid grid-cols-1 gap-5">
-            {(Object.keys(CHIPS) as (keyof Selections)[]).map((cat) => (
-              <div key={cat} className="bg-zinc-900/30 border border-white/[0.06] rounded-xl p-4">
-                <CategorySection
-                  catKey={cat}
-                  selections={selections}
-                  customChips={customChips}
-                  onToggle={toggleChip}
-                  onAddCustom={addCustomChip}
-                  onClearAll={clearCategory}
-                />
+          {studioMode === 'selection' && (
+            <div className="grid grid-cols-1 gap-5">
+              {(Object.keys(CHIPS) as (keyof Selections)[]).map((cat) => (
+                <div key={cat} className="bg-zinc-900/30 border border-white/[0.06] rounded-xl p-4">
+                  <CategorySection
+                    catKey={cat}
+                    selections={selections}
+                    customChips={customChips}
+                    onToggle={toggleChip}
+                    onAddCustom={addCustomChip}
+                    onClearAll={clearCategory}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Mode Niche ──────────────────────────────────────────── */}
+          {studioMode === 'niche' && (
+            <div className="space-y-4">
+              {/* Niche selector */}
+              <div>
+                <p className="text-xs font-medium text-zinc-400 mb-2">Niche</p>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(NICHE_LABELS) as NicheKey[]).map(key => (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedNiche(key)}
+                      className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${
+                        selectedNiche === key
+                          ? 'bg-violet-600/20 text-white border-violet-500/40'
+                          : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200 hover:border-white/[0.15]'
+                      }`}
+                    >
+                      {NICHE_LABELS[key]}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+
+              {/* Count */}
+              <div>
+                <p className="text-xs text-zinc-400 mb-2">
+                  Nombre d&apos;images : <span className="text-white font-medium">{nicheCount}</span>
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={1}
+                    max={20}
+                    value={nicheCount}
+                    onChange={e => setNicheCount(Number(e.target.value))}
+                    className="flex-1 accent-violet-500"
+                  />
+                  <span className="text-sm font-semibold text-white w-8 text-right">{nicheCount}</span>
+                </div>
+              </div>
+
+              {/* Preview of what will be used */}
+              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
+                <p className="text-[11px] text-zinc-600">
+                  Génère {nicheCount} image{nicheCount > 1 ? 's' : ''} avec chips aléatoires {NICHE_LABELS[selectedNiche]} —
+                  lieux, tenues, activités et cadrage adaptés à la niche.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
