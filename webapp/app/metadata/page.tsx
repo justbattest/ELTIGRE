@@ -26,11 +26,11 @@ type FileResult = {
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 /**
- * Compression client-side → les photos passent de 30MB à ~2MB avant l'envoi.
- * CHUNK_SIZE=10 est safe après compression (10 × 2MB = 20MB par requête).
- * Promise.all sur tous les chunks = vitesse maximale, identique à Bulk Edit.
+ * Metadata gère aussi des vidéos (non compressées, potentiellement lourdes).
+ * Chunks de 5, envoi SÉQUENTIEL pour éviter l'OOM Railway.
+ * Images compressées à ~2MB → 5 × 2MB = 10MB par requête max.
  */
-const UPLOAD_CHUNK_SIZE = 10
+const UPLOAD_CHUNK_SIZE = 5
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
@@ -202,9 +202,10 @@ export default function MetadataPage() {
         chunks.push(compressedEntries.slice(i, i + UPLOAD_CHUNK_SIZE))
       }
 
-      // Tous les chunks en parallèle — après compression ~20MB max simultané, safe
-      await Promise.all(chunks.map(async (chunk) => {
-        if (abort.signal.aborted) return
+      // Séquentiel — metadata inclut des vidéos non compressées potentiellement lourdes.
+      // 1 chunk à la fois évite l'OOM Railway même avec des gros fichiers.
+      for (const chunk of chunks) {
+        if (abort.signal.aborted) break
         const form = new FormData()
         form.append('runId', runId)
         chunk.forEach(e => form.append('files', e.file))
@@ -212,7 +213,7 @@ export default function MetadataPage() {
         const data = await res.json()
         if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
         setUploadedFiles(prev => prev + data.savedCount)
-      }))
+      }
 
       if (abort.signal.aborted || !runId) return
 
