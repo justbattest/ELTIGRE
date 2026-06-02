@@ -165,13 +165,26 @@ def generate_prompts_with_claude(
             raw = raw[4:]
     raw = raw.strip()
 
-    # Parser JSON avec fallback
+    # Parser JSON avec fallbacks progressifs
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
-        # Tenter un nettoyage des caractères de contrôle
-        cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', raw)
-        data = json.loads(cleaned)
+        # Fallback 1 : remplacer les chars de contrôle DANS les strings JSON
+        # (newlines/tabs littéraux dans une valeur = JSON invalide)
+        cleaned = re.sub(
+            r'(?s)"(?:[^"\\]|\\.)*"',
+            lambda m: (m.group()
+                       .replace('\n', '\\n')
+                       .replace('\r', '\\r')
+                       .replace('\t', '\\t')),
+            raw
+        )
+        try:
+            data = json.loads(cleaned)
+        except json.JSONDecodeError:
+            # Fallback 2 : supprimer tous les chars de contrôle restants
+            cleaned2 = re.sub(r'[\x00-\x1f\x7f]', ' ', cleaned)
+            data = json.loads(cleaned2)
 
     prompts = data.get("prompts", [])
     if not prompts:
