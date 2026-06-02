@@ -307,44 +307,73 @@ async def generate_motion_video(
     prompt: str | None = None,
     refresh_token: str = "",
 ) -> dict:
-    """Phase 2 : Kling v3.0 Motion Control via CLI higgsfield generate create kling3_0.
+    """Phase 2 : Kling Motion Control via l'API Kling AI officielle.
 
-    Utilise le CLI (gestion auth automatique avec hf_ token) plutôt que l'API HTTP
-    qui exige un Clerk JWT de courte durée inaccessible depuis le pipeline.
+    kling3_0_motion_control est web-only (Clerk JWT requis, inaccessible depuis pipeline).
+    On utilise l'API Kling AI directe qui fonctionne avec les clés access/secret.
     """
+    from pipeline.kling_api import upload_video_for_kling, create_motion_control_task, poll_motion_control_task
+
     try:
+        # Upload image (si URL CDN → extraire UUID pour Higgsfield upload, sinon chemin local)
         print(json.dumps({
             "type": "warn",
-            "msg": f"[{shortcode}] Kling v3 Motion Control via CLI (kling3_0 --image --video)…"
+            "msg": f"[{shortcode}] Upload image + vidéo vers Higgsfield CDN…"
         }), flush=True)
 
-        # CLI --image accepte UUID ou chemin local, PAS une URL CDN complète
-        # → extraire l'UUID depuis l'URL CDN si nécessaire
-        if image_source.startswith("http://") or image_source.startswith("https://"):
-            image_input = _extract_uuid_from_cdn_url(image_source)
-        else:
-            image_input = image_source  # chemin local → OK tel quel
-
-        # kling3_0_motion_control = le vrai modèle motion control (pas kling3_0 qui est text-to-video)
-        # Pas besoin de prompt pour motion control
-        cmd = [
-            "higgsfield", "generate", "create", "kling3_0_motion_control",
-            "--image", image_input,
-            "--video", concept_video_path,
-            "--wait",
-            "--wait-timeout", "15m",
-        ]
-
-        result_url = await run_higgsfield_for_user(
-            user_token, cmd, timeout=timeout, refresh_token=refresh_token
+        video_url, image_url = await asyncio.gather(
+            upload_video_for_kling(user_token, concept_video_path),
+            _resolve_image_url(user_token, image_source, shortcode),
         )
 
-        if result_url and result_url.strip():
-            return {"url": result_url.strip()}
-        return {"url": None, "error": "EMPTY_RESULT_KLING_V3"}
+        print(json.dumps({
+            "type": "warn",
+            "msg": f"[{shortcode}] Upload OK — Soumission Kling Motion Control…"
+        }), flush=True)
+
+        lock = _get_kling_lock()
+        task_id: str | None = None
+
+        async with lock:
+            for attempt in range(8):
+                try:
+                    task_id = await create_motion_control_task(
+                        access_key=kling_access_key,
+                        secret_key=kling_secret_key,
+                        image_source=image_url,
+                        video_url=video_url,
+                        mode="std",
+                        prompt=prompt,
+                    )
+                    print(json.dumps({
+                        "type": "warn",
+                        "msg": f"[{shortcode}] Kling task_id={task_id} ✅ — polling…"
+                    }), flush=True)
+                    await asyncio.sleep(5)
+                    break
+                except Exception as e:
+                    err = str(e) or repr(e)
+                    NO_RETRY = ("1102", "1101", "401", "403")
+                    if any(c in err for c in NO_RETRY):
+                        return {"url": None, "error": f"Kling: {err}"[:300]}
+                    if "429" in err or "1302" in err or "rate" in err.lower():
+                        await asyncio.sleep(45 * (attempt + 1))
+                        continue
+                    return {"url": None, "error": f"{type(e).__name__}: {err}"[:300]}
+
+        if not task_id:
+            return {"url": None, "error": "Kling rate limit — max retries atteint"}
+
+        result_url = await poll_motion_control_task(
+            access_key=kling_access_key,
+            secret_key=kling_secret_key,
+            task_id=task_id,
+            timeout=timeout,
+        )
+        return {"url": result_url}
 
     except asyncio.TimeoutError:
-        return {"url": None, "error": "TIMEOUT_KLING_V3_MC"}
+        return {"url": None, "error": "TIMEOUT_KLING_MC"}
     except Exception as e:
         return {"url": None, "error": f"{type(e).__name__}: {str(e) or repr(e)}"[:300]}
 
