@@ -11,3 +11,4 @@ numpy>=1.26.0
 instagrapi>=2.1.0
 instaloader>=4.10.3
 imageio-ffmpeg>=0.5.0
+PyJWT>=2.8.0
