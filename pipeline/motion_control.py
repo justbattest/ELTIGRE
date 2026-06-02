@@ -325,11 +325,12 @@ async def generate_motion_video(
         else:
             image_input = image_source  # chemin local → OK tel quel
 
+        # kling3_0_motion_control = le vrai modèle motion control (pas kling3_0 qui est text-to-video)
+        # Pas besoin de prompt pour motion control
         cmd = [
-            "higgsfield", "generate", "create", "kling3_0",
+            "higgsfield", "generate", "create", "kling3_0_motion_control",
             "--image", image_input,
             "--video", concept_video_path,
-            "--prompt", "Apply the motion from the reference video to the subject in the image. Keep the same person, background, and style.",
             "--wait",
             "--wait-timeout", "15m",
         ]
