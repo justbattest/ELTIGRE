@@ -329,6 +329,7 @@ async def generate_motion_video(
             "higgsfield", "generate", "create", "kling3_0",
             "--image", image_input,
             "--video", concept_video_path,
+            "--prompt", "Apply the motion from the reference video to the subject in the image. Keep the same person, background, and style.",
             "--wait",
             "--wait-timeout", "15m",
         ]
