@@ -11,7 +11,7 @@ import { spawn } from 'child_process'
 import * as path from 'path'
 import { runningProcesses, writePidFile, deletePidFile } from '@/app/api/run/route'
 import { handlePipelineEvent } from '@/lib/pipeline-events'
-import { onRunComplete } from '@/lib/resource-queue'
+import { canStartNow, onRunComplete } from '@/lib/resource-queue'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -52,6 +52,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Credentials incomplets (Anthropic + Higgsfield requis).' }, { status: 400 })
   }
 
+  // Vérifier la disponibilité AVANT de créer le run (évite l'auto-blocage)
+  const resourceGroup = 'soul_cinematic' as const
+  const canStart = await canStartNow(resourceGroup)
+
   // Créer le Run (inputProfiles vide = marqueur studio)
   const run = await prisma.run.create({
     data: {
@@ -63,10 +67,36 @@ export async function POST(req: NextRequest) {
       modelSetting: model,
       aspectRatio,
       quality,
-      status: 'running',
-      resourceGroup: 'soul_cinematic', // occupe le slot → Scraping détecte la concurrence
+      status: canStart ? 'running' : 'queued',
+      resourceGroup,
     },
   })
+
+  // Si slot occupé → mettre en queue et retourner immédiatement
+  if (!canStart) {
+    const queuedParams = {
+      scriptModule: 'pipeline.studio',
+      args: [
+        '--selections', JSON.stringify(selections),
+        '--mode', mode,
+        '--count', String(count),
+        '--soul-id', soulId,
+        '--element-id', elementId,
+        '--model', model,
+        '--aspect-ratio', aspectRatio,
+        '--quality', quality,
+      ],
+      env: {
+        ANTHROPIC_KEY: anthropicKey || '',
+        HIGGSFIELD_TOKEN: higgsToken || '',
+        ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
+        ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
+        ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
+      },
+    }
+    await prisma.run.update({ where: { id: run.id }, data: { queuedParams } })
+    return NextResponse.json({ runId: run.id, queued: true, message: 'Studio en attente — démarrera automatiquement' })
+  }
 
   // Lancer le subprocess Python
   const pythonPath = path.join(process.cwd(), '..', 'venv', 'bin', 'python')

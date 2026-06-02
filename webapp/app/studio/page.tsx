@@ -115,11 +115,39 @@ const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>>
     colorGrade: ['Golden hour', 'Warm morning', 'Cool airy'],
   },
   vieux: {
-    lieu: ['Modern hospital corridor', 'Restaurant chic interior', 'Nursing home lounge', 'Medical office desk'],
-    activite: ['Helping elderly patient', 'Carrying chart clipboard', 'Serving dessert elegantly', 'Walking bright corridor'],
-    outfit: ['Uniforme blanc deep-V + black heels', 'Uniforme rose pastel + nude heels', 'White deep-V bodysuit', 'Black fitted low-cut top'],
+    // Niche infirmière / restaurant — vibe clinique chic ou salle gastronomique
+    // Outfits tirés des prompts vidéo Vieux (NURSE_OUTFITS + RESTAURANT_OUTFITS)
+    lieu: [
+      'Luxury private clinic corridor Paris warm lighting',
+      'Upscale gastronomic restaurant golden candlelight',
+      'Hospital nurses station modern reception desk',
+      'High-end nursing home elegant lounge velvet armchairs',
+      'French restaurant kitchen entrance chef whites blurred background',
+    ],
+    activite: [
+      'Carrying silver medication tray both hands smiling',
+      'Writing on patient clipboard leaning against wall',
+      'Presenting dessert plate tableside elegantly',
+      'Adjusting IV drip stand beside bed calm expression',
+      'Taking blood pressure attentive caring gaze',
+      'Holding wine bottle presenting to table',
+    ],
+    outfit: [
+      'Extremely short white nurse uniform deep V-neckline hemline top of thighs black stiletto heels',
+      'Extremely short pastel pink nurse uniform open neckline hemline top of thighs nude heels',
+      'Extremely short navy scrubs deep open neckline hemline top of thighs black heels',
+      'White deep-V bodysuit open neckline generous cleavage',
+      'Black fitted low-cut top with deep generous cleavage',
+      'Blush silk blouse very low-cut deep cleavage',
+    ],
+    background: [
+      'Hospital hallway white walls soft warm overhead lights',
+      'Elegant dining room white tablecloths crystal glasses candlelight',
+      'Medical supply room chrome shelves clean clinical',
+      'Restaurant bar aged wood warm amber lighting bottles',
+    ],
     shotType: ['Candid waist-up', 'Selfie chest-up', 'Candid full-body'],
-    colorGrade: ['Warm morning', 'Office fluorescent', 'Cool airy'],
+    colorGrade: ['Warm morning', 'Office fluorescent', 'Golden hour'],
   },
   meteo: {
     lieu: ['TV studio news desk', 'Weather green screen studio', 'Outdoor storm reporter', 'News anchor modern set'],
