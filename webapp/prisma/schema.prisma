@@ -88,6 +88,8 @@ model Generation {
   fallbackReason         String?   @map("fallback_reason")
   higgsFieldJobId        String?   @map("higgsfield_job_id")
   generatedImageUrl      String?   @map("generated_image_url")
+  driveGeneratedUrl      String?   @map("drive_generated_url")  // URL Drive permanente du résultat généré
+  driveSourceUrl         String?   @map("drive_source_url")      // URL Drive de l'image source Instagram
   generationStatus       String?   @default("pending") @map("generation_status")
   creditsUsed            Float?    @map("credits_used")
   scrapedAt              DateTime? @map("scraped_at") @db.Timestamptz(6)
@@ -95,6 +97,7 @@ model Generation {
   generatedAt            DateTime? @map("generated_at") @db.Timestamptz(6)
   run                    Run?      @relation(fields: [runId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user                   User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  instagramPosts         InstagramPost[]
 
   @@index([runId], map: "idx_generations_run_id")
   @@index([sourceShortcode], map: "idx_generations_shortcode")
@@ -122,6 +125,57 @@ model ValidatedPrompt {
   @@index([niche])
   @@map("validated_prompts")
 }
+
+// ─── Instagram Poster ──────────────────────────────────────────────────────────
+
+model InstagramAccount {
+  id           String          @id @default(cuid())
+  userId       String          @map("user_id")
+  username     String
+  passwordEnc  String?         @map("password_enc")    // AES-256 encrypted
+  sessionJson  String?         @map("session_json") @db.Text  // JSON instagrapi chiffré
+  deviceJson   String?         @map("device_json") @db.Text   // Fingerprint device chiffré
+  networkName  String          @map("network_name")   // "iPhone_SIM1"
+  warmupPhase  Int             @default(1) @map("warmup_phase")  // 1,2,3,4
+  status       String          @default("warmup")     // warmup|active|challenge|banned|suspended
+  lastPostedAt DateTime?       @map("last_posted_at") @db.Timestamptz(6)
+  postsToday   Int             @default(0) @map("posts_today")
+  postsTodayDate DateTime?     @map("posts_today_date") @db.Timestamptz(6)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  posts        InstagramPost[]
+
+  @@index([userId], map: "idx_ig_accounts_user_id")
+  @@index([status], map: "idx_ig_accounts_status")
+  @@map("instagram_accounts")
+}
+
+model InstagramPost {
+  id           String           @id @default(cuid())
+  userId       String           @map("user_id")
+  accountId    String           @map("account_id")
+  generationId Int?             @map("generation_id")  // FK Generation (optionnel)
+  driveFileId  String?          @map("drive_file_id")  // ID fichier Google Drive
+  driveFileUrl String?          @map("drive_file_url") @db.Text  // URL shareable Drive
+  caption      String?          @db.Text
+  mediaType    String           @default("reel")       // reel|photo
+  scheduledFor DateTime?        @map("scheduled_for") @db.Timestamptz(6)
+  postedAt     DateTime?        @map("posted_at") @db.Timestamptz(6)
+  status       String           @default("pending")    // pending|processing|posted|failed|cancelled
+  igPostId     String?          @map("ig_post_id")
+  errorMessage String?          @map("error_message") @db.Text
+  retryCount   Int              @default(0) @map("retry_count")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  account      InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  generation   Generation?      @relation(fields: [generationId], references: [id], onDelete: SetNull)
+
+  @@index([userId], map: "idx_ig_posts_user_id")
+  @@index([status], map: "idx_ig_posts_status")
+  @@index([accountId], map: "idx_ig_posts_account_id")
+  @@index([scheduledFor], map: "idx_ig_posts_scheduled")
+  @@map("instagram_posts")
+}
+
+// ─── VideoPromptBank ───────────────────────────────────────────────────────────
 
 model VideoPromptBank {
   id            Int      @id @default(autoincrement())

@@ -15,3 +15,10 @@ webapp/.prisma/
 webapp/.env
 webapp/.env.local
 webapp/.env*.local
+
+# Instagram Poster — données sensibles (JAMAIS committer)
+instagram_poster/config.json
+instagram_poster/sessions/
+instagram_poster/devices/
+instagram_poster/logs/
+instagram_poster/queue.json

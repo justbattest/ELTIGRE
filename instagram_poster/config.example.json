@@ -1,0 +1,57 @@
+{
+  "railway_url": "https://your-app.railway.app",
+  "mac_api_token": "METTRE_LE_MEME_TOKEN_QUE_MAC_API_TOKEN_SUR_RAILWAY",
+  "google_credentials_path": "/Users/battest/google_credentials.json",
+  "networks": {
+    "iPhone_SIM1": "iPhone de Alexandre",
+    "iPhone_SIM2": "iPhone 2",
+    "iPhone_SIM3": "iPhone 3"
+  },
+  "accounts": {
+    "ACCOUNT_ID_DEPUIS_DB_1": {
+      "session_file": "sessions/compte1.json",
+      "device_file": "devices/compte1.json",
+      "network": "iPhone_SIM1"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_2": {
+      "session_file": "sessions/compte2.json",
+      "device_file": "devices/compte2.json",
+      "network": "iPhone_SIM1"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_3": {
+      "session_file": "sessions/compte3.json",
+      "device_file": "devices/compte3.json",
+      "network": "iPhone_SIM1"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_4": {
+      "session_file": "sessions/compte4.json",
+      "device_file": "devices/compte4.json",
+      "network": "iPhone_SIM2"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_5": {
+      "session_file": "sessions/compte5.json",
+      "device_file": "devices/compte5.json",
+      "network": "iPhone_SIM2"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_6": {
+      "session_file": "sessions/compte6.json",
+      "device_file": "devices/compte6.json",
+      "network": "iPhone_SIM2"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_7": {
+      "session_file": "sessions/compte7.json",
+      "device_file": "devices/compte7.json",
+      "network": "iPhone_SIM3"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_8": {
+      "session_file": "sessions/compte8.json",
+      "device_file": "devices/compte8.json",
+      "network": "iPhone_SIM3"
+    },
+    "ACCOUNT_ID_DEPUIS_DB_9": {
+      "session_file": "sessions/compte9.json",
+      "device_file": "devices/compte9.json",
+      "network": "iPhone_SIM3"
+    }
+  }
+}

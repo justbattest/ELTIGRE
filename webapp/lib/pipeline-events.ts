@@ -60,6 +60,8 @@ export async function handlePipelineEvent(
             modelUsed:         event.model as string,
             fallbackUsed:      (event.fallback as boolean)        || false,
             generatedImageUrl: event.url as string,
+            ...(event.drive_generated_url ? { driveGeneratedUrl: event.drive_generated_url as string } : {}),
+            ...(event.drive_source_url    ? { driveSourceUrl:    event.drive_source_url    as string } : {}),
             generationStatus:  'complete',
             generatedAt:       new Date(),
           },

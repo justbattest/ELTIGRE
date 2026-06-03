@@ -1,0 +1,201 @@
+"""
+Session Manager — gère les sessions instagrapi.
+
+Responsabilités :
+- Premier login d'un compte (init_account) → génère un device unique, login, dump session
+- Chargement session existante (get_client) → load_settings + login léger
+- Sauvegarde session après chaque action (save_session)
+
+RÈGLE ABSOLUE : 1 device profile par compte, jamais réutilisé sur un autre compte.
+"""
+
+import json
+import os
+import random
+import logging
+from pathlib import Path
+from instagrapi import Client
+from instagrapi.exceptions import LoginRequired, ChallengeRequired
+
+logger = logging.getLogger(__name__)
+
+# Pools de devices Samsung réalistes (instagrapi simule Android)
+DEVICE_POOL = [
+    {
+        "app_version": "269.0.0.18.75",
+        "android_version": 33,
+        "android_release": "13.0",
+        "dpi": "420dpi",
+        "resolution": "1080x2340",
+        "manufacturer": "Samsung",
+        "device": "SM-G991B",
+        "model": "Galaxy S21",
+        "cpu": "exynos2100",
+        "version_code": "314665256",
+    },
+    {
+        "app_version": "269.0.0.18.75",
+        "android_version": 33,
+        "android_release": "13.0",
+        "dpi": "440dpi",
+        "resolution": "1080x2400",
+        "manufacturer": "Samsung",
+        "device": "SM-S918B",
+        "model": "Galaxy S23",
+        "cpu": "snapdragon8gen2",
+        "version_code": "314665256",
+    },
+    {
+        "app_version": "269.0.0.18.75",
+        "android_version": 34,
+        "android_release": "14.0",
+        "dpi": "450dpi",
+        "resolution": "1440x3088",
+        "manufacturer": "Samsung",
+        "device": "SM-S928B",
+        "model": "Galaxy S24 Ultra",
+        "cpu": "snapdragon8gen3",
+        "version_code": "314665256",
+    },
+    {
+        "app_version": "269.0.0.18.75",
+        "android_version": 33,
+        "android_release": "13.0",
+        "dpi": "420dpi",
+        "resolution": "1080x2340",
+        "manufacturer": "Google",
+        "device": "Pixel 7",
+        "model": "Pixel 7",
+        "cpu": "tensor_g2",
+        "version_code": "314665256",
+    },
+    {
+        "app_version": "269.0.0.18.75",
+        "android_version": 34,
+        "android_release": "14.0",
+        "dpi": "411dpi",
+        "resolution": "1080x2400",
+        "manufacturer": "Google",
+        "device": "Pixel 8",
+        "model": "Pixel 8",
+        "cpu": "tensor_g3",
+        "version_code": "314665256",
+    },
+    {
+        "app_version": "269.0.0.18.75",
+        "android_version": 33,
+        "android_release": "13.0",
+        "dpi": "395dpi",
+        "resolution": "1080x2340",
+        "manufacturer": "OnePlus",
+        "device": "CPH2449",
+        "model": "OnePlus 11",
+        "cpu": "snapdragon8gen2",
+        "version_code": "314665256",
+    },
+]
+
+
+def _base_dir() -> Path:
+    """Retourne le répertoire de base du script."""
+    return Path(__file__).parent
+
+
+def init_account(account_id: str, username: str, password: str, config: dict) -> Client:
+    """
+    Premier login d'un compte.
+    Génère un device unique, login, dump session + device.
+    À appeler UNE SEULE FOIS par compte (depuis le bon hotspot !).
+    """
+    account_cfg = config["accounts"].get(account_id, {})
+    session_file = _base_dir() / account_cfg.get("session_file", f"sessions/{account_id}.json")
+    device_file = _base_dir() / account_cfg.get("device_file", f"devices/{account_id}.json")
+
+    if session_file.exists():
+        logger.warning(f"Session déjà existante pour {account_id} — utiliser get_client()")
+        return get_client(account_id, username, password, config)
+
+    # Choisir un device unique parmi le pool (basé sur l'index du compte pour stabilité)
+    # Chaque compte a toujours le même device tant que l'ordre ne change pas
+    account_ids = list(config["accounts"].keys())
+    idx = account_ids.index(account_id) if account_id in account_ids else random.randint(0, len(DEVICE_POOL) - 1)
+    device = DEVICE_POOL[idx % len(DEVICE_POOL)]
+
+    cl = Client()
+    cl.delay_range = [2, 6]  # Délai naturel entre requêtes internes
+    cl.set_device(device)
+    cl.set_country("US")
+    cl.set_locale("en_US")
+
+    logger.info(f"[{username}] Premier login avec device {device['model']}...")
+    cl.login(username, password)
+
+    # Sauvegarder session + device
+    session_file.parent.mkdir(parents=True, exist_ok=True)
+    device_file.parent.mkdir(parents=True, exist_ok=True)
+    cl.dump_settings(str(session_file))
+
+    # Sauvegarder le device séparément pour pouvoir le réappliquer
+    with open(device_file, "w") as f:
+        json.dump(device, f, indent=2)
+
+    logger.info(f"[{username}] Session initialisée → {session_file}")
+    return cl
+
+
+def get_client(account_id: str, username: str, password: str, config: dict) -> Client:
+    """
+    Charge une session existante et retourne un Client instagrapi prêt à l'emploi.
+    Si la session est expirée, tente un re-login et sauvegarde la nouvelle session.
+    """
+    account_cfg = config["accounts"].get(account_id, {})
+    session_file = _base_dir() / account_cfg.get("session_file", f"sessions/{account_id}.json")
+    device_file = _base_dir() / account_cfg.get("device_file", f"devices/{account_id}.json")
+
+    cl = Client()
+    cl.delay_range = [2, 6]
+
+    # Appliquer le device fingerprint sauvegardé (IDENTIQUE à l'init)
+    if device_file.exists():
+        with open(device_file) as f:
+            device = json.load(f)
+        cl.set_device(device)
+        cl.set_country("US")
+        cl.set_locale("en_US")
+
+    if session_file.exists():
+        # Charger la session existante — évite un re-login from scratch
+        cl.load_settings(str(session_file))
+
+    try:
+        # Login léger : si session valide, instagrapi ne génère pas de nouvelle session
+        cl.login(username, password)
+        return cl
+    except LoginRequired:
+        logger.warning(f"[{username}] Session expirée — re-login...")
+        # Supprimer le fichier session et recommencer from scratch
+        if session_file.exists():
+            session_file.unlink()
+        cl2 = Client()
+        cl2.delay_range = [2, 6]
+        if device_file.exists():
+            with open(device_file) as f:
+                device = json.load(f)
+            cl2.set_device(device)
+            cl2.set_country("US")
+            cl2.set_locale("en_US")
+        cl2.login(username, password)
+        cl2.dump_settings(str(session_file))
+        logger.info(f"[{username}] Re-login réussi, nouvelle session sauvegardée.")
+        return cl2
+    except ChallengeRequired:
+        # Ne pas swallower — le caller doit gérer
+        raise
+
+
+def save_session(cl: Client, account_id: str, config: dict) -> None:
+    """Sauvegarde la session après un post (met à jour les cookies)."""
+    account_cfg = config["accounts"].get(account_id, {})
+    session_file = _base_dir() / account_cfg.get("session_file", f"sessions/{account_id}.json")
+    session_file.parent.mkdir(parents=True, exist_ok=True)
+    cl.dump_settings(str(session_file))

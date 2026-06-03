@@ -14,6 +14,7 @@ import {
   BarChart2,
   ChevronLeft,
   ChevronRight,
+  Send,
 } from 'lucide-react'
 
 const GROUPS = [
@@ -43,9 +44,10 @@ const GROUPS = [
     ],
     separate: false,
   },
-  { key: 'carousel', icon: LayoutGrid, label: 'CARROUSEL', href: '/carousel', pages: ['/carousel'], subTabs: [], separate: false },
-  { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata', pages: ['/metadata'], subTabs: [], separate: false  },
-  { key: 'en-cours', icon: Timer,      label: 'EN COURS',  href: '/en-cours', pages: ['/en-cours'], subTabs: [], separate: true },
+  { key: 'carousel', icon: LayoutGrid, label: 'CARROUSEL', href: '/carousel',  pages: ['/carousel'],  subTabs: [], separate: false },
+  { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata',  pages: ['/metadata'],  subTabs: [], separate: false },
+  { key: 'poster',   icon: Send,       label: 'POSTER',    href: '/poster',    pages: ['/poster'],    subTabs: [], separate: true  },
+  { key: 'en-cours', icon: Timer,      label: 'EN COURS',  href: '/en-cours',  pages: ['/en-cours'],  subTabs: [], separate: false },
 ]
 
 export function Sidebar() {
