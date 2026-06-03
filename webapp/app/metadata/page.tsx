@@ -27,10 +27,12 @@ type FileResult = {
 
 /**
  * Metadata gère aussi des vidéos (non compressées, potentiellement lourdes).
- * Chunks de 5, envoi SÉQUENTIEL pour éviter l'OOM Railway.
- * Images compressées à ~2MB → 5 × 2MB = 10MB par requête max.
+ * Chunks de 3, envoi SÉQUENTIEL pour éviter l'OOM Railway.
+ * Images compressées à ~2MB → 3 × 2MB = 6MB par requête max.
+ * Retry automatique x2 si "Load failed" (coupure réseau transitoire).
  */
-const UPLOAD_CHUNK_SIZE = 5
+const UPLOAD_CHUNK_SIZE = 3
+const UPLOAD_MAX_RETRIES = 2
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
 
@@ -203,16 +205,34 @@ export default function MetadataPage() {
       }
 
       // Séquentiel — metadata inclut des vidéos non compressées potentiellement lourdes.
-      // 1 chunk à la fois évite l'OOM Railway même avec des gros fichiers.
+      // 1 chunk à la fois évite l'OOM Railway. Retry x2 si coupure réseau transitoire.
       for (const chunk of chunks) {
         if (abort.signal.aborted) break
-        const form = new FormData()
-        form.append('runId', runId)
-        chunk.forEach(e => form.append('files', e.file))
-        const res  = await fetch('/api/metadata/upload', { method: 'POST', body: form, signal: abort.signal })
-        const data = await res.json()
-        if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
-        setUploadedFiles(prev => prev + data.savedCount)
+
+        let lastError: Error | null = null
+        for (let attempt = 0; attempt <= UPLOAD_MAX_RETRIES; attempt++) {
+          if (abort.signal.aborted) break
+          if (attempt > 0) {
+            // Petite pause avant retry (laisse Railway respirer)
+            await new Promise(r => setTimeout(r, 2000 * attempt))
+          }
+          try {
+            const form = new FormData()
+            form.append('runId', runId)
+            chunk.forEach(e => form.append('files', e.file))
+            const res  = await fetch('/api/metadata/upload', { method: 'POST', body: form, signal: abort.signal })
+            const data = await res.json()
+            if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`)
+            setUploadedFiles(prev => prev + data.savedCount)
+            lastError = null
+            break // succès → passer au chunk suivant
+          } catch (e) {
+            lastError = e instanceof Error ? e : new Error(String(e))
+            if (abort.signal.aborted) break
+            console.warn(`Chunk upload attempt ${attempt + 1} failed:`, lastError.message)
+          }
+        }
+        if (lastError && !abort.signal.aborted) throw lastError
       }
 
       if (abort.signal.aborted || !runId) return
