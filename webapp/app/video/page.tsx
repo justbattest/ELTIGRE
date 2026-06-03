@@ -76,6 +76,14 @@ const SPORT_OUTFITS = [
   { label: 'Olive deep-V + black shorts', value: 'tight olive green deep V-neck athletic top, extremely short tight black athletic shorts form-fitting back and sides' },
 ]
 
+const SERVEUSE_OUTFITS = [
+  { label: 'Black jumpsuit deep-V zipper (original)', value: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, short puffed sleeves, fitted pants, small chest badge, long dark wavy hair, nude pointed heels' },
+  { label: 'White fitted server blouse + black mini', value: 'tight white fitted server blouse deep V-neckline generous cleavage, very short black skirt, small chest badge, black pointed heels' },
+  { label: 'Black deep-V fitted dress server', value: 'tight fitted black server dress deep V-neckline generous cleavage, hemline mid-thigh, small chest badge, black pointed heels' },
+  { label: 'Burgundy fitted uniform deep-V', value: 'tight burgundy fitted server uniform deep V-neckline generous cleavage, small chest badge, black stiletto heels, long dark wavy hair' },
+  { label: 'Black satin top + fitted skirt', value: 'tight black satin server top deep V-neckline generous cleavage, fitted black mini skirt, small server badge, nude pointed heels' },
+]
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function SubNicheLabel({ subNiche }: { subNiche: string }) {
@@ -85,6 +93,7 @@ function SubNicheLabel({ subNiche }: { subNiche: string }) {
   if (subNiche === 'restaurant') return <span className="text-xs px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-400 font-medium">🍽️ Restaurant</span>
   if (subNiche === 'meteo') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">📺 Météo</span>
   if (subNiche === 'reporter') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">🌪️ Reporter</span>
+  if (subNiche === 'serveuse') return <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-400 font-medium">🍾 Serveuse</span>
   return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
 }
 
@@ -106,7 +115,7 @@ export default function VideoPage() {
   const [loadingPrompts, setLoadingPrompts] = useState(false)
 
   // ── Niche — 4 onglets séparés ──
-  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo'>('conference')
+  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse'>('conference')
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation' | 'random'>('direct')
@@ -178,13 +187,13 @@ export default function VideoPage() {
     setVarOutfit('')
     setVarPhrase('')
     // conference et sport sont dans le même niche DB 'conference_sport', filtrés côté client
-    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : 'conference_sport'
+    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : niche === 'serveuse' ? 'serveuse' : 'conference_sport'
     fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
       .then(data => {
         const all: ValidatedPrompt[] = data.prompts || []
         // Filtre côté client par subNiche pour conference/sport ; golf et vieux sont déjà leur propre niche
-        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo')
+        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo' || niche === 'serveuse')
           ? all
           : all.filter(p => p.subNiche === niche)
         setPrompts(filtered)
@@ -216,6 +225,7 @@ export default function VideoPage() {
     if (sub === 'nurse') return NURSE_OUTFITS
     if (sub === 'restaurant') return RESTAURANT_OUTFITS
     if (sub === 'meteo' || sub === 'reporter') return METEO_OUTFITS
+    if (sub === 'serveuse') return SERVEUSE_OUTFITS
     return CONF_OUTFITS
   })()
 
@@ -356,6 +366,7 @@ export default function VideoPage() {
             { id: 'golf' as const,       emoji: '⛳', label: 'Golf' },
             { id: 'vieux' as const,      emoji: '👴', label: 'Vieux' },
             { id: 'meteo' as const,      emoji: '📺', label: 'Météo' },
+            { id: 'serveuse' as const,   emoji: '🍾', label: 'Serveuse' },
           ]).map(n => (
             <button
               key={n.id}

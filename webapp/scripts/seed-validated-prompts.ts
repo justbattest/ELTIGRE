@@ -1134,6 +1134,231 @@ const PROMPTS: PromptSeed[] = [
     ])
   },
 
+  // ═══════════════════════════════════════════════════════════════════
+  // SERVEUSE — Restaurant haut de gamme
+  // Concept 1 : double-entendre cocktail (nom de la boisson = innocent / réaction client)
+  // Concept 2 : manger dans l'assiette pour vérifier une réclamation + recover deadpan
+  //
+  // Formule : Setup pro → Trigger → Break unhinged → Recover → Punchline deadpan
+  // Outfit : tight black fitted server uniform jumpsuit, deep V-neck zipper, deep cleavage
+  // Setting : upscale restaurant, dark marble table, warm amber lighting
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── Phrases séries cocktails ──────────────────────────────────────────────────
+
+  // ─── SÉRIE COCKTAILS ───────────────────────────────────────────────
+
+  // ── S1 — "Sex on the Beach" · Deadpan parfait · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S1 — "Sex on the Beach" · Deadpan · 12s min',
+    isBest: true,
+    sortOrder: 10,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, short puffed sleeves, fitted pants, small chest badge, long dark wavy hair, nude pointed heels',
+    speakerLine: "Your sex on the beach.",
+    phraseVariations: [
+      "Your sex on the beach.",
+      "Your screaming orgasm.",
+      "Your slow comfortable screw.",
+      "Your sex with an alligator.",
+      "Your between the sheets.",
+      "Your orgasm on the rocks.",
+      "Your dirty bastard.",
+      "Your tight snatch.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, at seated customer eye level. Upscale restaurant: dark round marble table foreground, black chair, champagne flute, white napkin, candle. Warm amber lighting, ornate floral wallpaper, cage chandelier, other diners background. Male customer partially visible right of frame.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, short puffed sleeves, fitted pants, small chest badge, long dark wavy hair, nude pointed heels — approaches holding cocktail glass. Sets glass on table entirely professionally. Delivers her line clearly. Male customer leans back and responds. She straightens. Blinks once. The professional smile fades by exactly one degree. Delivers her final line flatly, without breaking eye contact.",
+        dialogue: "[Server, warm and professional]: 'Your sex on the beach.' — [Male customer, leaning back]: 'With you? Absolutely.' — [Server, smile fading to flat]: 'It\\'s a DRINK.'"
+      },
+      {
+        style: "fixed medium shot seated eye level, upscale restaurant dark marble tables candlelight, ornate floral wallpaper amber lighting cage chandelier, other diners background, no colour grading, candid warm restaurant feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, short puffed sleeves, fitted pants, small chest badge, long dark wavy hair, nude pointed heels"
+      }
+    ])
+  },
+
+  // ── S2 — "Screaming Orgasm" shot · Flat deadpan · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S2 — "Screaming Orgasm" · Shot deadpan · 12s min',
+    sortOrder: 20,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels',
+    speakerLine: "Your screaming orgasm, sir.",
+    phraseVariations: [
+      "Your screaming orgasm, sir.",
+      "Your blow job, sir.",
+      "Your slippery nipple, sir.",
+      "Your sex on the beach, sir.",
+      "Your slow comfortable screw, sir.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, at seated customer eye level. Upscale restaurant: dark round marble table foreground, small shot glass on round tray, candle, white napkin. Warm amber lighting, ornate wallpaper, cage chandelier, other diners background.",
+        motion_intensity: 0.38,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in tight black server uniform approaches holding tray with small shot glass. Sets shot glass in front of male customer with a polished professional gesture. Smiles briefly. Delivers her line. Customer pauses — leans back slightly with a slow smirk. Delivers his line. She holds his gaze. One very long beat. Then places both hands flat on the table, leans forward slightly, delivers her final line without blinking or changing expression.",
+        dialogue: "[Server, brightly professional]: 'Your screaming orgasm, sir.' — [Male customer, slowly]: 'That sounds like a personal invitation.' — [Server, completely flat, no expression]: 'It\\'s a shot.'"
+      },
+      {
+        style: "fixed medium shot seated eye level, upscale restaurant dark marble table candlelight, ornate wallpaper amber lighting cage chandelier, other diners background, no colour grading, candid restaurant feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels"
+      }
+    ])
+  },
+
+  // ── S3 — "Blow Job" shot · Instructions très professionnelles · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S3 — "Blow Job" shot · Instructions pro · 12s min',
+    sortOrder: 30,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels',
+    speakerLine: "Your blow job, sir.",
+    phraseVariations: [
+      "Your blow job, sir.",
+      "Your screaming orgasm, sir.",
+      "Your sex on the beach, sir.",
+      "Your slippery nipple, sir.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, at seated customer eye level. Upscale restaurant: dark round marble table foreground, small shot glass topped with a dome of whipped cream on tray, candle, white napkin. Warm amber lighting, ornate wallpaper, other diners background.",
+        motion_intensity: 0.38,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in tight black server uniform approaches holding tray with small shot glass topped with a dome of whipped cream. Sets it in front of male customer with a professional gesture. Delivers her line. Male customer blinks. Looks at the shot. Looks up at her. Clears his throat. Delivers his line. She looks at the shot glass, then back at him. Completely composed. Delivers her instructions in the same neutral professional voice she would use for a wine pairing — helpful, clear, without the faintest trace of irony.",
+        dialogue: "[Server, warmly professional]: 'Your blow job, sir.' — [Male customer, after a pause]: 'For... free?' — [Server, neutrally instructive]: 'You don\\'t use your hands. Just tilt your head back. The cream comes with it.'"
+      },
+      {
+        style: "fixed medium shot seated eye level, upscale restaurant dark marble table candlelight, ornate wallpaper amber lighting cage chandelier, other diners background, no colour grading, candid restaurant feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels. Small shot glass with perfect dome of whipped cream on round tray"
+      }
+    ])
+  },
+
+  // ── S4 — "Slippery Nipple" · Addition sans un mot · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S4 — "Slippery Nipple" · Addition sans réponse · 12s min',
+    sortOrder: 40,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels',
+    speakerLine: "Your slippery nipple.",
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, at seated customer eye level. Upscale restaurant: dark round marble table foreground, black chair, small shot glass on tray, candle. Warm amber lighting, ornate wallpaper, cage chandelier, other diners background.",
+        motion_intensity: 0.36,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman in tight black server uniform approaches, shot glass balanced on tray. Sets glass professionally in front of male customer. Delivers her line. Long pause. Customer leans forward. Delivers his line very sincerely. She looks at him. A very long beat where nothing happens. Then, without a word, she reaches into her apron pocket. Places the bill folder on the table in front of him. Turns. Walks away at exactly the same professional pace she arrived with, without looking back.",
+        dialogue: "[Server, professionally warm]: 'Your slippery nipple.' — [Male customer, with complete sincerity]: 'Which one?' — [Server, placing the bill folder on the table without turning back]: '...'"
+      },
+      {
+        style: "fixed medium shot seated eye level, upscale restaurant dark marble table candlelight, ornate wallpaper amber lighting cage chandelier, other diners background, no colour grading, candid warm restaurant feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels. Black leather bill folder placed on table"
+      }
+    ])
+  },
+
+  // ─── SÉRIE MANGER DANS L'ASSIETTE ──────────────────────────────────
+
+  // ── S5 — Éclair · Avale tout · Choke + crème · Vanilla options · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S5 — Éclair · Avale tout · Choke · "Vanilla options" · 12s min',
+    sortOrder: 50,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, chest badge, long dark wavy hair',
+    promptJson: JSON.stringify([
+      {
+        framing: "Handheld vertical close medium shot, camera very close — almost at her chest level as she stands at table. Intimate and slightly shaky. Dark marble table edge foreground. Warm candlelight dominant light source, everything slightly underexposed except her face. Other diners very blurred background.",
+        motion_intensity: 0.44,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman at table, white dessert plate in both hands. Sets it down gently. Smiles professionally. Delivers her line. Male customer off-screen responds. She nods. Places both hands flat on the table. Bends forward slowly and deliberately over the plate. Takes the entire éclair in one long unhurried motion directly from the plate — no hands — éclair completely gone. Straightens back up. Whipped cream and chocolate glaze visible on her lower lip and chin. Immediately chokes. Pulls back. Both hands cover mouth. Eyes watering. One long breath. Picks up napkin. Wipes mouth and chin thoroughly. Smooths uniform. Looks back at customer completely straight-faced. Delivers final line.",
+        dialogue: "[Server, warm]: 'Your éclair with profiteroles.' — [Male customer, off-screen]: 'I ordered vanilla, not chocolate.' — [Server, nodding]: 'No problem.' — [Server, after wiping face, completely composed]: 'Would you like to see the vanilla options?'"
+      },
+      {
+        style: "handheld vertical close medium shot at chest level, intimate slightly shaky, dark marble table edge foreground, warm candlelight dominant available light slightly underexposed, other diners very blurred background, natural iPhone grain, no colour grading, real candid feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage prominent at this angle, chest badge, long dark wavy hair. Plate: one long chocolate éclair standing upright vertically, two round profiteroles at its base, chocolate glaze, whipped cream on top, white plate"
+      }
+    ])
+  },
+
+  // ── S6 — Éclair · Grosse bouchée · Choke · Recover · MEILLEUR · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S6 — Éclair · Grosse bouchée · Choke · Recover · MEILLEUR · 12s min',
+    isBest: true,
+    sortOrder: 51,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, chest badge, long dark wavy hair',
+    promptJson: JSON.stringify([
+      {
+        framing: "Handheld vertical close medium shot, camera very close — almost at her chest level as she stands at table. Intimate and slightly shaky. Dark marble table edge foreground. Warm candlelight dominant light source, everything slightly underexposed except her face. Other diners very blurred background.",
+        motion_intensity: 0.44,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman at table, white dessert plate in both hands. Sets it down gently. Smiles professionally. Delivers her line. Male customer off-screen responds. She nods. Places both hands flat on the table. Bends forward over the plate — takes one very large bite from the top of the éclair directly from the plate, no hands — more than half of it disappears in one bite. Straightens back up chewing. Whipped cream visible on her lower lip and chin. Immediately chokes on the oversized bite. Both hands fly to mouth. Eyes watering. She chews through it. One long breath. Picks up napkin. Wipes mouth and chin carefully. Smooths her uniform. Looks back at customer completely straight-faced. Delivers final line.",
+        dialogue: "[Server, warm]: 'Your éclair with profiteroles.' — [Male customer, off-screen]: 'I ordered vanilla, not chocolate.' — [Server, nodding]: 'No problem.' — [Server, after wiping face, composed]: 'Would you like to see the vanilla options?'"
+      },
+      {
+        style: "handheld vertical close medium shot at chest level, intimate slightly shaky, dark marble table edge foreground, warm candlelight dominant available light slightly underexposed, other diners very blurred background, natural iPhone grain, no colour grading, real candid feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage prominent at this angle, chest badge, long dark wavy hair. Plate: one long chocolate éclair standing upright vertically with large bite taken from top, two round profiteroles at its base, whipped cream and chocolate glaze, white plate — éclair visibly half eaten after the bite"
+      }
+    ])
+  },
+
+  // ── S7 — Soupe froide · Boire directement · Confirme + emporte · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S7 — Soupe froide · Boire directement · "I\'ll have that warmed up" · 12s min',
+    sortOrder: 60,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, at seated customer eye level. Upscale restaurant: dark round marble table foreground, white soup bowl with cream velouté on plate, white napkin, candle, silverware. Warm amber lighting, ornate wallpaper, cage chandelier, other diners background.",
+        motion_intensity: 0.42,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman approaches marble table. Places white soup bowl in front of male customer with professional grace. Smiles. Delivers her line. Customer responds, gesturing at the soup. She looks at the bowl. Nods seriously. Picks up the soup bowl with both hands — lifts it to her mouth — takes a long slow deliberate sip directly from the edge of the bowl, eyes closed briefly in concentration. Sets bowl back on plate. A single considered nod. Wipes the corner of her mouth with the back of her wrist. Then picks up the bowl again. Walks away. Delivers her line over her shoulder without turning back fully.",
+        dialogue: "[Server, warmly professional]: 'Tonight\\'s velouté, sir.' — [Customer, gesturing at bowl]: 'It\\'s completely cold.' — [Server, after sipping from bowl, single nod]: 'I\\'ll have that warmed up.'"
+      },
+      {
+        style: "fixed medium shot seated eye level, upscale restaurant dark marble table candlelight, ornate wallpaper amber lighting cage chandelier, other diners background, no colour grading, candid warm restaurant feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels. White soup bowl with cream-coloured velouté on white plate"
+      }
+    ])
+  },
+
+  // ── S8 — Steak trop saignant · Goûter à mains nues · "Medium-rare" · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S8 — Steak saignant · Goûter à mains nues · "Medium-rare" · 12s min',
+    sortOrder: 70,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels',
+    promptJson: JSON.stringify([
+      {
+        framing: "Fixed medium shot, at seated customer eye level. Upscale restaurant: dark round marble table foreground, large white plate with perfectly plated steak fillet and garnish, wine glass, candle, silverware. Warm amber lighting, ornate wallpaper, cage chandelier, other diners background.",
+        motion_intensity: 0.44,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman places steak plate in front of male customer with professional ease. He cuts into the steak. Looks up. Delivers his complaint. She looks at the steak. Leans over. Picks up the steak fillet with both hands from his plate. Turns it over slowly. Examines it. Takes a deliberate considered bite from the edge — chews slowly. Expression: professional concentration, like a sommelier assessing a vintage. Replaces the steak on his plate carefully, precisely. Wipes both hands clean on her apron in two neat strokes. Delivers her assessment in the same tone a doctor delivers a diagnosis.",
+        dialogue: "[Customer, looking at cut steak]: 'This is way too rare.' — [Server, after biting and chewing thoughtfully]: 'Medium-rare. I\\'d call that medium-rare.' — [Brief pause] — 'I can have the kitchen take it up to medium if you prefer.'"
+      },
+      {
+        style: "fixed medium shot seated eye level, upscale restaurant dark marble table candlelight, ornate wallpaper amber lighting cage chandelier, other diners background, no colour grading, candid warm restaurant feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, small chest badge, long dark wavy hair, nude pointed heels. Large white plate with plated steak fillet and garnish"
+      }
+    ])
+  },
+
+  // ── S9 — "Extra cream" · Crème partout sur le visage · Recover total · 12s min ──
+  {
+    niche: 'serveuse',
+    subNiche: 'serveuse',
+    title: 'S9 — "Extra cream" · Crème partout visage · Recover · 12s min',
+    sortOrder: 80,
+    outfitText: 'tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, chest badge, long dark wavy hair',
+    promptJson: JSON.stringify([
+      {
+        framing: "Handheld vertical close medium shot, camera close — almost at her chest level as she stands at table. Intimate and slightly shaky. Dark marble table edge foreground. Warm candlelight dominant light source, slightly underexposed. Other diners very blurred background.",
+        motion_intensity: 0.44,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman approaches with white dessert plate holding a profiterole tower topped with an enormous mound of whipped cream. Sets plate down with professional care. Smiles. Customer off-screen delivers his request. She nods. Studies the tower very briefly. Then bends forward — takes one very large deliberate bite from the top of the cream mound directly from the plate, no hands. Straightens back up. Whipped cream covers her nose, both cheeks, and her chin entirely. Massive white coverage. She blinks once. Picks up napkin from the table. Wipes meticulously — nose, left cheek, right cheek, chin — in several careful practised strokes. Smooths her uniform. Looks back at customer. Completely composed. Delivers final line.",
+        dialogue: "[Customer, off-screen]: 'Could I get some extra cream on that?' — [Server studies tower — no words — bites in] — [Server, after wiping face thoroughly, fully composed]: 'Our kitchen will bring that right out for you.'"
+      },
+      {
+        style: "handheld vertical close medium shot at chest level, intimate slightly shaky, dark marble table edge foreground, warm candlelight dominant available light slightly underexposed, other diners very blurred background, natural iPhone grain, no colour grading, real candid feel — tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage prominent at this angle, chest badge, long dark wavy hair. Plate: profiterole tower with enormous mound of whipped cream — whipped cream covers face entirely after bite: nose, both cheeks, chin"
+      }
+    ])
+  },
+
   // ── P17 — Fauteuil roulant · Album photos · MEILLEUR (triangle rouge) ──
   {
     niche: 'vieux',
