@@ -10,13 +10,14 @@ import { encryptIfPresent } from '@/lib/crypto'
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
+  const { id } = await params
   const account = await prisma.instagramAccount.findFirst({
-    where: { id: params.id, userId: session.user.id },
+    where: { id, userId: session.user.id },
   })
   if (!account) return NextResponse.json({ error: 'Compte introuvable' }, { status: 404 })
 
@@ -33,7 +34,7 @@ export async function PATCH(
   if (deviceJson !== undefined) data.deviceJson = deviceJson
 
   const updated = await prisma.instagramAccount.update({
-    where: { id: params.id },
+    where: { id },
     data,
     select: {
       id: true,
@@ -51,16 +52,17 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
+  const { id } = await params
   const account = await prisma.instagramAccount.findFirst({
-    where: { id: params.id, userId: session.user.id },
+    where: { id, userId: session.user.id },
   })
   if (!account) return NextResponse.json({ error: 'Compte introuvable' }, { status: 404 })
 
-  await prisma.instagramAccount.delete({ where: { id: params.id } })
+  await prisma.instagramAccount.delete({ where: { id } })
   return NextResponse.json({ ok: true })
 }
