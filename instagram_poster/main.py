@@ -273,17 +273,25 @@ def process_post(pending: dict, config: dict) -> None:
 
 
 def _get_downloader(config: dict):
-    """Initialise le downloader Drive depuis config ou env."""
-    # Essayer depuis config.json d'abord, puis depuis l'environnement
-    creds_path = config.get("google_credentials_path")
-    refresh_token = os.environ.get("GOOGLE_REFRESH_TOKEN")
-    client_id = os.environ.get("GOOGLE_CLIENT_ID")
-    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+    """Initialise le downloader Drive depuis config.json ou env vars (fallback)."""
+    # Priorité : config.json → puis variables d'environnement
+    refresh_token = (
+        config.get("google_refresh_token")
+        or os.environ.get("GOOGLE_REFRESH_TOKEN")
+    )
+    client_id = (
+        config.get("google_client_id")
+        or os.environ.get("GOOGLE_CLIENT_ID")
+    )
+    client_secret = (
+        config.get("google_client_secret")
+        or os.environ.get("GOOGLE_CLIENT_SECRET")
+    )
 
     if refresh_token and client_id and client_secret:
         return drive_downloader.DriveDownloader(refresh_token, client_id, client_secret)
 
-    logger.warning("Credentials Drive non configurés — téléchargement Drive impossible")
+    logger.warning("Credentials Google Drive non configurés dans config.json — téléchargement Drive désactivé")
     return None
 
 
