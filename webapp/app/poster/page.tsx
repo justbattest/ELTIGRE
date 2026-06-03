@@ -244,7 +244,7 @@ function ScheduleModal({
             >
               {accounts.filter(a => a.status !== 'banned').map(a => (
                 <option key={a.id} value={a.id}>
-                  @{a.username} — {a.networkName} — Phase {a.warmupPhase} ({WARMUP_LIMITS[a.warmupPhase]}/j)
+                  @{a.username} — {a.networkName} — Phase {a.warmupPhase} (max {WARMUP_LIMITS[a.warmupPhase]}/j)
                 </option>
               ))}
             </select>
@@ -407,11 +407,9 @@ function AddAccountModal({
               onChange={e => setNetworkName(e.target.value)}
               className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
             >
-              <option value="iPhone_SIM1">iPhone SIM 1 (comptes 1-3)</option>
-              <option value="iPhone_SIM2">iPhone SIM 2 (comptes 4-6)</option>
-              <option value="iPhone_SIM3">iPhone SIM 3 (comptes 7-9)</option>
-              <option value="iPhone_SIM4">iPhone SIM 4 (backup)</option>
-              <option value="iPhone_SIM5">iPhone SIM 5 (backup)</option>
+              <option value="iPhone 12promax">iPhone 12promax</option>
+              <option value="iPhone 15promax">iPhone 15promax</option>
+              <option value="iPhone 14">iPhone 14</option>
             </select>
           </div>
           <div>
