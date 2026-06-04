@@ -92,7 +92,8 @@ export async function GET(req: NextRequest) {
 
     // Décrypter les credentials pour le Mac
     const password = decryptIfPresent(account.passwordEnc)
-    const sessionJson = account.sessionJson // Déjà chiffré côté Railway — le Mac le déchiffre avec MAC_API_TOKEN
+    const totpSecret = decryptIfPresent(account.totpSecret)
+    const sessionJson = account.sessionJson
     const deviceJson = account.deviceJson
 
     // Si reset du compteur quotidien nécessaire, le faire maintenant
@@ -115,11 +116,12 @@ export async function GET(req: NextRequest) {
       account: {
         id: account.id,
         username: account.username,
-        password,           // Déchiffré — en clair dans la réponse HTTPS
+        password,
+        totpSecret,         // Secret TOTP décrypté (généré automatiquement par pyotp au login)
         networkName: account.networkName,
         warmupPhase: account.warmupPhase,
-        sessionJson,        // JSON session instagrapi (chiffré par le Mac avec sa propre clé)
-        deviceJson,         // JSON device fingerprint
+        sessionJson,
+        deviceJson,
       },
     })
   }

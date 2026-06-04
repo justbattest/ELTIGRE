@@ -46,6 +46,7 @@ def post_reel(
     video_path: str,
     caption: str,
     config: dict,
+    totp_secret: str | None = None,
     retry_count: int = 0,
 ) -> dict:
     """
@@ -59,6 +60,9 @@ def post_reel(
 
     cl: Client | None = None
     try:
+        # Injecter le totp_secret dans la config pour que session_manager puisse le lire
+        if totp_secret and account_id in config.get("accounts", {}):
+            config["accounts"][account_id]["totp_secret"] = totp_secret
         cl = session_manager.get_client(account_id, username, password, config)
 
         # Délai humain avant l'upload
@@ -84,7 +88,7 @@ def post_reel(
         logger.warning(f"[{username}] Rate limit — attente 15min: {e}")
         if retry_count < 1:
             time.sleep(random.uniform(900, 1800))  # 15-30 min
-            return post_reel(account_id, username, password, video_path, caption, config, retry_count + 1)
+            return post_reel(account_id, username, password, video_path, caption, config, totp_secret, retry_count + 1)
         return {
             "success": False,
             "error": f"Rate limit après retry: {e}",
@@ -141,6 +145,7 @@ def post_photo(
     image_path: str,
     caption: str,
     config: dict,
+    totp_secret: str | None = None,
     retry_count: int = 0,
 ) -> dict:
     """
@@ -153,6 +158,8 @@ def post_photo(
     logger.info(f"[{username}] Posting Photo: {Path(image_path).name}")
 
     try:
+        if totp_secret and account_id in config.get("accounts", {}):
+            config["accounts"][account_id]["totp_secret"] = totp_secret
         cl = session_manager.get_client(account_id, username, password, config)
 
         human_delay(3, 10)
@@ -199,13 +206,13 @@ def post(
     caption: str,
     media_type: str,  # 'reel' | 'photo'
     config: dict,
+    totp_secret: str | None = None,
 ) -> dict:
     """Dispatcher : poste selon le media_type."""
     if media_type == "photo":
-        return post_photo(account_id, username, password, media_path, caption, config)
+        return post_photo(account_id, username, password, media_path, caption, config, totp_secret)
     else:
-        # Par défaut : Reel
-        return post_reel(account_id, username, password, media_path, caption, config)
+        return post_reel(account_id, username, password, media_path, caption, config, totp_secret)
 
 
 def _read_session_file(account_id: str, config: dict) -> str | None:

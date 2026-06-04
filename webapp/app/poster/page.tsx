@@ -346,7 +346,8 @@ function AddAccountModal({
 }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [networkName, setNetworkName] = useState('iPhone_SIM1')
+  const [totpSecret, setTotpSecret] = useState('')
+  const [networkName, setNetworkName] = useState('iPhone 12promax')
   const [warmupPhase, setWarmupPhase] = useState(1)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -360,7 +361,7 @@ function AddAccountModal({
       const res = await fetch('/api/instagram/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password, networkName, warmupPhase }),
+        body: JSON.stringify({ username: username.trim(), password, totpSecret: totpSecret.trim() || null, networkName, warmupPhase }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
@@ -401,7 +402,21 @@ function AddAccountModal({
             />
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Réseau hotspot</label>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">
+              Clé 2FA Google Authenticator
+            </label>
+            <input
+              value={totpSecret}
+              onChange={e => setTotpSecret(e.target.value)}
+              placeholder="Ex: JBSW Y3DP EHPK 3PXP (espaces ok)"
+              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 font-mono"
+            />
+            <p className="text-xs text-zinc-600 mt-1">
+              Instagram → Sécurité → Auth. 2 facteurs → Application → "Entrer la clé manuellement"
+            </p>
+          </div>
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Téléphone hotspot</label>
             <select
               value={networkName}
               onChange={e => setNetworkName(e.target.value)}

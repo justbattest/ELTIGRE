@@ -180,6 +180,7 @@ def process_post(pending: dict, config: dict) -> None:
     account_id = account_data["id"]
     username = account_data["username"]
     password = account_data["password"] or ""
+    totp_secret = account_data.get("totpSecret")  # Secret TOTP depuis la DB (décrypté par Railway)
     network_name_key = account_data["networkName"]
     caption = post_data.get("caption") or ""
     media_type = post_data.get("mediaType", "reel")
@@ -254,6 +255,7 @@ def process_post(pending: dict, config: dict) -> None:
             account_id=account_id,
             username=username,
             password=password,
+            totp_secret=totp_secret,
             media_path=media_path,
             caption=caption,
             media_type=media_type,
