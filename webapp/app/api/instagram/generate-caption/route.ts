@@ -57,23 +57,32 @@ export async function POST(req: NextRequest) {
     `Type de contenu: ${mediaType}`,
   ].filter(Boolean).join('\n')
 
-  const prompt = `Tu es un expert en contenu Instagram viral. Tu dois écrire une caption Instagram native pour une vidéo.
+  const prompt = `You are an Instagram engagement expert. Write ONE short open question as a caption for this video/carousel.
 
-CONTEXTE DE LA VIDÉO:
+CONTENT CONTEXT:
 ${nicheContext}
 
-RÈGLES ABSOLUES:
-- Ton naturel, humain, pas "marketing"
-- Commence par une hook qui donne envie de regarder (sans "Hook:" ou autre label)
-- 2-4 lignes maximum (caption courte = plus de reach)
-- Pas de hashtags dans la caption (ils iront en commentaire)
-- Peut inclure 1-2 emojis max si ça colle naturellement
-- En français
-- Jamais de majuscules sur TOUT un mot (sauf acronymes)
-- Le texte doit faire réagir : rire, choc, curiosité, ou reconnaissance
+ABSOLUTE RULES:
+- Language: ENGLISH ONLY — never French
+- Format: 1 single open question, MAX 12 words
+- The question must make people WANT to answer — it creates curiosity, debate, or self-recognition
+- Directly related to what happens in the video (not generic)
+- Natural, casual tone — like a friend asking
+- 0-1 emoji max, only if it fits perfectly
+- NO hashtags in the caption
+- Never start with "Would you", vary the structure
+- Never be cringe or try-hard
 
-RÉPONDS EN JSON:
-{"caption": "...", "hashtags": ["hashtag1", "hashtag2", ...]}`
+GOOD EXAMPLES:
+- "Be honest — how many of you have done this? 😭"
+- "Is this illegal or totally acceptable?"
+- "Tell me I'm not the only one"
+- "What would YOU have said here? 👀"
+- "Raise your hand if this is literally your job 🙋"
+- "The last thing she said though 💀"
+
+RESPOND IN JSON ONLY:
+{"caption": "...", "hashtags": ["hashtag1", "hashtag2", "hashtag3"]}`
 
   let caption = ''
   let hashtags: string[] = []

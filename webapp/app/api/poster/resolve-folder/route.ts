@@ -14,39 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { decryptIfPresent } from '@/lib/crypto'
-
-// Refresh token Google via OAuth2
-async function getAccessToken(refreshToken: string, clientId: string, clientSecret: string): Promise<string> {
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
-  })
-  const data = await res.json()
-  if (!data.access_token) throw new Error('Impossible de rafraîchir le token Google Drive')
-  return data.access_token
-}
-
-function extractFolderId(url: string): string | null {
-  // Formats : /folders/ID, /drive/folders/ID, id=ID
-  const patterns = [
-    /\/folders\/([a-zA-Z0-9_-]+)/,
-    /id=([a-zA-Z0-9_-]+)/,
-  ]
-  for (const p of patterns) {
-    const m = url.match(p)
-    if (m) return m[1]
-  }
-  // ID pur
-  if (/^[a-zA-Z0-9_-]{25,}$/.test(url)) return url
-  return null
-}
+import { getAccessToken, extractDriveId } from '@/lib/drive-api'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -55,7 +23,7 @@ export async function POST(req: NextRequest) {
   const { folderUrl } = await req.json()
   if (!folderUrl) return NextResponse.json({ error: 'folderUrl requis' }, { status: 400 })
 
-  const folderId = extractFolderId(folderUrl)
+  const folderId = extractDriveId(folderUrl)
   if (!folderId) return NextResponse.json({ error: 'Impossible d\'extraire l\'ID du dossier Drive' }, { status: 400 })
 
   // Récupérer les credentials Google
@@ -64,7 +32,7 @@ export async function POST(req: NextRequest) {
     select: { googleRefreshToken: true },
   })
 
-  const refreshToken = decryptIfPresent(creds?.googleRefreshToken)
+  const refreshToken = creds?.googleRefreshToken || null
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 

@@ -62,6 +62,16 @@ type Generation = {
   postCount: number
 }
 
+type DriveCarousel = {
+  id: string
+  name: string
+  runId: string
+  characterName: string
+  previewUrl: string
+  fileUrls: string[]
+  fileIds: string[]
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const WARMUP_LIMITS: Record<number, number> = { 1: 1, 2: 1, 3: 2, 4: 3 }
@@ -118,9 +128,9 @@ function WarmupBar({ phase }: { phase: number }) {
   )
 }
 
-// ─── Modal : Planifier un carousel ────────────────────────────────────────────
+// ─── Quick Carousel Scheduler ──────────────────────────────────────────────────
 
-function CarouselModal({
+function QuickCarouselModal({
   accounts,
   onClose,
   onScheduled,
@@ -129,199 +139,292 @@ function CarouselModal({
   onClose: () => void
   onScheduled: () => void
 }) {
-  const [folderUrl, setFolderUrl] = useState('')
-  const [resolvedFiles, setResolvedFiles] = useState<{ name: string; id: string; downloadUrl: string }[]>([])
-  const [resolving, setResolving] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id || '')
-  const [caption, setCaption] = useState('')
-  const [scheduledFor, setScheduledFor] = useState('')
-  const [generating, setGenerating] = useState(false)
-  const [scheduling, setScheduling] = useState(false)
+  const [perDay, setPerDay] = useState(2)
+  const [numDays, setNumDays] = useState(3)
+  const [step, setStep] = useState<'config' | 'scanning' | 'preview' | 'scheduling' | 'done'>('config')
+  const [carousels, setCarousels] = useState<DriveCarousel[]>([])
+  const [selected, setSelected] = useState<DriveCarousel[]>([])
+  const [captions, setCaptions] = useState<string[]>([])
   const [error, setError] = useState('')
+  const [progress, setProgress] = useState('')
+  const [result, setResult] = useState<{ scheduled: number; firstPostAt?: string } | null>(null)
 
-  useEffect(() => {
-    const d = new Date()
-    d.setHours(d.getHours() + 1, 0, 0, 0)
-    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-    setScheduledFor(local)
-  }, [])
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId)
+  const total = perDay * numDays
 
-  const resolveFolder = async () => {
-    if (!folderUrl.trim()) return setError('Colle l\'URL du dossier Drive')
-    setResolving(true)
+  const scan = async () => {
+    if (!selectedAccount) return setError('Sélectionner un compte')
+    if (!selectedAccount.characterName) return setError('Ce compte n\'a pas de personnage lié (va dans Comptes → modifier)')
+    setStep('scanning')
     setError('')
     try {
-      const res = await fetch('/api/poster/resolve-folder', {
+      const res = await fetch('/api/poster/scan-carousels', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folderUrl: folderUrl.trim() }),
+        body: JSON.stringify({ characterName: selectedAccount.characterName }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur')
-      setResolvedFiles(data.files || [])
+      if (!res.ok) throw new Error(data.error || 'Erreur scan')
+      if (!data.carousels?.length) {
+        setError(data.message || 'Aucun carousel trouvé dans Drive pour ce personnage.')
+        setStep('config')
+        return
+      }
+      setCarousels(data.carousels)
+
+      // Sélection aléatoire de N carousels
+      const shuffled = [...data.carousels].sort(() => Math.random() - 0.5)
+      const picked = shuffled.slice(0, Math.min(total, shuffled.length))
+      setSelected(picked)
+      setStep('preview')
     } catch (e) {
       setError(String(e))
-    } finally {
-      setResolving(false)
+      setStep('config')
     }
   }
 
-  const generateCaption = async () => {
-    setGenerating(true)
-    setError('')
-    try {
-      const res = await fetch('/api/instagram/generate-caption', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ niche: 'carousel', mediaType: 'carousel' }),
-      })
-      const data = await res.json()
-      if (res.ok) setCaption(data.caption || '')
-    } catch { /* ignore */ }
-    finally { setGenerating(false) }
-  }
-
   const schedule = async () => {
-    if (!selectedAccountId) return setError('Sélectionner un compte')
-    if (resolvedFiles.length < 2) return setError('Résoudre le dossier d\'abord (min 2 images)')
-    setScheduling(true)
+    setStep('scheduling')
     setError('')
+
+    // Générer toutes les captions en parallèle avec Claude
+    setProgress('Génération des captions avec Claude...')
+    let generatedCaptions: string[] = []
     try {
-      const driveFilesJson = JSON.stringify(resolvedFiles.map(f => f.downloadUrl))
-      const res = await fetch('/api/instagram/posts', {
+      const captionResults = await Promise.all(
+        selected.map(() =>
+          fetch('/api/instagram/generate-caption', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              niche: 'carousel',
+              mediaType: 'carousel',
+              characterName: selectedAccount?.characterName,
+              language: 'en',
+            }),
+          }).then(r => r.json()).then(d => d.caption || '')
+        )
+      )
+      generatedCaptions = captionResults
+      setCaptions(generatedCaptions)
+    } catch {
+      generatedCaptions = selected.map(() => '')
+    }
+
+    // Planification bulk
+    setProgress('Planification en cours...')
+    try {
+      const res = await fetch('/api/poster/bulk-schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accountId: selectedAccountId,
-          driveFilesJson,
-          caption,
-          mediaType: 'carousel',
-          scheduledFor: scheduledFor || null,
+          carousels: selected.map((c, i) => ({
+            fileUrls: c.fileUrls,
+            caption: generatedCaptions[i] || '',
+          })),
+          perDay,
+          startDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // demain
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur')
+      if (!res.ok) throw new Error(data.error || 'Erreur planification')
+      setResult({ scheduled: data.scheduled, firstPostAt: data.firstPostAt })
+      setStep('done')
       onScheduled()
-      onClose()
     } catch (e) {
       setError(String(e))
-    } finally {
-      setScheduling(false)
+      setStep('preview')
     }
   }
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-white/[0.07] rounded-2xl w-full max-w-lg shadow-2xl">
+
+        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
-          <h2 className="font-semibold text-white">Planifier un Carousel</h2>
+          <div>
+            <h2 className="font-semibold text-white">Planifier des Carousels</h2>
+            <p className="text-xs text-zinc-500 mt-0.5">Scan Drive auto · Horaires US optimaux · Captions Claude</p>
+          </div>
           <button onClick={onClose}><X className="w-5 h-5 text-zinc-500 hover:text-white" /></button>
         </div>
 
-        <div className="p-5 space-y-4">
-          {/* URL dossier Drive */}
-          <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">URL du dossier Drive (1 dossier = 4 images)</label>
-            <div className="flex gap-2">
-              <input
-                value={folderUrl}
-                onChange={e => setFolderUrl(e.target.value)}
-                placeholder="https://drive.google.com/drive/folders/..."
-                className="flex-1 bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
-              />
-              <button
-                onClick={resolveFolder}
-                disabled={resolving}
-                className="px-3 py-2 rounded-xl text-sm bg-zinc-700 hover:bg-zinc-600 text-white transition disabled:opacity-50 whitespace-nowrap"
-              >
-                {resolving ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Charger'}
-              </button>
-            </div>
-          </div>
+        <div className="p-5 space-y-5">
 
-          {/* Aperçu des images */}
-          {resolvedFiles.length > 0 && (
-            <div>
-              <p className="text-xs text-zinc-400 mb-2">{resolvedFiles.length} image{resolvedFiles.length > 1 ? 's' : ''} trouvée{resolvedFiles.length > 1 ? 's' : ''}</p>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {resolvedFiles.map((f, i) => (
-                  <div key={f.id} className="shrink-0 w-16 h-16 bg-zinc-800 rounded-lg overflow-hidden relative border border-white/[0.07]">
-                    <img
-                      src={f.downloadUrl}
-                      alt={f.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                    />
-                    <span className="absolute bottom-0.5 right-1 text-[9px] text-white bg-black/60 px-0.5 rounded">{i + 1}</span>
-                  </div>
-                ))}
+          {/* Step: config */}
+          {(step === 'config' || step === 'scanning') && (
+            <>
+              {/* Compte */}
+              <div>
+                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Compte</label>
+                <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)}
+                  className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+                >
+                  {accounts.filter(a => a.status !== 'banned').map(a => (
+                    <option key={a.id} value={a.id}>
+                      @{a.username}{a.characterName ? ` · ${a.characterName}` : ' (pas de personnage)'} — {a.networkName}
+                    </option>
+                  ))}
+                </select>
+                {selectedAccount?.characterName && (
+                  <p className="text-xs text-zinc-600 mt-1">
+                    Scan Drive : <span className="text-violet-400">{selectedAccount.characterName}/carousels/</span>
+                  </p>
+                )}
               </div>
+
+              {/* Par jour */}
+              <div>
+                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-2">Par jour</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button key={n} onClick={() => setPerDay(n)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${
+                        perDay === n ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nombre de jours */}
+              <div>
+                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-2">
+                  Nombre de jours — <span className="text-violet-400">{total} carousels au total</span>
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 5, 7].map(n => (
+                    <button key={n} onClick={() => setNumDays(n)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${
+                        numDays === n ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      {n}j
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Info horaires */}
+              <div className="bg-zinc-800/40 border border-white/[0.05] rounded-xl px-4 py-3 text-xs text-zinc-500 space-y-0.5">
+                <p className="text-zinc-400 font-medium mb-1">Horaires US (EST) automatiques :</p>
+                <p>☀️ Matin : 6h-9h EST · 🌆 Midi : 11h30-13h30 EST · 🌙 Soir : 19h-21h30 EST</p>
+                <p>Variation aléatoire ±7-25 min · jamais H:00 ou H:30 exacte</p>
+              </div>
+
+              {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
+            </>
+          )}
+
+          {/* Step: scanning */}
+          {step === 'scanning' && (
+            <div className="flex flex-col items-center py-8 gap-3">
+              <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+              <p className="text-sm text-zinc-400">Scan Drive en cours...</p>
+              <p className="text-xs text-zinc-600">{selectedAccount?.characterName}/carousels/</p>
             </div>
           )}
 
-          {/* Compte */}
-          <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Compte cible</label>
-            <select
-              value={selectedAccountId}
-              onChange={e => setSelectedAccountId(e.target.value)}
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
-            >
-              {accounts.filter(a => a.status !== 'banned').map(a => (
-                <option key={a.id} value={a.id}>
-                  @{a.username}{a.characterName ? ` · ${a.characterName}` : ''} — {a.networkName}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Step: preview */}
+          {step === 'preview' && selected.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-white font-medium">
+                  <span className="text-violet-400">{selected.length}</span> carousels sélectionnés
+                  <span className="text-zinc-500 text-xs ml-2">sur {carousels.length} disponibles</span>
+                </p>
+                <button
+                  onClick={() => {
+                    const shuffled = [...carousels].sort(() => Math.random() - 0.5)
+                    setSelected(shuffled.slice(0, Math.min(total, shuffled.length)))
+                  }}
+                  className="text-xs text-zinc-400 hover:text-white flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" /> Reshuffler
+                </button>
+              </div>
 
-          {/* Caption */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-zinc-400 uppercase tracking-wider">Caption</label>
-              <button onClick={generateCaption} disabled={generating} className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50">
-                {generating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                {generating ? 'Génération...' : 'Générer avec Claude'}
-              </button>
+              {/* Aperçu des carousels sélectionnés */}
+              <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                {selected.map((c, i) => (
+                  <div key={c.id} className="aspect-square bg-zinc-800 rounded-lg overflow-hidden relative">
+                    <img
+                      src={c.previewUrl}
+                      alt={c.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[9px] text-white px-1 py-0.5 text-center">
+                      #{i + 1} · {c.fileUrls.length} imgs
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-zinc-800/40 rounded-xl px-4 py-3 text-xs text-zinc-500">
+                Captions générées automatiquement en anglais par Claude (question ouverte).
+                Premier post demain aux meilleurs horaires US.
+              </div>
+
+              {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
             </div>
-            <textarea
-              value={caption}
-              onChange={e => setCaption(e.target.value)}
-              placeholder="Caption du carousel..."
-              rows={3}
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 resize-none focus:outline-none focus:border-violet-500/50"
-            />
-          </div>
+          )}
 
-          {/* Heure */}
-          <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Planifier pour</label>
-            <input
-              type="datetime-local"
-              value={scheduledFor}
-              onChange={e => setScheduledFor(e.target.value)}
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
-            />
-          </div>
+          {/* Step: scheduling */}
+          {step === 'scheduling' && (
+            <div className="flex flex-col items-center py-8 gap-3">
+              <Sparkles className="w-8 h-8 text-violet-400 animate-pulse" />
+              <p className="text-sm text-zinc-400">{progress}</p>
+            </div>
+          )}
 
-          {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
+          {/* Step: done */}
+          {step === 'done' && result && (
+            <div className="flex flex-col items-center py-8 gap-3 text-center">
+              <CheckCircle className="w-10 h-10 text-emerald-400" />
+              <p className="text-lg font-bold text-white">{result.scheduled} carousels planifiés ✓</p>
+              <p className="text-sm text-zinc-400">
+                Premier post : {result.firstPostAt
+                  ? new Date(result.firstPostAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                  : 'demain'}
+              </p>
+              <p className="text-xs text-zinc-600">Captions en anglais générées · Horaires US optimaux · Voir dans Queue posts</p>
+            </div>
+          )}
         </div>
 
+        {/* Footer */}
         <div className="flex gap-2 p-5 border-t border-white/[0.07]">
-          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white transition">Annuler</button>
-          <button
-            onClick={schedule}
-            disabled={scheduling || resolvedFiles.length < 2}
-            className="flex-1 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium disabled:opacity-50 transition flex items-center justify-center gap-2"
-          >
-            {scheduling ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {scheduling ? 'Planification...' : 'Planifier le carousel'}
+          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white transition">
+            {step === 'done' ? 'Fermer' : 'Annuler'}
           </button>
+          {step === 'config' && (
+            <button onClick={scan} disabled={!selectedAccount?.characterName}
+              className="flex-1 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium disabled:opacity-50 transition flex items-center justify-center gap-2"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Scanner Drive ({total} carousels)
+            </button>
+          )}
+          {step === 'preview' && (
+            <button onClick={schedule}
+              className="flex-1 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium transition flex items-center justify-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Planifier {selected.length} carousels
+            </button>
+          )}
         </div>
       </div>
     </div>
   )
 }
+
 
 // ─── Modal : Planifier un post ─────────────────────────────────────────────────
 
@@ -739,10 +842,10 @@ export default function PosterPage() {
   const [allCharacters, setAllCharacters] = useState<string[]>([])
   const [loadingGens, setLoadingGens] = useState(false)
   const [scheduleGen, setScheduleGen] = useState<Generation | null>(null)
-  const [showCarouselModal, setShowCarouselModal] = useState(false)
+  const [showQuickCarouselModal, setShowQuickCarouselModal] = useState(false)
   // Filtres galerie
   const [filterChar, setFilterChar] = useState<string>('all')
-  const [filterType, setFilterType] = useState<'all' | 'video' | 'image'>('all')
+  const [filterType, setFilterType] = useState<'all' | 'video' | 'image'>('video') // default: vidéos seulement
 
   // Queue
   const [posts, setPosts] = useState<Post[]>([])
@@ -1065,7 +1168,7 @@ export default function PosterPage() {
                     >
                       <RefreshCw className={`w-4 h-4 ${loadingGens ? 'animate-spin' : ''}`} />
                     </button>
-                    <button onClick={() => setShowCarouselModal(true)} disabled={accounts.length === 0}
+                    <button onClick={() => setShowQuickCarouselModal(true)} disabled={accounts.length === 0}
                       className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-800 border border-white/[0.07] text-zinc-300 hover:border-violet-500/50 hover:text-violet-300 disabled:opacity-40 transition whitespace-nowrap"
                     >
                       <LayoutGrid className="w-4 h-4" />
@@ -1111,10 +1214,21 @@ export default function PosterPage() {
                           <div className="aspect-[9/16] bg-zinc-800 relative">
                             {thumb ? (
                               gen.isVideo ? (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-zinc-900">
-                                  <Video className="w-7 h-7 text-violet-500" />
-                                  <span className="text-[10px] text-zinc-500 px-2 text-center">{gen.modelUsed || 'video'}</span>
-                                </div>
+                                // CDN Higgsfield = mp4 direct → lecture au hover
+                                (thumb.includes('cloudfront') || thumb.includes('.mp4')) ? (
+                                  <video
+                                    src={thumb}
+                                    muted playsInline preload="metadata"
+                                    className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+                                    onMouseEnter={e => (e.target as HTMLVideoElement).play().catch(() => {})}
+                                    onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0 }}
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-zinc-900">
+                                    <Video className="w-7 h-7 text-violet-500" />
+                                    <span className="text-[10px] text-zinc-500 px-2 text-center">{gen.modelUsed || 'video'}</span>
+                                  </div>
+                                )
                               ) : (
                                 <img src={thumb} alt="" className="w-full h-full object-cover" />
                               )
@@ -1316,10 +1430,10 @@ export default function PosterPage() {
           onScheduled={() => { loadPosts(); loadGenerations() }}
         />
       )}
-      {showCarouselModal && accounts.length > 0 && (
-        <CarouselModal
+      {showQuickCarouselModal && accounts.length > 0 && (
+        <QuickCarouselModal
           accounts={accounts}
-          onClose={() => setShowCarouselModal(false)}
+          onClose={() => setShowQuickCarouselModal(false)}
           onScheduled={() => { loadPosts(); setTab('queue') }}
         />
       )}
