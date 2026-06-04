@@ -197,11 +197,22 @@ async def run_validated_studio(
 
         if result.get("url"):
             completed += 1
+
+            # Upload Drive avant d'émettre l'event (pour inclure l'URL Drive dans la DB)
+            drive_video_url = None
+            if drive:
+                try:
+                    drive_result = await drive.upload_video(run_id, sub_niche or "conference_sport", shortcode, result["url"])
+                    drive_video_url = drive_result.get("drive_video_url") if isinstance(drive_result, dict) else drive_result
+                except Exception as drive_err:
+                    print(json.dumps({"type": "warn", "msg": f"Drive upload échoué: {drive_err}"}), flush=True)
+
             print(json.dumps({
                 "type": "generation",
                 "shortcode": shortcode,
                 "status": "complete",
                 "url": result["url"],
+                "drive_generated_url": drive_video_url,
                 "model": "seedance_2_0",
                 "fallback": False,
                 "prompt": prompt_json,
@@ -213,11 +224,6 @@ async def run_validated_studio(
                 "slide_index": 0,
                 "local_image_path": None,
             }), flush=True)
-
-            if drive:
-                asyncio.create_task(
-                    drive.upload_video(run_id, "conference_sport", shortcode, result["url"])
-                )
         else:
             failed += 1
             print(json.dumps({
@@ -307,6 +313,16 @@ async def run_video_studio(
 
         if result.get("url"):
             completed += 1
+
+            # Upload Drive avant d'émettre l'event
+            drive_video_url = None
+            if drive:
+                try:
+                    drive_result = await drive.upload_video(run_id, niche, shortcode, result["url"])
+                    drive_video_url = drive_result.get("drive_video_url") if isinstance(drive_result, dict) else drive_result
+                except Exception as drive_err:
+                    print(json.dumps({"type": "warn", "msg": f"Drive upload échoué: {drive_err}"}), flush=True)
+
             print(json.dumps({
                 "type": "generation",
                 "shortcode": shortcode,
@@ -325,13 +341,8 @@ async def run_video_studio(
                 "rank": i,
                 "slide_index": 0,
                 "local_image_path": None,
+                "drive_generated_url": drive_video_url,
             }), flush=True)
-
-            # Upload vers Google Drive en arrière-plan (non bloquant)
-            if drive:
-                asyncio.create_task(
-                    drive.upload_video(run_id, niche, shortcode, result["url"])
-                )
         else:
             failed += 1
             print(json.dumps({

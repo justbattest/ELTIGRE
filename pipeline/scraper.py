@@ -374,7 +374,22 @@ def scrape_profile(
             }), flush=True)
 
     # ── Essai 3 : Apify + proxies résidentiels ──
-    return scrape_profile_apify(profile_url, max_posts, apify_key)
+    if not apify_key:
+        raise RuntimeError(
+            "Tous les scrapers ont échoué. Cookie Instagram peut-être expiré. "
+            "Va dans Paramètres et copie un nouveau cookie sessionid depuis Chrome."
+        )
+    try:
+        return scrape_profile_apify(profile_url, max_posts, apify_key)
+    except Exception as e:
+        err_str = str(e)
+        if "x402" in err_str or "payment" in err_str.lower():
+            raise RuntimeError(
+                "Apify requiert maintenant un paiement (x402). "
+                "Le cookie Instagram est expiré ET Apify est bloqué. "
+                "Solution : Va dans Paramètres → colle un nouveau cookie sessionid Instagram."
+            )
+        raise
 
 
 # ── Extraction d'images ─────────────────────────────────────────────────────────
