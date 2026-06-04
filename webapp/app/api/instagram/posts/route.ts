@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     accountId,
     driveFileId,
     driveFileUrl,
+    driveFilesJson,   // Pour les carousels : JSON array d'URLs
     caption,
     mediaType = 'reel',
     scheduledFor,
@@ -50,8 +51,8 @@ export async function POST(req: NextRequest) {
   } = body
 
   if (!accountId) return NextResponse.json({ error: 'accountId requis' }, { status: 400 })
-  if (!driveFileId && !driveFileUrl) {
-    return NextResponse.json({ error: 'driveFileId ou driveFileUrl requis' }, { status: 400 })
+  if (!driveFileId && !driveFileUrl && !driveFilesJson) {
+    return NextResponse.json({ error: 'driveFileId, driveFileUrl ou driveFilesJson requis' }, { status: 400 })
   }
 
   // Vérifier que le compte appartient à l'utilisateur
@@ -89,6 +90,7 @@ export async function POST(req: NextRequest) {
       generationId: generationId ? Number(generationId) : null,
       driveFileId: driveFileId || null,
       driveFileUrl: driveFileUrl || null,
+      driveFilesJson: driveFilesJson || null,
       caption: caption || null,
       mediaType,
       scheduledFor: finalScheduledFor,

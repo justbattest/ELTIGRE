@@ -7,7 +7,7 @@ import { PageWrapper } from '@/components/PageWrapper'
 import {
   Plus, RefreshCw, Trash2, Calendar, CheckCircle,
   Clock, AlertCircle, XCircle, Wifi, User, ChevronDown,
-  Send, Sparkles, X, ExternalLink, AlertTriangle, Video,
+  Send, Sparkles, X, ExternalLink, AlertTriangle, Video, LayoutGrid,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -110,6 +110,211 @@ function WarmupBar({ phase }: { phase: number }) {
           }`}
         />
       ))}
+    </div>
+  )
+}
+
+// ─── Modal : Planifier un carousel ────────────────────────────────────────────
+
+function CarouselModal({
+  accounts,
+  onClose,
+  onScheduled,
+}: {
+  accounts: Account[]
+  onClose: () => void
+  onScheduled: () => void
+}) {
+  const [folderUrl, setFolderUrl] = useState('')
+  const [resolvedFiles, setResolvedFiles] = useState<{ name: string; id: string; downloadUrl: string }[]>([])
+  const [resolving, setResolving] = useState(false)
+  const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id || '')
+  const [caption, setCaption] = useState('')
+  const [scheduledFor, setScheduledFor] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [scheduling, setScheduling] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const d = new Date()
+    d.setHours(d.getHours() + 1, 0, 0, 0)
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    setScheduledFor(local)
+  }, [])
+
+  const resolveFolder = async () => {
+    if (!folderUrl.trim()) return setError('Colle l\'URL du dossier Drive')
+    setResolving(true)
+    setError('')
+    try {
+      const res = await fetch('/api/poster/resolve-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderUrl: folderUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      setResolvedFiles(data.files || [])
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setResolving(false)
+    }
+  }
+
+  const generateCaption = async () => {
+    setGenerating(true)
+    setError('')
+    try {
+      const res = await fetch('/api/instagram/generate-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ niche: 'carousel', mediaType: 'carousel' }),
+      })
+      const data = await res.json()
+      if (res.ok) setCaption(data.caption || '')
+    } catch { /* ignore */ }
+    finally { setGenerating(false) }
+  }
+
+  const schedule = async () => {
+    if (!selectedAccountId) return setError('Sélectionner un compte')
+    if (resolvedFiles.length < 2) return setError('Résoudre le dossier d\'abord (min 2 images)')
+    setScheduling(true)
+    setError('')
+    try {
+      const driveFilesJson = JSON.stringify(resolvedFiles.map(f => f.downloadUrl))
+      const res = await fetch('/api/instagram/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId: selectedAccountId,
+          driveFilesJson,
+          caption,
+          mediaType: 'carousel',
+          scheduledFor: scheduledFor || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      onScheduled()
+      onClose()
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setScheduling(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-zinc-900 border border-white/[0.07] rounded-2xl w-full max-w-lg shadow-2xl">
+        <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
+          <h2 className="font-semibold text-white">Planifier un Carousel</h2>
+          <button onClick={onClose}><X className="w-5 h-5 text-zinc-500 hover:text-white" /></button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* URL dossier Drive */}
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">URL du dossier Drive (1 dossier = 4 images)</label>
+            <div className="flex gap-2">
+              <input
+                value={folderUrl}
+                onChange={e => setFolderUrl(e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className="flex-1 bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
+              />
+              <button
+                onClick={resolveFolder}
+                disabled={resolving}
+                className="px-3 py-2 rounded-xl text-sm bg-zinc-700 hover:bg-zinc-600 text-white transition disabled:opacity-50 whitespace-nowrap"
+              >
+                {resolving ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Charger'}
+              </button>
+            </div>
+          </div>
+
+          {/* Aperçu des images */}
+          {resolvedFiles.length > 0 && (
+            <div>
+              <p className="text-xs text-zinc-400 mb-2">{resolvedFiles.length} image{resolvedFiles.length > 1 ? 's' : ''} trouvée{resolvedFiles.length > 1 ? 's' : ''}</p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {resolvedFiles.map((f, i) => (
+                  <div key={f.id} className="shrink-0 w-16 h-16 bg-zinc-800 rounded-lg overflow-hidden relative border border-white/[0.07]">
+                    <img
+                      src={f.downloadUrl}
+                      alt={f.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                    <span className="absolute bottom-0.5 right-1 text-[9px] text-white bg-black/60 px-0.5 rounded">{i + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Compte */}
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Compte cible</label>
+            <select
+              value={selectedAccountId}
+              onChange={e => setSelectedAccountId(e.target.value)}
+              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+            >
+              {accounts.filter(a => a.status !== 'banned').map(a => (
+                <option key={a.id} value={a.id}>
+                  @{a.username}{a.characterName ? ` · ${a.characterName}` : ''} — {a.networkName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Caption */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs text-zinc-400 uppercase tracking-wider">Caption</label>
+              <button onClick={generateCaption} disabled={generating} className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50">
+                {generating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {generating ? 'Génération...' : 'Générer avec Claude'}
+              </button>
+            </div>
+            <textarea
+              value={caption}
+              onChange={e => setCaption(e.target.value)}
+              placeholder="Caption du carousel..."
+              rows={3}
+              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 resize-none focus:outline-none focus:border-violet-500/50"
+            />
+          </div>
+
+          {/* Heure */}
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Planifier pour</label>
+            <input
+              type="datetime-local"
+              value={scheduledFor}
+              onChange={e => setScheduledFor(e.target.value)}
+              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
+        </div>
+
+        <div className="flex gap-2 p-5 border-t border-white/[0.07]">
+          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white transition">Annuler</button>
+          <button
+            onClick={schedule}
+            disabled={scheduling || resolvedFiles.length < 2}
+            className="flex-1 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium disabled:opacity-50 transition flex items-center justify-center gap-2"
+          >
+            {scheduling ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {scheduling ? 'Planification...' : 'Planifier le carousel'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -529,6 +734,7 @@ export default function PosterPage() {
   const [generations, setGenerations] = useState<Generation[]>([])
   const [loadingGens, setLoadingGens] = useState(false)
   const [scheduleGen, setScheduleGen] = useState<Generation | null>(null)
+  const [showCarouselModal, setShowCarouselModal] = useState(false)
 
   // Queue
   const [posts, setPosts] = useState<Post[]>([])
@@ -809,9 +1015,19 @@ export default function PosterPage() {
             {/* ── Tab: Gallery ───────────────────────────────────────── */}
             {tab === 'gallery' && (
               <div className="space-y-4">
-                <p className="text-sm text-zinc-500">
-                  30 dernières générations complètes. Clique sur "Planifier" pour envoyer sur Instagram.
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-zinc-500">
+                    30 dernières générations. Clique "Planifier" pour vidéos/photos, ou poste un carousel ci-dessous.
+                  </p>
+                  <button
+                    onClick={() => setShowCarouselModal(true)}
+                    disabled={accounts.length === 0}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-800 border border-white/[0.07] text-zinc-300 hover:border-violet-500/50 hover:text-violet-300 disabled:opacity-40 transition whitespace-nowrap"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                    Poster un carousel
+                  </button>
+                </div>
                 {accounts.length === 0 && (
                   <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-3 text-sm text-amber-300">
                     Aucun compte Instagram configuré. Ajoute des comptes dans l'onglet "Comptes" d'abord.
@@ -1013,6 +1229,13 @@ export default function PosterPage() {
           accounts={accounts}
           onClose={() => setScheduleGen(null)}
           onScheduled={loadPosts}
+        />
+      )}
+      {showCarouselModal && accounts.length > 0 && (
+        <CarouselModal
+          accounts={accounts}
+          onClose={() => setShowCarouselModal(false)}
+          onScheduled={() => { loadPosts(); setTab('queue') }}
         />
       )}
     </div>

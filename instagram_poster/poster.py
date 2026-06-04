@@ -24,7 +24,6 @@ from instagrapi.exceptions import (
     LoginRequired,
     PleaseWaitFewMinutes,
     FeedbackRequired,
-    MediaUploadVideoTimeout,
 )
 
 import session_manager
@@ -121,14 +120,6 @@ def post_reel(
             "account_status": "suspended",
         }
 
-    except MediaUploadVideoTimeout as e:
-        logger.error(f"[{username}] Upload timeout: {e}")
-        return {
-            "success": False,
-            "error": f"Upload timeout — fichier trop lourd ou connexion lente",
-            "account_status": None,
-        }
-
     except Exception as e:
         logger.exception(f"[{username}] Erreur inattendue lors du post: {e}")
         return {
@@ -198,21 +189,72 @@ def post_photo(
         return {"success": False, "error": str(e), "account_status": None}
 
 
+def post_carousel(
+    account_id: str,
+    username: str,
+    password: str,
+    image_paths: list[str],
+    caption: str,
+    config: dict,
+    totp_secret: str | None = None,
+) -> dict:
+    """
+    Poste un carousel (album) Instagram.
+    image_paths : liste de chemins locaux des images (triées, max 10, min 2)
+    """
+    logger.info(f"[{username}] Posting Carousel: {len(image_paths)} images")
+    try:
+        if totp_secret and account_id in config.get("accounts", {}):
+            config["accounts"][account_id]["totp_secret"] = totp_secret
+        cl = session_manager.get_client(account_id, username, password, config)
+
+        human_delay(3, 10)
+
+        media = cl.album_upload(
+            paths=image_paths,
+            caption=caption,
+        )
+
+        session_manager.save_session(cl, account_id, config)
+        logger.info(f"[{username}] Carousel posté ✓ — pk={media.pk}")
+        return {
+            "success": True,
+            "ig_post_id": str(media.pk),
+            "session_json": _read_session_file(account_id, config),
+        }
+
+    except PleaseWaitFewMinutes as e:
+        logger.warning(f"[{username}] Rate limit carousel")
+        return {"success": False, "error": f"Rate limit: {e}", "account_status": None}
+    except ChallengeRequired:
+        logger.error(f"[{username}] CHALLENGE REQUIRED")
+        return {"success": False, "error": f"Challenge required pour @{username}", "account_status": "challenge"}
+    except FeedbackRequired as e:
+        logger.error(f"[{username}] FEEDBACK REQUIRED")
+        return {"success": False, "error": str(e), "account_status": "suspended"}
+    except Exception as e:
+        logger.exception(f"[{username}] Erreur carousel: {e}")
+        return {"success": False, "error": str(e), "account_status": None}
+
+
 def post(
     account_id: str,
     username: str,
     password: str,
-    media_path: str,
+    media_path: str | list[str],   # str pour video/photo, list[str] pour carousel
     caption: str,
-    media_type: str,  # 'reel' | 'photo'
+    media_type: str,               # 'reel' | 'photo' | 'carousel'
     config: dict,
     totp_secret: str | None = None,
 ) -> dict:
     """Dispatcher : poste selon le media_type."""
-    if media_type == "photo":
-        return post_photo(account_id, username, password, media_path, caption, config, totp_secret)
+    if media_type == "carousel":
+        paths = media_path if isinstance(media_path, list) else [media_path]
+        return post_carousel(account_id, username, password, paths, caption, config, totp_secret)
+    elif media_type == "photo":
+        return post_photo(account_id, username, password, str(media_path), caption, config, totp_secret)
     else:
-        return post_reel(account_id, username, password, media_path, caption, config, totp_secret)
+        return post_reel(account_id, username, password, str(media_path), caption, config, totp_secret)
 
 
 def _read_session_file(account_id: str, config: dict) -> str | None:

@@ -214,29 +214,58 @@ def process_post(pending: dict, config: dict) -> None:
         save_queue(None)
         return
 
-    # 3. Télécharger le fichier depuis Drive
-    # Priorité : URL publique (pas besoin de token) > OAuth (si configuré)
-    media_path = None
+    # 3. Télécharger le(s) fichier(s) depuis Drive
+    drive_files_json = post_data.get("driveFilesJson")
+    media_path = None   # str pour video/photo, list[str] pour carousel
+    tmp_files = []      # fichiers temporaires à nettoyer après le post
+
     try:
-        if drive_file_url:
-            # Essai download public d'abord (fonctionne si le fichier est "anyone with link")
+        if media_type == "carousel" and drive_files_json:
+            # Carousel : télécharger chaque image de la liste
+            import json as _json
+            urls = _json.loads(drive_files_json) if isinstance(drive_files_json, str) else drive_files_json
+            logger.info(f"Carousel : {len(urls)} images à télécharger")
+            paths = []
+            for url in urls:
+                try:
+                    file_id = drive_downloader._extract_drive_id(url)
+                    if file_id:
+                        p = drive_downloader.download_public(file_id)
+                    else:
+                        p = drive_downloader.download_public(url)
+                    paths.append(p)
+                    tmp_files.append(p)
+                except Exception as dl_err:
+                    logger.error(f"Erreur download image carousel {url}: {dl_err}")
+                    raise
+            media_path = paths
+
+        elif drive_file_url:
+            # Video/photo : URL Drive unique
             try:
                 file_id = drive_downloader._extract_drive_id(drive_file_url)
                 if file_id:
                     media_path = drive_downloader.download_public(file_id)
+                else:
+                    media_path = drive_downloader.download_public(drive_file_url)
+                tmp_files.append(media_path)
             except Exception as pub_err:
                 logger.warning(f"Download public échoué: {pub_err} — tentative OAuth...")
                 downloader = _get_downloader(config)
                 if downloader:
                     media_path = downloader.download_from_url(drive_file_url)
+                    tmp_files.append(media_path)
+
         elif drive_file_id:
             try:
                 media_path = drive_downloader.download_public(drive_file_id)
+                tmp_files.append(media_path)
             except Exception as pub_err:
                 logger.warning(f"Download public échoué: {pub_err} — tentative OAuth...")
                 downloader = _get_downloader(config)
                 if downloader:
                     media_path = downloader.download_file(drive_file_id)
+                    tmp_files.append(media_path)
 
         if not media_path:
             raise ValueError("Impossible de télécharger le fichier (ni URL ni file_id valide)")
@@ -265,13 +294,14 @@ def process_post(pending: dict, config: dict) -> None:
         logger.exception(f"Erreur inattendue lors du post: {e}")
         result = {"success": False, "error": str(e)}
     finally:
-        # Nettoyer le fichier temporaire dans tous les cas
-        if media_path and os.path.exists(media_path):
-            try:
-                os.unlink(media_path)
-                logger.debug(f"Fichier temp supprimé: {media_path}")
-            except Exception:
-                pass
+        # Nettoyer les fichiers temporaires (video/photo ou les 4 images carousel)
+        for tmp in tmp_files:
+            if tmp and os.path.exists(tmp):
+                try:
+                    os.unlink(tmp)
+                    logger.debug(f"Fichier temp supprimé: {tmp}")
+                except Exception:
+                    pass
 
     # 5. Reporter le résultat
     try:

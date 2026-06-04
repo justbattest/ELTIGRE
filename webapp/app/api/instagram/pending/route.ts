@@ -109,6 +109,7 @@ export async function GET(req: NextRequest) {
         id: post.id,
         driveFileId: post.driveFileId,
         driveFileUrl: post.driveFileUrl,
+        driveFilesJson: post.driveFilesJson,  // Pour carousel : JSON array d'URLs
         caption: post.caption,
         mediaType: post.mediaType,
         scheduledFor: post.scheduledFor,
