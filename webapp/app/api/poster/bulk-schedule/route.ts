@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
   const body = await req.json()
-  const { accountId, carousels, perDay = 1, startDate } = body
+  const { accountId, carousels, perDay = 1, startDate, firstPostAt } = body
 
   if (!accountId) return NextResponse.json({ error: 'accountId requis' }, { status: 400 })
   if (!carousels?.length) return NextResponse.json({ error: 'carousels requis' }, { status: 400 })
@@ -110,9 +110,14 @@ export async function POST(req: NextRequest) {
 
   for (let day = 0; day < totalDays && carouselIdx < carousels.length; day++) {
     for (let slotIdx = 0; slotIdx < perDay && carouselIdx < carousels.length; slotIdx++) {
-      const slot = slots[slotIdx % slots.length]
-      const scheduledAt = buildScheduledDate(baseDate, day, slot)
-      scheduledDates.push(scheduledAt)
+      // Premier post : utiliser firstPostAt si fourni (mode test)
+      if (carouselIdx === 0 && firstPostAt) {
+        scheduledDates.push(new Date(firstPostAt))
+      } else {
+        const slot = slots[slotIdx % slots.length]
+        const scheduledAt = buildScheduledDate(baseDate, day, slot)
+        scheduledDates.push(scheduledAt)
+      }
       carouselIdx++
     }
   }

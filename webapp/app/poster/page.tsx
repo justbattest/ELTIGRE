@@ -142,6 +142,7 @@ function QuickCarouselModal({
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id || '')
   const [perDay, setPerDay] = useState(2)
   const [numDays, setNumDays] = useState(3)
+  const [startDatetime, setStartDatetime] = useState('')  // datetime-local (heure locale)
   const [step, setStep] = useState<'config' | 'scanning' | 'preview' | 'scheduling' | 'done'>('config')
   const [carousels, setCarousels] = useState<DriveCarousel[]>([])
   const [selected, setSelected] = useState<DriveCarousel[]>([])
@@ -152,6 +153,12 @@ function QuickCarouselModal({
 
   const selectedAccount = accounts.find(a => a.id === selectedAccountId)
   const total = perDay * numDays
+
+  const setNowPlus2 = () => {
+    const d = new Date(Date.now() + 2 * 60 * 1000)
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    setStartDatetime(local)
+  }
 
   const scan = async () => {
     if (!selectedAccount) return setError('Sélectionner un compte')
@@ -225,7 +232,10 @@ function QuickCarouselModal({
             caption: generatedCaptions[i] || '',
           })),
           perDay,
-          startDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // demain
+          startDate: startDatetime
+            ? new Date(startDatetime).toISOString().split('T')[0]  // date locale sélectionnée
+            : new Date(Date.now() + 86400000).toISOString().split('T')[0], // demain par défaut
+          firstPostAt: startDatetime ? new Date(startDatetime).toISOString() : undefined,
         }),
       })
       const data = await res.json()
@@ -308,6 +318,27 @@ function QuickCarouselModal({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Premier post */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs text-zinc-400 uppercase tracking-wider">Premier post (optionnel)</label>
+                  <button onClick={setNowPlus2}
+                    className="text-xs text-violet-400 hover:text-violet-300 transition font-medium"
+                  >
+                    Test : maintenant + 2 min
+                  </button>
+                </div>
+                <input
+                  type="datetime-local"
+                  value={startDatetime}
+                  onChange={e => setStartDatetime(e.target.value)}
+                  className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+                />
+                <p className="text-xs text-zinc-600 mt-1">
+                  Entre ton heure locale (France). Vide = horaires US optimaux automatiques dès demain.
+                </p>
               </div>
 
               {/* Info horaires */}
