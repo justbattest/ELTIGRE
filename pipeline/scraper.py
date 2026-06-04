@@ -55,17 +55,27 @@ def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: 
     }), flush=True)
 
     cl = Client()
-    cl.delay_range = [1, 2]  # Délai naturel entre requêtes
+    cl.delay_range = [1, 3]  # Délai naturel entre requêtes
 
     try:
         cl.login_by_sessionid(decoded_cookie)
     except Exception as e:
         raise RuntimeError(f"instagrapi login failed: {e}")
 
+    # Essai 1 : lookup GraphQL (moins sensible aux blocages IP Railway)
+    user_id = None
     try:
-        user_id = cl.user_id_from_username(username)
-    except Exception as e:
-        raise RuntimeError(f"instagrapi user lookup failed for @{username}: {e}")
+        user_info = cl.user_info_by_username_gql(username)
+        user_id = user_info.pk
+    except Exception as gql_err:
+        print(json.dumps({"type": "info", "msg": f"GQL lookup failed: {str(gql_err)[:80]} — fallback v1"}), flush=True)
+
+    # Essai 2 : lookup v1 API mobile
+    if not user_id:
+        try:
+            user_id = cl.user_id_from_username(username)
+        except Exception as e:
+            raise RuntimeError(f"instagrapi user lookup failed for @{username}: {e}")
 
     # Récupérer plus de posts que demandé pour compenser le filtrage des vidéos.
     # On estime ~40% de vidéos en moyenne sur Instagram → on fetch 2x pour avoir assez d'images.
