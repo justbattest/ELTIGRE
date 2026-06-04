@@ -133,7 +133,8 @@ model InstagramAccount {
   userId       String          @map("user_id")
   username     String
   passwordEnc  String?         @map("password_enc")    // AES-256 encrypted
-  totpSecret   String?         @map("totp_secret")     // Secret base32 Google Authenticator (AES-256)
+  totpSecret    String?         @map("totp_secret")     // Secret base32 Google Authenticator (AES-256)
+  characterName String?         @map("character_name")  // Nom du personnage Higgsfield lié (ex: "EMMA", "NINA")
   sessionJson  String?         @map("session_json") @db.Text  // JSON instagrapi chiffré
   deviceJson   String?         @map("device_json") @db.Text   // Fingerprint device chiffré
   networkName  String          @map("network_name")   // "iPhone_SIM1"

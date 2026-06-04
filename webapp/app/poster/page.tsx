@@ -16,6 +16,7 @@ type Account = {
   id: string
   username: string
   networkName: string
+  characterName: string | null
   warmupPhase: number
   status: string
   lastPostedAt: string | null
@@ -244,7 +245,7 @@ function ScheduleModal({
             >
               {accounts.filter(a => a.status !== 'banned').map(a => (
                 <option key={a.id} value={a.id}>
-                  @{a.username} — {a.networkName} — Phase {a.warmupPhase} (max {WARMUP_LIMITS[a.warmupPhase]}/j)
+                  @{a.username}{a.characterName ? ` · ${a.characterName}` : ''} — {a.networkName} — Phase {a.warmupPhase} (max {WARMUP_LIMITS[a.warmupPhase]}/j)
                 </option>
               ))}
             </select>
@@ -347,10 +348,22 @@ function AddAccountModal({
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [totpSecret, setTotpSecret] = useState('')
+  const [characterName, setCharacterName] = useState('')
   const [networkName, setNetworkName] = useState('iPhone 12promax')
   const [warmupPhase, setWarmupPhase] = useState(1)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [characters, setCharacters] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    fetch('/api/characters')
+      .then(r => r.json())
+      .then(data => {
+        const all = [...(data.referenceElements || []), ...(data.soulCharacters || [])]
+        setCharacters(all)
+      })
+      .catch(() => {})
+  }, [])
 
   const save = async () => {
     if (!username.trim()) return setError('Username requis')
@@ -361,7 +374,7 @@ function AddAccountModal({
       const res = await fetch('/api/instagram/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password, totpSecret: totpSecret.trim() || null, networkName, warmupPhase }),
+        body: JSON.stringify({ username: username.trim(), password, totpSecret: totpSecret.trim() || null, characterName: characterName || null, networkName, warmupPhase }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
@@ -414,6 +427,40 @@ function AddAccountModal({
             <p className="text-xs text-zinc-600 mt-1">
               Instagram → Sécurité → Auth. 2 facteurs → Application → "Entrer la clé manuellement"
             </p>
+          </div>
+          <div>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Personnage (modèle)</label>
+            {characters.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setCharacterName('')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                    characterName === '' ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-500 hover:text-white'
+                  }`}
+                >
+                  Aucun
+                </button>
+                {characters.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setCharacterName(c.name)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                      characterName === c.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-500 hover:text-white'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <input
+                value={characterName}
+                onChange={e => setCharacterName(e.target.value)}
+                placeholder="Ex: EMMA, NINA..."
+                className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
+              />
+            )}
+            <p className="text-xs text-zinc-600 mt-1">Lie ce compte à un seul personnage — évite les croisements de contenu</p>
           </div>
           <div>
             <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Téléphone hotspot</label>
@@ -887,6 +934,11 @@ export default function PosterPage() {
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <span className="font-medium text-white text-sm">@{acc.username}</span>
                               <AccountStatusBadge status={acc.status} />
+                              {acc.characterName && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-violet-900/40 text-violet-300 font-medium border border-violet-700/30">
+                                  {acc.characterName}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-zinc-500 mb-2">
                               <span className="flex items-center gap-1">

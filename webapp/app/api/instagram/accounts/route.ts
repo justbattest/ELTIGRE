@@ -19,13 +19,14 @@ export async function GET() {
       id: true,
       username: true,
       networkName: true,
+      characterName: true,
       warmupPhase: true,
       status: true,
       lastPostedAt: true,
       postsToday: true,
       postsTodayDate: true,
       createdAt: true,
-      // Ne PAS retourner sessionJson / deviceJson / passwordEnc (sensitive)
+      // Ne PAS retourner sessionJson / deviceJson / passwordEnc / totpSecret (sensitive)
     },
   })
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
   const body = await req.json()
-  const { username, password, networkName, warmupPhase = 1, totpSecret } = body
+  const { username, password, networkName, warmupPhase = 1, totpSecret, characterName } = body
 
   if (!username?.trim()) return NextResponse.json({ error: 'Username requis' }, { status: 400 })
   if (!networkName?.trim()) return NextResponse.json({ error: 'NetworkName requis (ex: iPhone_SIM1)' }, { status: 400 })
@@ -56,6 +57,7 @@ export async function POST(req: NextRequest) {
       username: username.trim(),
       passwordEnc: encryptIfPresent(password),
       totpSecret: encryptIfPresent(totpSecret?.trim() || null),
+      characterName: characterName?.trim() || null,
       networkName: networkName.trim(),
       warmupPhase: Number(warmupPhase),
       status: 'warmup',
