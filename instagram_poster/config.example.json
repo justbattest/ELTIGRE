@@ -11,7 +11,8 @@
     "ACCOUNT_ID_DEPUIS_DB_1": {
       "session_file": "sessions/compte1.json",
       "device_file": "devices/compte1.json",
-      "network": "iPhone_SIM1"
+      "network": "iPhone 12promax",
+      "totp_secret": "SECRET_BASE32_GOOGLE_AUTHENTICATOR"
     },
     "ACCOUNT_ID_DEPUIS_DB_2": {
       "session_file": "sessions/compte2.json",

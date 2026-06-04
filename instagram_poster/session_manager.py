@@ -15,7 +15,14 @@ import random
 import logging
 from pathlib import Path
 from instagrapi import Client
-from instagrapi.exceptions import LoginRequired, ChallengeRequired
+from instagrapi.exceptions import LoginRequired, ChallengeRequired, TwoFactorRequired
+
+try:
+    import pyotp
+    PYOTP_AVAILABLE = True
+except ImportError:
+    PYOTP_AVAILABLE = False
+    logging.getLogger(__name__).warning("pyotp non installé — 2FA TOTP non supporté")
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +108,39 @@ def _base_dir() -> Path:
     return Path(__file__).parent
 
 
+def _generate_totp(secret: str) -> str:
+    """Génère le code TOTP actuel depuis le secret base32."""
+    if not PYOTP_AVAILABLE:
+        raise RuntimeError("pyotp non installé. Lance: pip install pyotp")
+    # Nettoyer le secret (espaces, tirets parfois ajoutés par Instagram)
+    clean_secret = secret.replace(" ", "").replace("-", "").upper()
+    return pyotp.TOTP(clean_secret).now()
+
+
+def _do_login(cl: Client, username: str, password: str, totp_secret: str | None) -> None:
+    """
+    Login instagrapi avec gestion automatique du 2FA TOTP.
+    - Si pas de 2FA : login normal
+    - Si TwoFactorRequired : génère le code TOTP et finalise le login
+    """
+    try:
+        cl.login(username, password)
+    except TwoFactorRequired as e:
+        if not totp_secret:
+            raise RuntimeError(
+                f"2FA requis pour @{username} mais aucun totp_secret configuré dans config.json. "
+                f"Ajoute le secret TOTP de Google Authenticator pour ce compte."
+            )
+        logger.info(f"[{username}] 2FA requis — génération code TOTP...")
+        code = _generate_totp(totp_secret)
+        logger.info(f"[{username}] Code TOTP généré: {code}")
+        cl.two_factor_login(
+            two_factor_identifier=e.two_factor_identifier,
+            verification_code=code,
+        )
+        logger.info(f"[{username}] 2FA validé ✓")
+
+
 def init_account(account_id: str, username: str, password: str, config: dict) -> Client:
     """
     Premier login d'un compte.
@@ -127,8 +167,9 @@ def init_account(account_id: str, username: str, password: str, config: dict) ->
     cl.set_country("US")
     cl.set_locale("en_US")
 
-    logger.info(f"[{username}] Premier login avec device {device['model']}...")
-    cl.login(username, password)
+    totp_secret = config["accounts"].get(account_id, {}).get("totp_secret")
+    logger.info(f"[{username}] Premier login avec device {device['model']}{'+ 2FA' if totp_secret else ''}...")
+    _do_login(cl, username, password, totp_secret)
 
     # Sauvegarder session + device
     session_file.parent.mkdir(parents=True, exist_ok=True)
@@ -167,9 +208,11 @@ def get_client(account_id: str, username: str, password: str, config: dict) -> C
         # Charger la session existante — évite un re-login from scratch
         cl.load_settings(str(session_file))
 
+    totp_secret = config["accounts"].get(account_id, {}).get("totp_secret")
+
     try:
         # Login léger : si session valide, instagrapi ne génère pas de nouvelle session
-        cl.login(username, password)
+        _do_login(cl, username, password, totp_secret)
         return cl
     except LoginRequired:
         logger.warning(f"[{username}] Session expirée — re-login...")
@@ -184,7 +227,7 @@ def get_client(account_id: str, username: str, password: str, config: dict) -> C
             cl2.set_device(device)
             cl2.set_country("US")
             cl2.set_locale("en_US")
-        cl2.login(username, password)
+        _do_login(cl2, username, password, totp_secret)
         cl2.dump_settings(str(session_file))
         logger.info(f"[{username}] Re-login réussi, nouvelle session sauvegardée.")
         return cl2

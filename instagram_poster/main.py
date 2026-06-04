@@ -214,15 +214,31 @@ def process_post(pending: dict, config: dict) -> None:
         return
 
     # 3. Télécharger le fichier depuis Drive
+    # Priorité : URL publique (pas besoin de token) > OAuth (si configuré)
     media_path = None
     try:
-        downloader = _get_downloader(config)
-        if downloader and drive_file_id:
-            media_path = downloader.download_file(drive_file_id)
-        elif downloader and drive_file_url:
-            media_path = downloader.download_from_url(drive_file_url)
-        else:
-            raise ValueError("Pas de fichier Drive configuré et pas de downloader disponible")
+        if drive_file_url:
+            # Essai download public d'abord (fonctionne si le fichier est "anyone with link")
+            try:
+                file_id = drive_downloader._extract_drive_id(drive_file_url)
+                if file_id:
+                    media_path = drive_downloader.download_public(file_id)
+            except Exception as pub_err:
+                logger.warning(f"Download public échoué: {pub_err} — tentative OAuth...")
+                downloader = _get_downloader(config)
+                if downloader:
+                    media_path = downloader.download_from_url(drive_file_url)
+        elif drive_file_id:
+            try:
+                media_path = drive_downloader.download_public(drive_file_id)
+            except Exception as pub_err:
+                logger.warning(f"Download public échoué: {pub_err} — tentative OAuth...")
+                downloader = _get_downloader(config)
+                if downloader:
+                    media_path = downloader.download_file(drive_file_id)
+
+        if not media_path:
+            raise ValueError("Impossible de télécharger le fichier (ni URL ni file_id valide)")
     except Exception as e:
         logger.error(f"Erreur téléchargement Drive: {e}")
         api_report_result(config, post_id, {

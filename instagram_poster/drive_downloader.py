@@ -115,12 +115,67 @@ class DriveDownloader:
     def download_from_url(self, url: str, dest_path: str | None = None) -> str:
         """
         Télécharge depuis une URL Drive shareable (format: drive.google.com/file/d/ID/view).
-        Extrait l'ID et utilise download_file().
+        Tente d'abord un téléchargement public (sans auth), puis OAuth si échec.
         """
         file_id = _extract_drive_id(url)
         if not file_id:
             raise ValueError(f"Impossible d'extraire l'ID Drive depuis : {url}")
-        return self.download_file(file_id, dest_path)
+        # Essai téléchargement public d'abord (plus simple, pas besoin de token)
+        try:
+            return download_public(file_id, dest_path)
+        except Exception as e:
+            logger.warning(f"Téléchargement public échoué ({e}), tentative OAuth...")
+            return self.download_file(file_id, dest_path)
+
+
+def download_public(file_id: str, dest_path: str | None = None) -> str:
+    """
+    Télécharge un fichier Google Drive via lien public (sans OAuth).
+    Fonctionne si le fichier est partagé "anyone with link".
+    Gère automatiquement la confirmation Google pour les gros fichiers.
+    """
+    import tempfile
+
+    if not dest_path:
+        tmp = tempfile.NamedTemporaryFile(suffix=".tmp", prefix="ig_poster_", delete=False)
+        dest_path = tmp.name
+        tmp.close()
+
+    session = requests.Session()
+
+    # Tentative directe
+    download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    resp = session.get(download_url, stream=True, timeout=120)
+
+    # Google affiche une page de confirmation pour les gros fichiers
+    if "text/html" in resp.headers.get("Content-Type", ""):
+        # Extraire le token de confirmation
+        import re
+        confirm_match = re.search(r'confirm=([0-9A-Za-z_-]+)', resp.text)
+        if confirm_match:
+            confirm = confirm_match.group(1)
+        else:
+            # Nouvelle méthode Google (2023+)
+            confirm = "t"
+        download_url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm={confirm}"
+        resp = session.get(download_url, stream=True, timeout=120)
+
+    resp.raise_for_status()
+
+    # Détecter l'extension depuis Content-Disposition ou Content-Type
+    content_type = resp.headers.get("Content-Type", "")
+    if dest_path.endswith(".tmp"):
+        ext = _mime_to_ext(content_type.split(";")[0].strip())
+        dest_path = dest_path.replace(".tmp", ext)
+
+    with open(dest_path, "wb") as f:
+        for chunk in resp.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+
+    size_mb = os.path.getsize(dest_path) / (1024 * 1024)
+    logger.info(f"Téléchargement public OK : {size_mb:.1f} MB → {dest_path}")
+    return dest_path
 
 
 def _mime_to_ext(mime_type: str) -> str:
