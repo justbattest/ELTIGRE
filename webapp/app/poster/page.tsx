@@ -1207,7 +1207,9 @@ export default function PosterPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {generations.map(gen => {
                       const thumb = gen.driveGeneratedUrl || gen.generatedImageUrl
+                      const postUrl = gen.driveGeneratedUrl || gen.generatedImageUrl  // Drive prioritaire, CDN en fallback
                       const hasDrive = !!gen.driveGeneratedUrl
+                      const hasUrl = !!postUrl
                       return (
                         <div key={gen.id} className="bg-zinc-900/60 border border-white/[0.07] rounded-xl overflow-hidden group relative">
                           {/* Thumbnail */}
@@ -1257,8 +1259,8 @@ export default function PosterPage() {
                                   <ExternalLink className="w-3 h-3 text-white" />
                                 </a>
                               )}
-                              {!hasDrive && (
-                                <span className="bg-red-900/80 text-red-300 text-[9px] px-1 py-0.5 rounded">No Drive</span>
+                              {!hasDrive && hasUrl && (
+                                <span className="bg-zinc-700/90 text-zinc-400 text-[9px] px-1 py-0.5 rounded">CDN</span>
                               )}
                             </div>
 
@@ -1281,12 +1283,12 @@ export default function PosterPage() {
                               </p>
                             )}
                             <button
-                              onClick={() => accounts.length > 0 && setScheduleGen(gen)}
-                              disabled={accounts.length === 0 || !hasDrive}
+                              onClick={() => accounts.length > 0 && hasUrl && setScheduleGen(gen)}
+                              disabled={accounts.length === 0 || !hasUrl}
                               className="w-full py-1.5 rounded-lg text-[11px] font-semibold bg-violet-600/80 hover:bg-violet-600 text-white transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                             >
                               <Send className="w-3 h-3" />
-                              {!hasDrive ? 'No Drive URL' : gen.isPending ? 'Déjà planifié' : 'Planifier'}
+                              {!hasUrl ? 'Pas d\'URL' : gen.isPending ? 'Déjà planifié' : 'Planifier'}
                             </button>
                           </div>
                         </div>
