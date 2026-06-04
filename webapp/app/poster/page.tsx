@@ -49,13 +49,17 @@ type Post = {
 
 type Generation = {
   id: number
+  runId: string | null
   generatedImageUrl: string | null
   driveGeneratedUrl: string | null
   modelUsed: string | null
   sceneDescription: string | null
-  generationStatus: string
   generatedAt: string | null
-  runId: string | null
+  characterName: string | null
+  isVideo: boolean
+  isPosted: boolean
+  isPending: boolean
+  postCount: number
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -732,9 +736,13 @@ export default function PosterPage() {
 
   // Gallery (générations récentes)
   const [generations, setGenerations] = useState<Generation[]>([])
+  const [allCharacters, setAllCharacters] = useState<string[]>([])
   const [loadingGens, setLoadingGens] = useState(false)
   const [scheduleGen, setScheduleGen] = useState<Generation | null>(null)
   const [showCarouselModal, setShowCarouselModal] = useState(false)
+  // Filtres galerie
+  const [filterChar, setFilterChar] = useState<string>('all')
+  const [filterType, setFilterType] = useState<'all' | 'video' | 'image'>('all')
 
   // Queue
   const [posts, setPosts] = useState<Post[]>([])
@@ -754,15 +762,18 @@ export default function PosterPage() {
   const loadGenerations = useCallback(async () => {
     setLoadingGens(true)
     try {
-      // Récupérer les 30 dernières générations complètes
-      const res = await fetch('/api/generations/recent?limit=30&status=complete')
+      const params = new URLSearchParams({ limit: '80', hidePosted: 'true' })
+      if (filterChar !== 'all') params.set('characterName', filterChar)
+      if (filterType !== 'all') params.set('mediaType', filterType)
+      const res = await fetch(`/api/generations/recent?${params}`)
       if (res.ok) {
         const data = await res.json()
         setGenerations(data.generations || [])
+        if (data.characters?.length) setAllCharacters(data.characters)
       }
     } catch { /* ignore */ }
     finally { setLoadingGens(false) }
-  }, [])
+  }, [filterChar, filterType])
 
   const loadPosts = useCallback(async () => {
     setLoadingPosts(true)
@@ -1015,79 +1026,153 @@ export default function PosterPage() {
             {/* ── Tab: Gallery ───────────────────────────────────────── */}
             {tab === 'gallery' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-zinc-500">
-                    30 dernières générations. Clique "Planifier" pour vidéos/photos, ou poste un carousel ci-dessous.
-                  </p>
-                  <button
-                    onClick={() => setShowCarouselModal(true)}
-                    disabled={accounts.length === 0}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-800 border border-white/[0.07] text-zinc-300 hover:border-violet-500/50 hover:text-violet-300 disabled:opacity-40 transition whitespace-nowrap"
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                    Poster un carousel
-                  </button>
+
+                {/* ── Barre de filtres ── */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Filtre personnage */}
+                  <div className="flex gap-1 flex-wrap">
+                    <button
+                      onClick={() => setFilterChar('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterChar === 'all' ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                    >
+                      Tous
+                    </button>
+                    {allCharacters.map(c => (
+                      <button key={c} onClick={() => setFilterChar(c === filterChar ? 'all' : c)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterChar === c ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Séparateur */}
+                  <div className="h-5 w-px bg-white/[0.07]" />
+
+                  {/* Filtre type */}
+                  {(['all', 'video', 'image'] as const).map(t => (
+                    <button key={t} onClick={() => setFilterType(t)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterType === t ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                    >
+                      {t === 'all' ? 'Tout' : t === 'video' ? 'Vidéos' : 'Photos'}
+                    </button>
+                  ))}
+
+                  {/* Bouton carousel + refresh */}
+                  <div className="ml-auto flex gap-2">
+                    <button onClick={loadGenerations} disabled={loadingGens}
+                      className="p-2 rounded-xl bg-zinc-800 border border-white/[0.07] text-zinc-400 hover:text-white transition disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${loadingGens ? 'animate-spin' : ''}`} />
+                    </button>
+                    <button onClick={() => setShowCarouselModal(true)} disabled={accounts.length === 0}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-800 border border-white/[0.07] text-zinc-300 hover:border-violet-500/50 hover:text-violet-300 disabled:opacity-40 transition whitespace-nowrap"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      Carousel
+                    </button>
+                  </div>
                 </div>
+
+                {/* ── Info ── */}
+                <p className="text-xs text-zinc-600">
+                  {generations.length} contenu{generations.length > 1 ? 's' : ''} disponible{generations.length > 1 ? 's' : ''} — déjà postés masqués automatiquement
+                </p>
+
                 {accounts.length === 0 && (
                   <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-3 text-sm text-amber-300">
-                    Aucun compte Instagram configuré. Ajoute des comptes dans l'onglet "Comptes" d'abord.
+                    Aucun compte configuré — va dans l'onglet Comptes d'abord.
                   </div>
                 )}
+
+                {/* ── Grille ── */}
                 {loadingGens ? (
-                  <p className="text-sm text-zinc-500">Chargement...</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="aspect-[9/16] bg-zinc-800/50 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
                 ) : generations.length === 0 ? (
-                  <p className="text-sm text-zinc-500">Aucune génération récente avec URL Drive.</p>
+                  <div className="bg-zinc-900/60 border border-white/[0.07] rounded-2xl p-10 text-center">
+                    <Video className="w-8 h-8 text-zinc-700 mx-auto mb-3" />
+                    <p className="text-zinc-500 text-sm">Aucun contenu disponible</p>
+                    <p className="text-zinc-700 text-xs mt-1">
+                      {filterChar !== 'all' || filterType !== 'all' ? 'Essaie de changer les filtres' : 'Génère du contenu depuis les autres onglets'}
+                    </p>
+                  </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {generations.map(gen => {
                       const thumb = gen.driveGeneratedUrl || gen.generatedImageUrl
                       const hasDrive = !!gen.driveGeneratedUrl
                       return (
-                        <div key={gen.id} className="bg-zinc-900/60 border border-white/[0.07] rounded-xl overflow-hidden group">
+                        <div key={gen.id} className="bg-zinc-900/60 border border-white/[0.07] rounded-xl overflow-hidden group relative">
                           {/* Thumbnail */}
                           <div className="aspect-[9/16] bg-zinc-800 relative">
                             {thumb ? (
-                              thumb.includes('.mp4') ? (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 text-xs gap-1">
-                                  <Video className="w-6 h-6" />
-                                  <span>{gen.modelUsed || 'video'}</span>
+                              gen.isVideo ? (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-zinc-900">
+                                  <Video className="w-7 h-7 text-violet-500" />
+                                  <span className="text-[10px] text-zinc-500 px-2 text-center">{gen.modelUsed || 'video'}</span>
                                 </div>
                               ) : (
                                 <img src={thumb} alt="" className="w-full h-full object-cover" />
                               )
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-zinc-700 text-xs">
-                                No preview
+                              <div className="absolute inset-0 flex items-center justify-center text-zinc-700 text-xs">Pas d'aperçu</div>
+                            )}
+
+                            {/* Badges top */}
+                            <div className="absolute top-1.5 left-1.5 right-1.5 flex items-start justify-between gap-1">
+                              <div className="flex flex-col gap-1">
+                                {gen.characterName && (
+                                  <span className="bg-violet-900/90 text-violet-200 text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                    {gen.characterName}
+                                  </span>
+                                )}
+                                {gen.isPending && (
+                                  <span className="bg-amber-900/90 text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                    Planifié
+                                  </span>
+                                )}
                               </div>
-                            )}
-                            {!hasDrive && (
-                              <div className="absolute top-1 right-1 bg-amber-900/80 rounded px-1 py-0.5 text-amber-300 text-[10px]">
-                                No Drive
-                              </div>
-                            )}
-                            {hasDrive && (
-                              <a
-                                href={gen.driveGeneratedUrl!}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-black/60 rounded p-1 transition"
-                              >
-                                <ExternalLink className="w-3 h-3 text-white" />
-                              </a>
-                            )}
+                              {hasDrive && (
+                                <a href={gen.driveGeneratedUrl!} target="_blank" rel="noopener noreferrer"
+                                  className="opacity-0 group-hover:opacity-100 bg-black/60 hover:bg-black/80 p-1 rounded transition"
+                                >
+                                  <ExternalLink className="w-3 h-3 text-white" />
+                                </a>
+                              )}
+                              {!hasDrive && (
+                                <span className="bg-red-900/80 text-red-300 text-[9px] px-1 py-0.5 rounded">No Drive</span>
+                              )}
+                            </div>
+
+                            {/* Badge type vidéo/image */}
+                            <div className="absolute bottom-1.5 left-1.5">
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${gen.isVideo ? 'bg-blue-900/90 text-blue-300' : 'bg-emerald-900/90 text-emerald-300'}`}>
+                                {gen.isVideo ? 'VIDÉO' : 'PHOTO'}
+                              </span>
+                            </div>
                           </div>
-                          {/* Info + action */}
-                          <div className="p-2">
-                            <p className="text-[11px] text-zinc-500 truncate mb-2">
-                              {gen.modelUsed || 'unknown'}
-                            </p>
+
+                          {/* Footer */}
+                          <div className="p-2 space-y-1.5">
+                            {gen.sceneDescription && (
+                              <p className="text-[10px] text-zinc-500 line-clamp-2 leading-tight">{gen.sceneDescription}</p>
+                            )}
+                            {gen.generatedAt && (
+                              <p className="text-[9px] text-zinc-700">
+                                {new Date(gen.generatedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            )}
                             <button
                               onClick={() => accounts.length > 0 && setScheduleGen(gen)}
-                              disabled={accounts.length === 0}
-                              className="w-full py-1.5 rounded-lg text-xs font-medium bg-violet-600/80 hover:bg-violet-600 text-white transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                              disabled={accounts.length === 0 || !hasDrive}
+                              className="w-full py-1.5 rounded-lg text-[11px] font-semibold bg-violet-600/80 hover:bg-violet-600 text-white transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                             >
                               <Send className="w-3 h-3" />
-                              Planifier
+                              {!hasDrive ? 'No Drive URL' : gen.isPending ? 'Déjà planifié' : 'Planifier'}
                             </button>
                           </div>
                         </div>
@@ -1228,7 +1313,7 @@ export default function PosterPage() {
           generation={scheduleGen}
           accounts={accounts}
           onClose={() => setScheduleGen(null)}
-          onScheduled={loadPosts}
+          onScheduled={() => { loadPosts(); loadGenerations() }}
         />
       )}
       {showCarouselModal && accounts.length > 0 && (

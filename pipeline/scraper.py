@@ -2,13 +2,12 @@
 Instagram scraper — posts triés par engagement (likes + comments).
 Téléchargement immédiat des images (URLs CDN expirent rapidement).
 
-Trois modes (par ordre de priorité) :
+Deux modes (par ordre de priorité) :
 1. AVEC cookie → instagrapi  (API mobile exacte d'Instagram, TOUS profils publics y compris Restricted)
 2. AVEC cookie, si instagrapi échoue → Instaloader (fallback)
-3. SANS cookie  → apify/instagram-scraper + proxies résidentiels (profils non-restreints)
 
-On scrape TOUS les posts (images simples + carousels confondus).
-La seule règle : avoir au moins 1 image et un max d'engagement.
+Apify supprimé : requiert maintenant un paiement (x402) et bloque de toute façon
+les profils restreints. Le cookie Instagram est la seule méthode fiable.
 """
 
 import asyncio
@@ -18,7 +17,6 @@ import json
 import re
 import urllib.parse
 from pathlib import Path
-from apify_client import ApifyClient
 
 
 def clean_instagram_url(url: str) -> str:
@@ -272,7 +270,8 @@ def _instaloader_post_to_dict(post) -> dict:
 
 # ── Mode Apify (sans cookie, profils non-restreints) ───────────────────────────
 
-def scrape_profile_apify(profile_url: str, max_posts: int, apify_key: str) -> list:
+def _scrape_profile_apify_removed(profile_url: str, max_posts: int, apify_key: str) -> list:
+    """SUPPRIMÉ — Apify requiert maintenant un paiement (x402). Utiliser le cookie Instagram."""
     """Scrape via apify/instagram-scraper (browser Chromium + proxies résidentiels).
     Meilleur taux de succès sur les profils restreints que le post-scraper HTTP.
     """
@@ -340,56 +339,51 @@ def scrape_profile_apify(profile_url: str, max_posts: int, apify_key: str) -> li
 def scrape_profile(
     profile_url: str,
     max_posts: int,
-    apify_key: str,
+    apify_key: str | None = None,  # Conservé pour compatibilité — non utilisé
     session_cookie: str | None = None,
 ) -> list:
-    """Point d'entrée — cascade de méthodes :
-    1. Cookie → instagrapi (API mobile, TOUS profils)
-    2. Cookie → Instaloader (fallback si instagrapi échoue)
-    3. Pas de cookie → Apify (proxies résidentiels)
+    """Point d'entrée — 2 méthodes avec cookie Instagram (obligatoire) :
+    1. instagrapi (API mobile, tous profils y compris Restricted)
+    2. Instaloader (fallback si instagrapi échoue)
+
+    IMPORTANT : Le cookie sessionid Instagram est requis. Sans cookie aucun scraping possible.
+    Pour renouveler : Chrome → instagram.com → F12 → Application → Cookies → sessionid
     """
-    if session_cookie:
-        # ── Essai 1 : instagrapi (API mobile authentifiée) ──
-        try:
-            posts = scrape_profile_instagrapi(profile_url, max_posts, session_cookie)
-            if posts:
-                return posts
-            print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback Instaloader"}), flush=True)
-        except Exception as e:
-            print(json.dumps({
-                "type": "info",
-                "msg": f"instagrapi échoué ({type(e).__name__}: {str(e)[:100]}) — fallback Instaloader"
-            }), flush=True)
-
-        # ── Essai 2 : Instaloader (fallback) ──
-        try:
-            posts = scrape_profile_instaloader(profile_url, max_posts, session_cookie)
-            if posts:
-                return posts
-            print(json.dumps({"type": "info", "msg": "Instaloader: 0 posts — fallback Apify"}), flush=True)
-        except Exception as e:
-            print(json.dumps({
-                "type": "info",
-                "msg": f"Instaloader échoué ({type(e).__name__}: {str(e)[:100]}) — fallback Apify"
-            }), flush=True)
-
-    # ── Essai 3 : Apify + proxies résidentiels ──
-    if not apify_key:
+    if not session_cookie:
         raise RuntimeError(
-            "Tous les scrapers ont échoué. Cookie Instagram peut-être expiré. "
-            "Va dans Paramètres et copie un nouveau cookie sessionid depuis Chrome."
+            "Cookie Instagram manquant. "
+            "Va dans Paramètres → colle ton cookie sessionid Instagram (Chrome → F12 → Application → Cookies)."
         )
+
+    # ── Essai 1 : instagrapi (API mobile authentifiée) ──
     try:
-        return scrape_profile_apify(profile_url, max_posts, apify_key)
+        posts = scrape_profile_instagrapi(profile_url, max_posts, session_cookie)
+        if posts:
+            return posts
+        print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback Instaloader"}), flush=True)
     except Exception as e:
-        err_str = str(e)
-        if "x402" in err_str or "payment" in err_str.lower():
-            raise RuntimeError(
-                "Apify requiert maintenant un paiement (x402). "
-                "Le cookie Instagram est expiré ET Apify est bloqué. "
-                "Solution : Va dans Paramètres → colle un nouveau cookie sessionid Instagram."
-            )
-        raise
+        print(json.dumps({
+            "type": "info",
+            "msg": f"instagrapi échoué ({type(e).__name__}: {str(e)[:100]}) — fallback Instaloader"
+        }), flush=True)
+
+    # ── Essai 2 : Instaloader (fallback) ──
+    try:
+        posts = scrape_profile_instaloader(profile_url, max_posts, session_cookie)
+        if posts:
+            return posts
+        print(json.dumps({"type": "info", "msg": "Instaloader: 0 posts — profil introuvable ou vide"}), flush=True)
+    except Exception as e:
+        print(json.dumps({
+            "type": "info",
+            "msg": f"Instaloader échoué ({type(e).__name__}: {str(e)[:100]})"
+        }), flush=True)
+
+    raise RuntimeError(
+        f"Impossible de scraper ce profil. "
+        f"Vérifie que : 1) le profil existe et est public, "
+        f"2) ton cookie sessionid n'est pas expiré (renouvelle-le depuis Chrome)."
+    )
 
 
 # ── Extraction d'images ─────────────────────────────────────────────────────────
