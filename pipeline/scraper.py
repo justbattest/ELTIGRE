@@ -390,6 +390,160 @@ def _scrape_profile_apify_removed(profile_url: str, max_posts: int, apify_key: s
     return valid_posts
 
 
+# ── Mode httpx direct (sans instagrapi — API privée mobile avec cookie brut) ──
+
+def scrape_profile_httpx(profile_url: str, max_posts: int, session_cookie: str, proxy_url: str | None = None) -> list:
+    """Scrape via requêtes httpx directes à l'API privée Instagram.
+
+    N'utilise pas instagrapi → pas de vérification de session → pas de boucle de redirects.
+    Envoie le cookie + headers mobile directement, comme l'app Instagram Android.
+    """
+    import time
+
+    username = extract_username(profile_url)
+    decoded_cookie = urllib.parse.unquote(session_cookie.strip())
+
+    # Extraire user_id depuis le sessionid (format: "<user_id>:<token>:...")
+    user_id_match = re.search(r"^(\d+)", decoded_cookie)
+    logged_in_user_id = user_id_match.group(1) if user_id_match else ""
+
+    proxy_label = f" via proxy {proxy_url.split('@')[-1]}" if proxy_url else ""
+    print(json.dumps({
+        "type": "info",
+        "msg": f"httpx direct: scraping @{username} (API mobile brute{proxy_label})"
+    }), flush=True)
+
+    # Headers reproduisant exactement l'app Instagram Android
+    headers = {
+        "User-Agent": "Instagram 264.0.0.23.104 Android (31/12; 560dpi; 1440x3040; samsung; SM-G998B; p3s; exynos2100; en_US; 438553079)",
+        "X-IG-App-ID": "567067343352427",
+        "X-IG-Capabilities": "3brTvw==",
+        "X-IG-Connection-Type": "WIFI",
+        "Accept-Language": "en-US",
+        "Accept-Encoding": "gzip, deflate",
+        "Cookie": f"sessionid={decoded_cookie}; ds_user_id={logged_in_user_id}",
+    }
+    if logged_in_user_id and decoded_cookie:
+        headers["Authorization"] = (
+            f"Bearer ds_user_id={logged_in_user_id}"
+            f"&sessionid={decoded_cookie}"
+            f"&should_use_header_over_cookies=1"
+        )
+
+    proxies = {"http://": proxy_url, "https://": proxy_url} if proxy_url else None
+
+    with httpx.Client(headers=headers, proxies=proxies, timeout=30, follow_redirects=True) as client:
+        # ── Étape 1 : lookup user_id depuis le username ──
+        user_id = None
+        try:
+            resp = client.get(
+                f"https://i.instagram.com/api/v1/users/web_profile_info/?username={username}"
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                user_id = data.get("data", {}).get("user", {}).get("id")
+            else:
+                print(json.dumps({"type": "info", "msg": f"httpx user lookup status={resp.status_code} — essai web fallback"}), flush=True)
+        except Exception as e:
+            print(json.dumps({"type": "info", "msg": f"httpx user lookup error: {str(e)[:80]}"}), flush=True)
+
+        # Fallback : endpoint web
+        if not user_id:
+            try:
+                resp2 = client.get(
+                    f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}",
+                    headers={**headers, "Referer": "https://www.instagram.com/"},
+                )
+                if resp2.status_code == 200:
+                    data2 = resp2.json()
+                    user_id = data2.get("data", {}).get("user", {}).get("id")
+                else:
+                    print(json.dumps({"type": "info", "msg": f"httpx web fallback status={resp2.status_code}"}), flush=True)
+            except Exception as e2:
+                print(json.dumps({"type": "info", "msg": f"httpx web fallback error: {str(e2)[:80]}"}), flush=True)
+
+        if not user_id:
+            raise RuntimeError(f"httpx: impossible de récupérer l'user_id de @{username}")
+
+        # ── Étape 2 : récupérer les posts ──
+        posts = []
+        max_id = None
+        fetch_count = min(max_posts * 2, max_posts + 30)
+
+        while len(posts) < fetch_count:
+            params: dict = {"count": "12"}
+            if max_id:
+                params["max_id"] = max_id
+
+            try:
+                resp3 = client.get(
+                    f"https://i.instagram.com/api/v1/feed/user/{user_id}/",
+                    params=params,
+                )
+                if resp3.status_code != 200:
+                    print(json.dumps({"type": "info", "msg": f"httpx feed status={resp3.status_code}"}), flush=True)
+                    break
+                feed = resp3.json()
+            except Exception as e3:
+                print(json.dumps({"type": "info", "msg": f"httpx feed error: {str(e3)[:80]}"}), flush=True)
+                break
+
+            items = feed.get("items", [])
+            if not items:
+                break
+
+            for item in items:
+                media_type = item.get("media_type", 0)
+                if media_type == 2:  # video simple → skip
+                    continue
+
+                images: list[str] = []
+                if media_type == 8:  # carousel
+                    for node in item.get("carousel_media", []):
+                        img_versions = node.get("image_versions2", {}).get("candidates", [])
+                        if img_versions:
+                            images.append(img_versions[0]["url"])
+                else:  # image simple
+                    img_versions = item.get("image_versions2", {}).get("candidates", [])
+                    if img_versions:
+                        images.append(img_versions[0]["url"])
+
+                if not images:
+                    continue
+
+                posts.append({
+                    "shortCode": item.get("code", ""),
+                    "type": {1: "Image", 2: "Video", 8: "Sidecar"}.get(media_type, "Image"),
+                    "likesCount": item.get("like_count", 0),
+                    "commentsCount": item.get("comment_count", 0),
+                    "caption": (item.get("caption") or {}).get("text", ""),
+                    "url": f"https://www.instagram.com/p/{item.get('code', '')}/",
+                    "displayUrl": images[0],
+                    "images": images,
+                    "timestamp": item.get("taken_at", ""),
+                    "ownerUsername": username,
+                })
+
+            if not feed.get("more_available"):
+                break
+            max_id = feed.get("next_max_id")
+            if not max_id:
+                break
+            time.sleep(1.5)
+
+    posts.sort(
+        key=lambda p: (p.get("likesCount") or 0) + (p.get("commentsCount") or 0) * 3,
+        reverse=True
+    )
+    posts = posts[:max_posts]
+
+    print(json.dumps({
+        "type": "info",
+        "msg": f"httpx direct: {len(posts)} posts récupérés pour @{username}"
+    }), flush=True)
+    return posts
+
+
 # ── Dispatcher principal ────────────────────────────────────────────────────────
 
 def scrape_profile(
@@ -399,11 +553,12 @@ def scrape_profile(
     session_cookie: str | None = None,
     proxy_url: str | None = None,  # Proxy résidentiel optionnel (ex: "http://user:pass@host:port")
 ) -> list:
-    """Point d'entrée — 2 méthodes avec cookie Instagram (obligatoire) :
-    1. instagrapi (API mobile, login direct sans vérification pour éviter boucle redirects)
-    2. Instaloader (fallback si instagrapi échoue)
+    """Point d'entrée — 3 méthodes avec cookie Instagram (obligatoire) :
+    1. instagrapi (API mobile avec vérification si proxy, bypass sinon)
+    2. httpx direct (API mobile brute sans instagrapi — évite les boucles de redirects)
+    3. Instaloader (fallback final)
 
-    proxy_url (optionnel) : proxy résidentiel/4G pour contourner un éventuel blocage IP.
+    proxy_url (optionnel) : proxy résidentiel/4G pour contourner blocage IP.
     IMPORTANT : Le cookie sessionid Instagram est requis.
     Pour renouveler : Chrome → instagram.com → F12 → Application → Cookies → sessionid
     """
@@ -413,20 +568,32 @@ def scrape_profile(
             "Va dans Paramètres → colle ton cookie sessionid Instagram (Chrome → F12 → Application → Cookies)."
         )
 
-    # ── Essai 1 : instagrapi (login direct sans vérification) ──
+    # ── Essai 1 : instagrapi ──
     try:
         posts = scrape_profile_instagrapi(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
             return posts
-        print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback Instaloader"}), flush=True)
+        print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback httpx"}), flush=True)
     except Exception as e:
         err_msg = str(e)[:120]
         print(json.dumps({
             "type": "info",
-            "msg": f"instagrapi échoué ({type(e).__name__}: {err_msg}) — fallback Instaloader"
+            "msg": f"instagrapi échoué ({type(e).__name__}: {err_msg}) — fallback httpx direct"
         }), flush=True)
 
-    # ── Essai 2 : Instaloader (fallback, avec proxy si configuré) ──
+    # ── Essai 2 : httpx direct (sans instagrapi) ──
+    try:
+        posts = scrape_profile_httpx(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
+        if posts:
+            return posts
+        print(json.dumps({"type": "info", "msg": "httpx direct: 0 posts — fallback Instaloader"}), flush=True)
+    except Exception as e:
+        print(json.dumps({
+            "type": "info",
+            "msg": f"httpx direct échoué ({type(e).__name__}: {str(e)[:100]}) — fallback Instaloader"
+        }), flush=True)
+
+    # ── Essai 3 : Instaloader (fallback final) ──
     try:
         posts = scrape_profile_instaloader(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
@@ -438,15 +605,13 @@ def scrape_profile(
             "msg": f"Instaloader échoué ({type(e).__name__}: {str(e)[:100]})"
         }), flush=True)
 
-    proxy_hint = ""
-    if not proxy_url:
-        proxy_hint = (" Si l'IP serveur est bloquée par Instagram, configure un proxy résidentiel"
-                      " dans Paramètres → Proxy scraping (webshare.io gratuit).")
     raise RuntimeError(
-        f"Impossible de scraper ce profil. "
-        f"Vérifie que : 1) le profil existe et est public, "
-        f"2) ton cookie sessionid n'est pas expiré (renouvelle-le depuis Chrome)."
-        f"{proxy_hint}"
+        f"Impossible de scraper ce profil (@{extract_username(profile_url)}). "
+        f"Les 3 méthodes ont échoué. "
+        f"Vérifie que : 1) le profil est public, "
+        f"2) ton cookie sessionid est valide (Chrome → F12 → Application → Cookies → sessionid), "
+        f"3) le proxy configuré est un proxy RÉSIDENTIEL (pas datacenter). "
+        f"Proxy actuel : {'configuré (' + proxy_url.split('@')[-1] + ')' if proxy_url else 'aucun — IP Railway utilisée'}."
     )
 
 
