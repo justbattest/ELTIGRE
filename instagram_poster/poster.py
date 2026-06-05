@@ -38,6 +38,38 @@ def human_delay(min_sec: float = 3, max_sec: float = 12) -> None:
     time.sleep(delay)
 
 
+def human_warmup(cl: Client, username: str) -> None:
+    """
+    Simule un comportement humain après le login, avant de poster.
+    Rend la session "chaude" — réduit la détection bot par Meta.
+
+    Séquence : notifs → feed → pause lecture → prêt à poster
+    Total : ~20-45s (comme un humain qui ouvre l'app et navigue un peu)
+    """
+    logger.info(f"[{username}] Warm-up session (simule comportement humain)...")
+
+    # 1. Vérifier les notifications (premier geste naturel à l'ouverture de l'app)
+    human_delay(1, 3)
+    try:
+        cl.news_inbox()
+    except Exception:
+        pass  # Non bloquant
+
+    # 2. Charger quelques posts du feed (scroll rapide)
+    human_delay(2, 5)
+    try:
+        cl.get_timeline()
+    except Exception:
+        pass  # Non bloquant
+
+    # 3. Pause "lecture" — simule un humain qui regarde les posts
+    pause = random.uniform(10, 25)
+    logger.debug(f"[{username}] Lecture feed simulée ({pause:.0f}s)...")
+    time.sleep(pause)
+
+    logger.info(f"[{username}] Warm-up terminé — prêt à poster")
+
+
 def post_reel(
     account_id: str,
     username: str,
@@ -46,6 +78,7 @@ def post_reel(
     caption: str,
     config: dict,
     totp_secret: str | None = None,
+    proxy_url: str | None = None,
     retry_count: int = 0,
 ) -> dict:
     """
@@ -62,12 +95,11 @@ def post_reel(
         # Injecter le totp_secret dans la config pour que session_manager puisse le lire
         if totp_secret and account_id in config.get("accounts", {}):
             config["accounts"][account_id]["totp_secret"] = totp_secret
-        cl = session_manager.get_client(account_id, username, password, config)
+        cl = session_manager.get_client(account_id, username, password, config, proxy_url)
 
-        # Délai humain avant l'upload
-        human_delay(5, 15)
-
-        # Upload le Reel
+        # Warm-up avant de poster (simule comportement humain)
+        human_warmup(cl, username)
+        logger.info(f"[{username}] Caption: {caption[:80]!r}{'...' if len(caption) > 80 else ''}")
         media = cl.clip_upload(
             path=video_path,
             caption=caption,
@@ -137,6 +169,7 @@ def post_photo(
     caption: str,
     config: dict,
     totp_secret: str | None = None,
+    proxy_url: str | None = None,
     retry_count: int = 0,
 ) -> dict:
     """
@@ -151,9 +184,8 @@ def post_photo(
     try:
         if totp_secret and account_id in config.get("accounts", {}):
             config["accounts"][account_id]["totp_secret"] = totp_secret
-        cl = session_manager.get_client(account_id, username, password, config)
-
-        human_delay(3, 10)
+        cl = session_manager.get_client(account_id, username, password, config, proxy_url)
+        human_warmup(cl, username)
 
         media = cl.photo_upload(
             path=image_path,
@@ -197,6 +229,7 @@ def post_carousel(
     caption: str,
     config: dict,
     totp_secret: str | None = None,
+    proxy_url: str | None = None,
 ) -> dict:
     """
     Poste un carousel (album) Instagram.
@@ -206,9 +239,12 @@ def post_carousel(
     try:
         if totp_secret and account_id in config.get("accounts", {}):
             config["accounts"][account_id]["totp_secret"] = totp_secret
-        cl = session_manager.get_client(account_id, username, password, config)
+        cl = session_manager.get_client(account_id, username, password, config, proxy_url)
 
-        human_delay(3, 10)
+        # Warm-up avant de poster (simule comportement humain)
+        human_warmup(cl, username)
+
+        logger.info(f"[{username}] Caption: {caption[:80]!r}{'...' if len(caption) > 80 else ''}")
 
         media = cl.album_upload(
             paths=image_paths,
@@ -246,15 +282,16 @@ def post(
     media_type: str,               # 'reel' | 'photo' | 'carousel'
     config: dict,
     totp_secret: str | None = None,
+    proxy_url: str | None = None,
 ) -> dict:
     """Dispatcher : poste selon le media_type."""
     if media_type == "carousel":
         paths = media_path if isinstance(media_path, list) else [media_path]
-        return post_carousel(account_id, username, password, paths, caption, config, totp_secret)
+        return post_carousel(account_id, username, password, paths, caption, config, totp_secret, proxy_url)
     elif media_type == "photo":
-        return post_photo(account_id, username, password, str(media_path), caption, config, totp_secret)
+        return post_photo(account_id, username, password, str(media_path), caption, config, totp_secret, proxy_url)
     else:
-        return post_reel(account_id, username, password, str(media_path), caption, config, totp_secret)
+        return post_reel(account_id, username, password, str(media_path), caption, config, totp_secret, proxy_url)
 
 
 def _read_session_file(account_id: str, config: dict) -> str | None:

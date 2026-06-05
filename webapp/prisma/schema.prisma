@@ -156,9 +156,10 @@ model InstagramPost {
   userId       String           @map("user_id")
   accountId    String           @map("account_id")
   generationId Int?             @map("generation_id")  // FK Generation (optionnel)
-  driveFileId   String?          @map("drive_file_id")   // ID fichier Google Drive (video/photo)
-  driveFileUrl  String?          @map("drive_file_url") @db.Text  // URL shareable Drive (video/photo)
-  driveFilesJson String?         @map("drive_files_json") @db.Text // JSON array d'URLs pour carousel (["url1","url2","url3","url4"])
+  driveFileId    String?          @map("drive_file_id")      // ID fichier Google Drive (video/photo)
+  driveFileUrl   String?          @map("drive_file_url") @db.Text   // URL shareable Drive (video/photo)
+  driveFilesJson String?          @map("drive_files_json") @db.Text  // JSON array d'URLs pour carousel
+  carouselFolderId String?        @map("carousel_folder_id")  // ID Drive du dossier carousel_N (déduplication)
   caption      String?          @db.Text
   mediaType    String           @default("reel")       // reel|photo
   scheduledFor DateTime?        @map("scheduled_for") @db.Timestamptz(6)

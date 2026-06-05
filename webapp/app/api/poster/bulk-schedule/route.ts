@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const { accountId, carousels, perDay = 1, startDate, firstPostAt } = body
+  // carousels: Array<{ fileUrls: string[], caption?: string, carouselFolderId?: string }>
 
   if (!accountId) return NextResponse.json({ error: 'accountId requis' }, { status: 400 })
   if (!carousels?.length) return NextResponse.json({ error: 'carousels requis' }, { status: 400 })
@@ -123,11 +124,12 @@ export async function POST(req: NextRequest) {
   }
 
   // Créer tous les posts en une transaction
-  const postsData = carousels.map((carousel: { fileUrls: string[]; caption?: string }, i: number) => ({
+  const postsData = carousels.map((carousel: { fileUrls: string[]; caption?: string; carouselFolderId?: string }, i: number) => ({
     userId: session.user.id,
     accountId,
     driveFilesJson: JSON.stringify(carousel.fileUrls),
-    caption: carousel.caption || null,
+    caption: carousel.caption?.trim() || null,
+    carouselFolderId: carousel.carouselFolderId || null,
     mediaType: 'carousel',
     scheduledFor: scheduledDates[i] || new Date(),
     status: 'pending',

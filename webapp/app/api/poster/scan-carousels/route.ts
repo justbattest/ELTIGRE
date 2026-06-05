@@ -16,13 +16,14 @@ import { prisma } from '@/lib/prisma'
 import { getAccessToken, listFolder, findFolder, getDownloadUrl } from '@/lib/drive-api'
 
 export type DriveCarousel = {
-  id: string               // carousel_N folder ID
+  id: string               // carousel_N folder ID (= carouselFolderId en DB)
   name: string             // "carousel_1", "carousel_2"...
   runId: string            // run_id parent folder name
   characterName: string
   previewUrl: string       // URL de la 1ère image (aperçu)
   fileUrls: string[]       // 4 URLs téléchargeables
   fileIds: string[]        // 4 file IDs Drive
+  alreadyPosted: boolean   // true si posté sur n'importe quel compte
 }
 
 export async function POST(req: NextRequest) {
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest) {
           previewUrl: fileUrls[0],
           fileUrls,
           fileIds,
+          alreadyPosted: false, // sera mis à jour après la requête DB
         })
       }
 
@@ -123,7 +125,35 @@ export async function POST(req: NextRequest) {
       if (carousels.length >= 100) break
     }
 
-    return NextResponse.json({ carousels, total: carousels.length })
+    // Vérifier quels carousels ont déjà été postés (sur n'importe quel compte)
+    const allFolderIds = carousels.map(c => c.id)
+    const postedFolderIds = new Set<string>()
+    if (allFolderIds.length > 0) {
+      const postedPosts = await prisma.instagramPost.findMany({
+        where: {
+          userId: session.user.id,
+          carouselFolderId: { in: allFolderIds },
+          status: { in: ['posted', 'pending', 'processing'] },
+        },
+        select: { carouselFolderId: true },
+      })
+      postedPosts.forEach(p => { if (p.carouselFolderId) postedFolderIds.add(p.carouselFolderId) })
+    }
+
+    // Annoter chaque carousel + filtrer les déjà postés
+    const annotated = carousels.map(c => ({
+      ...c,
+      alreadyPosted: postedFolderIds.has(c.id),
+    }))
+
+    const available = annotated.filter(c => !c.alreadyPosted)
+    const alreadyPostedCount = annotated.length - available.length
+
+    return NextResponse.json({
+      carousels: available,             // Seulement les non-postés
+      alreadyPosted: alreadyPostedCount, // Info pour l'UI
+      total: available.length,
+    })
   } catch (e) {
     console.error('[scan-carousels]', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })

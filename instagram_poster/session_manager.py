@@ -117,6 +117,13 @@ def _generate_totp(secret: str) -> str:
     return pyotp.TOTP(clean_secret).now()
 
 
+def _apply_proxy(cl: Client, proxy_url: str | None) -> None:
+    """Configure le proxy sur le client instagrapi si fourni."""
+    if proxy_url:
+        cl.set_proxy(proxy_url)
+        logger.debug(f"Proxy configuré: {proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url[:30]}")
+
+
 def _do_login(cl: Client, username: str, password: str, totp_secret: str | None) -> None:
     """
     Login instagrapi avec gestion automatique du 2FA TOTP.
@@ -182,7 +189,7 @@ def init_account(account_id: str, username: str, password: str, config: dict) ->
     return cl
 
 
-def get_client(account_id: str, username: str, password: str, config: dict) -> Client:
+def get_client(account_id: str, username: str, password: str, config: dict, proxy_url: str | None = None) -> Client:
     """
     Charge une session existante et retourne un Client instagrapi prêt à l'emploi.
     Si la session est expirée, tente un re-login et sauvegarde la nouvelle session.
@@ -201,6 +208,10 @@ def get_client(account_id: str, username: str, password: str, config: dict) -> C
         cl.set_device(device)
         cl.set_country("US")
         cl.set_locale("en_US")
+
+    # Proxy 4G si configuré (depuis config.json ou passé directement)
+    effective_proxy = proxy_url or config["accounts"].get(account_id, {}).get("proxy_url")
+    _apply_proxy(cl, effective_proxy)
 
     if session_file.exists():
         # Charger la session existante — évite un re-login from scratch

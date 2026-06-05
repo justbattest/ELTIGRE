@@ -197,30 +197,38 @@ def process_post(pending: dict, config: dict) -> None:
     wifi_name = config.get("networks", {}).get(network_name_key, network_name_key)
     logger.info(f"Réseau cible: {wifi_name} ({network_name_key})")
 
-    # 2. Switch vers le bon hotspot (ou vérifier que l'IP actuelle est déjà carrier)
-    try:
-        ip = network_switcher.switch_to_network(wifi_name)
-        logger.info(f"Connecté à {wifi_name} — IP: {ip}")
-    except ConnectionError as e:
-        # WiFi switch échoué — vérifier si on est déjà sur une IP carrier (USB tethering)
-        logger.warning(f"WiFi switch échoué: {e} — vérification IP actuelle...")
-        current_ip = network_switcher.get_public_ip()
+    # 2. Réseau : proxy 4G OU switch hotspot iPhone
+    proxy_url = config["accounts"].get(account_id, {}).get("proxy_url")
+
+    if proxy_url:
+        # Mode proxy 4G — pas besoin de switch WiFi
+        logger.info(f"Proxy 4G configuré : {proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url[:30]}...")
+        # La validation IP sera faite via instagrapi directement
+    else:
+        # Mode hotspot iPhone — switch WiFi
         try:
-            network_switcher._validate_carrier_ip(current_ip, "current (USB/tethering)")
-            logger.info(f"IP actuelle valide (USB tethering) : {current_ip} — on continue")
-        except ValueError:
-            logger.error(f"IP datacenter ou pas de connexion. Vérifier le partage de connexion iPhone.")
-            api_report_result(config, post_id, {
-                "success": False,
-                "error": f"Hotspot introuvable et IP actuelle non carrier ({current_ip}). Vérifier partage de connexion iPhone.",
-            })
+            ip = network_switcher.switch_to_network(wifi_name)
+            logger.info(f"Connecté à {wifi_name} — IP: {ip}")
+        except ConnectionError as e:
+            # WiFi switch échoué — vérifier si on est déjà sur une IP carrier (USB tethering)
+            logger.warning(f"WiFi switch échoué: {e} — vérification IP actuelle...")
+            current_ip = network_switcher.get_public_ip()
+            try:
+                network_switcher._validate_carrier_ip(current_ip, "current (USB/tethering)")
+                logger.info(f"IP actuelle valide (USB tethering) : {current_ip} — on continue")
+            except ValueError:
+                logger.error(f"IP datacenter ou pas de connexion. Vérifier le partage de connexion iPhone.")
+                api_report_result(config, post_id, {
+                    "success": False,
+                    "error": f"Hotspot introuvable et IP actuelle non carrier ({current_ip}). Vérifier partage de connexion iPhone.",
+                })
+                save_queue(None)
+                return
+        except ValueError as e:
+            logger.error(f"IP suspecte après switch: {e}")
+            api_report_result(config, post_id, {"success": False, "error": str(e)})
             save_queue(None)
             return
-    except ValueError as e:
-        logger.error(f"IP suspecte après switch: {e}")
-        api_report_result(config, post_id, {"success": False, "error": str(e)})
-        save_queue(None)
-        return
 
     # 3. Télécharger le(s) fichier(s) depuis Drive
     drive_files_json = post_data.get("driveFilesJson")
@@ -326,6 +334,7 @@ def process_post(pending: dict, config: dict) -> None:
             caption=caption,
             media_type=media_type,
             config=config,
+            proxy_url=proxy_url,
         )
     except Exception as e:
         logger.exception(f"Erreur inattendue lors du post: {e}")

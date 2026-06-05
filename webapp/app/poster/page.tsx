@@ -146,6 +146,7 @@ function QuickCarouselModal({
   const [step, setStep] = useState<'config' | 'scanning' | 'preview' | 'scheduling' | 'done'>('config')
   const [carousels, setCarousels] = useState<DriveCarousel[]>([])
   const [selected, setSelected] = useState<DriveCarousel[]>([])
+  const [alreadyPostedCount, setAlreadyPostedCount] = useState(0)
   const [captions, setCaptions] = useState<string[]>([])
   const [error, setError] = useState('')
   const [progress, setProgress] = useState('')
@@ -179,8 +180,9 @@ function QuickCarouselModal({
         return
       }
       setCarousels(data.carousels)
+      setAlreadyPostedCount(data.alreadyPosted || 0)
 
-      // Sélection aléatoire de N carousels
+      // Sélection aléatoire de N carousels (tous sont déjà filtrés = non postés)
       const shuffled = [...data.carousels].sort(() => Math.random() - 0.5)
       const picked = shuffled.slice(0, Math.min(total, shuffled.length))
       setSelected(picked)
@@ -230,6 +232,7 @@ function QuickCarouselModal({
           carousels: selected.map((c, i) => ({
             fileUrls: c.fileUrls,
             caption: generatedCaptions[i] || '',
+            carouselFolderId: c.id,  // ID Drive pour déduplication
           })),
           perDay,
           startDate: startDatetime
@@ -368,6 +371,9 @@ function QuickCarouselModal({
                 <p className="text-sm text-white font-medium">
                   <span className="text-violet-400">{selected.length}</span> carousels sélectionnés
                   <span className="text-zinc-500 text-xs ml-2">sur {carousels.length} disponibles</span>
+                  {alreadyPostedCount > 0 && (
+                    <span className="text-zinc-600 text-xs ml-2">· {alreadyPostedCount} déjà postés exclus</span>
+                  )}
                 </p>
                 <button
                   onClick={() => {
