@@ -42,25 +42,28 @@ def _login_sessionid_direct(cl, sessionid: str) -> None:
     """Injecte le cookie sessionid SANS appeler user_info_v1 pour vérification.
 
     login_by_sessionid() standard appelle user_info_v1() en interne pour valider la session.
-    Sur Railway (IP datacenter), cet appel peut tomber dans une boucle de redirects (30 redirects).
-    Ce helper bypass la vérification : on injecte le cookie directement et on laisse les appels
-    de scraping eux-mêmes valider (ils échoueront avec un vrai message d'erreur si session invalide).
+    Sur IP datacenter/proxy non-résidentiel, cet appel peut boucler (30 redirects) ou déclencher
+    un challenge de localisation.
+
+    Ce helper bypass la vérification : cookie injecté via le dictionnaire de settings,
+    authorization utilisé en mode cookie (pas header) pour maximiser la compatibilité.
     """
     import re as _re
     decoded = sessionid.strip()
     user_match = _re.search(r"^(\d+)", decoded)
     if not user_match:
-        # Format inattendu → fallback standard
         cl.login_by_sessionid(decoded)
         return
     user_id = user_match.group(1)
     cl.set_settings({})
     cl.settings["cookies"] = {"sessionid": decoded}
     cl.init()
+    # should_use_header_over_cookies=False → utilise le cookie HTTP standard
+    # plutôt que l'en-tête Authorization Bearer → meilleure compatibilité API
     cl.authorization_data = {
         "ds_user_id": user_id,
         "sessionid": decoded,
-        "should_use_header_over_cookies": True,
+        "should_use_header_over_cookies": False,
     }
 
 
@@ -85,23 +88,20 @@ def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: 
     }), flush=True)
 
     cl = Client()
-    # Délai entre requêtes : plus long pour réduire le risque de 429 sur IP datacenter
-    cl.delay_range = [3, 8] if not proxy_url else [1, 3]
-
-    if proxy_url:
-        cl.set_proxy(proxy_url)
+    cl.delay_range = [2, 5]
 
     try:
-        if proxy_url:
-            # Avec proxy (IP résidentielle) → login standard avec vérification.
-            # La vérification user_info_v1() fonctionne car l'IP n'est pas bloquée.
-            cl.login_by_sessionid(decoded_cookie)
-        else:
-            # Sans proxy (IP datacenter Railway) → bypass verification pour éviter
-            # la boucle de 30 redirects que Railway déclenche sur user_info_v1().
-            _login_sessionid_direct(cl, decoded_cookie)
+        # Bypass user_info_v1() verification dans TOUS les cas :
+        # - Sans proxy : évite la boucle de 30 redirects sur IP datacenter Railway
+        # - Avec proxy : évite le challenge de localisation (proxy pays ≠ pays du compte)
+        # Le cookie est injecté directement via settings, auth en mode cookie (pas header Bearer)
+        _login_sessionid_direct(cl, decoded_cookie)
     except Exception as e:
         raise RuntimeError(f"instagrapi login failed: {e}")
+
+    # Définir le proxy APRÈS login/init pour s'assurer qu'il est actif pour les appels API
+    if proxy_url:
+        cl.set_proxy(proxy_url)
 
     # Essai 1 : lookup GraphQL (moins sensible aux blocages IP Railway)
     user_id = None
@@ -578,32 +578,20 @@ def scrape_profile(
             "Va dans Paramètres → colle ton cookie sessionid Instagram (Chrome → F12 → Application → Cookies)."
         )
 
-    # ── Essai 1 : instagrapi ──
+    # ── Essai 1 : instagrapi (bypass + proxy APRÈS init) ──
     try:
         posts = scrape_profile_instagrapi(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
             return posts
-        print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback httpx"}), flush=True)
+        print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback Instaloader"}), flush=True)
     except Exception as e:
         err_msg = str(e)[:120]
         print(json.dumps({
             "type": "info",
-            "msg": f"instagrapi échoué ({type(e).__name__}: {err_msg}) — fallback httpx direct"
+            "msg": f"instagrapi échoué ({type(e).__name__}: {err_msg}) — fallback Instaloader"
         }), flush=True)
 
-    # ── Essai 2 : httpx direct (sans instagrapi) ──
-    try:
-        posts = scrape_profile_httpx(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
-        if posts:
-            return posts
-        print(json.dumps({"type": "info", "msg": "httpx direct: 0 posts — fallback Instaloader"}), flush=True)
-    except Exception as e:
-        print(json.dumps({
-            "type": "info",
-            "msg": f"httpx direct échoué ({type(e).__name__}: {str(e)[:100]}) — fallback Instaloader"
-        }), flush=True)
-
-    # ── Essai 3 : Instaloader (fallback final) ──
+    # ── Essai 2 : Instaloader ──
     try:
         posts = scrape_profile_instaloader(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
@@ -615,13 +603,13 @@ def scrape_profile(
             "msg": f"Instaloader échoué ({type(e).__name__}: {str(e)[:100]})"
         }), flush=True)
 
+    proxy_info = f"configuré ({proxy_url.split('@')[-1]})" if proxy_url else "aucun (IP Railway utilisée)"
     raise RuntimeError(
-        f"Impossible de scraper ce profil (@{extract_username(profile_url)}). "
-        f"Les 3 méthodes ont échoué. "
-        f"Vérifie que : 1) le profil est public, "
-        f"2) ton cookie sessionid est valide (Chrome → F12 → Application → Cookies → sessionid), "
-        f"3) le proxy configuré est un proxy RÉSIDENTIEL (pas datacenter). "
-        f"Proxy actuel : {'configuré (' + proxy_url.split('@')[-1] + ')' if proxy_url else 'aucun — IP Railway utilisée'}."
+        f"Impossible de scraper @{extract_username(profile_url)}. "
+        f"Cookie valide (testé localement) mais IP bloquée par Instagram. "
+        f"Proxy actuel : {proxy_info}. "
+        f"Solution : dans Webshare → remplacer le proxy allemand par un proxy FRANÇAIS "
+        f"(bouton Countries → France) → même URL format http://user:pass@ip:port."
     )
 
 
