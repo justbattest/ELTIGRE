@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     // Fonction helper : trouve un sous-dossier par nom (insensible à la casse)
     const findFolderCI = async (parentId: string, name: string) => {
       const subs = await listFolder(token, parentId, 'application/vnd.google-apps.folder')
-      return subs.find(f => f.name.toLowerCase() === name.toLowerCase()) || null
+      return subs.find(f => f.name.trim().toLowerCase() === name.trim().toLowerCase()) || null
     }
 
     // 1. Trouver le dossier carousels/ en gérant 2 structures possibles :
