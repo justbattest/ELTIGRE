@@ -85,7 +85,8 @@ def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: 
     }), flush=True)
 
     cl = Client()
-    cl.delay_range = [1, 3]  # Délai naturel entre requêtes
+    # Délai entre requêtes : plus long pour réduire le risque de 429 sur IP datacenter
+    cl.delay_range = [3, 8] if not proxy_url else [1, 3]
 
     if proxy_url:
         cl.set_proxy(proxy_url)
@@ -191,11 +192,12 @@ def username_from_media(media) -> str:
 
 # ── Mode Instaloader (avec cookie de session — fallback) ───────────────────────
 
-def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie: str) -> list:
+def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie: str, proxy_url: str | None = None) -> list:
     """Scrape via Instaloader avec cookie de session Instagram.
     Fonctionne sur TOUS les profils publics, même les "Restricted".
 
     Le cookie Chrome est URL-encodé (%3A = :) — on URL-décode avant usage.
+    proxy_url : proxy résidentiel optionnel (même format que instagrapi)
     """
     import instaloader  # Import local pour ne pas crasher si non installé sans cookie
 
@@ -203,9 +205,10 @@ def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie:
     # URL-décoder le cookie (Chrome stocke la valeur encodée)
     decoded_cookie = urllib.parse.unquote(session_cookie.strip())
 
+    proxy_label = f" via proxy {proxy_url.split('@')[-1]}" if proxy_url else ""
     print(json.dumps({
         "type": "info",
-        "msg": f"Instaloader: scraping @{username} (mode authentifié)"
+        "msg": f"Instaloader: scraping @{username} (mode authentifié{proxy_label})"
     }), flush=True)
 
     L = instaloader.Instaloader(
@@ -217,6 +220,10 @@ def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie:
         user_agent=None,  # Utilise le user-agent par défaut d'Instaloader
     )
 
+    # Injecter le proxy si configuré
+    if proxy_url:
+        L.context._session.proxies = {"http": proxy_url, "https": proxy_url}
+
     # Injecter le cookie de session Instagram
     L.context._session.cookies.set("sessionid", decoded_cookie, domain=".instagram.com")
     # ds_user_id = premier segment du sessionid (ex: "71400275246:..." → "71400275246")
@@ -227,14 +234,13 @@ def scrape_profile_instaloader(profile_url: str, max_posts: int, session_cookie:
     try:
         profile = instaloader.Profile.from_username(L.context, username)
     except instaloader.exceptions.ProfileNotExistsException:
-        # Profil inexistant → erreur définitive, pas de fallback utile
+        # Profil inexistant → erreur définitive
         print(json.dumps({"type": "error", "msg": f"Profil @{username} introuvable sur Instagram"}), flush=True)
         return []
     except instaloader.exceptions.LoginRequiredException:
-        # Cookie invalide/expiré → laisser remonter pour fallback Apify
         raise
     except Exception:
-        # Erreur réseau/403/400 → laisser remonter pour fallback Apify
+        # Erreur réseau/403/400/429
         raise
 
     posts = []
@@ -414,9 +420,9 @@ def scrape_profile(
             "msg": f"instagrapi échoué ({type(e).__name__}: {err_msg}) — fallback Instaloader"
         }), flush=True)
 
-    # ── Essai 2 : Instaloader (fallback) ──
+    # ── Essai 2 : Instaloader (fallback, avec proxy si configuré) ──
     try:
-        posts = scrape_profile_instaloader(profile_url, max_posts, session_cookie)
+        posts = scrape_profile_instaloader(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
             return posts
         print(json.dumps({"type": "info", "msg": "Instaloader: 0 posts — profil introuvable ou vide"}), flush=True)
