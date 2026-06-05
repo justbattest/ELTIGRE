@@ -16,9 +16,14 @@ type CarouselEvent =
   | { type: 'error'; message: string }
   | { type: 'stderr'; msg: string }
 
+type SoulCharacter = { id: string; name: string; status?: string }
+
 export default function CarouselPage() {
   useSession()
   const router = useRouter()
+
+  // ── Onglet actif ──────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'mix' | 'variations'>('mix')
 
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -27,10 +32,20 @@ export default function CarouselPage() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
-  // ── Personnage (pour le dossier Drive) ────────────────────────────────────
+  // ── Personnage ────────────────────────────────────────────────────────────
   const [refElements, setRefElements] = useState<{ id: string; name: string }[]>([])
+  const [soulCharacters, setSoulCharacters] = useState<SoulCharacter[]>([])
   const [selectedCharacterName, setSelectedCharacterName] = useState('')
+  const [selectedSoulId, setSelectedSoulId] = useState('') // UUID pour variations img2img
   const [loadingChars, setLoadingChars] = useState(false)
+
+  // ── Variations — état spécifique ─────────────────────────────────────────
+  const [varRunId, setVarRunId] = useState<string | null>(null)
+  const [varTotal, setVarTotal] = useState(0)
+  const [varCompleted, setVarCompleted] = useState(0)
+  const [varLinks, setVarLinks] = useState<{ n: number; urls: string[] }[]>([])
+  const [varDone, setVarDone] = useState(false)
+  const [varError, setVarError] = useState('')
 
   const loadCharacters = async () => {
     setLoadingChars(true)
@@ -39,10 +54,12 @@ export default function CarouselPage() {
       const res = await fetch('/api/characters')
       const data = await res.json()
       const elements: { id: string; name: string }[] = data.referenceElements || []
-      const souls: { id: string; name: string }[] = data.soulCharacters || []
+      const souls: SoulCharacter[] = data.soulCharacters || []
       const all = [...elements, ...souls]
       setRefElements(all)
+      setSoulCharacters(souls)
       if (all.length && !selectedCharacterName) setSelectedCharacterName(all[0].name)
+      if (souls.length && !selectedSoulId) setSelectedSoulId(souls[0].id)
     } catch {
       // silencieux
     } finally {
@@ -55,10 +72,12 @@ export default function CarouselPage() {
       .then(r => r.json())
       .then(data => {
         const elements: { id: string; name: string }[] = data.referenceElements || []
-        const souls: { id: string; name: string }[] = data.soulCharacters || []
+        const souls: SoulCharacter[] = data.soulCharacters || []
         const all = [...elements, ...souls]
         setRefElements(all)
+        setSoulCharacters(souls)
         if (all.length) setSelectedCharacterName(all[0].name)
+        if (souls.length) setSelectedSoulId(souls[0].id)
       })
       .catch(() => { /* silencieux si Higgsfield indisponible */ })
   }, [])
@@ -113,6 +132,18 @@ export default function CarouselPage() {
     setCombinationsPossible(0)
   }
 
+  const resetVariations = () => {
+    previews.forEach(URL.revokeObjectURL)
+    setFiles([])
+    setPreviews([])
+    setVarRunId(null)
+    setVarTotal(0)
+    setVarCompleted(0)
+    setVarLinks([])
+    setVarDone(false)
+    setVarError('')
+  }
+
   // ── Drag & Drop ───────────────────────────────────────────────────────────
 
   const onDragOver = (e: React.DragEvent) => {
@@ -161,6 +192,77 @@ export default function CarouselPage() {
       setUploading(false)
     }
   }
+
+  // ── Lancement Variations ──────────────────────────────────────────────────
+
+  const launchVariations = async () => {
+    if (files.length === 0) {
+      setVarError('Ajoute au moins 1 photo de référence.')
+      return
+    }
+    if (!selectedSoulId) {
+      setVarError('Sélectionne un Soul Character (nécessaire pour la génération).')
+      return
+    }
+    setVarError('')
+    setUploading(true)
+
+    const compressedFiles = await Promise.all(files.map(f => compressImage(f)))
+
+    const form = new FormData()
+    compressedFiles.forEach(f => form.append('images', f))
+    form.append('soulId', selectedSoulId)
+    form.append('characterName', selectedCharacterName)
+    form.append('quality', '2k')
+
+    try {
+      const res = await fetch('/api/carousel/generate-variations', { method: 'POST', body: form })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setVarError(data.error || 'Erreur lors du lancement')
+        setUploading(false)
+        return
+      }
+      setVarRunId(data.runId)
+      setUploading(false)
+    } catch (e) {
+      setVarError(String(e))
+      setUploading(false)
+    }
+  }
+
+  // ── SSE stream (variations) ───────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!varRunId || varDone) return
+    const es = new EventSource(`/api/carousel/events/${varRunId}`)
+    es.onmessage = (e) => {
+      let event: CarouselEvent & { type: string }
+      try { event = JSON.parse(e.data) } catch { return }
+      if (event.type === 'carousel_start') {
+        setVarTotal((event as { total: number }).total)
+      } else if (event.type === 'carousel') {
+        setVarCompleted(prev => prev + 1)
+        if ((event as { drive_urls: string[] }).drive_urls?.length) {
+          setVarLinks(prev => [...prev, {
+            n: (event as { n: number }).n,
+            urls: (event as { drive_urls: string[] }).drive_urls
+          }])
+        }
+      } else if (event.type === 'done') {
+        setVarDone(true)
+        es.close()
+      } else if (event.type === 'error') {
+        const msg = (event as { message: string }).message || 'Erreur inconnue'
+        setVarError(msg)
+        setVarDone(true)
+        es.close()
+      }
+    }
+    es.onerror = () => { es.close(); setVarError('Connexion perdue.'); setVarDone(true) }
+    return () => es.close()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [varRunId, varDone])
 
   // ── SSE stream ────────────────────────────────────────────────────────────
 
@@ -230,6 +332,188 @@ export default function CarouselPage() {
       <PageWrapper>
       <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
+        {/* ── Onglets ─────────────────────────────────────────────────────── */}
+        <div className="flex gap-1 bg-zinc-900/80 border border-white/[0.06] rounded-xl p-1">
+          <button
+            onClick={() => setActiveTab('mix')}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+              activeTab === 'mix'
+                ? 'bg-violet-600 text-white shadow'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            🔀 Mix aléatoire
+          </button>
+          <button
+            onClick={() => setActiveTab('variations')}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+              activeTab === 'variations'
+                ? 'bg-violet-600 text-white shadow'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            🎨 Variations (img2img)
+          </button>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* ── ONGLET VARIATIONS ─────────────────────────────────────────── */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'variations' && !varRunId && (
+          <>
+            {/* Info */}
+            <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4">
+              <p className="text-sm text-violet-300 font-medium mb-1">🎨 Mode Variations — Image à Image</p>
+              <p className="text-xs text-violet-400/70">
+                Pour chaque photo uploadée, SoulCinema génère <strong className="text-violet-300">3 variations</strong> (même décor, pose/angle différent).
+                Résultat : 1 carousel Drive par photo = original + 3 variations cohérentes.
+              </p>
+            </div>
+
+            {/* Soul Character (obligatoire pour img2img) */}
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-zinc-400">Soul Character <span className="text-red-400">*</span></p>
+                <button onClick={loadCharacters} disabled={loadingChars} className="text-xs text-violet-400 hover:text-violet-300 transition disabled:opacity-50">
+                  {loadingChars ? 'Chargement...' : 'Rafraîchir'}
+                </button>
+              </div>
+              {soulCharacters.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {soulCharacters.map(s => (
+                    <button key={s.id}
+                      onClick={() => { setSelectedSoulId(s.id); setSelectedCharacterName(s.name) }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                        selectedSoulId === s.id
+                          ? 'bg-violet-600 border-violet-500 text-white'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-violet-500/50 hover:text-white'
+                      }`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500">Aucun Soul Character trouvé — connecte Higgsfield dans les Paramètres.</p>
+              )}
+              {selectedSoulId && (
+                <p className="text-[10px] text-zinc-600 mt-2 font-mono">{selectedSoulId}</p>
+              )}
+            </div>
+
+            {/* Zone drag & drop (même que mix) */}
+            <div
+              onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                dragging ? 'border-violet-400 bg-violet-900/20' : 'border-white/[0.08] hover:border-white/[0.20] bg-zinc-900/40'
+              }`}
+            >
+              <div className="text-4xl mb-3">📸</div>
+              <p className="text-zinc-300 font-medium">Glisse tes photos de référence</p>
+              <p className="text-zinc-500 text-sm mt-1">1 photo = 1 carousel complet (original + 3 variations)</p>
+              <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+                onChange={e => e.target.files && addFiles(e.target.files)} />
+            </div>
+
+            {/* Previews */}
+            {files.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-zinc-400">
+                    {files.length} photo{files.length > 1 ? 's' : ''} → {files.length} carousel{files.length > 1 ? 's' : ''} de 4 images
+                  </span>
+                  <button onClick={resetVariations} className="text-xs text-gray-600 hover:text-red-400 transition">Tout effacer</button>
+                </div>
+                <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
+                  {previews.map((url, i) => (
+                    <div key={i} className="relative group aspect-square">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" className="w-full h-full object-cover rounded-lg border border-violet-500/30" />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 rounded-b-lg py-0.5 text-[8px] text-center text-violet-400">→ 4 imgs</div>
+                      <button onClick={(e) => { e.stopPropagation(); removeFile(i) }}
+                        className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition">×</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {varError && (
+              <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm rounded-xl p-4">{varError}</div>
+            )}
+
+            <button
+              onClick={launchVariations}
+              disabled={files.length === 0 || !selectedSoulId || uploading}
+              className="w-full bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+            >
+              {uploading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                  Compression + lancement...
+                </span>
+              ) : files.length === 0
+                ? 'Ajouter des photos de référence'
+                : `🎨 Générer ${files.length} carousel${files.length > 1 ? 's' : ''} (${files.length * 3} générations Higgsfield)`}
+            </button>
+          </>
+        )}
+
+        {/* Variations — Progression */}
+        {activeTab === 'variations' && varRunId && (
+          <div className="space-y-5">
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-medium text-zinc-100">
+                  {varDone && !varError ? '✅ Variations générées !' : varDone && varError ? '❌ Erreur' : '🎨 Génération en cours...'}
+                </h2>
+                <span className="text-xs text-zinc-500">{varCompleted}/{varTotal || '?'} carousels</span>
+              </div>
+              <div>
+                <div className="bg-white/[0.05] rounded-full h-2">
+                  <div className="bg-gradient-to-r from-violet-500 to-cyan-400 h-2 rounded-full transition-all duration-300"
+                    style={{ width: varTotal > 0 ? `${Math.round(varCompleted / varTotal * 100)}%` : '0%' }} />
+                </div>
+              </div>
+              {varError && <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm rounded-lg p-3">{varError}</div>}
+              {varDone && (
+                <button onClick={resetVariations}
+                  className="w-full bg-white/[0.08] hover:bg-white/[0.12] text-white text-sm rounded-lg py-2.5 transition">
+                  + Nouvelle session
+                </button>
+              )}
+            </div>
+            {varLinks.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-zinc-400 mb-3">Carousels créés ({varLinks.length})</h3>
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {varLinks.map(({ n, urls }) => (
+                    <div key={n} className="bg-zinc-900/60 border border-white/[0.07] rounded-xl p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-zinc-500 w-24">carousel_{n}</span>
+                        <div className="flex gap-1">
+                          {urls.map((_, i) => (
+                            <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-zinc-400' : 'bg-violet-500'}`} />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-zinc-600">{urls.length} imgs (1 orig + {urls.length - 1} variantes)</span>
+                      </div>
+                      <a href={urls[0]} target="_blank" rel="noopener noreferrer"
+                        className="text-[10px] text-violet-400 hover:text-violet-300 transition">Voir Drive →</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* ── ONGLET MIX ────────────────────────────────────────────────── */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'mix' && (
+        <>
         {/* ── Config ─────────────────────────────────────────────────────── */}
         {!runId && (
           <>
@@ -514,6 +798,10 @@ export default function CarouselPage() {
             )}
           </div>
         )}
+        </>
+        )}
+        {/* ── Fin onglet Mix ──────────────────────────────────────────────── */}
+
       </div>
       </PageWrapper>
       </main>
