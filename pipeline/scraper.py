@@ -38,9 +38,38 @@ def extract_username(url: str) -> str:
 
 # ── Mode instagrapi (avec cookie de session — API mobile Instagram) ────────────
 
-def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: str) -> list:
+def _login_sessionid_direct(cl, sessionid: str) -> None:
+    """Injecte le cookie sessionid SANS appeler user_info_v1 pour vérification.
+
+    login_by_sessionid() standard appelle user_info_v1() en interne pour valider la session.
+    Sur Railway (IP datacenter), cet appel peut tomber dans une boucle de redirects (30 redirects).
+    Ce helper bypass la vérification : on injecte le cookie directement et on laisse les appels
+    de scraping eux-mêmes valider (ils échoueront avec un vrai message d'erreur si session invalide).
+    """
+    import re as _re
+    decoded = sessionid.strip()
+    user_match = _re.search(r"^(\d+)", decoded)
+    if not user_match:
+        # Format inattendu → fallback standard
+        cl.login_by_sessionid(decoded)
+        return
+    user_id = user_match.group(1)
+    cl.set_settings({})
+    cl.settings["cookies"] = {"sessionid": decoded}
+    cl.init()
+    cl.authorization_data = {
+        "ds_user_id": user_id,
+        "sessionid": decoded,
+        "should_use_header_over_cookies": True,
+    }
+
+
+def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: str, proxy_url: str | None = None) -> list:
     """Scrape via instagrapi — utilise l'API mobile exacte d'Instagram (app headers iOS/Android).
     Fonctionne sur TOUS les profils publics y compris les "Restricted" qui nécessitent un login.
+
+    proxy_url (optionnel) : ex. "http://user:pass@host:port" — proxy résidentiel pour éviter les
+    blocages IP datacenter. Laisser None pour accès direct.
     """
     from instagrapi import Client
     import warnings
@@ -49,16 +78,21 @@ def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: 
     username = extract_username(profile_url)
     decoded_cookie = urllib.parse.unquote(session_cookie.strip())
 
+    proxy_label = f" via proxy {proxy_url.split('@')[-1]}" if proxy_url else ""
     print(json.dumps({
         "type": "info",
-        "msg": f"instagrapi: scraping @{username} (API mobile authentifiée)"
+        "msg": f"instagrapi: scraping @{username} (API mobile{proxy_label})"
     }), flush=True)
 
     cl = Client()
     cl.delay_range = [1, 3]  # Délai naturel entre requêtes
 
+    if proxy_url:
+        cl.set_proxy(proxy_url)
+
     try:
-        cl.login_by_sessionid(decoded_cookie)
+        # Bypass verification (évite boucle de redirects sur IP datacenter)
+        _login_sessionid_direct(cl, decoded_cookie)
     except Exception as e:
         raise RuntimeError(f"instagrapi login failed: {e}")
 
@@ -351,12 +385,14 @@ def scrape_profile(
     max_posts: int,
     apify_key: str | None = None,  # Conservé pour compatibilité — non utilisé
     session_cookie: str | None = None,
+    proxy_url: str | None = None,  # Proxy résidentiel optionnel (ex: "http://user:pass@host:port")
 ) -> list:
     """Point d'entrée — 2 méthodes avec cookie Instagram (obligatoire) :
-    1. instagrapi (API mobile, tous profils y compris Restricted)
+    1. instagrapi (API mobile, login direct sans vérification pour éviter boucle redirects)
     2. Instaloader (fallback si instagrapi échoue)
 
-    IMPORTANT : Le cookie sessionid Instagram est requis. Sans cookie aucun scraping possible.
+    proxy_url (optionnel) : proxy résidentiel/4G pour contourner un éventuel blocage IP.
+    IMPORTANT : Le cookie sessionid Instagram est requis.
     Pour renouveler : Chrome → instagram.com → F12 → Application → Cookies → sessionid
     """
     if not session_cookie:
@@ -365,16 +401,17 @@ def scrape_profile(
             "Va dans Paramètres → colle ton cookie sessionid Instagram (Chrome → F12 → Application → Cookies)."
         )
 
-    # ── Essai 1 : instagrapi (API mobile authentifiée) ──
+    # ── Essai 1 : instagrapi (login direct sans vérification) ──
     try:
-        posts = scrape_profile_instagrapi(profile_url, max_posts, session_cookie)
+        posts = scrape_profile_instagrapi(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
             return posts
         print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback Instaloader"}), flush=True)
     except Exception as e:
+        err_msg = str(e)[:120]
         print(json.dumps({
             "type": "info",
-            "msg": f"instagrapi échoué ({type(e).__name__}: {str(e)[:100]}) — fallback Instaloader"
+            "msg": f"instagrapi échoué ({type(e).__name__}: {err_msg}) — fallback Instaloader"
         }), flush=True)
 
     # ── Essai 2 : Instaloader (fallback) ──
@@ -389,10 +426,15 @@ def scrape_profile(
             "msg": f"Instaloader échoué ({type(e).__name__}: {str(e)[:100]})"
         }), flush=True)
 
+    proxy_hint = ""
+    if not proxy_url:
+        proxy_hint = (" Si l'IP serveur est bloquée par Instagram, configure un proxy résidentiel"
+                      " dans Paramètres → Proxy scraping (webshare.io gratuit).")
     raise RuntimeError(
         f"Impossible de scraper ce profil. "
         f"Vérifie que : 1) le profil existe et est public, "
         f"2) ton cookie sessionid n'est pas expiré (renouvelle-le depuis Chrome)."
+        f"{proxy_hint}"
     )
 
 
@@ -480,14 +522,17 @@ async def scrape_and_download_all(
     apify_key: str,
     run_dir: str,
     session_cookie: str | None = None,
+    proxy_url: str | None = None,
 ) -> list[dict]:
     """Pipeline complet : scrape + download pour un profil.
     Retourne une liste de dicts {post, local_images}.
     Émet des événements JSON sur stdout pour le monitoring.
+
+    proxy_url : proxy résidentiel optionnel pour instagrapi (ex: "http://user:pass@host:port")
     """
     print(json.dumps({"type": "phase", "phase": "scraping", "pct": 0}), flush=True)
 
-    posts = scrape_profile(profile_url, max_posts, apify_key, session_cookie=session_cookie)
+    posts = scrape_profile(profile_url, max_posts, apify_key, session_cookie=session_cookie, proxy_url=proxy_url)
 
     is_carousel = lambda p: p.get("type") in ("Sidecar", "GraphSidecar") or len(p.get("images", [])) > 1
     n_carousels = sum(1 for p in posts if is_carousel(p))

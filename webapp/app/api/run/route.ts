@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
   const googleRefreshToken = creds?.googleRefreshToken || null
   const driveFolderId = creds?.driveFolderId || null
   const instagramSessionCookie = decryptIfPresent(creds?.instagramSessionCookie) || null
+  const scrapingProxyUrl = creds?.scrapingProxyUrl || null  // Proxy résidentiel optionnel pour le scraping
 
   // Apify est optionnel — utilisé uniquement en fallback si pas de cookie Instagram.
   // Avec instagrapi (cookie) ou instaloader, Apify n'est pas nécessaire.
@@ -127,6 +128,7 @@ export async function POST(req: NextRequest) {
         ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),
         ...(process.env.GOOGLE_CLIENT_SECRET ? { GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET } : {}),
         ...(instagramSessionCookie ? { INSTAGRAM_SESSION_COOKIE: instagramSessionCookie } : {}),
+        ...(scrapingProxyUrl ? { SCRAPING_PROXY_URL: scrapingProxyUrl } : {}),
         ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
       },
     }
@@ -165,6 +167,7 @@ export async function POST(req: NextRequest) {
         ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),
         ...(process.env.GOOGLE_CLIENT_SECRET ? { GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET } : {}),
         ...(instagramSessionCookie ? { INSTAGRAM_SESSION_COOKIE: instagramSessionCookie } : {}),
+        ...(scrapingProxyUrl ? { SCRAPING_PROXY_URL: scrapingProxyUrl } : {}),
         ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
       },
       stdio: ['ignore', 'pipe', 'pipe'],

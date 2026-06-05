@@ -31,6 +31,7 @@ async def run_pipeline(
     drive_credentials: str | None = None,    # kept for compat, unused
     drive_folder_id: str | None = None,      # kept for compat, unused
     session_cookie: str | None = None,       # Cookie session Instagram (optionnel)
+    scraping_proxy: str | None = None,       # Proxy résidentiel pour le scraping (optionnel)
 ) -> None:
     """Pipeline complet pour un run.
 
@@ -71,6 +72,7 @@ async def run_pipeline(
                 apify_key=apify_key,
                 run_dir=work_dir,
                 session_cookie=session_cookie,
+                proxy_url=scraping_proxy,
             )
             all_post_data.extend(data)
 

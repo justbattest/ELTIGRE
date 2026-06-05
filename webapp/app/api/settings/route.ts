@@ -56,6 +56,7 @@ export async function GET() {
     driveConnected: !!creds.googleRefreshToken,
     driveFolderId: creds.driveFolderId || '',
     instagramSessionCookie: maskKey(rawInstagramCookie),
+    scrapingProxyUrl: creds.scrapingProxyUrl || '',  // Pas masqué (pas un secret critique)
   })
 }
 
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
     referenceElements,
     driveFolderId,
     instagramSessionCookie,
+    scrapingProxyUrl,
   } = body
 
   // Récupère les valeurs existantes pour ne pas écraser avec du vide
@@ -118,6 +120,10 @@ export async function POST(req: NextRequest) {
   }
   if (klingSecretKey && !klingSecretKey.includes('...')) {
     data.klingSecretKey = encrypt(klingSecretKey)
+  }
+  // Proxy scraping — stocké en clair (pas un secret critique, juste une URL)
+  if (scrapingProxyUrl !== undefined) {
+    data.scrapingProxyUrl = scrapingProxyUrl.trim() || null
   }
 
   await prisma.userCredentials.upsert({

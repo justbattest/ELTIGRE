@@ -41,6 +41,8 @@ export default function SettingsPage() {
   const [driveAuthState, setDriveAuthState] = useState<'idle' | 'starting' | 'waiting' | 'approved' | 'error'>('idle')
   const [driveError, setDriveError] = useState('')
 
+  const [scrapingProxyUrl, setScrapingProxyUrl] = useState('')
+
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -64,6 +66,7 @@ export default function SettingsPage() {
         setHiggsConnected(data.higgsFieldConnected || false)
         setDriveConnected(data.driveConnected || false)
         setDriveFolderId(data.driveFolderId || '')
+        setScrapingProxyUrl(data.scrapingProxyUrl || '')
       })
   }, [])
 
@@ -119,6 +122,7 @@ export default function SettingsPage() {
           referenceElements,
           driveFolderId,
           instagramSessionCookie,
+          scrapingProxyUrl,
         }),
       })
       setSaved(true)
@@ -288,6 +292,36 @@ export default function SettingsPage() {
               <p>Comment récupérer : ouvre Instagram dans Chrome → F12 → Application → Cookies → instagram.com</p>
               <p>→ Copie la <strong className="text-gray-400">valeur</strong> du cookie <code className="bg-gray-800 px-1 rounded">sessionid</code></p>
             </div>
+          </div>
+
+          {/* Proxy scraping */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 className="font-medium mb-1 text-gray-200">
+              🌐 Proxy pour le scraping
+              <span className="ml-2 text-xs bg-gray-800 text-gray-400 border border-gray-700 px-2 py-0.5 rounded-full font-normal">Optionnel — gratuit sur webshare.io</span>
+            </h2>
+            <p className="text-gray-500 text-xs mb-3">
+              Si Instagram bloque le serveur (erreur "Exceeded 30 redirects"), configure un proxy résidentiel.{' '}
+              <a
+                href="https://webshare.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-400 hover:text-violet-300 underline"
+              >
+                webshare.io
+              </a>
+              {' '}offre 1 proxy gratuit (1 GB/mois) — s'inscrire → Proxies → Free Proxies → copier le lien.
+            </p>
+            <input
+              type="text"
+              value={scrapingProxyUrl}
+              onChange={(e) => setScrapingProxyUrl(e.target.value)}
+              placeholder="http://username:password@p.webshare.io:80"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+            />
+            {scrapingProxyUrl && (
+              <p className="text-green-500 text-xs mt-1.5">✓ Proxy configuré — le scraping utilisera cette IP</p>
+            )}
           </div>
 
           {/* Anthropic */}
