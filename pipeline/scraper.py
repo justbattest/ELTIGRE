@@ -430,22 +430,32 @@ def scrape_profile_httpx(profile_url: str, max_posts: int, session_cookie: str, 
             f"&should_use_header_over_cookies=1"
         )
 
-    proxies = {"http://": proxy_url, "https://": proxy_url} if proxy_url else None
+    # httpx 0.20+ supprime l'argument `proxies` → utiliser mounts
+    mounts: dict = {}
+    if proxy_url:
+        try:
+            mounts = {
+                "http://": httpx.HTTPTransport(proxy=proxy_url),
+                "https://": httpx.HTTPTransport(proxy=proxy_url),
+            }
+        except Exception:
+            # Fallback ancien format httpx
+            mounts = {}
 
-    with httpx.Client(headers=headers, proxies=proxies, timeout=30, follow_redirects=True) as client:
+    with httpx.Client(headers=headers, mounts=mounts, timeout=30, follow_redirects=True) as client:
         # ── Étape 1 : lookup user_id depuis le username ──
         user_id = None
         try:
             resp = client.get(
                 f"https://i.instagram.com/api/v1/users/web_profile_info/?username={username}"
             )
+            snippet = resp.text[:120].replace('\n', ' ')
+            print(json.dumps({"type": "info", "msg": f"httpx user lookup status={resp.status_code} body={snippet!r}"}), flush=True)
             if resp.status_code == 200:
                 data = resp.json()
                 user_id = data.get("data", {}).get("user", {}).get("id")
-            else:
-                print(json.dumps({"type": "info", "msg": f"httpx user lookup status={resp.status_code} — essai web fallback"}), flush=True)
         except Exception as e:
-            print(json.dumps({"type": "info", "msg": f"httpx user lookup error: {str(e)[:80]}"}), flush=True)
+            print(json.dumps({"type": "info", "msg": f"httpx user lookup error: {str(e)[:100]}"}), flush=True)
 
         # Fallback : endpoint web
         if not user_id:
@@ -454,13 +464,13 @@ def scrape_profile_httpx(profile_url: str, max_posts: int, session_cookie: str, 
                     f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}",
                     headers={**headers, "Referer": "https://www.instagram.com/"},
                 )
+                snippet2 = resp2.text[:120].replace('\n', ' ')
+                print(json.dumps({"type": "info", "msg": f"httpx web fallback status={resp2.status_code} body={snippet2!r}"}), flush=True)
                 if resp2.status_code == 200:
                     data2 = resp2.json()
                     user_id = data2.get("data", {}).get("user", {}).get("id")
-                else:
-                    print(json.dumps({"type": "info", "msg": f"httpx web fallback status={resp2.status_code}"}), flush=True)
             except Exception as e2:
-                print(json.dumps({"type": "info", "msg": f"httpx web fallback error: {str(e2)[:80]}"}), flush=True)
+                print(json.dumps({"type": "info", "msg": f"httpx web fallback error: {str(e2)[:100]}"}), flush=True)
 
         if not user_id:
             raise RuntimeError(f"httpx: impossible de récupérer l'user_id de @{username}")
