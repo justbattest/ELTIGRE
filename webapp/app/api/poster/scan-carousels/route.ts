@@ -52,24 +52,33 @@ export async function POST(req: NextRequest) {
   try {
     const token = await getAccessToken(refreshToken, clientId, clientSecret)
 
-    // 1. Trouver le dossier carousels/
-    // Cas A : root = "EL TIGRE LIVE" → root/EMMAGOOD/carousels/
-    // Cas B : root = "EMMAGOOD" directement → root/carousels/
-    let carouselsFolder = await findFolder(token, rootFolderId, 'carousels')
+    // Fonction helper : trouve un sous-dossier par nom (insensible à la casse)
+    const findFolderCI = async (parentId: string, name: string) => {
+      const subs = await listFolder(token, parentId, 'application/vnd.google-apps.folder')
+      return subs.find(f => f.name.toLowerCase() === name.toLowerCase()) || null
+    }
+
+    // 1. Trouver le dossier carousels/ en gérant 2 structures possibles :
+    // Cas A : driveFolderId = "EMMAGOOD" → carousels/ directement dedans
+    // Cas B : driveFolderId = "EL TIGRE LIVE" → EMMAGOOD/ → carousels/
+    let carouselsFolder = await findFolderCI(rootFolderId, 'carousels')
 
     if (!carouselsFolder) {
-      // Cas A : chercher d'abord le dossier du personnage
-      const charFolder = await findFolder(token, rootFolderId, characterName)
+      // Cas B : chercher le dossier personnage d'abord
+      const charFolder = await findFolderCI(rootFolderId, characterName)
       if (charFolder) {
-        carouselsFolder = await findFolder(token, charFolder.id, 'carousels')
+        carouselsFolder = await findFolderCI(charFolder.id, 'carousels')
       }
     }
 
     if (!carouselsFolder) {
+      // Debug : lister ce qu'il y a dans le root pour aider au diagnostic
+      const rootContents = await listFolder(token, rootFolderId, 'application/vnd.google-apps.folder')
+      const rootNames = rootContents.map(f => f.name).join(', ')
       return NextResponse.json({
         carousels: [],
         total: 0,
-        message: `Aucun dossier "carousels" trouvé pour ${characterName} dans Drive. Génère d'abord des carousels.`,
+        message: `Dossier "carousels" introuvable. Contenu de la racine Drive : [${rootNames || 'vide'}]`,
       })
     }
 
