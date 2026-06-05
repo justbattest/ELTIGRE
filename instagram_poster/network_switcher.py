@@ -33,12 +33,44 @@ WIFI_CONNECT_TIMEOUT = 45  # secondes
 IP_CHECK_TIMEOUT = 10       # secondes
 
 
+def get_current_wifi_ssid(wifi_interface: str = "en0") -> str:
+    """
+    Retourne le SSID WiFi actuel via ipconfig (fiable sur macOS Sonoma).
+    networksetup -getairportnetwork est buggé sur macOS Ventura/Sonoma.
+    """
+    try:
+        result = subprocess.run(
+            ["ipconfig", "getsummary", wifi_interface],
+            capture_output=True, text=True, timeout=5
+        )
+        for line in result.stdout.splitlines():
+            if "SSID" in line:
+                # Format : "  SSID : NomDuReseau"
+                parts = line.split(":", 1)
+                if len(parts) == 2:
+                    return parts[1].strip()
+    except Exception:
+        pass
+
+    # Fallback : networksetup (peut être incorrect sur Sonoma mais on essaie)
+    result = subprocess.run(
+        ["networksetup", "-getairportnetwork", wifi_interface],
+        capture_output=True, text=True
+    )
+    if "Current Wi-Fi Network:" in result.stdout:
+        return result.stdout.split(":", 1)[1].strip()
+    return ""
+
+
 def switch_to_network(network_name: str, wifi_interface: str = "en0") -> str:
     """
     Bascule le WiFi du Mac vers le réseau spécifié.
 
+    Note: Sur macOS Ventura/Sonoma, networksetup -getairportnetwork est buggé.
+    On utilise ipconfig getsummary pour vérifier la connexion réelle.
+
     Args:
-        network_name: Le nom du réseau WiFi (ex: "iPhone de Alexandre")
+        network_name: Le nom du réseau WiFi (ex: "iPhone 12promax")
         wifi_interface: Interface WiFi (défaut: en0)
 
     Returns:
@@ -50,42 +82,50 @@ def switch_to_network(network_name: str, wifi_interface: str = "en0") -> str:
     """
     logger.info(f"Switch WiFi → {network_name}")
 
-    # Commande pour basculer le réseau
-    result = subprocess.run(
-        ["networksetup", "-setairportnetwork", wifi_interface, network_name],
-        capture_output=True, text=True
-    )
-
-    if result.returncode != 0:
-        # Parfois networksetup retourne une erreur même si ça marche — on continue
-        logger.warning(f"networksetup warning: {result.stderr.strip()}")
-
-    # Attendre que la connexion soit établie
-    start = time.time()
-    connected = False
-    while time.time() - start < WIFI_CONNECT_TIMEOUT:
-        status = subprocess.run(
-            ["networksetup", "-getairportnetwork", wifi_interface],
+    # Vérifier d'abord si on est déjà sur le bon réseau
+    current_ssid = get_current_wifi_ssid(wifi_interface)
+    if current_ssid and (network_name in current_ssid or current_ssid in network_name):
+        logger.info(f"Déjà connecté à {current_ssid} ✓")
+    else:
+        # Tenter le switch
+        result = subprocess.run(
+            ["networksetup", "-setairportnetwork", wifi_interface, network_name],
             capture_output=True, text=True
         )
-        if network_name in status.stdout:
-            logger.info(f"WiFi connecté à {network_name}")
-            time.sleep(3)  # Laisser le DHCP s'établir
-            connected = True
-            break
-        time.sleep(1)
+        if result.returncode != 0:
+            logger.warning(f"networksetup warning: {result.stderr.strip()}")
 
-    if not connected:
-        raise ConnectionError(f"Impossible de se connecter à {network_name} après {WIFI_CONNECT_TIMEOUT}s")
+        # Attendre que la connexion soit établie (vérification via ipconfig)
+        start = time.time()
+        connected = False
+        while time.time() - start < WIFI_CONNECT_TIMEOUT:
+            ssid = get_current_wifi_ssid(wifi_interface)
+            if ssid and (network_name in ssid or ssid in network_name):
+                logger.info(f"WiFi connecté à {ssid} ✓")
+                time.sleep(3)
+                connected = True
+                break
+            # Fallback : vérifier si internet fonctionne
+            try:
+                ip = get_public_ip()
+                if ip and ip != "unknown":
+                    logger.info(f"Internet disponible ({ip}) — connexion probablement établie")
+                    connected = True
+                    break
+            except Exception:
+                pass
+            time.sleep(2)
 
-    # Attendre 2 minutes pour la stabilisation IP (comme préconisé dans le brief)
-    # Réduit à 30s pour les tests — ajuster à 120s en prod
-    logger.info("Stabilisation IP (30s)...")
-    time.sleep(30)
+        if not connected:
+            raise ConnectionError(f"Impossible de se connecter à {network_name} après {WIFI_CONNECT_TIMEOUT}s")
+
+    # Stabilisation IP
+    logger.info("Stabilisation IP (15s)...")
+    time.sleep(15)
 
     # Récupérer l'IP publique
     public_ip = get_public_ip()
-    logger.info(f"IP publique après switch : {public_ip}")
+    logger.info(f"IP publique : {public_ip}")
 
     # Sanity check
     _validate_carrier_ip(public_ip, network_name)

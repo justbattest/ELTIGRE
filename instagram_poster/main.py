@@ -196,18 +196,25 @@ def process_post(pending: dict, config: dict) -> None:
     wifi_name = config.get("networks", {}).get(network_name_key, network_name_key)
     logger.info(f"Réseau cible: {wifi_name} ({network_name_key})")
 
-    # 2. Switch vers le bon hotspot
+    # 2. Switch vers le bon hotspot (ou vérifier que l'IP actuelle est déjà carrier)
     try:
         ip = network_switcher.switch_to_network(wifi_name)
         logger.info(f"Connecté à {wifi_name} — IP: {ip}")
     except ConnectionError as e:
-        logger.error(f"Impossible de se connecter au hotspot: {e}")
-        api_report_result(config, post_id, {
-            "success": False,
-            "error": f"Hotspot introuvable: {wifi_name}. Vérifier que l'iPhone est en partage de connexion.",
-        })
-        save_queue(None)
-        return
+        # WiFi switch échoué — vérifier si on est déjà sur une IP carrier (USB tethering)
+        logger.warning(f"WiFi switch échoué: {e} — vérification IP actuelle...")
+        current_ip = network_switcher.get_public_ip()
+        try:
+            network_switcher._validate_carrier_ip(current_ip, "current (USB/tethering)")
+            logger.info(f"IP actuelle valide (USB tethering) : {current_ip} — on continue")
+        except ValueError:
+            logger.error(f"IP datacenter ou pas de connexion. Vérifier le partage de connexion iPhone.")
+            api_report_result(config, post_id, {
+                "success": False,
+                "error": f"Hotspot introuvable et IP actuelle non carrier ({current_ip}). Vérifier partage de connexion iPhone.",
+            })
+            save_queue(None)
+            return
     except ValueError as e:
         logger.error(f"IP suspecte après switch: {e}")
         api_report_result(config, post_id, {"success": False, "error": str(e)})

@@ -52,23 +52,24 @@ export async function POST(req: NextRequest) {
   try {
     const token = await getAccessToken(refreshToken, clientId, clientSecret)
 
-    // 1. Trouver le dossier du personnage dans la racine Drive
-    const charFolder = await findFolder(token, rootFolderId, characterName)
-    if (!charFolder) {
-      return NextResponse.json({
-        carousels: [],
-        total: 0,
-        message: `Dossier "${characterName}" introuvable dans Drive. Génère d'abord des carousels pour ce personnage.`,
-      })
+    // 1. Trouver le dossier carousels/
+    // Cas A : root = "EL TIGRE LIVE" → root/EMMAGOOD/carousels/
+    // Cas B : root = "EMMAGOOD" directement → root/carousels/
+    let carouselsFolder = await findFolder(token, rootFolderId, 'carousels')
+
+    if (!carouselsFolder) {
+      // Cas A : chercher d'abord le dossier du personnage
+      const charFolder = await findFolder(token, rootFolderId, characterName)
+      if (charFolder) {
+        carouselsFolder = await findFolder(token, charFolder.id, 'carousels')
+      }
     }
 
-    // 2. Trouver le dossier carousels/ dans le dossier personnage
-    const carouselsFolder = await findFolder(token, charFolder.id, 'carousels')
     if (!carouselsFolder) {
       return NextResponse.json({
         carousels: [],
         total: 0,
-        message: `Aucun dossier "carousels" trouvé pour ${characterName}.`,
+        message: `Aucun dossier "carousels" trouvé pour ${characterName} dans Drive. Génère d'abord des carousels.`,
       })
     }
 
