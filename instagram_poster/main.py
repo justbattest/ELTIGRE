@@ -198,7 +198,8 @@ def process_post(pending: dict, config: dict) -> None:
     logger.info(f"Réseau cible: {wifi_name} ({network_name_key})")
 
     # 2. Réseau : proxy 4G OU switch hotspot iPhone
-    proxy_url = config["accounts"].get(account_id, {}).get("proxy_url")
+    # Proxy : priorité Railway (UI) > config.json local
+    proxy_url = pending.get("proxyUrl") or config["accounts"].get(account_id, {}).get("proxy_url")
 
     if proxy_url:
         # Mode proxy 4G — pas besoin de switch WiFi

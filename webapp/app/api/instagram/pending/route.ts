@@ -96,13 +96,21 @@ export async function GET(req: NextRequest) {
     const sessionJson = account.sessionJson
     const deviceJson = account.deviceJson
 
-    // Récupérer le refresh token Google Drive pour le téléchargement authentifié
+    // Récupérer credentials Google Drive + proxies réseau
     const userCreds = await prisma.userCredentials.findUnique({
       where: { userId: account.userId },
-      select: { googleRefreshToken: true },
+      select: { googleRefreshToken: true, networkProxies: true },
     })
-    // Le token peut être en clair (OAuth callback) ou chiffré (settings)
     const googleRefreshToken = decryptIfPresent(userCreds?.googleRefreshToken) || userCreds?.googleRefreshToken || null
+
+    // Proxy 4G pour ce compte (basé sur son réseau / téléphone)
+    let proxyUrl: string | null = null
+    if (userCreds?.networkProxies) {
+      try {
+        const proxies = JSON.parse(userCreds.networkProxies) as Record<string, string>
+        proxyUrl = proxies[account.networkName] || null
+      } catch { /* ignore */ }
+    }
 
     // Si reset du compteur quotidien nécessaire, le faire maintenant
     if (isNewDay) {
@@ -137,6 +145,7 @@ export async function GET(req: NextRequest) {
         clientId: process.env.GOOGLE_CLIENT_ID || null,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || null,
       },
+      proxyUrl,  // Proxy 4G du téléphone (null = utiliser hotspot iPhone)
     })
   }
 

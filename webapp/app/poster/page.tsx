@@ -880,6 +880,10 @@ export default function PosterPage() {
   const [loadingGens, setLoadingGens] = useState(false)
   const [scheduleGen, setScheduleGen] = useState<Generation | null>(null)
   const [showQuickCarouselModal, setShowQuickCarouselModal] = useState(false)
+  // Proxies par réseau (1 proxy = 1 téléphone = 3 comptes)
+  const [proxyDraft, setProxyDraft] = useState<Record<string, string>>({})
+  const [savingProxies, setSavingProxies] = useState(false)
+  const [proxySaved, setProxySaved] = useState(false)
   // Filtres galerie
   const [filterChar, setFilterChar] = useState<string>('all')
   const [filterType, setFilterType] = useState<'all' | 'video' | 'image'>('video') // default: vidéos seulement
@@ -926,7 +930,14 @@ export default function PosterPage() {
     finally { setLoadingPosts(false) }
   }, [postFilter])
 
-  useEffect(() => { loadAccounts() }, [loadAccounts])
+  useEffect(() => {
+    loadAccounts()
+    // Charger les proxies configurés
+    fetch('/api/instagram/network-proxies')
+      .then(r => r.json())
+      .then(d => { if (d.proxies) setProxyDraft(d.proxies) })
+      .catch(() => {})
+  }, [loadAccounts])
   useEffect(() => { if (tab === 'gallery') loadGenerations() }, [tab, loadGenerations])
   useEffect(() => { if (tab === 'queue') loadPosts() }, [tab, loadPosts])
 
@@ -1356,6 +1367,71 @@ export default function PosterPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* ── Proxies 4G par téléphone ──────────────────────────── */}
+                <div className="bg-zinc-900/60 border border-white/[0.07] rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Proxies 4G mobiles</p>
+                      <p className="text-xs text-zinc-600 mt-0.5">1 proxy par téléphone · remplace le hotspot iPhone</p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setSavingProxies(true)
+                        try {
+                          await fetch('/api/instagram/network-proxies', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ proxies: proxyDraft }),
+                          })
+                          setProxySaved(true)
+                          setTimeout(() => setProxySaved(false), 3000)
+                        } catch { /* ignore */ }
+                        finally { setSavingProxies(false) }
+                      }}
+                      disabled={savingProxies}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-600 hover:bg-violet-500 text-white transition disabled:opacity-50"
+                    >
+                      {proxySaved ? '✓ Sauvegardé' : savingProxies ? '...' : 'Sauvegarder'}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {['iPhone 12promax', 'iPhone 15promax', 'iPhone 14'].map(network => {
+                      const accountsOnNetwork = accounts.filter(a => a.networkName === network)
+                      return (
+                        <div key={network} className="flex items-center gap-3">
+                          <div className="w-32 shrink-0">
+                            <p className="text-xs font-medium text-zinc-300">{network}</p>
+                            <p className="text-[10px] text-zinc-600">
+                              {accountsOnNetwork.length > 0
+                                ? accountsOnNetwork.map(a => `@${a.username}`).join(', ')
+                                : 'aucun compte'}
+                            </p>
+                          </div>
+                          <input
+                            value={proxyDraft[network] || ''}
+                            onChange={e => setProxyDraft(prev => ({ ...prev, [network]: e.target.value }))}
+                            placeholder="http://user:pass@host:port (vide = hotspot iPhone)"
+                            className={`flex-1 bg-zinc-800 border rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-600 font-mono focus:outline-none transition ${
+                              proxyDraft[network]
+                                ? 'border-emerald-600/50 focus:border-emerald-500'
+                                : 'border-white/[0.08] focus:border-violet-500/50'
+                            }`}
+                          />
+                          {proxyDraft[network] && (
+                            <span className="text-[10px] text-emerald-400 shrink-0">Proxy ✓</span>
+                          )}
+                          {!proxyDraft[network] && (
+                            <span className="text-[10px] text-zinc-600 shrink-0">Hotspot</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[10px] text-zinc-700 mt-3">
+                    Services recommandés : ProxyRack · Infatica · Brightdata (~$25-40/mois par proxy)
+                  </p>
                 </div>
 
                 {loadingAccounts ? (

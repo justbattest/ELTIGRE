@@ -35,6 +35,7 @@ model UserCredentials {
   instagramSessionCookie    String?   @map("instagram_session_cookie")
   klingAccessKey            String?   @map("kling_access_key")
   klingSecretKey            String?   @map("kling_secret_key")
+  networkProxies            String?   @map("network_proxies") @db.Text  // JSON: {"iPhone 12promax": "http://user:pass@host:port"}
   updatedAt              DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
