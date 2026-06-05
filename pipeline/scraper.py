@@ -92,8 +92,14 @@ def scrape_profile_instagrapi(profile_url: str, max_posts: int, session_cookie: 
         cl.set_proxy(proxy_url)
 
     try:
-        # Bypass verification (évite boucle de redirects sur IP datacenter)
-        _login_sessionid_direct(cl, decoded_cookie)
+        if proxy_url:
+            # Avec proxy (IP résidentielle) → login standard avec vérification.
+            # La vérification user_info_v1() fonctionne car l'IP n'est pas bloquée.
+            cl.login_by_sessionid(decoded_cookie)
+        else:
+            # Sans proxy (IP datacenter Railway) → bypass verification pour éviter
+            # la boucle de 30 redirects que Railway déclenche sur user_info_v1().
+            _login_sessionid_direct(cl, decoded_cookie)
     except Exception as e:
         raise RuntimeError(f"instagrapi login failed: {e}")
 
