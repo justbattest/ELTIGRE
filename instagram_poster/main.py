@@ -175,6 +175,7 @@ def process_post(pending: dict, config: dict) -> None:
     """Traite un post en attente de bout en bout."""
     post_data = pending["post"]
     account_data = pending["account"]
+    drive_creds = pending.get("driveCredentials", {})
 
     post_id = post_data["id"]
     account_id = account_data["id"]
@@ -228,40 +229,69 @@ def process_post(pending: dict, config: dict) -> None:
 
     try:
         if media_type == "carousel" and drive_files_json:
-            # Carousel : télécharger chaque image de la liste
+            # Carousel : télécharger chaque image avec OAuth (fichiers privés Drive)
             import json as _json
             urls = _json.loads(drive_files_json) if isinstance(drive_files_json, str) else drive_files_json
             logger.info(f"Carousel : {len(urls)} images à télécharger")
+
+            # Downloader authentifié depuis les credentials Railway
+            auth_downloader = _get_downloader(config, drive_creds)
+
             paths = []
-            for url in urls:
+            for idx, url in enumerate(urls):
                 try:
                     file_id = drive_downloader._extract_drive_id(url)
-                    if file_id:
-                        p = drive_downloader.download_public(file_id)
-                    else:
-                        p = drive_downloader.download_public(url)
+                    p = None
+
+                    # 1. Download OAuth (fichiers privés)
+                    if auth_downloader and file_id:
+                        try:
+                            p = auth_downloader.download_file(file_id)
+                            logger.info(f"Image {idx+1}/{len(urls)} (OAuth): {os.path.basename(p)}")
+                        except Exception as auth_err:
+                            logger.warning(f"OAuth download échoué ({auth_err}), fallback public...")
+
+                    # 2. Fallback public
+                    if not p:
+                        p = drive_downloader.download_public(file_id or url)
+
+                    # Vérifier header JPEG/PNG (pas du HTML)
+                    with open(p, 'rb') as f:
+                        header = f.read(16)
+                    is_image = header[:3] == b'\xff\xd8\xff' or header[:4] == b'\x89PNG' or b'RIFF' == header[:4]
+                    if not is_image:
+                        raise ValueError(f"Image {idx+1} invalide — fichier Drive privé non accessible")
+
+                    # Forcer extension correcte
+                    if not p.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                        new_p = p.rsplit('.', 1)[0] + '.jpg'
+                        os.rename(p, new_p)
+                        p = new_p
+
                     paths.append(p)
                     tmp_files.append(p)
                 except Exception as dl_err:
-                    logger.error(f"Erreur download image carousel {url}: {dl_err}")
+                    logger.error(f"Erreur download image carousel {idx+1}: {dl_err}")
                     raise
             media_path = paths
 
         elif drive_file_url:
             # Video/photo : URL Drive unique
+            auth_downloader = _get_downloader(config, drive_creds)
+            file_id = drive_downloader._extract_drive_id(drive_file_url)
             try:
-                file_id = drive_downloader._extract_drive_id(drive_file_url)
-                if file_id:
-                    media_path = drive_downloader.download_public(file_id)
+                if auth_downloader and file_id:
+                    media_path = auth_downloader.download_file(file_id)
                 else:
-                    media_path = drive_downloader.download_public(drive_file_url)
+                    media_path = drive_downloader.download_public(file_id or drive_file_url)
                 tmp_files.append(media_path)
-            except Exception as pub_err:
-                logger.warning(f"Download public échoué: {pub_err} — tentative OAuth...")
-                downloader = _get_downloader(config)
-                if downloader:
-                    media_path = downloader.download_from_url(drive_file_url)
+            except Exception as e:
+                logger.warning(f"Download échoué: {e} — fallback public...")
+                try:
+                    media_path = drive_downloader.download_public(file_id or drive_file_url)
                     tmp_files.append(media_path)
+                except Exception as e2:
+                    raise ValueError(f"Impossible de télécharger la vidéo: {e2}")
 
         elif drive_file_id:
             try:
@@ -327,26 +357,25 @@ def process_post(pending: dict, config: dict) -> None:
         logger.warning(f"✗ Post {post_id} échoué — {result.get('error')}")
 
 
-def _get_downloader(config: dict):
-    """Initialise le downloader Drive depuis config.json ou env vars (fallback)."""
-    # Priorité : config.json → puis variables d'environnement
-    refresh_token = (
-        config.get("google_refresh_token")
-        or os.environ.get("GOOGLE_REFRESH_TOKEN")
-    )
-    client_id = (
-        config.get("google_client_id")
-        or os.environ.get("GOOGLE_CLIENT_ID")
-    )
-    client_secret = (
-        config.get("google_client_secret")
-        or os.environ.get("GOOGLE_CLIENT_SECRET")
-    )
+def _get_downloader(config: dict, drive_creds: dict | None = None):
+    """Initialise le downloader Drive. Priorité : pending API > config.json > env vars."""
+    # 1. Token fourni par Railway dans la réponse /pending (le plus à jour)
+    if drive_creds:
+        refresh_token = drive_creds.get("refreshToken")
+        client_id = drive_creds.get("clientId") or config.get("google_client_id") or os.environ.get("GOOGLE_CLIENT_ID")
+        client_secret = drive_creds.get("clientSecret") or config.get("google_client_secret") or os.environ.get("GOOGLE_CLIENT_SECRET")
+        if refresh_token and client_id and client_secret:
+            return drive_downloader.DriveDownloader(refresh_token, client_id, client_secret)
+
+    # 2. Fallback : config.json ou env vars
+    refresh_token = config.get("google_refresh_token") or os.environ.get("GOOGLE_REFRESH_TOKEN")
+    client_id = config.get("google_client_id") or os.environ.get("GOOGLE_CLIENT_ID")
+    client_secret = config.get("google_client_secret") or os.environ.get("GOOGLE_CLIENT_SECRET")
 
     if refresh_token and client_id and client_secret:
         return drive_downloader.DriveDownloader(refresh_token, client_id, client_secret)
 
-    logger.warning("Credentials Google Drive non configurés dans config.json — téléchargement Drive désactivé")
+    logger.warning("Credentials Google Drive non disponibles — download authentifié désactivé")
     return None
 
 

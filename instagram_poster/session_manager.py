@@ -125,19 +125,17 @@ def _do_login(cl: Client, username: str, password: str, totp_secret: str | None)
     """
     try:
         cl.login(username, password)
-    except TwoFactorRequired as e:
+    except TwoFactorRequired:
         if not totp_secret:
             raise RuntimeError(
-                f"2FA requis pour @{username} mais aucun totp_secret configuré dans config.json. "
-                f"Ajoute le secret TOTP de Google Authenticator pour ce compte."
+                f"2FA requis pour @{username} mais aucun totp_secret configuré. "
+                f"Ajoute la clé Google Authenticator dans l'UI Poster → Comptes."
             )
         logger.info(f"[{username}] 2FA requis — génération code TOTP...")
         code = _generate_totp(totp_secret)
         logger.info(f"[{username}] Code TOTP généré: {code}")
-        cl.two_factor_login(
-            two_factor_identifier=e.two_factor_identifier,
-            verification_code=code,
-        )
+        # instagrapi 2.8.x : passer verification_code directement à login()
+        cl.login(username, password, verification_code=code)
         logger.info(f"[{username}] 2FA validé ✓")
 
 

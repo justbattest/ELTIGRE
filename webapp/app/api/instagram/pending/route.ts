@@ -96,6 +96,14 @@ export async function GET(req: NextRequest) {
     const sessionJson = account.sessionJson
     const deviceJson = account.deviceJson
 
+    // Récupérer le refresh token Google Drive pour le téléchargement authentifié
+    const userCreds = await prisma.userCredentials.findUnique({
+      where: { userId: account.userId },
+      select: { googleRefreshToken: true },
+    })
+    // Le token peut être en clair (OAuth callback) ou chiffré (settings)
+    const googleRefreshToken = decryptIfPresent(userCreds?.googleRefreshToken) || userCreds?.googleRefreshToken || null
+
     // Si reset du compteur quotidien nécessaire, le faire maintenant
     if (isNewDay) {
       await prisma.instagramAccount.update({
@@ -118,11 +126,16 @@ export async function GET(req: NextRequest) {
         id: account.id,
         username: account.username,
         password,
-        totpSecret,         // Secret TOTP décrypté (généré automatiquement par pyotp au login)
+        totpSecret,
         networkName: account.networkName,
         warmupPhase: account.warmupPhase,
         sessionJson,
         deviceJson,
+      },
+      driveCredentials: {
+        refreshToken: googleRefreshToken,
+        clientId: process.env.GOOGLE_CLIENT_ID || null,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || null,
       },
     })
   }
