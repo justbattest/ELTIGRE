@@ -2,12 +2,12 @@
 Instagram scraper — posts triés par engagement (likes + comments).
 Téléchargement immédiat des images (URLs CDN expirent rapidement).
 
-Deux modes (par ordre de priorité) :
-1. AVEC cookie → instagrapi  (API mobile exacte d'Instagram, TOUS profils publics y compris Restricted)
-2. AVEC cookie, si instagrapi échoue → Instaloader (fallback)
-
-Apify supprimé : requiert maintenant un paiement (x402) et bloque de toute façon
-les profils restreints. Le cookie Instagram est la seule méthode fiable.
+Méthodes (par ordre de priorité) :
+1. HikerAPI  — API managée (même team qu'instagrapi) — proxies résidentiels inclus,
+               sessions managées, aucun cookie requis, fonctionne depuis Railway.
+               $0.0006/requête, 100 gratuites. Variable env : HIKERAPI_TOKEN.
+2. instagrapi — fallback si HikerAPI non configuré ou erreur.
+3. Instaloader — fallback final.
 """
 
 import asyncio
@@ -554,62 +554,179 @@ def scrape_profile_httpx(profile_url: str, max_posts: int, session_cookie: str, 
     return posts
 
 
+# ── Mode HikerAPI (API managée — proxies + sessions inclus) ───────────────────
+
+def scrape_profile_hikerapi(profile_url: str, max_posts: int, hikerapi_token: str) -> list:
+    """Scrape via HikerAPI — même API privée Instagram qu'instagrapi, mais proxies
+    résidentiels et sessions managés par HikerAPI. Pas de cookie, pas de proxy local.
+    Fonctionne depuis n'importe quelle IP (Railway inclus).
+
+    Tarif : $0.0006/requête | Endpoint : https://api.hikerapi.com/v2/
+    """
+    import time as _time
+
+    username = extract_username(profile_url)
+    base_url = "https://api.hikerapi.com/v2"
+    headers = {
+        "accept": "application/json",
+        "x-access-key": hikerapi_token,
+    }
+
+    print(json.dumps({
+        "type": "info",
+        "msg": f"HikerAPI: scraping @{username} (proxies managés, pas de cookie requis)"
+    }), flush=True)
+
+    with httpx.Client(headers=headers, timeout=30, follow_redirects=True) as client:
+        # ── Étape 1 : user_id depuis username ──
+        resp = client.get(f"{base_url}/user/by/username", params={"username": username})
+        if resp.status_code != 200:
+            raise RuntimeError(f"HikerAPI user lookup failed (status={resp.status_code}): {resp.text[:200]}")
+        user_data = resp.json().get("user") or resp.json()
+        user_id = str(user_data.get("pk") or user_data.get("id", ""))
+        if not user_id:
+            raise RuntimeError(f"HikerAPI: user_id introuvable pour @{username}")
+
+        print(json.dumps({
+            "type": "info",
+            "msg": f"HikerAPI: @{username} trouvé (pk={user_id}, {user_data.get('media_count', '?')} posts)"
+        }), flush=True)
+
+        # ── Étape 2 : récupérer les posts paginés ──
+        posts = []
+        next_page_id = None
+        fetch_target = min(max_posts * 2, max_posts + 30)  # Over-fetch pour trier par engagement
+
+        while len(posts) < fetch_target:
+            params: dict = {"user_id": user_id, "amount": 12}
+            if next_page_id:
+                params["end_cursor"] = next_page_id
+
+            resp2 = client.get(f"{base_url}/user/medias", params=params)
+            if resp2.status_code != 200:
+                print(json.dumps({"type": "info", "msg": f"HikerAPI medias status={resp2.status_code}"}), flush=True)
+                break
+
+            data = resp2.json()
+            items = data.get("response", {}).get("items") or data.get("items") or (data if isinstance(data, list) else [])
+            if not items:
+                break
+
+            for item in items:
+                media_type = item.get("media_type", 0)
+                if media_type == 2:  # Vidéo simple → skip
+                    continue
+
+                images: list[str] = []
+                if media_type == 8:  # Carousel
+                    for slide in item.get("carousel_media", []):
+                        candidates = slide.get("image_versions2", {}).get("candidates", [])
+                        if candidates:
+                            images.append(candidates[0]["url"])
+                elif media_type == 1:  # Image simple
+                    candidates = item.get("image_versions2", {}).get("candidates", [])
+                    if candidates:
+                        images.append(candidates[0]["url"])
+
+                if not images:
+                    continue
+
+                cap_raw = item.get("caption")
+                caption = (cap_raw.get("text", "") if isinstance(cap_raw, dict) else str(cap_raw or ""))
+
+                posts.append({
+                    "shortCode": item.get("code", ""),
+                    "type": {1: "Image", 2: "Video", 8: "Sidecar"}.get(media_type, "Image"),
+                    "likesCount": item.get("like_count", 0),
+                    "commentsCount": item.get("comment_count", 0),
+                    "caption": caption,
+                    "url": f"https://www.instagram.com/p/{item.get('code', '')}/",
+                    "displayUrl": images[0],
+                    "images": images,
+                    "timestamp": item.get("taken_at", ""),
+                    "ownerUsername": username,
+                })
+
+            next_page_id = data.get("next_page_id")
+            if not next_page_id or not items:
+                break
+            _time.sleep(0.5)  # Légère pause entre pages
+
+    # Trier par engagement et couper au max demandé
+    posts.sort(
+        key=lambda p: (p.get("likesCount") or 0) + (p.get("commentsCount") or 0) * 3,
+        reverse=True
+    )
+    posts = posts[:max_posts]
+
+    print(json.dumps({
+        "type": "info",
+        "msg": f"HikerAPI: {len(posts)} posts récupérés pour @{username} (triés par engagement)"
+    }), flush=True)
+    return posts
+
+
 # ── Dispatcher principal ────────────────────────────────────────────────────────
 
 def scrape_profile(
     profile_url: str,
     max_posts: int,
-    apify_key: str | None = None,  # Conservé pour compatibilité — non utilisé
+    apify_key: str | None = None,       # Conservé pour compatibilité — non utilisé
     session_cookie: str | None = None,
-    proxy_url: str | None = None,  # Proxy résidentiel optionnel (ex: "http://user:pass@host:port")
+    proxy_url: str | None = None,
+    hikerapi_token: str | None = None,  # Token HikerAPI — méthode principale recommandée
 ) -> list:
-    """Point d'entrée — 3 méthodes avec cookie Instagram (obligatoire) :
-    1. instagrapi (API mobile avec vérification si proxy, bypass sinon)
-    2. httpx direct (API mobile brute sans instagrapi — évite les boucles de redirects)
-    3. Instaloader (fallback final)
-
-    proxy_url (optionnel) : proxy résidentiel/4G pour contourner blocage IP.
-    IMPORTANT : Le cookie sessionid Instagram est requis.
-    Pour renouveler : Chrome → instagram.com → F12 → Application → Cookies → sessionid
+    """Point d'entrée — 3 méthodes par ordre de priorité :
+    1. HikerAPI (si token configuré) — proxies managés, aucune IP locale requise ✅
+    2. instagrapi — fallback avec cookie + proxy optionnel
+    3. Instaloader — fallback final
     """
+    # ── Méthode 1 : HikerAPI (recommandée — fonctionne depuis Railway sans proxy) ──
+    if hikerapi_token:
+        try:
+            posts = scrape_profile_hikerapi(profile_url, max_posts, hikerapi_token)
+            if posts:
+                return posts
+            print(json.dumps({"type": "info", "msg": "HikerAPI: 0 posts — profil vide ?"}), flush=True)
+        except Exception as e:
+            print(json.dumps({
+                "type": "info",
+                "msg": f"HikerAPI échoué ({type(e).__name__}: {str(e)[:120]}) — fallback instagrapi"
+            }), flush=True)
+
+    # ── Méthode 2 : instagrapi (nécessite cookie + bonne IP) ──
     if not session_cookie:
         raise RuntimeError(
-            "Cookie Instagram manquant. "
-            "Va dans Paramètres → colle ton cookie sessionid Instagram (Chrome → F12 → Application → Cookies)."
+            "HikerAPI non configuré ET cookie Instagram manquant. "
+            "Solution recommandée : ajouter HIKERAPI_TOKEN dans les Paramètres."
         )
-
-    # ── Essai 1 : instagrapi (bypass + proxy APRÈS init) ──
     try:
         posts = scrape_profile_instagrapi(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
             return posts
         print(json.dumps({"type": "info", "msg": "instagrapi: 0 posts — fallback Instaloader"}), flush=True)
     except Exception as e:
-        err_msg = str(e)[:120]
         print(json.dumps({
             "type": "info",
-            "msg": f"instagrapi échoué ({type(e).__name__}: {err_msg}) — fallback Instaloader"
+            "msg": f"instagrapi échoué ({type(e).__name__}: {str(e)[:120]}) — fallback Instaloader"
         }), flush=True)
 
-    # ── Essai 2 : Instaloader ──
+    # ── Méthode 3 : Instaloader (fallback final) ──
     try:
         posts = scrape_profile_instaloader(profile_url, max_posts, session_cookie, proxy_url=proxy_url)
         if posts:
             return posts
-        print(json.dumps({"type": "info", "msg": "Instaloader: 0 posts — profil introuvable ou vide"}), flush=True)
+        print(json.dumps({"type": "info", "msg": "Instaloader: 0 posts — profil introuvable"}), flush=True)
     except Exception as e:
         print(json.dumps({
             "type": "info",
             "msg": f"Instaloader échoué ({type(e).__name__}: {str(e)[:100]})"
         }), flush=True)
 
-    proxy_info = f"configuré ({proxy_url.split('@')[-1]})" if proxy_url else "aucun (IP Railway utilisée)"
     raise RuntimeError(
         f"Impossible de scraper @{extract_username(profile_url)}. "
-        f"Cookie valide (testé localement) mais IP bloquée par Instagram. "
-        f"Proxy actuel : {proxy_info}. "
-        f"Solution : dans Webshare → remplacer le proxy allemand par un proxy FRANÇAIS "
-        f"(bouton Countries → France) → même URL format http://user:pass@ip:port."
+        f"{'HikerAPI configuré mais a échoué. ' if hikerapi_token else 'HikerAPI non configuré (recommandé). '}"
+        f"Vérifie que le profil est public."
     )
 
 
@@ -698,16 +815,22 @@ async def scrape_and_download_all(
     run_dir: str,
     session_cookie: str | None = None,
     proxy_url: str | None = None,
+    hikerapi_token: str | None = None,
 ) -> list[dict]:
     """Pipeline complet : scrape + download pour un profil.
     Retourne une liste de dicts {post, local_images}.
-    Émet des événements JSON sur stdout pour le monitoring.
 
-    proxy_url : proxy résidentiel optionnel pour instagrapi (ex: "http://user:pass@host:port")
+    hikerapi_token : méthode principale recommandée (proxies managés, fonctionne depuis Railway)
+    proxy_url : proxy résidentiel pour instagrapi (fallback si pas de HikerAPI)
     """
     print(json.dumps({"type": "phase", "phase": "scraping", "pct": 0}), flush=True)
 
-    posts = scrape_profile(profile_url, max_posts, apify_key, session_cookie=session_cookie, proxy_url=proxy_url)
+    posts = scrape_profile(
+        profile_url, max_posts, apify_key,
+        session_cookie=session_cookie,
+        proxy_url=proxy_url,
+        hikerapi_token=hikerapi_token,
+    )
 
     is_carousel = lambda p: p.get("type") in ("Sidecar", "GraphSidecar") or len(p.get("images", [])) > 1
     n_carousels = sum(1 for p in posts if is_carousel(p))

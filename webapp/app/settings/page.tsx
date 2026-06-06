@@ -42,6 +42,7 @@ export default function SettingsPage() {
   const [driveError, setDriveError] = useState('')
 
   const [scrapingProxyUrl, setScrapingProxyUrl] = useState('')
+  const [hikerApiKey, setHikerApiKey] = useState('')
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -67,6 +68,7 @@ export default function SettingsPage() {
         setDriveConnected(data.driveConnected || false)
         setDriveFolderId(data.driveFolderId || '')
         setScrapingProxyUrl(data.scrapingProxyUrl || '')
+        setHikerApiKey(data.hikerApiKey || '')
       })
   }, [])
 
@@ -123,6 +125,7 @@ export default function SettingsPage() {
           driveFolderId,
           instagramSessionCookie,
           scrapingProxyUrl,
+          hikerApiKey,
         }),
       })
       setSaved(true)
@@ -292,6 +295,31 @@ export default function SettingsPage() {
               <p>Comment récupérer : ouvre Instagram dans Chrome → F12 → Application → Cookies → instagram.com</p>
               <p>→ Copie la <strong className="text-gray-400">valeur</strong> du cookie <code className="bg-gray-800 px-1 rounded">sessionid</code></p>
             </div>
+          </div>
+
+          {/* HikerAPI */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 className="font-medium mb-1 text-gray-200">
+              🔍 HikerAPI — Scraping Instagram
+              <span className="ml-2 text-xs bg-green-900/40 text-green-400 border border-green-800 px-2 py-0.5 rounded-full font-normal">Recommandé</span>
+            </h2>
+            <p className="text-gray-500 text-xs mb-3">
+              Méthode principale pour le scraping — proxies résidentiels inclus, fonctionne depuis Railway sans configuration. $0.0006/requête (≈ $0.20/mois).{' '}
+              <a href="https://hikerapi.com/p/hsazcgym" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 underline">
+                hikerapi.com
+              </a>
+              {' '}→ Tokens → copier l'Access Key.
+            </p>
+            <input
+              type="password"
+              value={hikerApiKey}
+              onChange={(e) => setHikerApiKey(e.target.value)}
+              placeholder="ih6q3k93xb2yiflq23dz3vuhg0sr65en"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+            />
+            {hikerApiKey && !hikerApiKey.includes('...') && (
+              <p className="text-green-500 text-xs mt-1.5">✓ HikerAPI configuré — scraping via proxies managés</p>
+            )}
           </div>
 
           {/* Proxy scraping */}

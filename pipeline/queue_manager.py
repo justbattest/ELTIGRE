@@ -28,10 +28,11 @@ async def run_pipeline(
     anthropic_key: str,
     higgsfield_token: str,
     work_dir: str,
-    drive_credentials: str | None = None,    # kept for compat, unused
-    drive_folder_id: str | None = None,      # kept for compat, unused
-    session_cookie: str | None = None,       # Cookie session Instagram (optionnel)
-    scraping_proxy: str | None = None,       # Proxy résidentiel pour le scraping (optionnel)
+    drive_credentials: str | None = None,
+    drive_folder_id: str | None = None,
+    session_cookie: str | None = None,
+    scraping_proxy: str | None = None,
+    hikerapi_token: str | None = None,       # Token HikerAPI — méthode scraping principale
 ) -> None:
     """Pipeline complet pour un run.
 
@@ -73,6 +74,7 @@ async def run_pipeline(
                 run_dir=work_dir,
                 session_cookie=session_cookie,
                 proxy_url=scraping_proxy,
+                hikerapi_token=hikerapi_token,
             )
             all_post_data.extend(data)
 

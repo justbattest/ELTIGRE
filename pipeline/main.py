@@ -59,8 +59,9 @@ async def main():
     higgsfield_token = os.environ.get("HIGGSFIELD_TOKEN")
     drive_credentials = os.environ.get("DRIVE_CREDENTIALS")        # JSON service account (optionnel)
     drive_folder_id = os.environ.get("DRIVE_FOLDER_ID")            # ID dossier Drive (optionnel)
-    session_cookie = os.environ.get("INSTAGRAM_SESSION_COOKIE")    # Cookie session Instagram (optionnel)
-    scraping_proxy = os.environ.get("SCRAPING_PROXY_URL")          # Proxy résidentiel pour scraping (optionnel)
+    session_cookie = os.environ.get("INSTAGRAM_SESSION_COOKIE")    # Cookie session Instagram (fallback)
+    scraping_proxy = os.environ.get("SCRAPING_PROXY_URL")          # Proxy résidentiel (fallback)
+    hikerapi_token = os.environ.get("HIKERAPI_TOKEN")              # HikerAPI — méthode principale
 
     # apify_key peut être None — c'est un fallback optionnel (instagrapi/instaloader en priorité)
     if not anthropic_key:
@@ -97,6 +98,7 @@ async def main():
         drive_folder_id=drive_folder_id,
         session_cookie=session_cookie,
         scraping_proxy=scraping_proxy,
+        hikerapi_token=hikerapi_token,
     )
 
 
