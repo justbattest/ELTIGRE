@@ -274,29 +274,6 @@ export default function SettingsPage() {
         </h1>
 
         <div className="space-y-6">
-          {/* Instagram Session Cookie */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-1 text-gray-200">
-              🔐 Cookie Session Instagram
-              <span className="ml-2 text-xs bg-amber-900/40 text-amber-400 border border-amber-800 px-2 py-0.5 rounded-full font-normal">Optionnel — pour profils bloqués</span>
-            </h2>
-            <p className="text-gray-500 text-xs mb-3">
-              Permet de scraper <strong className="text-gray-300">tous les profils publics</strong> y compris les comptes restreints par Instagram.
-              Sans ce cookie, certains profils retournent BLOCKED.
-            </p>
-            <input
-              type="password"
-              value={instagramSessionCookie}
-              onChange={(e) => setInstagramSessionCookie(e.target.value)}
-              placeholder="IGQWRPxxxxxxxxxxxxxxx... (valeur du cookie sessionid)"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
-            />
-            <div className="mt-2 text-gray-500 text-xs space-y-0.5">
-              <p>Comment récupérer : ouvre Instagram dans Chrome → F12 → Application → Cookies → instagram.com</p>
-              <p>→ Copie la <strong className="text-gray-400">valeur</strong> du cookie <code className="bg-gray-800 px-1 rounded">sessionid</code></p>
-            </div>
-          </div>
-
           {/* HikerAPI */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <h2 className="font-medium mb-1 text-gray-200">
@@ -319,36 +296,6 @@ export default function SettingsPage() {
             />
             {hikerApiKey && !hikerApiKey.includes('...') && (
               <p className="text-green-500 text-xs mt-1.5">✓ HikerAPI configuré — scraping via proxies managés</p>
-            )}
-          </div>
-
-          {/* Proxy scraping */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-1 text-gray-200">
-              🌐 Proxy pour le scraping
-              <span className="ml-2 text-xs bg-gray-800 text-gray-400 border border-gray-700 px-2 py-0.5 rounded-full font-normal">Optionnel — gratuit sur webshare.io</span>
-            </h2>
-            <p className="text-gray-500 text-xs mb-3">
-              Si Instagram bloque le serveur (erreur "Exceeded 30 redirects"), configure un proxy résidentiel.{' '}
-              <a
-                href="https://webshare.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-violet-400 hover:text-violet-300 underline"
-              >
-                webshare.io
-              </a>
-              {' '}offre 1 proxy gratuit (1 GB/mois) — s'inscrire → Proxies → Free Proxies → copier le lien.
-            </p>
-            <input
-              type="text"
-              value={scrapingProxyUrl}
-              onChange={(e) => setScrapingProxyUrl(e.target.value)}
-              placeholder="http://username:password@p.webshare.io:80"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
-            />
-            {scrapingProxyUrl && (
-              <p className="text-green-500 text-xs mt-1.5">✓ Proxy configuré — le scraping utilisera cette IP</p>
             )}
           </div>
 
