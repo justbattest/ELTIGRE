@@ -192,16 +192,22 @@ def init_account(account_id: str, username: str, password: str, config: dict) ->
 def get_client(account_id: str, username: str, password: str, config: dict, proxy_url: str | None = None) -> Client:
     """
     Charge une session existante et retourne un Client instagrapi prêt à l'emploi.
-    Si la session est expirée, tente un re-login et sauvegarde la nouvelle session.
+
+    RÈGLE CRITIQUE : NE PAS re-logger si une session valide est chargée.
+    Chaque cl.login() génère une requête de connexion vers Instagram → flaggé comme suspect.
+    On charge la session sauvegardée et on retourne le client SANS appeler login().
+    Le re-login n'est déclenché que si la session est réellement expirée (LoginRequired
+    levé lors d'un vrai appel API comme album_upload).
     """
     account_cfg = config["accounts"].get(account_id, {})
     session_file = _base_dir() / account_cfg.get("session_file", f"sessions/{account_id}.json")
     device_file = _base_dir() / account_cfg.get("device_file", f"devices/{account_id}.json")
+    totp_secret = config["accounts"].get(account_id, {}).get("totp_secret")
 
     cl = Client()
     cl.delay_range = [2, 6]
 
-    # Appliquer le device fingerprint sauvegardé (IDENTIQUE à l'init)
+    # Appliquer le device fingerprint sauvegardé (IDENTIQUE à l'init — même device = même "téléphone")
     if device_file.exists():
         with open(device_file) as f:
             device = json.load(f)
@@ -209,40 +215,66 @@ def get_client(account_id: str, username: str, password: str, config: dict, prox
         cl.set_country("US")
         cl.set_locale("en_US")
 
-    # Proxy 4G si configuré (depuis config.json ou passé directement)
+    # Proxy 4G si configuré
     effective_proxy = proxy_url or config["accounts"].get(account_id, {}).get("proxy_url")
     _apply_proxy(cl, effective_proxy)
 
     if session_file.exists():
-        # Charger la session existante — évite un re-login from scratch
+        # ✅ Session existante → charger et RETOURNER DIRECTEMENT sans login
+        # Pas de requête Instagram, pas de nouvelle session, pas de flag
         cl.load_settings(str(session_file))
+        logger.info(f"[{username}] Session chargée depuis {session_file.name} — pas de re-login ✓")
+        return cl
 
+    # ── Première connexion : aucun fichier session ──
+    logger.info(f"[{username}] Pas de session sauvegardée — premier login...")
+    try:
+        _do_login(cl, username, password, totp_secret)
+        session_file.parent.mkdir(parents=True, exist_ok=True)
+        cl.dump_settings(str(session_file))
+        logger.info(f"[{username}] Session créée → {session_file.name}")
+        return cl
+    except ChallengeRequired:
+        raise
+
+
+def relogin_client(cl: Client, account_id: str, username: str, password: str, config: dict) -> None:
+    """
+    Re-login forcé quand un appel API a levé LoginRequired.
+    Appelé uniquement depuis poster.py quand album_upload/reel_upload échoue.
+    Sauvegarde la nouvelle session après succès.
+    """
+    account_cfg = config["accounts"].get(account_id, {})
+    session_file = _base_dir() / account_cfg.get("session_file", f"sessions/{account_id}.json")
+    device_file = _base_dir() / account_cfg.get("device_file", f"devices/{account_id}.json")
     totp_secret = config["accounts"].get(account_id, {}).get("totp_secret")
 
-    try:
-        # Login léger : si session valide, instagrapi ne génère pas de nouvelle session
-        _do_login(cl, username, password, totp_secret)
-        return cl
-    except LoginRequired:
-        logger.warning(f"[{username}] Session expirée — re-login...")
-        # Supprimer le fichier session et recommencer from scratch
-        if session_file.exists():
-            session_file.unlink()
-        cl2 = Client()
-        cl2.delay_range = [2, 6]
-        if device_file.exists():
-            with open(device_file) as f:
-                device = json.load(f)
-            cl2.set_device(device)
-            cl2.set_country("US")
-            cl2.set_locale("en_US")
-        _do_login(cl2, username, password, totp_secret)
-        cl2.dump_settings(str(session_file))
-        logger.info(f"[{username}] Re-login réussi, nouvelle session sauvegardée.")
-        return cl2
-    except ChallengeRequired:
-        # Ne pas swallower — le caller doit gérer
-        raise
+    logger.warning(f"[{username}] Session expirée — re-login forcé...")
+
+    # Réinitialiser proprement
+    if session_file.exists():
+        session_file.unlink()
+
+    cl2 = Client()
+    cl2.delay_range = [2, 6]
+    if device_file.exists():
+        with open(device_file) as f:
+            device = json.load(f)
+        cl2.set_device(device)
+        cl2.set_country("US")
+        cl2.set_locale("en_US")
+
+    # Copier le proxy si configuré
+    if cl.proxy:
+        cl2.set_proxy(cl.proxy)
+
+    _do_login(cl2, username, password, totp_secret)
+    session_file.parent.mkdir(parents=True, exist_ok=True)
+    cl2.dump_settings(str(session_file))
+    logger.info(f"[{username}] Re-login réussi → nouvelle session sauvegardée.")
+
+    # Copier l'état dans le client existant
+    cl.__dict__.update(cl2.__dict__)
 
 
 def save_session(cl: Client, account_id: str, config: dict) -> None:

@@ -127,12 +127,16 @@ def post_reel(
         }
 
     except LoginRequired as e:
-        logger.warning(f"[{username}] Session expirée pendant le post — re-login...")
-        # session_manager.get_client gère déjà le re-login
-        # Si on arrive ici, c'est que le re-login a aussi échoué
+        logger.warning(f"[{username}] Session expirée pendant le post — re-login et retry...")
+        if retry_count < 1 and cl is not None:
+            try:
+                session_manager.relogin_client(cl, account_id, username, password, config)
+                return post_reel(account_id, username, password, video_path, caption, config, totp_secret, proxy_url, retry_count + 1)
+            except Exception as e2:
+                return {"success": False, "error": f"Re-login échoué: {e2}", "account_status": None}
         return {
             "success": False,
-            "error": f"Login required: {e}",
+            "error": f"Login required après retry: {e}",
             "account_status": None,
         }
 
@@ -259,6 +263,17 @@ def post_carousel(
             "session_json": _read_session_file(account_id, config),
         }
 
+    except LoginRequired as e:
+        logger.warning(f"[{username}] Session expirée pendant carousel — re-login et retry...")
+        try:
+            cl2 = session_manager.get_client(account_id, username, password, config, proxy_url)
+            if cl2:
+                session_manager.relogin_client(cl2, account_id, username, password, config)
+                # Retry une fois
+                return post_carousel(account_id, username, password, image_paths, caption, config, totp_secret, proxy_url)
+        except Exception as e2:
+            return {"success": False, "error": f"Re-login carousel échoué: {e2}", "account_status": None}
+        return {"success": False, "error": f"Login required: {e}", "account_status": None}
     except PleaseWaitFewMinutes as e:
         logger.warning(f"[{username}] Rate limit carousel")
         return {"success": False, "error": f"Rate limit: {e}", "account_status": None}
