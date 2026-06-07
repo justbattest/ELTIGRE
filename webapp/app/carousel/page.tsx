@@ -231,36 +231,65 @@ export default function CarouselPage() {
     }
   }
 
-  // ── SSE stream (variations) ───────────────────────────────────────────────
+  // ── SSE stream (variations) — avec reconnexion automatique ──────────────────
 
   useEffect(() => {
     if (!varRunId || varDone) return
-    const es = new EventSource(`/api/carousel/events/${varRunId}`)
-    es.onmessage = (e) => {
-      let event: CarouselEvent & { type: string }
-      try { event = JSON.parse(e.data) } catch { return }
-      if (event.type === 'carousel_start') {
-        setVarTotal((event as { total: number }).total)
-      } else if (event.type === 'carousel') {
-        setVarCompleted(prev => prev + 1)
-        if ((event as { drive_urls: string[] }).drive_urls?.length) {
-          setVarLinks(prev => [...prev, {
-            n: (event as { n: number }).n,
-            urls: (event as { drive_urls: string[] }).drive_urls
-          }])
+    let es: EventSource | null = null
+    let retries = 0
+    const MAX_RETRIES = 20  // ~10 min de retries (20 × 30s)
+    let closed = false
+    let retryTimer: ReturnType<typeof setTimeout> | null = null
+
+    const connect = () => {
+      if (closed) return
+      es = new EventSource(`/api/carousel/events/${varRunId}`)
+      es.onmessage = (e) => {
+        retries = 0  // reset retry count on successful message
+        let event: CarouselEvent & { type: string }
+        try { event = JSON.parse(e.data) } catch { return }
+        if (event.type === 'carousel_start') {
+          setVarTotal((event as { total: number }).total)
+        } else if (event.type === 'carousel') {
+          setVarCompleted(prev => prev + 1)
+          if ((event as { drive_urls: string[] }).drive_urls?.length) {
+            setVarLinks(prev => [...prev, {
+              n: (event as { n: number }).n,
+              urls: (event as { drive_urls: string[] }).drive_urls
+            }])
+          }
+        } else if (event.type === 'done') {
+          closed = true
+          setVarDone(true)
+          es?.close()
+        } else if (event.type === 'error') {
+          const msg = (event as { message: string }).message || 'Erreur inconnue'
+          setVarError(msg)
+          closed = true
+          setVarDone(true)
+          es?.close()
         }
-      } else if (event.type === 'done') {
-        setVarDone(true)
-        es.close()
-      } else if (event.type === 'error') {
-        const msg = (event as { message: string }).message || 'Erreur inconnue'
-        setVarError(msg)
-        setVarDone(true)
-        es.close()
+      }
+      es.onerror = () => {
+        es?.close()
+        if (closed) return
+        if (retries >= MAX_RETRIES) {
+          setVarError('Connexion perdue après plusieurs tentatives — vérifie Drive pour les résultats.')
+          setVarDone(true)
+          return
+        }
+        retries++
+        const delay = Math.min(5000 * retries, 30000)  // 5s, 10s, ... max 30s
+        retryTimer = setTimeout(connect, delay)
       }
     }
-    es.onerror = () => { es.close(); setVarError('Connexion perdue.'); setVarDone(true) }
-    return () => es.close()
+
+    connect()
+    return () => {
+      closed = true
+      if (retryTimer) clearTimeout(retryTimer)
+      es?.close()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [varRunId, varDone])
 
@@ -312,10 +341,21 @@ export default function CarouselPage() {
       }
     }
 
+    let retries = 0
     es.onerror = () => {
       es.close()
-      setError('Connexion SSE perdue — le serveur a peut-être redémarré.')
-      setDone(true)
+      if (retries >= 10) {
+        setError('Connexion SSE perdue — le serveur a peut-être redémarré.')
+        setDone(true)
+        return
+      }
+      retries++
+      setTimeout(() => {
+        if (!done) {
+          const newEs = new EventSource(`/api/carousel/events/${runId}`)
+          Object.assign(newEs, { onmessage: es.onmessage })
+        }
+      }, Math.min(5000 * retries, 30000))
     }
     return () => es.close()
   // eslint-disable-next-line react-hooks/exhaustive-deps
