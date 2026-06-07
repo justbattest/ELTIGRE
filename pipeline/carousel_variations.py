@@ -29,6 +29,17 @@ from pathlib import Path
 from pipeline.metadata_optimizer import optimize_image_bytes
 
 
+# Semaphore global : 1 seul job Higgsfield img2img à la fois (concurrent_jobs_limit du plan)
+_hf_semaphore: asyncio.Semaphore | None = None
+
+
+def _get_hf_sem() -> asyncio.Semaphore:
+    global _hf_semaphore
+    if _hf_semaphore is None:
+        _hf_semaphore = asyncio.Semaphore(1)
+    return _hf_semaphore
+
+
 # ── Prompt template (Carousel Completer) ──────────────────────────────────────
 
 VARIATION_SYSTEM = """You are an expert in creating Instagram carousel content.
@@ -138,41 +149,59 @@ async def higgsfield_img2img(
         "--wait",
     ]
 
-    with tempfile.TemporaryDirectory(prefix="hf_var_") as tmp_home:
-        creds_dir = Path(tmp_home) / ".config" / "higgsfield"
-        creds_dir.mkdir(parents=True)
-        (creds_dir / "credentials.json").write_text(
-            json.dumps({"access_token": higgsfield_token, "refresh_token": higgsfield_refresh_token})
-        )
+    async def _run_once() -> str:
+        with tempfile.TemporaryDirectory(prefix="hf_var_") as tmp_home:
+            creds_dir = Path(tmp_home) / ".config" / "higgsfield"
+            creds_dir.mkdir(parents=True)
+            (creds_dir / "credentials.json").write_text(
+                json.dumps({"access_token": higgsfield_token, "refresh_token": higgsfield_refresh_token})
+            )
 
-        env = {**os.environ, "HOME": tmp_home}
-        proc = await asyncio.create_subprocess_exec(
-            *cmd_args,
-            env=env,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+            env = {**os.environ, "HOME": tmp_home}
+            proc = await asyncio.create_subprocess_exec(
+                *cmd_args,
+                env=env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
 
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
 
-        if proc.returncode != 0:
-            raise RuntimeError(f"Higgsfield error: {stderr.decode().strip()[:300]}")
+            if proc.returncode != 0:
+                raise RuntimeError(f"Higgsfield error: {stderr.decode().strip()[:300]}")
 
-        output = stdout.decode().strip()
-        # Extraire l'URL depuis la sortie
-        for line in output.split("\n"):
-            if line.startswith("http") or "https://" in line:
-                return line.strip()
-        # Chercher dans le JSON si la sortie est JSON
-        try:
-            data = json.loads(output)
-            url = data.get("url") or data.get("output_url") or data.get("image_url")
-            if url:
-                return url
-        except Exception:
-            pass
+            output = stdout.decode().strip()
+            for line in output.split("\n"):
+                if line.startswith("http") or "https://" in line:
+                    return line.strip()
+            try:
+                data = json.loads(output)
+                url = data.get("url") or data.get("output_url") or data.get("image_url")
+                if url:
+                    return url
+            except Exception:
+                pass
 
-        raise RuntimeError(f"Aucune URL trouvée dans la sortie Higgsfield: {output[:200]}")
+            raise RuntimeError(f"Aucune URL trouvée dans la sortie Higgsfield: {output[:200]}")
+
+    # Semaphore global → 1 seul job Higgsfield à la fois, avec retry sur concurrent_limit
+    sem = _get_hf_sem()
+    for attempt in range(4):  # 4 tentatives max
+        async with sem:
+            try:
+                return await _run_once()
+            except RuntimeError as e:
+                err = str(e)
+                if "concurrent" in err.lower() or "upgrade_plan" in err.lower():
+                    wait = 60 * (attempt + 1)  # 60s, 120s, 180s, 240s
+                    print(json.dumps({
+                        "type": "info",
+                        "msg": f"Higgsfield concurrent limit — attente {wait}s avant retry {attempt + 1}/4"
+                    }), flush=True)
+                    await asyncio.sleep(wait)
+                    continue
+                raise
+    raise RuntimeError("Higgsfield concurrent limit — max retries atteint")
 
 
 async def download_image(url: str, dest_path: str) -> None:
@@ -193,7 +222,7 @@ async def run_carousel_variations(
     higgsfield_refresh_token: str = "",
     anthropic_key: str = "",
     quality: str = "2k",
-    max_concurrent: int = 2,
+    max_concurrent: int = 1,
 ) -> None:
     """
     Pour chaque image uploadée :
