@@ -30,9 +30,13 @@ from pipeline.metadata_optimizer import optimize_image_bytes
 
 
 # Semaphore global Higgsfield : max 6 jobs img2img simultanés (plan supporte 8, marge sécurité)
-# Toutes les variations de tous les carousels partagent ce compteur global.
 _hf_semaphore: asyncio.Semaphore | None = None
-HF_MAX_CONCURRENT = 6  # Ajuster si le plan change (8 max selon Higgsfield)
+HF_MAX_CONCURRENT = 6
+
+# Cache du token Higgsfield (rafraîchi automatiquement quand il expire)
+# Structure: {"access_token": "...", "refresh_token": "..."}
+_hf_token_cache: dict = {}
+_hf_token_lock: asyncio.Lock | None = None
 
 
 def _get_hf_sem() -> asyncio.Semaphore:
@@ -40,6 +44,43 @@ def _get_hf_sem() -> asyncio.Semaphore:
     if _hf_semaphore is None:
         _hf_semaphore = asyncio.Semaphore(HF_MAX_CONCURRENT)
     return _hf_semaphore
+
+
+def _get_token_lock() -> asyncio.Lock:
+    global _hf_token_lock
+    if _hf_token_lock is None:
+        _hf_token_lock = asyncio.Lock()
+    return _hf_token_lock
+
+
+async def _refresh_hf_access_token(refresh_token: str) -> str:
+    """Rafraîchit le token Higgsfield via l'API de refresh.
+    Token Higgsfield expire après 3600s (1h) — nécessaire pour les longs runs.
+    Endpoint découvert : POST https://fnf-device-auth.higgsfield.ai/refresh
+    """
+    import urllib.request
+    import ssl
+    ctx = ssl.create_default_context()
+    req = urllib.request.Request(
+        "https://fnf-device-auth.higgsfield.ai/refresh",
+        data=json.dumps({"refresh_token": refresh_token}).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    loop = asyncio.get_event_loop()
+    def _do_refresh():
+        with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
+            return json.loads(r.read().decode())
+    data = await loop.run_in_executor(None, _do_refresh)
+
+    new_token = data.get("access_token")
+    new_refresh = data.get("refresh_token", refresh_token)
+    if not new_token:
+        raise RuntimeError(f"Refresh API: access_token absent dans la réponse: {data}")
+
+    _hf_token_cache["access_token"] = new_token
+    _hf_token_cache["refresh_token"] = new_refresh
+    return new_token
 
 
 # ── Prompt template (Carousel Completer) ──────────────────────────────────────
@@ -151,12 +192,19 @@ async def higgsfield_img2img(
         "--wait",
     ]
 
+    # Initialiser le cache token si pas encore fait
+    if not _hf_token_cache:
+        _hf_token_cache["access_token"] = higgsfield_token
+        _hf_token_cache["refresh_token"] = higgsfield_refresh_token
+
     async def _run_once() -> str:
+        current_token = _hf_token_cache.get("access_token", higgsfield_token)
+        current_refresh = _hf_token_cache.get("refresh_token", higgsfield_refresh_token)
         with tempfile.TemporaryDirectory(prefix="hf_var_") as tmp_home:
             creds_dir = Path(tmp_home) / ".config" / "higgsfield"
             creds_dir.mkdir(parents=True)
             (creds_dir / "credentials.json").write_text(
-                json.dumps({"access_token": higgsfield_token, "refresh_token": higgsfield_refresh_token})
+                json.dumps({"access_token": current_token, "refresh_token": current_refresh})
             )
 
             env = {**os.environ, "HOME": tmp_home}
@@ -186,24 +234,49 @@ async def higgsfield_img2img(
 
             raise RuntimeError(f"Aucune URL trouvée dans la sortie Higgsfield: {output[:200]}")
 
-    # Semaphore global → 1 seul job Higgsfield à la fois, avec retry sur concurrent_limit
+    # Semaphore global → max HF_MAX_CONCURRENT jobs simultanés
     sem = _get_hf_sem()
-    for attempt in range(4):  # 4 tentatives max
+    for attempt in range(5):  # 5 tentatives max
         async with sem:
             try:
                 return await _run_once()
             except RuntimeError as e:
                 err = str(e)
-                if "concurrent" in err.lower() or "upgrade_plan" in err.lower():
-                    wait = 60 * (attempt + 1)  # 60s, 120s, 180s, 240s
+
+                # Token expiré → refresh automatique et retry immédiat
+                if "session expired" in err.lower() or "hint: run" in err.lower():
+                    refresh_tok = _hf_token_cache.get("refresh_token", higgsfield_refresh_token)
+                    if not refresh_tok:
+                        raise RuntimeError(
+                            "Token Higgsfield expiré et aucun refresh_token disponible. "
+                            "Reconnecte Higgsfield dans les Paramètres."
+                        )
                     print(json.dumps({
                         "type": "info",
-                        "msg": f"Higgsfield concurrent limit — attente {wait}s avant retry {attempt + 1}/4"
+                        "msg": f"Token Higgsfield expiré — refresh automatique en cours..."
+                    }), flush=True)
+                    async with _get_token_lock():
+                        # Double-check : un autre coroutine a peut-être déjà refreshé
+                        if _hf_token_cache.get("access_token") == _hf_token_cache.get("access_token"):
+                            new_tok = await _refresh_hf_access_token(refresh_tok)
+                            print(json.dumps({
+                                "type": "info",
+                                "msg": f"Token Higgsfield rafraîchi ✓ — retry..."
+                            }), flush=True)
+                    continue  # retry avec le nouveau token
+
+                # Limite de jobs concurrents → attendre et retry
+                if "concurrent" in err.lower() or "upgrade_plan" in err.lower():
+                    wait = 60 * (attempt + 1)
+                    print(json.dumps({
+                        "type": "info",
+                        "msg": f"Higgsfield concurrent limit — attente {wait}s avant retry {attempt + 1}/5"
                     }), flush=True)
                     await asyncio.sleep(wait)
                     continue
+
                 raise
-    raise RuntimeError("Higgsfield concurrent limit — max retries atteint")
+    raise RuntimeError("Higgsfield — max retries atteint (concurrent limit)")
 
 
 async def download_image(url: str, dest_path: str) -> None:
