@@ -49,28 +49,39 @@ async def generate_video(
     """Lance une génération Seedance 2.0 et retourne {"url": "..."} ou {"error": "..."}."""
     from pipeline.generator import run_higgsfield_for_user
 
-    # Le tag <<<element_id>>> préfixe le prompt JSON (même pattern que seedream/nanobanana)
-    print(json.dumps({"type": "info", "msg": f"[DEBUG] element_id utilisé: {element_id}"}), flush=True)
-    full_prompt = f"<<<{element_id}>>> {prompt_json}"
+    def build_cmd(prompt: str) -> list:
+        return [
+            "higgsfield", "generate", "create", "seedance_2_0",
+            "--prompt", prompt,
+            "--aspect_ratio", aspect_ratio,
+            "--resolution", resolution,
+            "--duration", str(duration),
+            "--mode", "std",
+            "--wait",
+            "--wait-timeout", "15m",
+        ]
 
-    cmd = [
-        "higgsfield", "generate", "create", "seedance_2_0",
-        "--prompt", full_prompt,
-        "--aspect_ratio", aspect_ratio,
-        "--resolution", resolution,
-        "--duration", str(duration),
-        "--mode", "std",
-        "--wait",
-        "--wait-timeout", "15m",
-    ]
+    # Essai 1 : avec référence <<<element_id>>>
+    print(json.dumps({"type": "info", "msg": f"[DEBUG] element_id utilisé: {element_id}"}), flush=True)
+    cmd = build_cmd(f"<<<{element_id}>>> {prompt_json}")
 
     sem = get_semaphore()
     async with sem:
-        for attempt in range(3):  # 3 tentatives max
+        for attempt in range(3):
             try:
                 result_url = await run_higgsfield_for_user(user_token, cmd, timeout=timeout)
                 if result_url:
                     return {"url": result_url.strip()}
+
+                # EMPTY_RESULT : Higgsfield a répondu mais sans URL — retry sans référence
+                print(json.dumps({
+                    "type": "info",
+                    "msg": f"Seedance EMPTY_RESULT [{shortcode}] — retry sans référence element"
+                }), flush=True)
+                cmd = build_cmd(prompt_json)
+                result_url2 = await run_higgsfield_for_user(user_token, cmd, timeout=timeout)
+                if result_url2:
+                    return {"url": result_url2.strip()}
                 return {"url": None, "error": "EMPTY_RESULT"}
 
             except asyncio.TimeoutError:
@@ -80,14 +91,32 @@ async def generate_video(
                 err = str(e)
 
                 if "concurrent_jobs_limit" in err:
-                    # Attendre que le job en cours se termine avant de réessayer
-                    wait_time = 60 * (attempt + 1)  # 60s, 120s, 180s
+                    wait_time = 60 * (attempt + 1)
                     print(json.dumps({
                         "type": "warn",
                         "msg": f"concurrent_jobs_limit [{shortcode}] — attente {wait_time}s avant retry {attempt + 1}/3"
                     }), flush=True)
                     await asyncio.sleep(wait_time)
-                    continue  # retry
+                    continue
+
+                # "Reference element not found" → retry immédiatement sans le tag
+                if "reference element" in err.lower() or "not found" in err.lower():
+                    print(json.dumps({
+                        "type": "info",
+                        "msg": f"Reference element absent [{shortcode}] — retry sans référence"
+                    }), flush=True)
+                    cmd_no_ref = build_cmd(prompt_json)
+                    try:
+                        result_url = await run_higgsfield_for_user(user_token, cmd_no_ref, timeout=timeout)
+                        if result_url:
+                            return {"url": result_url.strip()}
+                        return {"url": None, "error": "EMPTY_RESULT_NO_REF"}
+                    except Exception as e2:
+                        print(json.dumps({
+                            "type": "warn",
+                            "msg": f"Seedance error sans ref [{shortcode}]: {str(e2)[:200]}"
+                        }), flush=True)
+                        return {"url": None, "error": str(e2)[:300]}
 
                 print(json.dumps({
                     "type": "warn",
