@@ -432,7 +432,7 @@ export default function VideoPage() {
             <label className="block text-xs text-zinc-400 mb-1.5">
               Durée vidéo : <span className="text-white font-medium">{duration}s</span>
             </label>
-            <input type="range" min={3} max={10} value={duration}
+            <input type="range" min={3} max={15} value={duration}
               onChange={e => setDuration(Number(e.target.value))}
               className="w-full accent-violet-500" />
           </div>
