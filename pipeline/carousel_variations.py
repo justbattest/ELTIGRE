@@ -29,14 +29,16 @@ from pathlib import Path
 from pipeline.metadata_optimizer import optimize_image_bytes
 
 
-# Semaphore global : 1 seul job Higgsfield img2img à la fois (concurrent_jobs_limit du plan)
+# Semaphore global Higgsfield : max 6 jobs img2img simultanés (plan supporte 8, marge sécurité)
+# Toutes les variations de tous les carousels partagent ce compteur global.
 _hf_semaphore: asyncio.Semaphore | None = None
+HF_MAX_CONCURRENT = 6  # Ajuster si le plan change (8 max selon Higgsfield)
 
 
 def _get_hf_sem() -> asyncio.Semaphore:
     global _hf_semaphore
     if _hf_semaphore is None:
-        _hf_semaphore = asyncio.Semaphore(1)
+        _hf_semaphore = asyncio.Semaphore(HF_MAX_CONCURRENT)
     return _hf_semaphore
 
 
@@ -222,7 +224,7 @@ async def run_carousel_variations(
     higgsfield_refresh_token: str = "",
     anthropic_key: str = "",
     quality: str = "2k",
-    max_concurrent: int = 1,
+    max_concurrent: int = 10,  # Throttle images-level (Claude + Drive) — Higgsfield géré par HF_MAX_CONCURRENT
 ) -> None:
     """
     Pour chaque image uploadée :
@@ -304,12 +306,14 @@ async def run_carousel_variations(
                 orig_url = await uploader.upload_bytes(orig_optimized, "1.jpg", carousel_folder_id)
                 drive_urls.append(orig_url)
 
-                # ── 4. Générer 3 variations (slots 2, 3, 4) ──
-                for var_idx, prompt in enumerate(variation_prompts):
-                    slot_num = var_idx + 2  # slots 2, 3, 4
+                # ── 4. Générer 3 variations en parallèle (slots 2, 3, 4) ──
+                # Le semaphore global HF_MAX_CONCURRENT=6 garantit ≤6 jobs Higgsfield simultanés
+                # toutes images confondues, même si plusieurs carousels tournent en parallèle.
+                async def generate_one_variation(var_idx: int, prompt: str) -> tuple[str | None, str | None]:
+                    """Retourne (drive_url, error_msg)."""
+                    slot_num = var_idx + 2
                     var_tmp = tmp_dir / f"var_{carousel_num}_{slot_num}.jpg"
                     try:
-                        # Higgsfield img2img
                         gen_url = await higgsfield_img2img(
                             original_path=str(img_path),
                             prompt=prompt,
@@ -318,27 +322,29 @@ async def run_carousel_variations(
                             higgsfield_refresh_token=higgsfield_refresh_token,
                             quality=quality,
                         )
-
-                        # Télécharger l'image générée
                         await download_image(gen_url, str(var_tmp))
-
-                        # Optimiser métadonnées
                         var_seed = (photo_idx * 10000 + slot_num * 1000) & 0x7FFFFFFF
                         var_optimized = optimize_image_bytes(var_tmp.read_bytes(), var_seed)
-
-                        # Upload Drive
                         var_url = await uploader.upload_bytes(var_optimized, f"{slot_num}.jpg", carousel_folder_id)
-                        drive_urls.append(var_url)
-
+                        return var_url, None
                     except Exception as e:
                         err = f"Variation {slot_num} échouée: {str(e)[:100]}"
-                        errors.append(err)
                         print(json.dumps({"type": "info", "msg": err}), flush=True)
+                        return None, err
                     finally:
                         try:
                             var_tmp.unlink(missing_ok=True)
                         except Exception:
                             pass
+
+                var_results = await asyncio.gather(*[
+                    generate_one_variation(i, p) for i, p in enumerate(variation_prompts)
+                ])
+                for var_url, var_err in var_results:
+                    if var_url:
+                        drive_urls.append(var_url)
+                    if var_err:
+                        errors.append(var_err)
 
             except Exception as e:
                 errors.append(f"Erreur générale photo {carousel_num}: {str(e)[:100]}")
