@@ -818,11 +818,13 @@ function AddAccountModal({
               onChange={e => setNetworkName(e.target.value)}
               className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
             >
+              <option value="iPhone 7">iPhone 7</option>
               <option value="iPhone 10">iPhone 10</option>
               <option value="iPhone 11">iPhone 11</option>
               <option value="iPhone 12promax">iPhone 12promax</option>
               <option value="iPhone 14">iPhone 14</option>
               <option value="iPhone 15promax">iPhone 15promax</option>
+              <option value="Samsung A54">Samsung A54</option>
             </select>
           </div>
           <div>
@@ -1399,7 +1401,7 @@ export default function PosterPage() {
                     </button>
                   </div>
                   <div className="space-y-2">
-                    {['iPhone 10', 'iPhone 11', 'iPhone 12promax', 'iPhone 14', 'iPhone 15promax'].map(network => {
+                    {['iPhone 7', 'iPhone 10', 'iPhone 11', 'iPhone 12promax', 'iPhone 14', 'iPhone 15promax', 'Samsung A54'].map(network => {
                       const accountsOnNetwork = accounts.filter(a => a.networkName === network)
                       return (
                         <div key={network} className="flex items-center gap-3">
