@@ -29,21 +29,60 @@ from pathlib import Path
 from pipeline.metadata_optimizer import optimize_image_bytes
 
 
-# Semaphore global Higgsfield : max 6 jobs img2img simultanés (plan supporte 8, marge sécurité)
-_hf_semaphore: asyncio.Semaphore | None = None
-HF_MAX_CONCURRENT = 6
+# ── Semaphore cross-process Higgsfield ───────────────────────────────────────
+# Utilise des fichiers lock dans /tmp/hf_slots/ pour coordonner entre plusieurs
+# subprocesses Railway (ex: Emma + Nina lancés simultanément).
+# Chaque "slot" = un fichier slot_N.lock contenant le PID du process qui le tient.
+# O_CREAT|O_EXCL = atomique sur Linux → pas de race condition.
+
+HF_GLOBAL_MAX = 6          # max jobs Higgsfield simultanés TOUS processes confondus
+_HF_SLOT_DIR = "/tmp/hf_slots"
+
+
+def _cleanup_stale_hf_slots() -> None:
+    """Supprime les slots dont le PID n'est plus actif (crash recovery)."""
+    slot_dir = Path(_HF_SLOT_DIR)
+    if not slot_dir.exists():
+        return
+    for slot in slot_dir.glob("slot_*.lock"):
+        try:
+            pid = int(slot.read_text().strip())
+            os.kill(pid, 0)  # signal 0 = vérifier existence seulement
+        except (ValueError, ProcessLookupError):
+            try: slot.unlink()
+            except: pass
+        except Exception:
+            pass
+
+
+async def _acquire_hf_slot() -> Path:
+    """Acquiert 1 slot parmi HF_GLOBAL_MAX (cross-process). Attend si tous pris."""
+    slot_dir = Path(_HF_SLOT_DIR)
+    slot_dir.mkdir(exist_ok=True)
+    _cleanup_stale_hf_slots()
+
+    while True:
+        for i in range(HF_GLOBAL_MAX):
+            slot_path = slot_dir / f"slot_{i}.lock"
+            try:
+                fd = os.open(str(slot_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                os.write(fd, str(os.getpid()).encode())
+                os.close(fd)
+                return slot_path
+            except FileExistsError:
+                continue
+        await asyncio.sleep(2)   # tous les slots pris → attendre sans bloquer l'event loop
+
+
+def _release_hf_slot(slot_path: Path) -> None:
+    try: slot_path.unlink()
+    except Exception: pass
+
 
 # Cache du token Higgsfield (rafraîchi automatiquement quand il expire)
 # Structure: {"access_token": "...", "refresh_token": "..."}
 _hf_token_cache: dict = {}
 _hf_token_lock: asyncio.Lock | None = None
-
-
-def _get_hf_sem() -> asyncio.Semaphore:
-    global _hf_semaphore
-    if _hf_semaphore is None:
-        _hf_semaphore = asyncio.Semaphore(HF_MAX_CONCURRENT)
-    return _hf_semaphore
 
 
 def _get_token_lock() -> asyncio.Lock:
@@ -234,48 +273,55 @@ async def higgsfield_img2img(
 
             raise RuntimeError(f"Aucune URL trouvée dans la sortie Higgsfield: {output[:200]}")
 
-    # Semaphore global → max HF_MAX_CONCURRENT jobs simultanés
-    sem = _get_hf_sem()
+    # Slot cross-process → max HF_GLOBAL_MAX jobs Higgsfield simultanés TOUS processes confondus.
+    # Le slot est toujours libéré dans le bloc finally pour éviter de bloquer inutilement
+    # pendant les délais d'attente (concurrent_limit).
     for attempt in range(5):  # 5 tentatives max
-        async with sem:
-            try:
-                return await _run_once()
-            except RuntimeError as e:
-                err = str(e)
+        slot = await _acquire_hf_slot()
+        try:
+            return await _run_once()
+        except RuntimeError as e:
+            err = str(e)
 
-                # Token expiré → refresh automatique et retry immédiat
-                if "session expired" in err.lower() or "hint: run" in err.lower():
-                    refresh_tok = _hf_token_cache.get("refresh_token", higgsfield_refresh_token)
-                    if not refresh_tok:
-                        raise RuntimeError(
-                            "Token Higgsfield expiré et aucun refresh_token disponible. "
-                            "Reconnecte Higgsfield dans les Paramètres."
-                        )
-                    print(json.dumps({
-                        "type": "info",
-                        "msg": f"Token Higgsfield expiré — refresh automatique en cours..."
-                    }), flush=True)
-                    async with _get_token_lock():
-                        # Double-check : un autre coroutine a peut-être déjà refreshé
-                        if _hf_token_cache.get("access_token") == _hf_token_cache.get("access_token"):
-                            new_tok = await _refresh_hf_access_token(refresh_tok)
-                            print(json.dumps({
-                                "type": "info",
-                                "msg": f"Token Higgsfield rafraîchi ✓ — retry..."
-                            }), flush=True)
-                    continue  # retry avec le nouveau token
+            # Token expiré → refresh automatique et retry immédiat
+            if "session expired" in err.lower() or "hint: run" in err.lower():
+                refresh_tok = _hf_token_cache.get("refresh_token", higgsfield_refresh_token)
+                if not refresh_tok:
+                    raise RuntimeError(
+                        "Token Higgsfield expiré et aucun refresh_token disponible. "
+                        "Reconnecte Higgsfield dans les Paramètres."
+                    )
+                print(json.dumps({
+                    "type": "info",
+                    "msg": f"Token Higgsfield expiré — refresh automatique en cours..."
+                }), flush=True)
+                async with _get_token_lock():
+                    # Double-check : un autre coroutine a peut-être déjà refreshé
+                    if _hf_token_cache.get("access_token") == _hf_token_cache.get("access_token"):
+                        new_tok = await _refresh_hf_access_token(refresh_tok)
+                        print(json.dumps({
+                            "type": "info",
+                            "msg": f"Token Higgsfield rafraîchi ✓ — retry..."
+                        }), flush=True)
+                continue  # finally libère le slot, puis retry en réacquérant
 
-                # Limite de jobs concurrents → attendre et retry
-                if "concurrent" in err.lower() or "upgrade_plan" in err.lower():
-                    wait = 60 * (attempt + 1)
-                    print(json.dumps({
-                        "type": "info",
-                        "msg": f"Higgsfield concurrent limit — attente {wait}s avant retry {attempt + 1}/5"
-                    }), flush=True)
-                    await asyncio.sleep(wait)
-                    continue
+            # Limite de jobs concurrents → libérer le slot AVANT d'attendre
+            # (inutile de bloquer un slot pendant 60-180s sans faire de travail)
+            if "concurrent" in err.lower() or "upgrade_plan" in err.lower():
+                wait = 60 * (attempt + 1)
+                _release_hf_slot(slot)
+                slot = None  # finally ne double-libère pas
+                print(json.dumps({
+                    "type": "info",
+                    "msg": f"Higgsfield concurrent limit — slot libéré, attente {wait}s avant retry {attempt + 1}/5"
+                }), flush=True)
+                await asyncio.sleep(wait)
+                continue
 
-                raise
+            raise
+        finally:
+            if slot is not None:
+                _release_hf_slot(slot)
     raise RuntimeError("Higgsfield — max retries atteint (concurrent limit)")
 
 
@@ -297,7 +343,7 @@ async def run_carousel_variations(
     higgsfield_refresh_token: str = "",
     anthropic_key: str = "",
     quality: str = "2k",
-    max_concurrent: int = 10,  # Throttle images-level (Claude + Drive) — Higgsfield géré par HF_MAX_CONCURRENT
+    max_concurrent: int = 10,  # Throttle images-level (Claude + Drive) — Higgsfield géré par HF_GLOBAL_MAX (cross-process)
 ) -> None:
     """
     Pour chaque image uploadée :
@@ -380,8 +426,8 @@ async def run_carousel_variations(
                 drive_urls.append(orig_url)
 
                 # ── 4. Générer 3 variations en parallèle (slots 2, 3, 4) ──
-                # Le semaphore global HF_MAX_CONCURRENT=6 garantit ≤6 jobs Higgsfield simultanés
-                # toutes images confondues, même si plusieurs carousels tournent en parallèle.
+                # Le slot cross-process HF_GLOBAL_MAX=6 garantit ≤6 jobs Higgsfield simultanés
+                # TOUS processes confondus (Emma + Nina en parallèle = max 6, pas 12).
                 async def generate_one_variation(var_idx: int, prompt: str) -> tuple[str | None, str | None]:
                     """Retourne (drive_url, error_msg)."""
                     slot_num = var_idx + 2
