@@ -12,6 +12,15 @@ import { PageWrapper } from '@/components/PageWrapper'
 type SoulChar = { id: string; name: string; type: string; status: string }
 type RefElement = { id: string; name: string }
 
+type RunBatch = {
+  runId: string
+  label: string
+  cards: GeneratedCard[]
+  stats: { completed: number; failed: number; total: number; elapsed: number }
+  status: 'running' | 'completed' | 'failed'
+  launchedAt: number
+}
+
 type Selections = {
   lieu: string[]
   activite: string[]
@@ -412,15 +421,12 @@ export default function StudioPage() {
   const [selectedNiche, setSelectedNiche] = useState<NicheKey>('conference')
   const [nicheCount, setNicheCount] = useState(8)
 
-  // État génération
-  const [launching, setLaunching] = useState(false)
+  // État génération — multi-batch
+  const [launching, setLaunching] = useState(false)  // true uniquement pendant le POST (quelques secondes)
   const [launchError, setLaunchError] = useState('')
-  const [activeRunId, setActiveRunId] = useState<string | null>(null)
-  const [cards, setCards] = useState<GeneratedCard[]>([])
-  const [runStats, setRunStats] = useState({ completed: 0, failed: 0, total: 0, elapsed: 0 })
-  const sseRef = useRef<EventSource | null>(null)
-  const startTimeRef = useRef<number>(0)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [runs, setRuns] = useState<RunBatch[]>([])
+  // Map runId → { sse, timer } pour gérer les connexions actives
+  const activeRunsRef = useRef<Map<string, { sse: EventSource; timer: ReturnType<typeof setInterval> }>>(new Map())
   const resultsRef = useRef<HTMLDivElement | null>(null)
 
   // Charger les defaults
@@ -492,124 +498,134 @@ export default function StudioPage() {
   // Total sélectionné
   const totalSelected = Object.values(selections).flat().length
 
-  // Connexion SSE pour un runId
+  // Connexion SSE pour un runId — met à jour ce run dans le tableau
   const connectSSE = (runId: string, total: number) => {
-    if (sseRef.current) sseRef.current.close()
+    const startTime = Date.now()
 
-    // Initialiser les cards en attente
-    setCards(
-      Array.from({ length: total }, (_, i) => ({
-        shortcode: `studio_${i}`,
-        status: 'pending',
-      }))
-    )
-
-    startTimeRef.current = Date.now()
-    timerRef.current = setInterval(() => {
-      setRunStats((s) => ({ ...s, elapsed: Math.floor((Date.now() - startTimeRef.current) / 1000) }))
+    const timer = setInterval(() => {
+      setRuns((prev) => prev.map((r) =>
+        r.runId === runId
+          ? { ...r, stats: { ...r.stats, elapsed: Math.floor((Date.now() - startTime) / 1000) } }
+          : r
+      ))
     }, 1000)
 
     const es = new EventSource(`/api/run/${runId}/stream`)
-    sseRef.current = es
+    activeRunsRef.current.set(runId, { sse: es, timer })
 
     es.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data)
 
-        if (data.totalPosts && data.totalPosts > 0) {
-          setRunStats((s) => ({ ...s, total: data.totalPosts }))
-        }
+        setRuns((prev) => prev.map((run) => {
+          if (run.runId !== runId) return run
 
-        setRunStats((s) => ({
-          ...s,
-          completed: data.completedPosts || 0,
-          failed: data.failedPosts || 0,
-        }))
+          // Stats
+          const updatedStats = {
+            ...run.stats,
+            completed: data.completedPosts ?? run.stats.completed,
+            failed:    data.failedPosts    ?? run.stats.failed,
+            total:     (data.totalPosts && data.totalPosts > 0) ? data.totalPosts : run.stats.total,
+          }
 
-        // Mettre à jour les cards depuis les générations
-        if (data.generations?.length) {
-          setCards((prev) => {
-            const updated = [...prev]
+          // Cards depuis les générations
+          let updatedCards = [...run.cards]
+          if (data.generations?.length) {
             for (const gen of data.generations) {
               const idx = parseInt(gen.sourceShortcode?.replace('studio_', '') ?? '-1', 10)
-              if (idx >= 0 && idx < updated.length) {
-                updated[idx] = {
+              if (idx >= 0 && idx < updatedCards.length) {
+                updatedCards[idx] = {
                   shortcode: gen.sourceShortcode,
-                  status: gen.generationStatus === 'complete' ? 'complete'
-                        : gen.generationStatus === 'failed' ? 'failed'
+                  status: gen.generationStatus === 'complete'   ? 'complete'
+                        : gen.generationStatus === 'failed'     ? 'failed'
                         : gen.generationStatus === 'processing' ? 'generating'
                         : 'pending',
-                  url: gen.generatedImageUrl || undefined,
-                  model: gen.modelUsed || undefined,
-                  fallback: gen.fallbackUsed || false,
-                  prompt: gen.promptUsed || undefined,
+                  url:      gen.generatedImageUrl || undefined,
+                  model:    gen.modelUsed         || undefined,
+                  fallback: gen.fallbackUsed      || false,
+                  prompt:   gen.promptUsed        || undefined,
                 }
               }
             }
-            return updated
-          })
-        }
+          }
 
-        // Stop si run terminé
-        if (data.status === 'completed' || data.status === 'failed') {
-          es.close()
-          if (timerRef.current) clearInterval(timerRef.current)
-          setLaunching(false)
-        }
+          // Statut final
+          const isDone = data.status === 'completed' || data.status === 'failed'
+          if (isDone) {
+            const handle = activeRunsRef.current.get(runId)
+            if (handle) { handle.sse.close(); clearInterval(handle.timer) }
+            activeRunsRef.current.delete(runId)
+          }
+
+          return {
+            ...run,
+            stats: updatedStats,
+            cards: updatedCards,
+            status: isDone ? (data.status === 'completed' ? 'completed' : 'failed') : 'running',
+          }
+        }))
       } catch {}
     }
 
     es.onerror = () => {
-      es.close()
-      if (timerRef.current) clearInterval(timerRef.current)
-      setLaunching(false)
+      const handle = activeRunsRef.current.get(runId)
+      if (handle) { handle.sse.close(); clearInterval(handle.timer) }
+      activeRunsRef.current.delete(runId)
+      setRuns((prev) => prev.map((r) =>
+        r.runId === runId ? { ...r, status: 'failed' } : r
+      ))
     }
+  }
+
+  // Crée un nouveau batch dans le tableau et lance le SSE
+  const startBatch = (runId: string, total: number, label: string) => {
+    const newBatch: RunBatch = {
+      runId,
+      label,
+      cards: Array.from({ length: total }, (_, i) => ({ shortcode: `studio_${i}`, status: 'pending' })),
+      stats: { completed: 0, failed: 0, total, elapsed: 0 },
+      status: 'running',
+      launchedAt: Date.now(),
+    }
+    setRuns((prev) => [newBatch, ...prev])
+    connectSSE(runId, total)
+    setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
   }
 
   // Lancement d'un batch
   const launch = async (mode: 'batch_config' | 'random_full') => {
     if (!selectedSoulId) return setLaunchError('Sélectionner un Soul Character')
     if (!selectedElementId) return setLaunchError('Sélectionner un Reference Element')
-
     if (mode === 'batch_config' && totalSelected === 0) {
       return setLaunchError('Sélectionner au moins une option pour ce mode')
     }
 
     setLaunching(true)
     setLaunchError('')
-    setActiveRunId(null)
-    setCards([])
-    setRunStats({ completed: 0, failed: 0, total: count, elapsed: 0 })
 
     try {
       const res = await fetch('/api/studio/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          selections,
-          mode,
-          count,
+          selections, mode, count,
           soulId: selectedSoulId,
           elementId: selectedElementId,
           characterName: selectedSoulName || selectedElementName,
-          model,
-          aspectRatio,
-          quality,
+          model, aspectRatio, quality,
         }),
       })
       const data = await res.json()
       if (data.error) {
         setLaunchError(data.error)
-        setLaunching(false)
       } else {
-        setActiveRunId(data.runId)
-        connectSSE(data.runId, count)
-        // Scroll vers les résultats
-        setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+        const label = `${count} · ${mode === 'random_full' ? '🎲 aléatoire' : '✨ sélection'}`
+        startBatch(data.runId, count, label)
       }
     } catch (e) {
       setLaunchError(String(e))
-      setLaunching(false)
+    } finally {
+      setLaunching(false)  // débloquer immédiatement après la création du run
     }
   }
 
@@ -618,11 +634,7 @@ export default function StudioPage() {
 
     setLaunchError('')
     setLaunching(true)
-    setActiveRunId(null)
-    setCards([])
-    setRunStats({ completed: 0, failed: 0, total: nicheCount, elapsed: 0 })
 
-    // Build selections with ALL niche chips selected (each image will randomly pick from them)
     const nichePool = NICHE_CHIPS[selectedNiche]
     const nicheSelections: Selections = {
       lieu: nichePool.lieu || [],
@@ -646,34 +658,34 @@ export default function StudioPage() {
           soulId: selectedSoulId,
           elementId: selectedElementId,
           characterName: selectedSoulName || selectedElementName,
-          model,
-          aspectRatio,
-          quality,
+          model, aspectRatio, quality,
         }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
         setLaunchError(data.error || 'Erreur lors du lancement')
-        setLaunching(false)
       } else {
-        setActiveRunId(data.runId)
-        connectSSE(data.runId, nicheCount)
-        setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+        const label = `${nicheCount} · ${NICHE_LABELS[selectedNiche]}`
+        startBatch(data.runId, nicheCount, label)
       }
     } catch (e) {
       setLaunchError(String(e))
+    } finally {
       setLaunching(false)
     }
   }
 
-  const resetBatch = () => {
-    if (sseRef.current) sseRef.current.close()
-    if (timerRef.current) clearInterval(timerRef.current)
-    setActiveRunId(null)
-    setCards([])
-    setRunStats({ completed: 0, failed: 0, total: 0, elapsed: 0 })
-    setLaunching(false)
-    setLaunchError('')
+  const removeRun = (runId: string) => {
+    const handle = activeRunsRef.current.get(runId)
+    if (handle) { handle.sse.close(); clearInterval(handle.timer) }
+    activeRunsRef.current.delete(runId)
+    setRuns((prev) => prev.filter((r) => r.runId !== runId))
+  }
+
+  const clearAllRuns = () => {
+    activeRunsRef.current.forEach(({ sse, timer }) => { sse.close(); clearInterval(timer) })
+    activeRunsRef.current.clear()
+    setRuns([])
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -867,7 +879,6 @@ export default function StudioPage() {
           <div className="space-y-2">
             {studioMode === 'selection' ? (
               <>
-                {/* Dans ma sélection */}
                 <button
                   onClick={() => launch('batch_config')}
                   disabled={launching}
@@ -876,14 +887,13 @@ export default function StudioPage() {
                   {launching ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Génération...
+                      Lancement...
                     </span>
                   ) : (
                     <>🎨 {count} prompt{count > 1 ? 's' : ''} · ma sélection</>
                   )}
                 </button>
 
-                {/* Random full */}
                 <button
                   onClick={() => launch('random_full')}
                   disabled={launching}
@@ -907,13 +917,13 @@ export default function StudioPage() {
             )}
           </div>
 
-          {/* Reset si run actif */}
-          {activeRunId && (
+          {/* Effacer tous les batches */}
+          {runs.length > 0 && (
             <button
-              onClick={resetBatch}
-              className="w-full text-xs text-gray-500 hover:text-gray-300 transition py-1"
+              onClick={clearAllRuns}
+              className="w-full text-xs text-gray-600 hover:text-gray-400 transition py-1"
             >
-              ↺ Nouveau batch
+              ✕ Effacer tous les résultats
             </button>
           )}
         </div>
@@ -1012,60 +1022,83 @@ export default function StudioPage() {
         </div>
       </div>
 
-      {/* Results section */}
-      {cards.length > 0 && (
-        <div ref={resultsRef} className="border-t border-white/[0.07] bg-zinc-950/80">
-          {/* Stats bar */}
-          <div className="px-6 py-4 flex items-center gap-4 border-b border-white/[0.06]">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-sm font-semibold text-white">{runStats.completed}</span>
-              <span className="text-xs text-gray-500">complétées</span>
-            </div>
-            <div className="w-px h-4 bg-white/[0.06]" />
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-400" />
-              <span className="text-sm font-semibold text-white">{runStats.failed}</span>
-              <span className="text-xs text-zinc-500">échouées</span>
-            </div>
-            <div className="w-px h-4 bg-white/[0.06]" />
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-zinc-500">{runStats.total} total</span>
-            </div>
-            <div className="w-px h-4 bg-white/[0.06]" />
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-zinc-500">
-                ⏱ {Math.floor(runStats.elapsed / 60)}:{String(runStats.elapsed % 60).padStart(2, '0')}
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div className="flex-1 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
-                style={{ width: `${runStats.total > 0 ? (runStats.completed / runStats.total) * 100 : 0}%` }}
-              />
-            </div>
-            <span className="text-xs text-zinc-500">
-              {runStats.total > 0 ? Math.round((runStats.completed / runStats.total) * 100) : 0}%
-            </span>
+      {/* Results section — multi-batch */}
+      {runs.length > 0 && (
+        <div ref={resultsRef} className="border-t border-white/[0.07] space-y-0">
+          {runs.map((run) => (
+            <div key={run.runId} className="border-b border-white/[0.06] bg-zinc-950/80">
+              {/* Stats bar */}
+              <div className="px-6 py-3 flex items-center gap-3 border-b border-white/[0.04]">
+                {/* Label + statut */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {run.status === 'running' && (
+                    <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                  )}
+                  {run.status === 'completed' && (
+                    <span className="w-2 h-2 rounded-full bg-green-400" />
+                  )}
+                  {run.status === 'failed' && (
+                    <span className="w-2 h-2 rounded-full bg-red-400" />
+                  )}
+                  <span className="text-xs font-medium text-zinc-300">{run.label}</span>
+                </div>
 
-            {activeRunId && (
-              <Link
-                href={`/run/${activeRunId}`}
-                target="_blank"
-                className="text-xs text-violet-400 hover:text-violet-300 transition ml-2"
-              >
-                ↗ Voir run complet
-              </Link>
-            )}
-          </div>
+                <div className="w-px h-4 bg-white/[0.06] shrink-0" />
 
-          {/* Grid images */}
-          <div className="p-6 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-            {cards.map((card) => (
-              <GenerationCard key={card.shortcode} card={card} />
-            ))}
-          </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-sm font-semibold text-white">{run.stats.completed}</span>
+                  <span className="text-xs text-gray-500">✓</span>
+                </div>
+                {run.stats.failed > 0 && (
+                  <>
+                    <div className="w-px h-4 bg-white/[0.06] shrink-0" />
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-sm font-semibold text-red-400">{run.stats.failed}</span>
+                      <span className="text-xs text-gray-500">✗</span>
+                    </div>
+                  </>
+                )}
+                <div className="w-px h-4 bg-white/[0.06] shrink-0" />
+                <span className="text-xs text-zinc-500 shrink-0">
+                  ⏱ {Math.floor(run.stats.elapsed / 60)}:{String(run.stats.elapsed % 60).padStart(2, '0')}
+                </span>
+
+                {/* Progress bar */}
+                <div className="flex-1 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
+                    style={{ width: `${run.stats.total > 0 ? (run.stats.completed / run.stats.total) * 100 : 0}%` }}
+                  />
+                </div>
+                <span className="text-xs text-zinc-500 shrink-0">
+                  {run.stats.total > 0 ? Math.round((run.stats.completed / run.stats.total) * 100) : 0}%
+                </span>
+
+                <Link
+                  href={`/run/${run.runId}`}
+                  target="_blank"
+                  className="text-xs text-violet-400 hover:text-violet-300 transition shrink-0"
+                >
+                  ↗
+                </Link>
+
+                <button
+                  onClick={() => removeRun(run.runId)}
+                  className="text-zinc-600 hover:text-zinc-300 transition text-xs shrink-0"
+                  title="Retirer ce batch"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Grid images */}
+              <div className="p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                {run.cards.map((card) => (
+                  <GenerationCard key={card.shortcode} card={card} />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
       </PageWrapper>
