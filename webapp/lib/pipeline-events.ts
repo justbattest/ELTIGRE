@@ -93,7 +93,7 @@ export async function handlePipelineEvent(
             const created = await prisma.generation.create({
               data: {
                 runId,
-                userId,
+                ...(userId ? { userId } : {}),
                 sourceShortcode: shortcode,
                 sourceRank: (event.rank as number) || 0,
                 generationStatus: 'failed',
@@ -161,7 +161,7 @@ async function getOrCreateGenerationId(
   const created = await prisma.generation.create({
     data: {
       runId,
-      userId,
+      ...(userId ? { userId } : {}),
       sourceShortcode: event.shortcode as string,
       // Inclure le rank dès la création pour que les cards s'affichent dans le bon ordre
       ...(rank !== undefined && rank !== null ? { sourceRank: rank } : {}),

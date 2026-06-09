@@ -61,6 +61,10 @@ async def generate_video(
             "--wait-timeout", "15m",
         ]
 
+    # Garde : prompt_json doit être une string non-vide
+    if not prompt_json or not isinstance(prompt_json, str):
+        return {"url": None, "error": f"promptJson invalide ou vide: {repr(prompt_json)[:80]}"}
+
     # Essai 1 : avec référence <<<element_id>>>
     print(json.dumps({"type": "info", "msg": f"[DEBUG] element_id utilisé: {element_id}"}), flush=True)
     cmd = build_cmd(f"<<<{element_id}>>> {prompt_json}")
@@ -101,6 +105,8 @@ async def generate_video(
 
                 # "Reference element not found" → retry immédiatement sans le tag
                 if "reference element" in err.lower() or "not found" in err.lower():
+                    if not prompt_json or not isinstance(prompt_json, str):
+                        return {"url": None, "error": f"promptJson invalide ou vide (fallback impossible): {repr(prompt_json)[:80]}"}
                     print(json.dumps({
                         "type": "info",
                         "msg": f"Reference element absent [{shortcode}] — retry sans référence"

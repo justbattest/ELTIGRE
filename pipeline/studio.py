@@ -128,17 +128,18 @@ Réponds en JSON strict — aucun texte autour :
 {{"prompts": ["prompt complet 1...", "prompt complet 2...", ...]}}"""
 
 
-def generate_prompts_with_claude(
+_PROMPT_BATCH_SIZE = 10  # Max prompts par appel Claude (budget ~7000 tokens)
+
+
+def _call_claude_for_prompts(
     selections: dict,
     mode: str,
     count: int,
-    anthropic_key: str,
+    client,
+    system_text: str,
 ) -> list[str]:
-    """Appelle Claude Haiku et retourne une liste de `count` prompts."""
-    client = anthropic.Anthropic(api_key=anthropic_key)
-
-    # max_tokens : ~500 tokens par prompt en moyenne, safety x1.4
-    max_tokens = min(count * 700, 8000)
+    """Un seul appel Claude pour `count` prompts (≤ _PROMPT_BATCH_SIZE)."""
+    max_tokens = count * 750  # ~750 tokens/prompt avec marge
 
     resp = client.messages.create(
         model="claude-haiku-4-5",
@@ -146,7 +147,7 @@ def generate_prompts_with_claude(
         system=[
             {
                 "type": "text",
-                "text": load_full_skill(),
+                "text": system_text,
                 "cache_control": {"type": "ephemeral"},
             }
         ],
@@ -170,7 +171,6 @@ def generate_prompts_with_claude(
         data = json.loads(raw)
     except json.JSONDecodeError:
         # Fallback 1 : remplacer les chars de contrôle DANS les strings JSON
-        # (newlines/tabs littéraux dans une valeur = JSON invalide)
         cleaned = re.sub(
             r'(?s)"(?:[^"\\]|\\.)*"',
             lambda m: (m.group()
@@ -186,11 +186,34 @@ def generate_prompts_with_claude(
             cleaned2 = re.sub(r'[\x00-\x1f\x7f]', ' ', cleaned)
             data = json.loads(cleaned2)
 
-    prompts = data.get("prompts", [])
-    if not prompts:
+    return data.get("prompts", [])
+
+
+def generate_prompts_with_claude(
+    selections: dict,
+    mode: str,
+    count: int,
+    anthropic_key: str,
+) -> list[str]:
+    """Appelle Claude Haiku (en batches si count > _PROMPT_BATCH_SIZE) et retourne `count` prompts."""
+    client = anthropic.Anthropic(api_key=anthropic_key)
+    system_text = load_full_skill()
+
+    all_prompts: list[str] = []
+    remaining = count
+
+    while remaining > 0:
+        batch = min(remaining, _PROMPT_BATCH_SIZE)
+        prompts = _call_claude_for_prompts(selections, mode, batch, client, system_text)
+        if not prompts:
+            raise ValueError(f"Claude n'a retourné aucun prompt (batch de {batch})")
+        all_prompts.extend(prompts)
+        remaining -= batch
+
+    if not all_prompts:
         raise ValueError("Claude n'a retourné aucun prompt")
 
-    return prompts[:count]
+    return all_prompts[:count]
 
 
 # ─── Run studio ──────────────────────────────────────────────────────────────
