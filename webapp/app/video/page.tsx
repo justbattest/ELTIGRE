@@ -84,6 +84,23 @@ const SERVEUSE_OUTFITS = [
   { label: 'Black satin top + fitted skirt', value: 'tight black satin server top deep V-neckline generous cleavage, fitted black mini skirt, small server badge, nude pointed heels' },
 ]
 
+const MCDO_OUTFITS = [
+  { label: 'Polo gris + queue blonde (original)', value: 'fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings' },
+  { label: 'Polo noir + brune', value: 'fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, dark brown hair in high ponytail with loose strands framing face, small silver hoop earrings' },
+  { label: 'Polo rouge + casquette McDo', value: 'fitted red polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, red baseball cap with golden M logo, dark hair in low ponytail, small gold stud earrings' },
+  { label: 'Polo gris + rousse cheveux longs', value: 'fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, long wavy red hair loose past shoulders, small gold hoop earrings' },
+  { label: 'Polo bleu marine + chignon + lanyard', value: "fitted navy blue polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in messy bun with loose strands framing face, small gold hoop earrings, McDonald's branded lanyard around neck" },
+  { label: "Polo noir + casquette à l'envers", value: 'fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, black baseball cap with golden M logo worn backwards, long dark wavy hair underneath, small gold hoop earrings' },
+]
+
+const SKATEPARK_OUTFITS = [
+  { label: 'Mini jupe + crop top noir, brune (original)', value: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair' },
+  { label: 'Jupe en jean + crop top blanc, blonde', value: 'very short denim mini skirt, tight white deep V-neck crop top deep cleavage, long blonde wavy hair' },
+  { label: 'Jupe plissée noire + crop top gris, queue haute', value: 'very short black pleated mini skirt, tight grey deep V-neck crop top deep cleavage, long dark hair in high ponytail' },
+  { label: 'Jupe rose + crop top noir, châtain', value: 'very short pink mini skirt, tight black deep V-neck crop top deep cleavage, long brown wavy hair' },
+  { label: 'Jupe blanche + crop top rouge, brune', value: 'very short white mini skirt, tight red deep V-neck crop top deep cleavage, long dark wavy hair' },
+]
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function SubNicheLabel({ subNiche }: { subNiche: string }) {
@@ -94,6 +111,8 @@ function SubNicheLabel({ subNiche }: { subNiche: string }) {
   if (subNiche === 'meteo') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">📺 Météo</span>
   if (subNiche === 'reporter') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">🌪️ Reporter</span>
   if (subNiche === 'serveuse') return <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-400 font-medium">🍾 Serveuse</span>
+  if (subNiche === 'mcdo') return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-900/50 text-yellow-400 font-medium">🍔 McDo</span>
+  if (subNiche === 'skatepark') return <span className="text-xs px-1.5 py-0.5 rounded bg-rose-900/50 text-rose-400 font-medium">🛴 Skatepark</span>
   return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
 }
 
@@ -115,7 +134,7 @@ export default function VideoPage() {
   const [loadingPrompts, setLoadingPrompts] = useState(false)
 
   // ── Niche — 4 onglets séparés ──
-  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse'>('conference')
+  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse' | 'mcdo' | 'skatepark'>('conference')
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation' | 'random'>('direct')
@@ -187,13 +206,13 @@ export default function VideoPage() {
     setVarOutfit('')
     setVarPhrase('')
     // conference et sport sont dans le même niche DB 'conference_sport', filtrés côté client
-    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : niche === 'serveuse' ? 'serveuse' : 'conference_sport'
+    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : niche === 'serveuse' ? 'serveuse' : niche === 'mcdo' ? 'mcdo' : niche === 'skatepark' ? 'skatepark' : 'conference_sport'
     fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
       .then(data => {
         const all: ValidatedPrompt[] = data.prompts || []
-        // Filtre côté client par subNiche pour conference/sport ; golf et vieux sont déjà leur propre niche
-        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo' || niche === 'serveuse')
+        // Filtre côté client par subNiche pour conference/sport ; golf, vieux, etc. sont déjà leur propre niche
+        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo' || niche === 'serveuse' || niche === 'mcdo' || niche === 'skatepark')
           ? all
           : all.filter(p => p.subNiche === niche)
         setPrompts(filtered)
@@ -226,6 +245,8 @@ export default function VideoPage() {
     if (sub === 'restaurant') return RESTAURANT_OUTFITS
     if (sub === 'meteo' || sub === 'reporter') return METEO_OUTFITS
     if (sub === 'serveuse') return SERVEUSE_OUTFITS
+    if (sub === 'mcdo') return MCDO_OUTFITS
+    if (sub === 'skatepark') return SKATEPARK_OUTFITS
     return CONF_OUTFITS
   })()
 
@@ -367,6 +388,8 @@ export default function VideoPage() {
             { id: 'vieux' as const,      emoji: '👴', label: 'Vieux' },
             { id: 'meteo' as const,      emoji: '📺', label: 'Météo' },
             { id: 'serveuse' as const,   emoji: '🍾', label: 'Serveuse' },
+            { id: 'mcdo' as const,       emoji: '🍔', label: 'McDo' },
+            { id: 'skatepark' as const,  emoji: '🛴', label: 'Skatepark' },
           ]).map(n => (
             <button
               key={n.id}
@@ -485,7 +508,7 @@ export default function VideoPage() {
                 <p className="text-xs text-zinc-500 mt-0.5">Chaque prompt est généré copie exacte — zéro modification.</p>
               </div>
               <span className="text-xs text-zinc-500">
-                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Météo' : '👴 Vieux'}
+                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Météo' : niche === 'serveuse' ? '🍾 Serveuse' : niche === 'mcdo' ? '🍔 McDo' : niche === 'skatepark' ? '🛴 Skatepark' : '👴 Vieux'}
               </span>
             </div>
 

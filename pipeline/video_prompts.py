@@ -539,6 +539,25 @@ VARIATION_OUTFITS: dict[str, list[str]] = {
         "tight white cutout crop top deep cleavage, extremely short tight burgundy athletic shorts very form-fitting",
         "tight olive green deep V-neck athletic top, extremely short tight black athletic shorts form-fitting back and sides",
     ],
+    # ── McDo (drive-through, P27-P42) ───────────────────────────────────────────
+    # Garde le branding McDo "M doré", la couleur du polo / coiffure varie.
+    "mcdo": [
+        "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+        "fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, dark brown hair in high ponytail with loose strands framing face, small silver hoop earrings",
+        "fitted red polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, red baseball cap with golden M logo, dark hair in low ponytail, small gold stud earrings",
+        "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, long wavy red hair loose past shoulders, small gold hoop earrings",
+        "fitted navy blue polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in messy bun with loose strands framing face, small gold hoop earrings, McDonald's branded lanyard around neck",
+        "fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, black baseball cap with golden M logo worn backwards, long dark wavy hair underneath, small gold hoop earrings",
+    ],
+    # ── Skatepark (scooter tricks, P43-P49) ─────────────────────────────────────
+    # "red underwear" reste hors outfitText, jamais touché par ces variations.
+    "skatepark": [
+        "very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair",
+        "very short denim mini skirt, tight white deep V-neck crop top deep cleavage, long blonde wavy hair",
+        "very short black pleated mini skirt, tight grey deep V-neck crop top deep cleavage, long dark hair in high ponytail",
+        "very short pink mini skirt, tight black deep V-neck crop top deep cleavage, long brown wavy hair",
+        "very short white mini skirt, tight red deep V-neck crop top deep cleavage, long dark wavy hair",
+    ],
 }
 
 def apply_variation(

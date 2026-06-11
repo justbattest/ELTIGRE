@@ -1391,6 +1391,584 @@ const PROMPTS: PromptSeed[] = [
     ])
   },
 
+  // ═══════════════════════════════════════════════════════════════════
+  // SKATEPARK — Scooter freestyle outdoor
+  // 7 prompts repris TEL QUELS (PROMPT 43-49 de WORKING_PROMPTS.md), AUCUNE variation
+  // (pas de speakerLine/phraseVariations — uniquement sons ambiants, pas de dialogue parlé)
+  // promptJson = objet JSON unique (pas un tableau), conservé tel quel
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── SK1 — No-hander quarterpipe · Version originale ──
+  {
+    niche: 'skatepark',
+    subNiche: 'skatepark',
+    title: 'SK1 — Scooter · No-hander quarterpipe · Version originale',
+    sortOrder: 10,
+    outfitText: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair',
+    promptJson: JSON.stringify({
+      framing: "Fixed medium shot, slightly below ramp level, front-facing. Outdoor concrete skatepark. Quarterpipe ramp. Natural daylight, blue sky.",
+      motion_intensity: 0.54,
+      action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman on scooter rides up quarterpipe at full speed. Launches off the lip. Both hands release the bars simultaneously — arms spread wide outward. The sudden air resistance combined with arms fully extended causes the skirt to lift at the peak. She grabs bars back. Lands. Breathless sound at peak.",
+      dialogue: "[breathless 'ohh!' at peak of air with hands out — soft exhale on landing]",
+      style: "fixed medium shot slightly below front-facing, outdoor concrete skatepark quarterpipe, natural daylight blue sky, slight natural grain, no colour grading, candid iPhone feel — very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair. Small central triangle of red underwear briefly visible in narrow gap between inner thighs during peak air, not wide not a band — immediately covered on landing"
+    })
+  },
+
+  // ── SK2 — No-hander quarterpipe · Real-time speed ──
+  {
+    niche: 'skatepark',
+    subNiche: 'skatepark',
+    title: 'SK2 — Scooter · No-hander quarterpipe · Real-time speed',
+    sortOrder: 20,
+    outfitText: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair',
+    promptJson: JSON.stringify({
+      framing: "Fixed medium shot, slightly below ramp level, front-facing. Outdoor concrete skatepark. Quarterpipe ramp. Natural daylight, blue sky.",
+      motion_intensity: 0.54,
+      action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman on scooter rides up quarterpipe at full speed. Launches off the lip. Both hands release the bars simultaneously — arms spread wide outward. The sudden air resistance combined with arms fully extended causes the skirt to lift at the peak. She grabs bars back. Lands. Breathless sound at peak.",
+      dialogue: "[breathless 'ohh!' at peak of air with hands out — soft exhale on landing]",
+      style: "fixed medium shot slightly below front-facing, outdoor concrete skatepark quarterpipe, natural daylight blue sky, slight natural grain, no colour grading, candid iPhone feel, real-time speed — very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair. Small central triangle of red underwear briefly visible in narrow gap between inner thighs during peak air, not wide not a band — immediately covered on landing"
+    })
+  },
+
+  // ── SK3 — 360 spin · Version originale ──
+  {
+    niche: 'skatepark',
+    subNiche: 'skatepark',
+    title: 'SK3 — Scooter · 360 spin · Version originale',
+    sortOrder: 30,
+    outfitText: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair',
+    promptJson: JSON.stringify({
+      framing: "Fixed medium shot, ground level, front-facing. Outdoor skatepark flat section. Natural daylight. Concrete and rails visible background.",
+      motion_intensity: 0.55,
+      action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman on scooter launches into full 360 degree body spin. The forceful full rotation combined with air causes the skirt to spin outward — centrifugal force keeps it briefly lifted during the spin. She completes the full rotation. Lands cleanly. Breathless sound through the rotation.",
+      dialogue: "[sharp breath at launch — sustained breathless 'ohh' through full rotation — exhale on landing]",
+      style: "fixed medium shot ground level front-facing, outdoor concrete skatepark, natural daylight blue sky, slight natural grain, no colour grading, candid iPhone feel — very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair. Small central triangle of red underwear briefly visible during full rotation, not wide not a band — settles after spin"
+    })
+  },
+
+  // ── SK4 — 360 spin · No slow motion ──
+  {
+    niche: 'skatepark',
+    subNiche: 'skatepark',
+    title: 'SK4 — Scooter · 360 spin · No slow motion',
+    sortOrder: 40,
+    outfitText: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair',
+    promptJson: JSON.stringify({
+      framing: "Fixed medium shot, ground level, front-facing. Outdoor skatepark flat section. Natural daylight. Concrete and rails visible background.",
+      motion_intensity: 0.51,
+      action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. No slow motion — natural real-time speed throughout. Young muscular woman on scooter launches into full 360 degree body spin. The forceful full rotation combined with air causes the skirt to spin outward — centrifugal force keeps it briefly lifted during the spin. She completes the full rotation. Lands cleanly. Breathless sound through the rotation.",
+      dialogue: "[sharp breath at launch — sustained breathless 'ohh' through full rotation — exhale on landing]",
+      style: "fixed medium shot ground level front-facing, outdoor concrete skatepark, natural daylight blue sky, slight natural grain, no colour grading, candid iPhone feel, no speed ramping — very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair. Small central triangle of red underwear briefly visible during full rotation, not wide not a band — settles after spin"
+    })
+  },
+
+  // ── SK5 — 360 spin · Real-time speed ──
+  {
+    niche: 'skatepark',
+    subNiche: 'skatepark',
+    title: 'SK5 — Scooter · 360 spin · Real-time speed',
+    sortOrder: 50,
+    outfitText: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair',
+    promptJson: JSON.stringify({
+      framing: "Fixed medium shot, ground level, front-facing. Outdoor skatepark flat section. Natural daylight. Concrete and rails visible background.",
+      motion_intensity: 0.55,
+      action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman on scooter launches into full 360 degree body spin. The forceful full rotation combined with air causes the skirt to spin outward — centrifugal force keeps it briefly lifted during the spin. She completes the full rotation. Lands cleanly. Breathless sound through the rotation.",
+      dialogue: "[sharp breath at launch — sustained breathless 'ohh' through full rotation — exhale on landing]",
+      style: "fixed medium shot ground level front-facing, outdoor concrete skatepark, natural daylight blue sky, slight natural grain, no colour grading, candid iPhone feel, real-time speed — very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair. Small central triangle of red underwear briefly visible during full rotation, not wide not a band — settles after spin"
+    })
+  },
+
+  // ── SK6 — Halfpipe massive air · Version originale ──
+  {
+    niche: 'skatepark',
+    subNiche: 'skatepark',
+    title: 'SK6 — Scooter · Halfpipe massive air · Version originale',
+    sortOrder: 60,
+    outfitText: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair',
+    promptJson: JSON.stringify({
+      framing: "Fixed medium shot at halfpipe lip level, side view. Outdoor concrete halfpipe. Blue sky background above the lip. Camera positioned exactly at coping height.",
+      motion_intensity: 0.56,
+      action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman on scooter rides up halfpipe wall at full speed. Body rises high above the coping — massive air. At the peak high above the lip the forceful upward momentum causes the short skirt to lift completely — brief flash of red visible at peak. She drops back in. Rides away down the ramp. Small sharp cry at the peak.",
+      dialogue: "[sharp 'oh!' at takeoff off coping — breathless 'ohh' at peak above halfpipe — controlled sound on drop back in]",
+      style: "fixed medium side shot at halfpipe lip level, outdoor concrete halfpipe, blue sky above, natural daylight, slight natural grain, no colour grading, candid iPhone feel — very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair. Small central triangle of red underwear briefly visible at peak of air above lip, not wide not a band — immediately settles on drop back in"
+    })
+  },
+
+  // ── SK7 — Halfpipe massive air · Real-time speed · BANGER (meilleur de la niche) ──
+  {
+    niche: 'skatepark',
+    subNiche: 'skatepark',
+    title: 'SK7 — Scooter · Halfpipe massive air · Real-time speed (BANGER)',
+    isBest: true,
+    sortOrder: 70,
+    outfitText: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair',
+    promptJson: JSON.stringify({
+      framing: "Fixed medium shot at halfpipe lip level, side view. Outdoor concrete halfpipe. Blue sky background above the lip. Camera positioned exactly at coping height.",
+      motion_intensity: 0.56,
+      action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young muscular woman on scooter rides up halfpipe wall at full speed. Body rises high above the coping — massive air. At the peak high above the lip the forceful upward momentum causes the short skirt to lift completely — brief flash of red visible at peak. She drops back in. Rides away down the ramp. Small sharp cry at the peak.",
+      dialogue: "[sharp 'oh!' at takeoff off coping — breathless 'ohh' at peak above halfpipe — controlled sound on drop back in]",
+      style: "fixed medium side shot at halfpipe lip level, outdoor concrete halfpipe, blue sky above, natural daylight, slight natural grain, no colour grading, candid iPhone feel, real-time speed — very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair. Small central triangle of red underwear briefly visible at peak of air above lip, not wide not a band — immediately settles on drop back in"
+    })
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // MCDO — McDonald's drive-through (nuit, POV voiture cliente au guichet)
+  // 16 prompts (PROMPT 27-42 de WORKING_PROMPTS.md), repris TEL QUELS +
+  // phraseVariations sur la phrase à double-sens (ADN du concept), comme
+  // pour la série cocktails `serveuse` (S1-S9). framing/motion_intensity/
+  // style universels (identiques aux 16), seul outfitText change en mode
+  // Variation (MCDO_OUTFITS).
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── MC1 — Concept original · Reconnue sur Instagram (Nina) · MEILLEUR ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC1 — McDo · Concept original · Reconnue sur Instagram (Nina)",
+    isBest: true,
+    sortOrder: 10,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Here you go, have a good night.",
+    phraseVariations: [
+      "Here you go, have a good night.",
+      "Here's your order, have a good night.",
+      "Alright, here you go — drive safe.",
+      "Here you go, enjoy your night.",
+      "All set — have a good night.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.41,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, both hands holding brown paper bag, extends it toward camera. Speaks her line. Client speaks. She pauses. Pulls back slightly. Speaks her line. Client speaks. She turns fully away — back to camera — hair whips with rotation. Pauses facing away. Turns back around to face window. Hand raises to shoulder height in small wave gesture. Wide smile spreads across face. Speaks her line with slight head shake. Client speaks. She does small embarrassed laugh, looks down briefly, then back up.",
+        dialogue: "[Employee, professional]: 'Here you go, have a good night.' — [Client, curious]: 'Wait, I know you. You're on Instagram right?' — [Employee, hesitant]: 'Maybe. Why?' — [Client, confident]: 'Nina. I follow you.' — [Employee, embarrassed smile]: 'Okay please, I'm at work right now.' — [Client, persistent]: 'Can I get your IG at least, like your personal one?'"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC2 — Don't forget your sauce · Déflection prénom ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC2 — McDo · Don't forget your sauce · Déflection prénom",
+    sortOrder: 20,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Here you go — and don't forget your sauce.",
+    phraseVariations: [
+      "Here you go — and don't forget your sauce.",
+      "Here you go — I added extra napkins for you.",
+      "Here's your order — your fries are right on top.",
+      "Here you go — careful, the drink is really full.",
+      "Here you go — I threw in an extra ketchup for you.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line. Client speaks. She pauses. Tilts head slightly. Holds his gaze one beat. Delivers final line flatly. Pulls window closed.",
+        dialogue: "[Employee, warm]: 'Here you go — and don't forget your sauce.' — [Client]: 'What's your name?' — [Employee, flat]: 'It's on the receipt. Have a good night.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC3 — Enjoy your meat · Beef burger · Deadpan (Famille A) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC3 — McDo · Enjoy your meat · Deadpan",
+    sortOrder: 30,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Enjoy your meat.",
+    phraseVariations: [
+      "Enjoy your meat.",
+      "Hope you really enjoy this one.",
+      "This one's extra juicy tonight.",
+      "Enjoy, it's nice and warm.",
+      "You're gonna enjoy this, trust me.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line with full professionalism. Client responds. She stills completely. Eyes stay on him. Slow blink. Delivers final line without expression. Pulls window closed.",
+        dialogue: "[Employee, warm professional]: 'Enjoy your meat.' — [Client, immediately]: 'I'm already enjoying it.' — [Employee, after one beat]: '...Your beef burger. Drive safe.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC4 — Something extra · Tease subtil (Famille C) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC4 — McDo · Something extra · Tease subtil",
+    sortOrder: 40,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "I put something extra in the bag for you.",
+    phraseVariations: [
+      "I put something extra in the bag for you.",
+      "I added a little something extra, just for you.",
+      "I snuck an extra dessert in there for you.",
+      "I gave you a little upgrade tonight.",
+      "I made sure you got the good batch of fries.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line with a small smile. Client responds. She tilts her head. Soft laugh. Speaks her line slowly. Still smiling. Pulls window closed — eye contact held until the last second.",
+        dialogue: "[Employee, warm]: 'I put something extra in the bag for you.' — [Client]: 'Can I find you on Instagram?' — [Employee, soft laugh]: 'Oh honey... Instagram is not really where things happen for me.' — [window slides shut slowly]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC5 — Hot and ready · The food · Slow smile (Famille B) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC5 — McDo · Hot and ready · Slow smile",
+    sortOrder: 50,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Here you go — hot and ready.",
+    phraseVariations: [
+      "Here you go — hot and ready.",
+      "Here you go — fresh off the grill.",
+      "Here you go — fresh and hot, just how you like it.",
+      "Here's your order — straight out of the fryer.",
+      "Here you go — nice and hot for you.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line fully straight-faced. Client responds. She holds his gaze. Long pause. Slight smile forms slowly. Delivers final line. Pulls window closed slowly without breaking eye contact.",
+        dialogue: "[Employee, professional]: 'Here you go — hot and ready.' — [Client]: 'That makes two of us.' — [Employee, slow smile]: '...The food. Enjoy.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC6 — Go large · The fries · Slow smile (Famille B) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC6 — McDo · Go large · Slow smile",
+    sortOrder: 60,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Would you like to go large?",
+    phraseVariations: [
+      "Would you like to go large?",
+      "Want to size that up?",
+      "Can I tempt you with an upgrade?",
+      "Would you like to add a little extra?",
+      "Want to make that a meal?",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, holding brown paper bag. Speaks her line casually. Client responds. She pauses. Sets bag on the ledge. Holds his gaze. Very slow smile. Delivers final line. Slides window shut with one hand — still smiling.",
+        dialogue: "[Employee, casual]: 'Would you like to go large?' — [Client]: 'With you? Absolutely.' — [Employee, very slow smile]: '...The fries.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC7 — Two hands · Large order · Slight smile (Famille A) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC7 — McDo · Two hands · Slight smile",
+    sortOrder: 70,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "You're gonna need two hands for this one.",
+    phraseVariations: [
+      "You're gonna need two hands for this one.",
+      "This one's heavier than it looks.",
+      "Careful, this bag's pretty full tonight.",
+      "This one's a handful, careful.",
+      "You might want both hands for this.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends very full brown paper bag toward camera with both hands. Speaks her line matter-of-factly. Client responds. She glances at the bag. Back at him. Small exhale. Delivers final line with a slight smile. Pulls window closed.",
+        dialogue: "[Employee, matter-of-fact]: 'You're gonna need two hands for this one.' — [Client]: 'Story of my night.' — [Employee, slight smile]: '...It's a large order. Enjoy.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC8 — Still hot · Wink (Famille C) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC8 — McDo · Still hot · Wink",
+    sortOrder: 80,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Just came out — still hot.",
+    phraseVariations: [
+      "Just came out — still hot.",
+      "Fresh batch, just for you.",
+      "Straight out of the fryer, still warm.",
+      "Just made this one fresh.",
+      "This one's piping hot, careful.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line warmly. Client responds. She tilts her head slightly. Small amused look. Delivers final line casually. One slow wink. Pulls window closed.",
+        dialogue: "[Employee, warm]: 'Just came out — still hot.' — [Client]: 'Best thing that's happened to me all night.' — [Employee, amused]: 'The fries always hit different at this hour.' — [one wink, window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC9 — Everything to be satisfied · Sweetheart (Famille C) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC9 — McDo · Everything to be satisfied · Sweetheart",
+    sortOrder: 90,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Everything you need to be satisfied, sir.",
+    phraseVariations: [
+      "Everything you need to be satisfied, sir.",
+      "That should be everything you need tonight.",
+      "I made sure you have everything you need.",
+      "That's everything — should keep you very satisfied.",
+      "I think that covers everything you need.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line with full composure. Client responds. She stills. Holds his gaze for one long beat. Slow smile. Delivers final line softly. Pulls window closed.",
+        dialogue: "[Employee, composed]: 'Everything you need to be satisfied, sir.' — [Client]: 'Not quite everything.' — [Employee, slow smile]: 'Drive safe, sweetheart.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC10 — Hot apple pie · Slow blink (Famille A) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC10 — McDo · Hot apple pie · Slow blink",
+    sortOrder: 100,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Hot apple pie in there — careful, it's really warm inside.",
+    phraseVariations: [
+      "Hot apple pie in there — careful, it's really warm inside.",
+      "There's something hot in there, careful.",
+      "That's fresh out of the oven, careful.",
+      "Careful, that one's still really warm.",
+      "Watch out, that's piping hot inside.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line with a warning tone. Client responds. She stills completely. Stares at him. One slow blink. Delivers final line. Pulls window closed.",
+        dialogue: "[Employee, warm warning]: 'Hot apple pie in there — careful, it's really warm inside.' — [Client]: 'I can tell.' — [Employee, one slow blink]: '...The pie. Enjoy.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC11 — Last order of the night · Shift ending (Famille A) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC11 — McDo · Last order of the night",
+    sortOrder: 110,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "You're my last order of the night.",
+    phraseVariations: [
+      "You're my last order of the night.",
+      "You just caught me right before close.",
+      "You're my final ticket of the shift.",
+      "Perfect timing — you're the last one tonight.",
+      "You got here just before we close up.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line casually. Client responds. She tilts her head. Small exhale. Delivers final line flatly. Pulls window closed.",
+        dialogue: "[Employee, casual]: 'You're my last order of the night.' — [Client]: 'Lucky me.' — [Employee, flat]: '...I meant my shift is almost over.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC12 — Free upgrade · Smile stays (Famille C) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC12 — McDo · Free upgrade · Elle joue le jeu",
+    sortOrder: 120,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "I went ahead and upgraded your order.",
+    phraseVariations: [
+      "I went ahead and upgraded your order.",
+      "I bumped your order up to a large for you.",
+      "I threw in a free dessert for you tonight.",
+      "I upgraded your drink to the large size.",
+      "I gave your order a little upgrade tonight.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends large brown paper bag toward camera. Speaks her line with a small smile. Client responds. She holds his gaze. Long beat. Delivers final line — smile stays. Pulls window closed slowly.",
+        dialogue: "[Employee, small smile]: 'I went ahead and upgraded your order.' — [Client]: 'Can I upgrade anything else tonight?' — [Employee, smile stays, soft]: 'Have a good night, sir.' — [window slides shut slowly]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC13 — Anything else I can do · Desserts (Famille C, max ambiguïté) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC13 — McDo · Anything else I can do · Ambiguïté maximale",
+    sortOrder: 130,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Is there anything else I can do for you tonight?",
+    phraseVariations: [
+      "Is there anything else I can do for you tonight?",
+      "Anything else I can get for you?",
+      "Is there anything else you'd like before you go?",
+      "Need anything else while you're here?",
+      "Is there anything more I can get started for you?",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Hands bag. Speaks her closing line with routine warmth. Client responds immediately. She pauses. Eyes stay on him. Very slow smile forms. Delivers final line. Pulls window closed.",
+        dialogue: "[Employee, routine warmth]: 'Is there anything else I can do for you tonight?' — [Client]: 'Oh, definitely.' — [Employee, very slow smile]: '...We also have desserts.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC14 — Special sauce · Big Mac sauce · Deadpan (Famille A) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC14 — McDo · Special sauce · Deadpan",
+    sortOrder: 140,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "Don't forget your special sauce.",
+    phraseVariations: [
+      "Don't forget your special sauce.",
+      "Make sure you grab your dipping sauce.",
+      "Don't forget the secret sauce.",
+      "Here's your sauce, don't forget it.",
+      "I made sure to add your favorite sauce.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends bag toward camera. Speaks her line. Client responds. She looks at the bag. Looks back at him. Flat expression. Delivers final line. Pulls window closed.",
+        dialogue: "[Employee, cheerful]: 'Don't forget your special sauce.' — [Client]: 'That's not the only special sauce around here.' — [Employee, flat]: '...It's Big Mac sauce. Have a good night.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC15 — Keep you warm · Hot chocolate · Deliberate look (Famille C) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC15 — McDo · Keep you warm · Deliberate look",
+    sortOrder: 150,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "This should keep you warm tonight.",
+    phraseVariations: [
+      "This should keep you warm tonight.",
+      "That'll warm you right up.",
+      "This one's nice and warm, perfect for tonight.",
+      "That should do the trick on a cold night like this.",
+      "This will definitely warm you up.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends bag and hot drink cup toward camera. Speaks her line warmly. Client responds. She looks at the cup. Back at him. Slow deliberate look. Delivers final line. Pulls window closed.",
+        dialogue: "[Employee, warm]: 'This should keep you warm tonight.' — [Client]: 'I might need something warmer.' — [Employee, slow deliberate look]: 'We have hot chocolate.' — [window slides shut]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
+  // ── MC16 — Freshly made · We open at six · Ending ambigu (Famille C) ──
+  {
+    niche: 'mcdo',
+    subNiche: 'mcdo',
+    title: "MC16 — McDo · Freshly made · Ending ambigu",
+    sortOrder: 160,
+    outfitText: "fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings",
+    speakerLine: "This one's freshly made — just for you.",
+    phraseVariations: [
+      "This one's freshly made — just for you.",
+      "I made sure this one's fresh, just for you.",
+      "This batch just came out, made it for you.",
+      "I picked the freshest one for you.",
+      "This one's straight off the line — just for you.",
+    ],
+    promptJson: JSON.stringify([
+      {
+        framing: "POV from inside car at drive-through window, slightly below window level looking up. McDonald's interior: beige painted brick wall, aluminum sliding window, fluorescent ceiling light, dark door with window left side.",
+        motion_intensity: 0.40,
+        action: "CONTINUOUS SINGLE SHOT NO CUTS. Immediate start. Young woman leans forward through drive-through window, extends brown paper bag toward camera. Speaks her line with genuine warmth. Client responds. She holds his gaze. Small smile. Delivers final line with a look. Pulls window closed slowly.",
+        dialogue: "[Employee, genuine warmth]: 'This one's freshly made — just for you.' — [Client]: 'I'll have to come back tomorrow then.' — [Employee, small look]: 'We open at six.' — [window slides shut slowly]"
+      },
+      {
+        style: "POV from car interior, drive-through window frame visible, aluminum window ledge foreground, side mirror edge right frame, nighttime exterior, McDonald's interior fluorescent lighting, beige brick walls, no colour grading, candid phone footage feel — fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings"
+      }
+    ])
+  },
+
 ]
 
 async function main() {

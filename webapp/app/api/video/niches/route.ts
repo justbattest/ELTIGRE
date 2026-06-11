@@ -7,7 +7,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-const KNOWN_NICHES = ['conference_sport', 'golf', 'vieux', 'meteo']
+const KNOWN_NICHES = ['conference_sport', 'golf', 'vieux', 'meteo', 'serveuse', 'mcdo', 'skatepark']
 
 const STATIC_NICHES = [
   { dbNiche: 'conference_sport', tabKey: 'conference', label: 'Conférence', emoji: '🎓' },
@@ -15,6 +15,9 @@ const STATIC_NICHES = [
   { dbNiche: 'golf',            tabKey: 'golf',       label: 'Golf',        emoji: '⛳' },
   { dbNiche: 'vieux',           tabKey: 'vieux',      label: 'Vieux',       emoji: '👴' },
   { dbNiche: 'meteo',           tabKey: 'meteo',      label: 'Météo',       emoji: '📺' },
+  { dbNiche: 'serveuse',        tabKey: 'serveuse',   label: 'Serveuse',    emoji: '🍾' },
+  { dbNiche: 'mcdo',            tabKey: 'mcdo',       label: 'McDo',        emoji: '🍔' },
+  { dbNiche: 'skatepark',       tabKey: 'skatepark',  label: 'Skatepark',   emoji: '🛴' },
 ]
 
 export async function GET() {
