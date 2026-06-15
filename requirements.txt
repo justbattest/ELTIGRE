@@ -12,3 +12,9 @@ instagrapi==2.7.10
 instaloader>=4.10.3
 imageio-ffmpeg>=0.5.0
 PyJWT>=2.8.0
+
+# Spoofer 2.0 — Tier 2 (warp/perspective) + Tier 3 (adversarial CLIP)
+opencv-python-headless>=4.10.0,<5.0.0
+torch>=2.2.0
+open_clip_torch>=2.24.0
+scipy>=1.13.0

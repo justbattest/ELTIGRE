@@ -9,6 +9,7 @@ import {
   VideoIcon,
   LayoutGrid,
   Wand2,
+  Shuffle,
   Timer,
   Settings,
   BarChart2,
@@ -46,6 +47,7 @@ const GROUPS = [
   },
   { key: 'carousel', icon: LayoutGrid, label: 'CARROUSEL', href: '/carousel',  pages: ['/carousel'],  subTabs: [], separate: false },
   { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata',  pages: ['/metadata'],  subTabs: [], separate: false },
+  { key: 'spoofer',  icon: Shuffle,    label: 'SPOOFER',   href: '/spoofer',   pages: ['/spoofer'],   subTabs: [], separate: false },
   { key: 'poster',   icon: Send,       label: 'POSTER',    href: '/poster',    pages: ['/poster'],    subTabs: [], separate: true  },
   { key: 'en-cours', icon: Timer,      label: 'EN COURS',  href: '/en-cours',  pages: ['/en-cours'],  subTabs: [], separate: false },
 ]
