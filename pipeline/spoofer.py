@@ -433,23 +433,28 @@ def _build_aggressive_filter_complex(seed: int, w: int, h: int, duration: float,
     tiers_applied.append("tier2")
 
     vbase_chain = ",".join(vf_parts)
-    filter_parts = [f"[0:v]{vbase_chain}[vbase]"]
 
     # Tier 4 — segmentation vitesse (vidéo)
     speeds = [rng.uniform(0.97, 1.03) for _ in range(3)]
     if duration >= 1.5:
+        # ffmpeg < 6 ("Invalid stream specifier: vbase ... matches no streams")
+        # ne supporte pas la réutilisation d'un label de sortie nommé comme
+        # entrée de PLUSIEURS filtres en aval. On fan-out explicitement via
+        # split= vers 3 pads dédiés, chacun utilisé une seule fois.
+        filter_parts = [f"[0:v]{vbase_chain},split=3[vb0][vb1][vb2]"]
         bounds = [0.0, duration / 3, 2 * duration / 3, duration]
         seg_labels = []
         for i in range(3):
             start, end = bounds[i], bounds[i + 1]
             label = f"vseg{i}"
             filter_parts.append(
-                f"[vbase]trim=start={start:.3f}:end={end:.3f},"
+                f"[vb{i}]trim=start={start:.3f}:end={end:.3f},"
                 f"setpts=(PTS-STARTPTS)/{speeds[i]:.4f}[{label}]"
             )
             seg_labels.append(f"[{label}]")
         filter_parts.append("".join(seg_labels) + "concat=n=3:v=1:a=0[vout]")
     else:
+        filter_parts = [f"[0:v]{vbase_chain}[vbase]"]
         filter_parts.append(f"[vbase]setpts=(PTS-STARTPTS)/{speeds[0]:.4f}[vout]")
     tiers_applied.append("tier4")
 
@@ -562,12 +567,12 @@ def spoof_video_bytes(data: bytes, seed: int, level: str, tmp_dir) -> tuple[byte
 
                 result = subprocess.run(cmd, capture_output=True, timeout=300)
                 if result.returncode != 0:
-                    raise RuntimeError(result.stderr.decode(errors="ignore")[-500:])
+                    raise RuntimeError(result.stderr.decode(errors="ignore")[-300:])
                 tiers_applied = t_applied
             except Exception as e:
                 print(json.dumps({
                     "type": "info",
-                    "msg": f"Tier 4 vidéo échoué ({str(e)[:200]}) — repli sur Tier 1+2",
+                    "msg": f"Tier 4 vidéo échoué ({str(e)[-200:]}) — repli sur Tier 1+2",
                 }), flush=True)
                 cmd = None
 
