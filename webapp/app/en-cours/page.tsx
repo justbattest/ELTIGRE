@@ -39,15 +39,24 @@ type SSEPayload = {
   generations: Generation[]
 }
 
-// Run en mémoire (metadata ou carousel)
+// Run en mémoire (metadata, carousel ou spoofer)
 type BatchRunInfo = {
   runId: string
-  runType: 'metadata' | 'carousel'
+  runType: 'metadata' | 'carousel' | 'spoofer'
   done: boolean
   total: number
   completed: number
-  characterName: string
+  characterName?: string
+  level?: string
+  totalFiles?: number
+  variations?: number
   startedAt: number
+}
+
+const SPOOFER_LEVEL_LABELS: Record<string, string> = {
+  light: '🟢 Léger',
+  medium: '🟡 Moyen',
+  aggressive: '🔴 Agressif',
 }
 
 // ─── Prompt Bank Button ────────────────────────────────────────────────────────
@@ -422,7 +431,9 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
 
     const sseUrl = run.runType === 'metadata'
       ? `/api/metadata/events/${run.runId}`
-      : `/api/carousel/events/${run.runId}`
+      : run.runType === 'carousel'
+      ? `/api/carousel/events/${run.runId}`
+      : `/api/spoofer/events/${run.runId}`
 
     const es = new EventSource(sseUrl)
 
@@ -435,11 +446,17 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
           if (ev.type === 'file')        { setCompleted(ev.n); if (!ev.total) return; setTotal(ev.total) }
           if (ev.type === 'done')        { setTotal(ev.total); setCompleted(ev.total); setIsDone(true); es.close() }
           if (ev.type === 'error')       { setHasError(true); setIsDone(true); es.close() }
-        } else {
+        } else if (run.runType === 'carousel') {
           if (ev.type === 'carousel_start') setTotal(ev.total)
           if (ev.type === 'carousel')       { setCompleted(ev.n); if (ev.total) setTotal(ev.total) }
           if (ev.type === 'done')           { setTotal(ev.total); setCompleted(ev.total); setIsDone(true); es.close() }
           if (ev.type === 'error')          { setHasError(true); setIsDone(true); es.close() }
+        } else {
+          // spoofer
+          if (ev.type === 'start')    setTotal(ev.total_variations ?? 0)
+          if (ev.type === 'progress') { setCompleted(ev.current ?? 0); if (ev.total) setTotal(ev.total) }
+          if (ev.type === 'done')     { setTotal(ev.total_outputs ?? 0); setCompleted(ev.total_outputs ?? 0); setIsDone(true); es.close() }
+          if (ev.type === 'error')    { setHasError(true); setIsDone(true); es.close() }
         }
       } catch { /* ignore */ }
     }
@@ -454,11 +471,18 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
     ? new Date(run.startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     : ''
 
-  const icon  = run.runType === 'metadata' ? '🧹' : '🃏'
-  const label = run.runType === 'metadata' ? 'Metadata Opti' : 'Carousels'
-  const barColor = run.runType === 'metadata' ? 'bg-cyan-500' : 'bg-violet-500'
-  const dotColor = run.runType === 'metadata' ? 'bg-cyan-400' : 'bg-violet-400'
-  const textColor = run.runType === 'metadata' ? 'text-cyan-400' : 'text-violet-400'
+  const icon  = run.runType === 'metadata' ? '🧹' : run.runType === 'carousel' ? '🃏' : '🔀'
+  const label = run.runType === 'metadata' ? 'Metadata Opti' : run.runType === 'carousel' ? 'Carousels' : 'Spoofer'
+  const barColor  = run.runType === 'metadata' ? 'bg-cyan-500'   : run.runType === 'carousel' ? 'bg-violet-500'   : 'bg-fuchsia-500'
+  const dotColor  = run.runType === 'metadata' ? 'bg-cyan-400'   : run.runType === 'carousel' ? 'bg-violet-400'   : 'bg-fuchsia-400'
+  const textColor = run.runType === 'metadata' ? 'text-cyan-400' : run.runType === 'carousel' ? 'text-violet-400' : 'text-fuchsia-400'
+
+  const subLabel = run.runType === 'spoofer'
+    ? [
+        run.totalFiles ? `${run.totalFiles} fichier${run.totalFiles > 1 ? 's' : ''}` : null,
+        run.level ? (SPOOFER_LEVEL_LABELS[run.level] || run.level) : null,
+      ].filter(Boolean).join(' · ')
+    : run.characterName
 
   return (
     <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] p-5 space-y-3">
@@ -466,8 +490,8 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
         <div className="flex items-center gap-2 min-w-0">
           <span>{icon}</span>
           <span className="font-semibold text-white text-sm">{label}</span>
-          {run.characterName && (
-            <span className="text-xs text-gray-500 truncate">· {run.characterName}</span>
+          {subLabel && (
+            <span className="text-xs text-gray-500 truncate">· {subLabel}</span>
           )}
           {timeStr && (
             <span className="text-xs text-gray-500 shrink-0">· {timeStr}</span>
@@ -499,6 +523,15 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
           />
         </div>
       </div>
+
+      {run.runType === 'spoofer' && isDone && !hasError && (
+        <a
+          href={`/api/spoofer/download/${run.runId}`}
+          className="inline-flex items-center gap-1.5 text-xs bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white font-medium rounded-lg px-3 py-1.5 transition"
+        >
+          ⬇️ Télécharger le ZIP
+        </a>
+      )}
     </div>
   )
 }
@@ -514,21 +547,24 @@ export default function EnCoursPage() {
 
   const load = async () => {
     try {
-      const [runsRes, metaRes, carouselRes] = await Promise.all([
+      const [runsRes, metaRes, carouselRes, spooferRes] = await Promise.all([
         fetch('/api/runs?status=recent'),
         fetch('/api/metadata/runs'),
         fetch('/api/carousel/runs'),
+        fetch('/api/spoofer/runs'),
       ])
       const runsData     = await runsRes.json()
       const metaData     = await metaRes.json()
       const carouselData = await carouselRes.json()
+      const spooferData  = await spooferRes.json()
 
       setRuns(runsData.runs || [])
 
-      // Fusionner metadata + carousel, trier par date desc
+      // Fusionner metadata + carousel + spoofer, trier par date desc
       const combined: BatchRunInfo[] = [
         ...(metaData.runs     || []).map((r: BatchRunInfo) => ({ ...r, runType: 'metadata'  as const })),
         ...(carouselData.runs || []).map((r: BatchRunInfo) => ({ ...r, runType: 'carousel' as const })),
+        ...(spooferData.runs  || []).map((r: BatchRunInfo) => ({ ...r, runType: 'spoofer'  as const })),
       ].sort((a, b) => b.startedAt - a.startedAt)
 
       setBatchRuns(combined)

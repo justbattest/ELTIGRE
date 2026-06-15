@@ -28,33 +28,34 @@ type Level = 'light' | 'medium' | 'aggressive'
 const UPLOAD_CHUNK_SIZE = 3
 const UPLOAD_MAX_RETRIES = 2
 
-const LEVELS: { value: Level; emoji: string; label: string; desc: string }[] = [
+const LEVELS: { value: Level; emoji: string; label: string; desc: string; recommended?: boolean }[] = [
   {
     value: 'light',
     emoji: '🟢',
     label: 'Léger',
-    desc: 'Tier 1 — crop/zoom, flip horizontal, micro-rotation. Casse les hash perceptuels (pHash/dHash). Le plus rapide.',
+    desc: 'Variations visuelles de base (cadrage, orientation, légère rotation). Le plus rapide — pratique pour traiter de très gros volumes.',
   },
   {
     value: 'medium',
     emoji: '🟡',
     label: 'Moyen',
-    desc: 'Tier 1 + 2 — ajoute perspective warp, color grading, vignette, grain. Casse aussi l’empreinte fréquentielle (type PhotoDNA/DCT).',
+    desc: 'Ajoute des ajustements de couleur, de texture et de perspective pour une protection plus poussée. Toujours rapide.',
   },
   {
     value: 'aggressive',
     emoji: '🔴',
     label: 'Agressif',
-    desc: 'Tier 1 + 2 + 3/4 — Images : + perturbation adversariale CLIP (casse les embeddings IA). Vidéos : + variations de vitesse par segments, pitch audio, watermark inaudible. Le plus lent (CLIP tourne sur GPU Apple/MPS).',
+    desc: 'Protection maximale : ajoute une couche dédiée contre la reconnaissance par IA (images) et des variations propres à chaque vidéo (rythme, son). Un peu plus long, mais recommandé dans la quasi-totalité des cas.',
+    recommended: true,
   },
 ]
 
 const TIER_LABELS: Record<string, string> = {
   tier1: 'Géométrie',
-  tier2: 'Fréquence/Couleur',
-  tier3: 'CLIP adversarial',
-  tier4: 'Vidéo (vitesse/pitch)',
-  metadata: 'Métadonnées Apple',
+  tier2: 'Couleur & texture',
+  tier3: 'Protection IA',
+  tier4: 'Variations vidéo',
+  metadata: 'Métadonnées',
 }
 
 // ── Helper SSE ────────────────────────────────────────────────────────────────
@@ -119,8 +120,9 @@ export default function SpooferPage() {
   const [dragging, setDragging] = useState(false)
   const [error,    setError]    = useState('')
 
-  const [level,      setLevel]      = useState<Level>('medium')
+  const [level,      setLevel]      = useState<Level>('aggressive')
   const [variations, setVariations] = useState(5)
+  const [noMirror,   setNoMirror]   = useState(false)
 
   // idle → compressing → uploading → processing → done
   const [phase,        setPhase]        = useState<'idle' | 'compressing' | 'uploading' | 'processing' | 'done'>('idle')
@@ -261,7 +263,7 @@ export default function SpooferPage() {
       const startRes  = await fetch('/api/spoofer/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ runId: newRunId, level, variations }),
+        body: JSON.stringify({ runId: newRunId, level, variations, noMirror }),
         signal: abort.signal,
       })
       const startData = await startRes.json()
@@ -336,19 +338,31 @@ export default function SpooferPage() {
                         : 'bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:border-violet-500/40'
                     }`}
                   >
-                    <div className="text-sm font-medium mb-1">{l.emoji} {l.label}</div>
+                    <div className="text-sm font-medium mb-1 flex items-center gap-1.5">
+                      <span>{l.emoji} {l.label}</span>
+                      {l.recommended && (
+                        <span className="text-[9px] font-semibold tracking-wide text-emerald-400 bg-emerald-900/30 border border-emerald-700/40 rounded px-1 py-[1px]">
+                          RECOMMANDÉ
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[10px] text-zinc-500 leading-snug">{l.desc}</div>
                   </button>
                 ))}
               </div>
+              <p className="text-[10px] text-zinc-600 mt-3 leading-snug">
+                💡 <strong className="text-zinc-500">Agressif</strong> est recommandé pour la quasi-totalité
+                des publications — c&apos;est le niveau de protection le plus complet. Léger/Moyen restent
+                utiles pour traiter très rapidement de gros volumes, ou quand une protection plus légère suffit.
+              </p>
             </div>
 
             {/* Nombre de variations */}
-            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4">
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-zinc-500">Variations par fichier</p>
-                  <p className="text-[10px] text-zinc-600 mt-0.5">Chaque fichier source génère N variantes uniques (seed différent).</p>
+                  <p className="text-[10px] text-zinc-600 mt-0.5">Chaque fichier source génère N variantes uniques — jamais deux fois la même combinaison.</p>
                 </div>
                 <input
                   type="number"
@@ -359,6 +373,22 @@ export default function SpooferPage() {
                   className="w-20 bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-center text-white text-sm focus:outline-none focus:border-violet-500"
                 />
               </div>
+
+              <label className="flex items-center justify-between gap-3 pt-3 border-t border-white/[0.06] cursor-pointer">
+                <div>
+                  <p className="text-xs text-zinc-300">🪞 Effet miroir (flip horizontal)</p>
+                  <p className="text-[10px] text-zinc-600 mt-0.5">
+                    Activé par défaut. Décoche si tes photos/vidéos contiennent du texte à l&apos;écran
+                    — le miroir le rendrait inversé et illisible.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={!noMirror}
+                  onChange={e => setNoMirror(!e.target.checked)}
+                  className="w-4 h-4 accent-violet-500 shrink-0"
+                />
+              </label>
             </div>
 
             {/* Zone drag & drop */}
@@ -419,12 +449,33 @@ export default function SpooferPage() {
               </div>
             )}
 
-            {/* Infos / installation */}
-            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4 space-y-1.5">
-              <p className="text-[10px] text-zinc-500">🧬 <strong className="text-zinc-400">Tier 1+2</strong> — géométrie + fréquence/couleur, toujours actif (image &amp; vidéo). Aucune installation supplémentaire requise.</p>
-              <p className="text-[10px] text-zinc-500">🧠 <strong className="text-zinc-400">Tier 3 (Agressif, images)</strong> — perturbation CLIP via <code className="text-violet-400">torch</code>/<code className="text-violet-400">open_clip_torch</code> (déjà installés, accélération GPU Apple/MPS). 1er lancement : téléchargement ponctuel des poids ViT-B-32 (~350MB, nécessite internet une fois).</p>
-              <p className="text-[10px] text-zinc-500">🎯 <strong className="text-zinc-400">Optionnel</strong> — <code className="text-violet-400">pip install rembg</code> (dans <code className="text-violet-400">venv</code>) améliore le Tier 3 en séparant sujet/fond ; sans ça, le Tier 3 fonctionne quand même (perturbation uniforme).</p>
-              <p className="text-[10px] text-zinc-500">📦 <strong className="text-zinc-400">Résultat</strong> — téléchargement direct d&apos;un ZIP contenant toutes les variations, pas de stockage Drive.</p>
+            {/* Pourquoi Spoofer 2.0 */}
+            <div className="bg-gradient-to-br from-violet-950/40 to-zinc-900/60 backdrop-blur-sm border border-violet-800/30 rounded-xl p-4 space-y-2">
+              <p className="text-xs font-semibold text-violet-300">🏆 Pourquoi Spoofer 2.0 est différent</p>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                La plupart des outils de spoofing se contentent d&apos;un seul petit changement (un recadrage,
+                un filtre de couleur...) — une protection que les systèmes de détection actuels repèrent
+                en quelques secondes, surtout dès qu&apos;ils reconnaissent plusieurs fichiers comme des
+                variantes d&apos;une même source.
+              </p>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Spoofer 2.0 combine <strong className="text-zinc-300">plusieurs couches de transformation
+                indépendantes</strong> — apparence générale, détails fins, couleurs et textures, et même la
+                manière dont une intelligence artificielle &laquo; comprend &raquo; une image ou une vidéo —
+                pour que chaque variation soit reconnue comme un fichier neuf et indépendant, sur tous
+                les plans à la fois.
+              </p>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Chaque variation reçoit sa propre combinaison unique de réglages : jamais la même recette
+                appliquée deux fois, même sur 15-20 versions d&apos;un seul fichier. Les informations internes
+                du fichier (date, appareil, position...) sont elles aussi régénérées de façon réaliste,
+                comme si chaque fichier provenait d&apos;un téléphone différent — un détail que les outils
+                basiques n&apos;abordent généralement pas.
+              </p>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
+                Résultat : quasi identique à l&apos;original pour toi et ton audience, mais unique aux yeux
+                des systèmes de détection — y compris les plus récents.
+              </p>
             </div>
 
             {error && (

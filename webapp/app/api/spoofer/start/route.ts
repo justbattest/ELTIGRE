@@ -3,7 +3,7 @@
  * Phase 2/2 — lance le subprocess Python sur les fichiers déjà enregistrés.
  * Appelé après que tous les chunks ont été uploadés via /api/spoofer/upload.
  *
- * Body JSON : { runId, level, variations }
+ * Body JSON : { runId, level, variations, noMirror? }
  * Retourne  : { ok: true, runId, fileCount }
  * Stream SSE via : GET /api/spoofer/events/[runId]
  * Téléchargement  : GET /api/spoofer/download/[runId] (une fois `done`)
@@ -27,11 +27,12 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  const body = await req.json() as { runId?: string; level?: string; variations?: number }
+  const body = await req.json() as { runId?: string; level?: string; variations?: number; noMirror?: boolean }
   const { runId } = body
   const level = VALID_LEVELS.has(body.level || '') ? (body.level as string) : 'medium'
   const variationsRaw = Number(body.variations)
   const variations = Math.max(1, Math.min(20, Number.isFinite(variationsRaw) ? Math.round(variationsRaw) : 5))
+  const noMirror = body.noMirror === true
 
   if (!runId) return NextResponse.json({ error: 'runId manquant' }, { status: 400 })
 
@@ -66,16 +67,19 @@ export async function POST(req: NextRequest) {
 
   console.log(`[spoofer:${runId}] démarrage subprocess — ${fileCount} fichiers, niveau=${level}, variations=${variations}`)
 
+  const args = [
+    '-m', 'pipeline.spoofer',
+    '--run-id',    runId,
+    '--files-dir', uploadDir,
+    '--level',     level,
+    '--variations', String(variations),
+    '--output-dir', outputDir,
+  ]
+  if (noMirror) args.push('--no-mirror')
+
   const proc = spawn(
     pythonPath,
-    [
-      '-m', 'pipeline.spoofer',
-      '--run-id',    runId,
-      '--files-dir', uploadDir,
-      '--level',     level,
-      '--variations', String(variations),
-      '--output-dir', outputDir,
-    ],
+    args,
     {
       cwd: projectRoot,
       env: { ...process.env },

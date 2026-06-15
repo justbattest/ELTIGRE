@@ -37,7 +37,10 @@ Protocole stdout JSON-lines (1 par ligne, flush=True) :
 
 CLI :
   venv/bin/python -m pipeline.spoofer --run-id <id> --files-dir <dir>
-      --level {light,medium,aggressive} --variations N [--output-dir <dir>]
+      --level {light,medium,aggressive} --variations N [--output-dir <dir>] [--no-mirror]
+
+  --no-mirror : désactive l'effet miroir (flip horizontal), utile pour les fichiers
+                contenant du texte à l'écran (le flip inverserait le texte).
 """
 
 import asyncio
@@ -92,8 +95,13 @@ def apply_random_crop_zoom(img: Image.Image, rng: random.Random,
     return cropped.resize((w, h), Image.LANCZOS)
 
 
-def apply_horizontal_flip(img: Image.Image, rng: random.Random, prob: float = 0.5) -> Image.Image:
-    if rng.random() < prob:
+def apply_horizontal_flip(img: Image.Image, rng: random.Random, prob: float = 0.5,
+                           allow_flip: bool = True) -> Image.Image:
+    # On consomme tout de même le random() (même si allow_flip=False) pour que le
+    # reste de la séquence aléatoire (et donc les autres transformations) ne change
+    # pas selon que le miroir soit activé ou non.
+    roll = rng.random()
+    if allow_flip and roll < prob:
         return img.transpose(Image.FLIP_LEFT_RIGHT)
     return img
 
@@ -290,7 +298,8 @@ class ClipAdversary:
 
 # ── Passe finale image (Tier 1/2/3 + métadonnées) ────────────────────────────────
 
-def spoof_image_bytes(data: bytes, seed: int, level: str, clip_adversary=None):
+def spoof_image_bytes(data: bytes, seed: int, level: str, clip_adversary=None,
+                       allow_flip: bool = True):
     """Applique les tiers selon `level`, puis la passe métadonnées finale.
 
     Retourne (bytes_jpeg, tiers_applied).
@@ -302,7 +311,7 @@ def spoof_image_bytes(data: bytes, seed: int, level: str, clip_adversary=None):
 
     if tiers["tier1"]:
         img = apply_random_crop_zoom(img, rng)
-        img = apply_horizontal_flip(img, rng)
+        img = apply_horizontal_flip(img, rng, allow_flip=allow_flip)
         img = apply_micro_rotation(img, rng)
         tiers_applied.append("tier1")
 
@@ -358,14 +367,17 @@ def _probe(ffmpeg: str, path) -> dict:
 
 # ── Tier 1/2 vidéo — chaîne -vf simple (light / medium, et fallback aggressive) ──
 
-def _build_simple_vf(seed: int, level: str, w: int, h: int):
+def _build_simple_vf(seed: int, level: str, w: int, h: int, allow_flip: bool = True):
     rng = random.Random(seed)
     tiers = LEVEL_TIERS[level]
     parts: list[str] = []
     tiers_applied: list[str] = []
 
     if tiers["tier1"]:
-        if rng.random() < 0.5:
+        # On consomme tout de même le random() même si allow_flip=False, pour que
+        # le reste de la séquence (rotation/crop/etc.) reste identique.
+        flip_roll = rng.random()
+        if allow_flip and flip_roll < 0.5:
             parts.append("hflip")
         angle = rng.uniform(0.3, 0.8) * (1 if rng.random() < 0.5 else -1)
         parts.append(f"rotate={math.radians(angle):.6f}:c=black")
@@ -397,7 +409,8 @@ def _build_simple_vf(seed: int, level: str, w: int, h: int):
 # ── Tier 4 vidéo — filter_complex (aggressive) ──────────────────────────────────
 
 def _build_aggressive_filter_complex(seed: int, w: int, h: int, duration: float,
-                                      has_audio: bool, sample_rate: int):
+                                      has_audio: bool, sample_rate: int,
+                                      allow_flip: bool = True):
     """Construit un filter_complex : Tier1+2 sur [0:v] → segments de vitesse
     (Tier4 vidéo) → [vout]. Si has_audio, segments audio assortis + pitch shift +
     watermark inaudible 18kHz → [aout]."""
@@ -406,7 +419,10 @@ def _build_aggressive_filter_complex(seed: int, w: int, h: int, duration: float,
 
     # Tier 1
     vf_parts: list[str] = []
-    if rng.random() < 0.5:
+    # On consomme tout de même le random() même si allow_flip=False, pour que le
+    # reste de la séquence (rotation/crop/etc.) reste identique.
+    flip_roll = rng.random()
+    if allow_flip and flip_roll < 0.5:
         vf_parts.append("hflip")
     angle = rng.uniform(0.3, 0.8) * (1 if rng.random() < 0.5 else -1)
     vf_parts.append(f"rotate={math.radians(angle):.6f}:c=black")
@@ -505,7 +521,8 @@ def _build_aggressive_filter_complex(seed: int, w: int, h: int, duration: float,
 
 # ── Passe finale vidéo ────────────────────────────────────────────────────────
 
-def spoof_video_bytes(data: bytes, seed: int, level: str, tmp_dir) -> tuple[bytes, list]:
+def spoof_video_bytes(data: bytes, seed: int, level: str, tmp_dir,
+                       allow_flip: bool = True) -> tuple[bytes, list]:
     """Applique les tiers vidéo selon `level`, puis la passe métadonnées finale.
 
     Repli en cascade pour garantir la stabilité :
@@ -544,7 +561,7 @@ def spoof_video_bytes(data: bytes, seed: int, level: str, tmp_dir) -> tuple[byte
         if tiers["tier4"]:
             try:
                 filter_complex, extra_inputs, audio_map, t_applied = _build_aggressive_filter_complex(
-                    seed, w, h, duration, has_audio, sample_rate
+                    seed, w, h, duration, has_audio, sample_rate, allow_flip=allow_flip
                 )
                 rng2 = random.Random(seed + 999_999)
                 gop = rng2.randint(24, 60)
@@ -577,7 +594,7 @@ def spoof_video_bytes(data: bytes, seed: int, level: str, tmp_dir) -> tuple[byte
                 cmd = None
 
         if cmd is None:
-            vf, t_applied = _build_simple_vf(seed, level, w, h)
+            vf, t_applied = _build_simple_vf(seed, level, w, h, allow_flip=allow_flip)
             cmd = [
                 ffmpeg, "-y", "-i", str(in_path), "-vf", vf,
                 "-c:v", "libx264", "-preset", "medium", "-crf", "23", "-pix_fmt", "yuv420p",
@@ -613,7 +630,7 @@ def _make_seed(run_id: str, filename: str, variation: int) -> int:
 
 
 async def run_spoofer(run_id: str, files_dir: str, level: str, variations: int,
-                       output_dir: str | None = None) -> None:
+                       output_dir: str | None = None, allow_flip: bool = True) -> None:
     files_dir_path = Path(files_dir)
     output_dir_path = Path(output_dir) if output_dir else files_dir_path.parent / f"output_{run_id}"
     output_dir_path.mkdir(parents=True, exist_ok=True)
@@ -685,7 +702,7 @@ async def run_spoofer(run_id: str, files_dir: str, level: str, variations: int,
                 try:
                     data = img_path.read_bytes()
                     out_bytes, tiers_applied = await loop.run_in_executor(
-                        None, spoof_image_bytes, data, seed, level, clip_adversary
+                        None, spoof_image_bytes, data, seed, level, clip_adversary, allow_flip
                     )
                     out_name = f"{img_path.stem}_v{k}.jpg"
                     out_path = output_dir_path / out_name
@@ -711,7 +728,7 @@ async def run_spoofer(run_id: str, files_dir: str, level: str, variations: int,
                 try:
                     data = vid_path.read_bytes()
                     out_bytes, tiers_applied = await loop.run_in_executor(
-                        None, spoof_video_bytes, data, seed, level, str(tmp_dir)
+                        None, spoof_video_bytes, data, seed, level, str(tmp_dir), allow_flip
                     )
                     out_name = f"{vid_path.stem}_v{k}.mp4"
                     out_path = output_dir_path / out_name
@@ -750,6 +767,9 @@ def main() -> None:
     parser.add_argument("--level", choices=["light", "medium", "aggressive"], default="medium")
     parser.add_argument("--variations", type=int, default=5)
     parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--no-mirror", action="store_true",
+                         help="Désactive l'effet miroir (flip horizontal) — utile si les "
+                              "fichiers contiennent du texte à l'écran.")
     args = parser.parse_args()
 
     variations = max(1, min(20, args.variations))
@@ -760,6 +780,7 @@ def main() -> None:
         level=args.level,
         variations=variations,
         output_dir=args.output_dir,
+        allow_flip=not args.no_mirror,
     ))
 
 
