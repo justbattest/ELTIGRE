@@ -130,6 +130,28 @@ def _find_best_frame(frame_paths: list[str]) -> tuple[str, float]:
     return best_path, best_t
 
 
+class _YtdlpStderrLogger:
+    """Redirige toutes les sorties yt-dlp vers stderr pour ne pas polluer stdout.
+
+    Le subprocess Python a son stdout capturé par Node.js pour les events JSON.
+    Sans ce logger, les lignes "[download] 7.8% of ..." apparaissent sur stdout
+    et causent des JSON.parse errors dans le handler Node.js.
+    """
+
+    def debug(self, msg: str) -> None:
+        if not msg.startswith("[debug]"):
+            print(msg, file=sys.stderr, flush=True)
+
+    def info(self, msg: str) -> None:
+        print(msg, file=sys.stderr, flush=True)
+
+    def warning(self, msg: str) -> None:
+        print(msg, file=sys.stderr, flush=True)
+
+    def error(self, msg: str) -> None:
+        print(msg, file=sys.stderr, flush=True)
+
+
 async def download_video(video_url: str, output_dir: str) -> str:
     """Télécharge la vidéo Instagram via yt-dlp. Retourne le chemin local."""
     import yt_dlp  # import local pour ne pas crasher si absent
@@ -139,6 +161,8 @@ async def download_video(video_url: str, output_dir: str) -> str:
         "outtmpl": output_template,
         "quiet": True,
         "no_warnings": True,
+        "noprogress": True,          # supprime la barre de progression
+        "logger": _YtdlpStderrLogger(),  # redirige TOUT vers stderr
         "format": "best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best",
         "noplaylist": True,
         "merge_output_format": "mp4",

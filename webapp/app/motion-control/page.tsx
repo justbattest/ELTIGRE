@@ -7,7 +7,7 @@ import { PageWrapper } from '@/components/PageWrapper'
 
 // ─── Types communs ────────────────────────────────────────────────────────────
 
-type RefElement = { id: string; name: string }
+type RefElement = { id: string; name: string; type?: string }
 
 // ─── Types onglet "Upload manuel" ─────────────────────────────────────────────
 
@@ -375,7 +375,12 @@ export default function MotionControlPage() {
       .then(data => {
         const els: RefElement[] = data.referenceElements || []
         setRefElements(els)
-        if (els.length) { setSelectedElementId(els[0].id); setSelectedElementName(els[0].name) }
+        if (els.length) {
+          // Par défaut : préférer un élément non-soul_2 (compatible nano_banana_2)
+          const preferred = els.find(e => e.type !== 'soul_2') || els[0]
+          setSelectedElementId(preferred.id)
+          setSelectedElementName(preferred.name)
+        }
       })
       .catch(() => {})
   }, [])
@@ -498,7 +503,15 @@ export default function MotionControlPage() {
       }
 
       sse.onerror = () => {
-        setBuildState(prev => prev ? { ...prev, error: 'Connexion SSE perdue' } : null)
+        // Ne pas écraser un message d'erreur déjà reçu depuis le pipeline
+        setBuildState(prev => {
+          if (!prev) return prev
+          if (prev.error) return prev  // garder l'erreur pipeline (ex: "reference elements not found")
+          // Seulement si le build n'est pas encore terminé
+          const isDone = prev.steps.outfits === 'done'
+          if (isDone) return prev
+          return { ...prev, error: 'Connexion SSE perdue (serveur redémarré ?)' }
+        })
         sse.close()
         setBuilding(false)
       }
@@ -662,28 +675,41 @@ export default function MotionControlPage() {
             </div>
 
             {/* Sélecteur de personnage (partagé entre les 3 onglets) */}
-            {refElements.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Personnage
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {refElements.map(e => (
-                    <button
-                      key={e.id}
-                      onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                        selectedElementId === e.id
-                          ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
-                      }`}
-                    >
-                      {e.name}
-                    </button>
-                  ))}
+            {refElements.length > 0 && (() => {
+              // Pour le concept builder (nano_banana_2), filtrer les éléments soul_2
+              // qui ne sont pas compatibles avec le person swap image-to-image.
+              // Les éléments soul_2 viennent de /reference-elements (Seedance vidéo).
+              // Les custom-references (/agents/custom-references) n'ont pas type='soul_2'.
+              const nanoElements = refElements.filter(e => e.type !== 'soul_2')
+              const displayElements = nanoElements.length > 0 ? nanoElements : refElements
+              return (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Personnage <span className="normal-case font-normal text-zinc-600">(custom reference nano_banana_2)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {displayElements.map(e => (
+                      <button
+                        key={e.id}
+                        onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                          selectedElementId === e.id
+                            ? 'bg-violet-600 border-violet-500 text-white'
+                            : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
+                        }`}
+                      >
+                        {e.name}
+                      </button>
+                    ))}
+                  </div>
+                  {nanoElements.length === 0 && (
+                    <p className="text-xs text-amber-500/80">
+                      ⚠️ Aucun custom reference détecté. Lance un scan depuis Settings → Personnages → &quot;Scanner mes éléments&quot;.
+                    </p>
+                  )}
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Onglets */}
             <div className="flex gap-1 bg-zinc-900/60 border border-white/[0.06] rounded-xl p-1">

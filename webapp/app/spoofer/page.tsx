@@ -21,34 +21,12 @@ type VariationResult = {
   tiersApplied: string[]
 }
 
-type Level = 'light' | 'medium' | 'aggressive'
+type Level = 'aggressive'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 const UPLOAD_CHUNK_SIZE = 3
 const UPLOAD_MAX_RETRIES = 2
-
-const LEVELS: { value: Level; emoji: string; label: string; desc: string; recommended?: boolean }[] = [
-  {
-    value: 'light',
-    emoji: '🟢',
-    label: 'Léger',
-    desc: 'Variations visuelles de base (cadrage, orientation, légère rotation). Le plus rapide — pratique pour traiter de très gros volumes.',
-  },
-  {
-    value: 'medium',
-    emoji: '🟡',
-    label: 'Moyen',
-    desc: 'Ajoute des ajustements de couleur, de texture et de perspective pour une protection plus poussée. Toujours rapide.',
-  },
-  {
-    value: 'aggressive',
-    emoji: '🔴',
-    label: 'Agressif',
-    desc: 'Protection maximale : ajoute une couche dédiée contre la reconnaissance par IA (images) et des variations propres à chaque vidéo (rythme, son). Un peu plus long, mais recommandé dans la quasi-totalité des cas.',
-    recommended: true,
-  },
-]
 
 const TIER_LABELS: Record<string, string> = {
   tier1: 'Géométrie',
@@ -120,7 +98,7 @@ export default function SpooferPage() {
   const [dragging, setDragging] = useState(false)
   const [error,    setError]    = useState('')
 
-  const [level,      setLevel]      = useState<Level>('aggressive')
+  const level: Level = 'aggressive'
   const [variations, setVariations] = useState(5)
   const [noMirror,   setNoMirror]   = useState(false)
 
@@ -324,39 +302,6 @@ export default function SpooferPage() {
         {/* ── Config (idle uniquement) ────────────────────────────────────── */}
         {phase === 'idle' && (
           <>
-            {/* Sélecteur de niveau */}
-            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4">
-              <p className="text-xs text-zinc-500 mb-3">Niveau d&apos;agressivité</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {LEVELS.map(l => (
-                  <button
-                    key={l.value}
-                    onClick={() => setLevel(l.value)}
-                    className={`text-left px-3 py-2.5 rounded-lg border transition ${
-                      level === l.value
-                        ? 'bg-gradient-to-br from-violet-600/30 to-violet-500/20 border-violet-500 text-white'
-                        : 'bg-white/[0.03] border-white/[0.08] text-zinc-400 hover:border-violet-500/40'
-                    }`}
-                  >
-                    <div className="text-sm font-medium mb-1 flex items-center gap-1.5">
-                      <span>{l.emoji} {l.label}</span>
-                      {l.recommended && (
-                        <span className="text-[9px] font-semibold tracking-wide text-emerald-400 bg-emerald-900/30 border border-emerald-700/40 rounded px-1 py-[1px]">
-                          RECOMMANDÉ
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-zinc-500 leading-snug">{l.desc}</div>
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-zinc-600 mt-3 leading-snug">
-                💡 <strong className="text-zinc-500">Agressif</strong> est recommandé pour la quasi-totalité
-                des publications — c&apos;est le niveau de protection le plus complet. Léger/Moyen restent
-                utiles pour traiter très rapidement de gros volumes, ou quand une protection plus légère suffit.
-              </p>
-            </div>
-
             {/* Nombre de variations */}
             <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
