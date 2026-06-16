@@ -70,7 +70,7 @@ async def download_image(url: str, suffix: str = ".png") -> str:
     return tmp_path
 
 
-async def resize_image_for_kling(url: str, user_token: str, shortcode: str) -> str:
+async def resize_image_for_kling(url: str, user_token: str, shortcode: str, refresh_token: str = "") -> str:
     """Télécharge l'image Seedream, la redimensionne à max 1280px, ré-uploade vers CDN.
 
     Kling Motion Control rejette les images trop grandes (>1280px sur le grand côté).
@@ -106,7 +106,7 @@ async def resize_image_for_kling(url: str, user_token: str, shortcode: str) -> s
 
     # Upload CDN
     try:
-        cdn_url = await upload_video_for_kling(user_token, tmp_small.name)
+        cdn_url = await upload_video_for_kling(user_token, tmp_small.name, refresh_token=refresh_token)
         return cdn_url
     finally:
         Path(tmp_small.name).unlink(missing_ok=True)
@@ -182,14 +182,49 @@ async def _resolve_image_url(user_token: str, image_source: str, shortcode: str)
     return await upload_video_for_kling(user_token, image_source)
 
 
+async def _get_fresh_higgsfield_token(user_token: str, refresh_token: str = "") -> str:
+    """Obtient un token Higgsfield frais via 'higgsfield auth token'.
+
+    Le CLI gère le refresh automatiquement si le token Clerk JWT est expiré.
+    Retourne user_token inchangé en cas d'échec (fallback sûr).
+
+    Pourquoi : les appels HTTP directs (POST /chains/motion-control) utilisent
+    le token brut stocké en DB (Clerk JWT, durée ~1h). Si expiré → 401.
+    La CLI (upload, generate) gère le refresh elle-même via credentials.json,
+    c'est pourquoi les uploads fonctionnent mais le POST HTTP échoue.
+    """
+    try:
+        result = await run_higgsfield_for_user(
+            user_token,
+            ["higgsfield", "auth", "token"],
+            timeout=30,
+            refresh_token=refresh_token,
+        )
+        fresh = result.strip()
+        if fresh and len(fresh) > 20:
+            return fresh
+        return user_token
+    except Exception as e:
+        # Non-fatal : on retente avec le token original
+        print(json.dumps({
+            "type": "warn",
+            "msg": f"Token refresh échoué ({e!r}) — utilisation du token stocké"
+        }), flush=True)
+        return user_token
+
+
 async def _create_motion_control_higgsfield(
     user_token: str,
     image_cdn_url: str,
     video_cdn_url: str,
+    refresh_token: str = "",
 ) -> dict:
     """POST /chains/motion-control via Higgsfield (Kling v3).
     Retourne {job_id, job_set_id}.
     """
+    # Rafraîchit le token avant l'appel HTTP direct — évite 401 si le Clerk JWT est expiré.
+    fresh_token = await _get_fresh_higgsfield_token(user_token, refresh_token)
+
     image_uuid = _extract_uuid_from_cdn_url(image_cdn_url)
     video_uuid = _extract_uuid_from_cdn_url(video_cdn_url)
 
@@ -216,7 +251,7 @@ async def _create_motion_control_higgsfield(
     }
 
     headers = {
-        "Authorization": f"Bearer {user_token}",
+        "Authorization": f"Bearer {fresh_token}",
         "Content-Type": "application/json",
         "Accept": "*/*",
         "Origin": "https://higgsfield.ai",
@@ -250,10 +285,13 @@ async def _poll_motion_control_higgsfield(
     shortcode: str,
     timeout: int = 900,
     interval: int = 12,
+    refresh_token: str = "",
 ) -> str:
     """Poll GET /jobs/{job_id} jusqu'à status=complete. Retourne l'URL vidéo."""
+    # Token frais pour le polling aussi (les runs longs peuvent dépasser l'expiry)
+    fresh_token = await _get_fresh_higgsfield_token(user_token, refresh_token)
     headers = {
-        "Authorization": f"Bearer {user_token}",
+        "Authorization": f"Bearer {fresh_token}",
         "Accept": "*/*",
         "Origin": "https://higgsfield.ai",
         "Referer": "https://higgsfield.ai/",
@@ -303,12 +341,14 @@ async def generate_motion_video(
     shortcode: str,
     timeout: int = 900,
     prompt: str | None = None,
+    refresh_token: str = "",
 ) -> dict:
     """Phase 2 : Kling v3.0 Motion Control via Higgsfield /chains/motion-control.
 
     Utilise le user_token Higgsfield (Clerk JWT) — pas de clé Kling nécessaire.
     Upload image + vidéo sur le CDN Higgsfield, puis POST sur l'endpoint
     fnf.higgsfield.ai/chains/motion-control, et poll jusqu'au résultat.
+    Le refresh_token permet au CLI d'auto-rafraîchir le Clerk JWT si expiré.
     """
     from pipeline.kling_api import upload_video_for_kling
 
@@ -319,7 +359,7 @@ async def generate_motion_video(
         }), flush=True)
 
         # Upload vidéo toujours (chemin local → CDN)
-        video_upload_coro = upload_video_for_kling(user_token, concept_video_path)
+        video_upload_coro = upload_video_for_kling(user_token, concept_video_path, refresh_token=refresh_token)
 
         if image_source.startswith("http://") or image_source.startswith("https://"):
             # Image déjà sur le CDN Higgsfield → pas besoin de ré-uploader
@@ -329,7 +369,7 @@ async def generate_motion_video(
             # Image locale → upload aussi
             video_cdn_url, image_cdn_url = await asyncio.gather(
                 video_upload_coro,
-                upload_video_for_kling(user_token, image_source),
+                upload_video_for_kling(user_token, image_source, refresh_token=refresh_token),
             )
 
         print(json.dumps({
@@ -341,6 +381,7 @@ async def generate_motion_video(
             user_token=user_token,
             image_cdn_url=image_cdn_url,
             video_cdn_url=video_cdn_url,
+            refresh_token=refresh_token,
         )
         job_id = chain["job_id"]
 
@@ -354,6 +395,7 @@ async def generate_motion_video(
             job_id=job_id,
             shortcode=shortcode,
             timeout=timeout,
+            refresh_token=refresh_token,
         )
         return {"url": result_url}
 
@@ -406,7 +448,7 @@ async def process_one_outfit(
         }), flush=True)
         try:
             image_source = await resize_image_for_kling(
-                pre_generated_image, user_token, shortcode
+                pre_generated_image, user_token, shortcode, refresh_token=refresh_token
             )
         except Exception as e:
             print(json.dumps({
@@ -437,7 +479,7 @@ async def process_one_outfit(
             }), flush=True)
             try:
                 image_source = await resize_image_for_kling(
-                    seedream_result["url"], user_token, shortcode
+                    seedream_result["url"], user_token, shortcode, refresh_token=refresh_token
                 )
             except Exception as e:
                 # Fallback : passer l'URL directement si le resize échoue
@@ -473,6 +515,7 @@ async def process_one_outfit(
         concept_video_path=concept_video,
         shortcode=shortcode,
         prompt=kling_prompt,
+        refresh_token=refresh_token,
     )
 
     if not kling_result.get("url"):

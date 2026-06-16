@@ -46,11 +46,12 @@ def generate_kling_jwt(access_key: str, secret_key: str) -> str:
 
 # ─── Upload vidéo concept ───────────────────────────────────────────────────────
 
-async def upload_video_for_kling(user_token: str, video_path: str) -> str:
+async def upload_video_for_kling(user_token: str, video_path: str, refresh_token: str = "") -> str:
     """Upload la vidéo concept via Higgsfield CLI et retourne une URL publique.
 
     Higgsfield CDN est accessible publiquement → l'URL peut être passée
     directement à l'API Kling en tant que video_url.
+    refresh_token permet au CLI d'auto-rafraîchir le Clerk JWT si expiré.
     """
     from pipeline.generator import run_higgsfield_for_user
 
@@ -58,6 +59,7 @@ async def upload_video_for_kling(user_token: str, video_path: str) -> str:
         user_token,
         ["higgsfield", "upload", "create", video_path, "--json"],
         timeout=120,
+        refresh_token=refresh_token,
     )
 
     raw = result.strip()
