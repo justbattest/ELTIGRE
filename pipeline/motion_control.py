@@ -196,17 +196,35 @@ async def _upload_file_for_motion_control(user_token: str, file_path: str, refre
     raise Exception(f"Upload: impossible d'extraire l'URL depuis: {raw[:300]}")
 
 
-async def _get_fresh_jwt_from_session(session_cookie: str) -> str:
-    """Exchange a Clerk __session cookie for a fresh API JWT (60s validity).
+import base64 as _b64
 
-    The __session cookie lasts ~7 days. This call refreshes it into a short-lived
-    Bearer JWT accepted by fnf.higgsfield.ai.
+
+def _decode_jwt_iat(token: str) -> int:
+    """Decode JWT payload without verification and return iat field (or 1 if unavailable)."""
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            return 1
+        padding = "=" * (4 - len(parts[1]) % 4)
+        payload_data = json.loads(_b64.urlsafe_b64decode(parts[1] + padding).decode())
+        return int(payload_data.get("iat", 1))
+    except Exception:
+        return 1
+
+
+async def _get_fresh_jwt_from_session(session_cookie: str) -> str:
+    """Exchange a Clerk __session cookie for a fresh API JWT.
+
+    Sends __session + __client_uat (derived from JWT iat) to the Clerk client endpoint.
+    __client_uat is required: without it Clerk returns sessions:[] (anonymous client).
     """
+    client_uat = _decode_jwt_iat(session_cookie)
+
     async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
         resp = await client.get(
             "https://clerk.higgsfield.ai/v1/client",
             headers={
-                "Cookie": f"__session={session_cookie}",
+                "Cookie": f"__session={session_cookie}; __client_uat={client_uat}",
                 "Origin": "https://higgsfield.ai",
                 "Referer": "https://higgsfield.ai/",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -218,7 +236,6 @@ async def _get_fresh_jwt_from_session(session_cookie: str) -> str:
         resp.raise_for_status()
         data = resp.json()
 
-    # Clerk response structure: response.sessions[0].last_active_token.jwt
     response_obj = data.get("response", data)
     sessions = response_obj.get("sessions", [])
     if sessions:
@@ -226,36 +243,52 @@ async def _get_fresh_jwt_from_session(session_cookie: str) -> str:
         if jwt:
             return jwt
 
-    raise Exception(f"Could not find JWT in Clerk response: {str(data)[:200]}")
+    raise Exception(f"Could not find JWT in Clerk response (sessions=[]): {str(data)[:200]}")
 
 
 async def _resolve_clerk_jwt(stored_token: str, shortcode: str = "") -> str:
-    """Convert stored Clerk credential to a valid Bearer JWT.
-
-    Tries to use stored_token as a __session cookie to auto-refresh a fresh JWT.
-    Falls back to using it directly (legacy raw JWT paste, likely already expired).
-    """
+    """Try to refresh stored Clerk credential into a fresh JWT. Falls back to direct use."""
     try:
         jwt = await _get_fresh_jwt_from_session(stored_token)
         if shortcode:
-            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Clerk JWT auto-refreshed via session cookie ✓"}), flush=True)
+            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Clerk JWT refreshed ✓"}), flush=True)
         return jwt
     except Exception as e:
-        # Fall back to direct use (user pasted a raw JWT — may be expired)
         if shortcode:
-            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Session refresh failed ({e!r}), using stored token directly"}), flush=True)
+            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Clerk refresh failed ({e!r}), using directly"}), flush=True)
         return stored_token
 
 
+async def _post_motion_control(auth_token: str, payload: dict) -> dict:
+    """Raw POST to /chains/motion-control. Raises httpx.HTTPStatusError on HTTP errors."""
+    headers = {
+        "Authorization": f"Bearer {auth_token}",
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+        "Origin": "https://higgsfield.ai",
+        "Referer": "https://higgsfield.ai/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    }
+    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+        resp = await client.post(
+            "https://fnf.higgsfield.ai/chains/motion-control",
+            json=payload,
+            headers=headers,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
 async def _create_motion_control_higgsfield(
+    user_token: str,
     clerk_token: str,
     image_cdn_url: str,
     video_cdn_url: str,
-) -> dict:
-    """POST /chains/motion-control via Higgsfield (Kling Motion Control).
+    shortcode: str = "",
+) -> tuple[dict, str]:
+    """POST /chains/motion-control. Tries hf_xxx first, then Clerk JWT.
 
-    Requiert le Clerk JWT (token de session web higgsfield.ai) — pas le token CLI hf_xxx.
-    Retourne {job_id, job_set_id}.
+    Returns (job_info_dict, winning_token) — the winning token must be used for polling.
     """
     image_uuid = _extract_uuid_from_cdn_url(image_cdn_url)
     video_uuid = _extract_uuid_from_cdn_url(video_cdn_url)
@@ -282,42 +315,48 @@ async def _create_motion_control_higgsfield(
         "use_free_gens": False,
     }
 
-    headers = {
-        "Authorization": f"Bearer {clerk_token}",
-        "Content-Type": "application/json",
-        "Accept": "*/*",
-        "Origin": "https://higgsfield.ai",
-        "Referer": "https://higgsfield.ai/",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    }
+    # Try hf_xxx first (no expiry), then Clerk JWT as fallback
+    tokens_to_try = [
+        (user_token, "hf_xxx"),
+        (clerk_token, "Clerk JWT"),
+    ]
 
-    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-        resp = await client.post(
-            "https://fnf.higgsfield.ai/chains/motion-control",
-            json=payload,
-            headers=headers,
-        )
-        if resp.status_code == 401:
-            raise Exception(
-                "Token Higgsfield expiré (401). Va dans Settings → Higgsfield Session Token "
-                "et colle un nouveau token depuis F12 sur higgsfield.ai."
-            )
-        resp.raise_for_status()
-        data = resp.json()
+    for token, label in tokens_to_try:
+        if not token:
+            continue
+        try:
+            if shortcode:
+                print(json.dumps({"type": "warn", "msg": f"[{shortcode}] POST motion-control avec {label}…"}), flush=True)
+            data = await _post_motion_control(token, payload)
+            if shortcode:
+                print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Auth {label} accepté ✓"}), flush=True)
 
-    job_sets = data.get("job_sets", [])
-    if not job_sets:
-        raise Exception(f"No job_sets in response: {data}")
-    job_set = job_sets[0]
-    jobs = job_set.get("jobs", [])
-    if not jobs:
-        raise Exception(f"No jobs in job_set: {job_set}")
+            job_sets = data.get("job_sets", [])
+            if not job_sets:
+                raise Exception(f"No job_sets in response: {data}")
+            job_set = job_sets[0]
+            jobs = job_set.get("jobs", [])
+            if not jobs:
+                raise Exception(f"No jobs in job_set: {job_set}")
 
-    return {"job_id": jobs[0]["id"], "job_set_id": job_set["id"]}
+            return {"job_id": jobs[0]["id"], "job_set_id": job_set["id"]}, token
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                if shortcode:
+                    print(json.dumps({"type": "warn", "msg": f"[{shortcode}] {label} → 401, essai suivant…"}), flush=True)
+                continue
+            raise
+
+    raise Exception(
+        "Motion Control 401 avec tous les tokens. "
+        "Si hf_xxx: reconnecte Higgsfield dans Settings. "
+        "Si Clerk JWT: colle un nouveau token depuis F12 → Network → Authorization: Bearer."
+    )
 
 
 async def _poll_motion_control_higgsfield(
-    clerk_token: str,
+    bearer_token: str,
     job_id: str,
     shortcode: str,
     timeout: int = 900,
@@ -325,7 +364,7 @@ async def _poll_motion_control_higgsfield(
 ) -> str:
     """Poll GET /jobs/{job_id} jusqu'à status=complete. Retourne l'URL vidéo."""
     headers = {
-        "Authorization": f"Bearer {clerk_token}",
+        "Authorization": f"Bearer {bearer_token}",
         "Accept": "*/*",
         "Origin": "https://higgsfield.ai",
         "Referer": "https://higgsfield.ai/",
@@ -382,25 +421,14 @@ async def generate_motion_video(
 ) -> dict:
     """Phase 2 : Kling Motion Control via Higgsfield /chains/motion-control.
 
-    Requiert le Clerk JWT (HIGGSFIELD_CLERK_TOKEN env var) — pas le token CLI hf_xxx.
-    Flow : upload image + vidéo via CLI → POST /chains/motion-control → poll jusqu'au résultat.
-
-    image_source : chemin local (déjà préparé par prepare_image_for_kling)
-    concept_video_path : chemin local de la vidéo de référence
-    clerk_token : Clerk JWT de session higgsfield.ai (obligatoire pour /chains/motion-control)
+    Tries hf_xxx token first (no expiry, no setup needed), then falls back to Clerk JWT.
+    clerk_token is optional — if hf_xxx works, it is not needed at all.
     """
-    if not clerk_token:
-        return {
-            "url": None,
-            "error": (
-                "HIGGSFIELD_SESSION_TOKEN manquant. "
-                "Va dans Settings → Higgsfield Session Token et colle le token depuis F12."
-            )
-        }
-
     try:
-        # Auto-refresh JWT from session cookie (if stored as __session cookie)
-        fresh_jwt = await _resolve_clerk_jwt(clerk_token, shortcode)
+        # If clerk_token stored, try to refresh it (adds __client_uat to make Clerk recognize session)
+        fresh_clerk_jwt = ""
+        if clerk_token:
+            fresh_clerk_jwt = await _resolve_clerk_jwt(clerk_token, shortcode)
 
         print(json.dumps({
             "type": "warn",
@@ -421,10 +449,13 @@ async def generate_motion_video(
             "msg": f"[{shortcode}] Upload OK — POST /chains/motion-control…"
         }), flush=True)
 
-        chain = await _create_motion_control_higgsfield(
-            clerk_token=fresh_jwt,
+        # Try hf_xxx first, then Clerk JWT — returns the winning token for polling
+        chain, winning_token = await _create_motion_control_higgsfield(
+            user_token=user_token,
+            clerk_token=fresh_clerk_jwt,
             image_cdn_url=image_cdn_url,
             video_cdn_url=video_cdn_url,
+            shortcode=shortcode,
         )
         job_id = chain["job_id"]
 
@@ -434,7 +465,7 @@ async def generate_motion_video(
         }), flush=True)
 
         result_url = await _poll_motion_control_higgsfield(
-            clerk_token=fresh_jwt,
+            bearer_token=winning_token,
             job_id=job_id,
             shortcode=shortcode,
             timeout=timeout,
@@ -700,8 +731,8 @@ def main():
         print(json.dumps({
             "type": "warn",
             "msg": (
-                "HIGGSFIELD_CLERK_TOKEN manquant — le Motion Control va échouer. "
-                "Colle ton Clerk JWT dans Settings → Higgsfield Session Token."
+                "HIGGSFIELD_CLERK_TOKEN non configuré — "
+                "essai avec hf_xxx token en premier (pas besoin de token Clerk si ça marche)."
             )
         }), flush=True)
 
