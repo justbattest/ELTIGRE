@@ -1,16 +1,20 @@
 /**
  * POST /api/motion-control/start
  *
- * Reçoit en FormData :
- *   image        — image concept (File)
- *   video        — vidéo de référence (File)
+ * Mode A — FormData (upload manuel) :
+ *   image        File     image concept
+ *   video        File     vidéo de référence
+ *   characterName? string
  *
- * Sauvegarde image + vidéo dans /tmp/mc_<timestamp>/,
- * crée un Run (modelSetting='kling_motion_control'),
- * spawn pipeline/motion_control.py,
+ * Mode B — JSON (depuis bibliothèque de concepts) :
+ *   conceptId    string   ID d'un MotionConcept en DB
+ *                         → outfitImages + localVideoPath utilisés directement
+ *                         → phase Seedream sautée (--pre-generated-images)
+ *
+ * Crée un Run (modelSetting='kling_motion_control'), spawn pipeline/motion_control.py,
  * retourne { runId }.
  *
- * Phase 1 : Flux Kontext Max — édition ciblée outfit uniquement (pas d'element_id requis)
+ * Phase 1 : Seedream v4.5 img2img — outfit variations (sauté si conceptId fourni)
  * Phase 2 : Kling 3.0 Motion Control API — applique la motion de la vidéo de référence
  */
 import { NextRequest, NextResponse } from 'next/server'
@@ -28,30 +32,25 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  let formData: FormData
-  try {
-    formData = await req.formData()
-  } catch {
-    return NextResponse.json({ error: 'FormData invalide' }, { status: 400 })
-  }
+  // Détecter le mode : JSON (conceptId) vs FormData (upload manuel)
+  const contentType = req.headers.get('content-type') || ''
+  const isJsonMode = contentType.includes('application/json')
 
-  const imageFile = formData.get('image') as File | null
-  const videoFile = formData.get('video') as File | null
-  const characterName = (formData.get('characterName') as string | null) || ''
-
-  if (!imageFile) return NextResponse.json({ error: 'Image concept requise' }, { status: 400 })
-  if (!videoFile) return NextResponse.json({ error: 'Vidéo de référence requise' }, { status: 400 })
+  let imagePath = ''
+  let videoPath = ''
+  let characterName = ''
+  let runDir: string | null = null
+  let conceptId: string | null = null
+  let preGeneratedImages: string[] | null = null
 
   // Récupérer les credentials
   const creds = await prisma.userCredentials.findUnique({
     where: { userId: session.user.id },
   })
-
   const higgsToken = decryptIfPresent(creds?.higgsFieldToken)
   if (!higgsToken) {
     return NextResponse.json({ error: 'Higgsfield token requis.' }, { status: 400 })
   }
-
   const higgsRefreshToken = decryptIfPresent(creds?.higgsFieldRefreshToken) || ''
   const klingAccessKey = decryptIfPresent(creds?.klingAccessKey) || ''
   const klingSecretKey = decryptIfPresent(creds?.klingSecretKey) || ''
@@ -61,22 +60,114 @@ export async function POST(req: NextRequest) {
   const googleRefreshToken = creds?.googleRefreshToken || null
   const driveFolderId = creds?.driveFolderId || null
 
-  // Sauvegarder les fichiers sur disque
-  const runDir = path.join('/tmp', `mc_${Date.now()}`)
-  fs.mkdirSync(runDir, { recursive: true })
+  if (isJsonMode) {
+    // ── Mode B : depuis bibliothèque ──────────────────────────────────────────
+    let body: { conceptId?: string; characterName?: string }
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'Body JSON invalide' }, { status: 400 })
+    }
 
-  const imageExt = imageFile.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const videoExt = videoFile.name.split('.').pop()?.toLowerCase() || 'mp4'
-  const imagePath = path.join(runDir, `concept.${imageExt}`)
-  const videoPath = path.join(runDir, `concept.${videoExt}`)
+    if (!body.conceptId) {
+      return NextResponse.json({ error: 'conceptId requis en mode JSON' }, { status: 400 })
+    }
+    conceptId = body.conceptId
+    characterName = body.characterName || ''
 
-  fs.writeFileSync(imagePath, Buffer.from(await imageFile.arrayBuffer()))
-  fs.writeFileSync(videoPath, Buffer.from(await videoFile.arrayBuffer()))
+    // Charger le concept depuis la DB
+    const concept = await prisma.motionConcept.findUnique({
+      where: { id: conceptId },
+    })
+    if (!concept) return NextResponse.json({ error: 'Concept introuvable' }, { status: 404 })
+    if (concept.userId !== session.user.id) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+
+    // Vidéo : chemin local si disponible, sinon re-télécharger depuis sourceVideoUrl
+    if (concept.localVideoPath && fs.existsSync(concept.localVideoPath)) {
+      videoPath = concept.localVideoPath
+    } else if (concept.sourceVideoUrl) {
+      // La vidéo a été supprimée (tmp). On doit la re-télécharger.
+      // Pour l'instant, on retourne une erreur claire — l'UI peut proposer re-build.
+      return NextResponse.json({
+        error: 'Vidéo locale introuvable (supprimée depuis /tmp). Veuillez re-générer le concept.',
+        conceptId,
+      }, { status: 422 })
+    } else {
+      return NextResponse.json({ error: 'Aucune vidéo disponible pour ce concept.' }, { status: 422 })
+    }
+
+    // Image concept (pour fallback Kling si pre-generated échoue)
+    if (!concept.conceptImageUrl) {
+      return NextResponse.json({ error: 'conceptImageUrl manquant dans ce concept.' }, { status: 422 })
+    }
+
+    // Télécharger le concept image localement pour le passer en --concept-image
+    runDir = path.join('/tmp', `mc_${Date.now()}`)
+    fs.mkdirSync(runDir, { recursive: true })
+    imagePath = path.join(runDir, 'concept.jpg')
+
+    // Téléchargement synchrone via node https (simple, pas de dépendance)
+    try {
+      const https = await import('https')
+      const http = await import('http')
+      await new Promise<void>((resolve, reject) => {
+        const url = new URL(concept.conceptImageUrl!)
+        const client = url.protocol === 'https:' ? https : http
+        const file = fs.createWriteStream(imagePath)
+        client.default.get(concept.conceptImageUrl!, (res) => {
+          res.pipe(file)
+          file.on('finish', () => { file.close(); resolve() })
+        }).on('error', reject)
+      })
+    } catch (dlErr) {
+      return NextResponse.json({ error: `Téléchargement concept image échoué: ${dlErr}` }, { status: 500 })
+    }
+
+    // Outfits pré-générés
+    const outfits = Array.isArray(concept.outfitImages) ? concept.outfitImages as string[] : []
+    if (outfits.length > 0) {
+      preGeneratedImages = outfits
+    }
+
+    // Incrémenter viewCount
+    prisma.motionConcept.update({
+      where: { id: conceptId },
+      data: { viewCount: { increment: 1 } },
+    }).catch(() => {})
+
+  } else {
+    // ── Mode A : upload manuel FormData ──────────────────────────────────────
+    let formData: FormData
+    try {
+      formData = await req.formData()
+    } catch {
+      return NextResponse.json({ error: 'FormData invalide' }, { status: 400 })
+    }
+
+    const imageFile = formData.get('image') as File | null
+    const videoFile = formData.get('video') as File | null
+    characterName = (formData.get('characterName') as string | null) || ''
+
+    if (!imageFile) return NextResponse.json({ error: 'Image concept requise' }, { status: 400 })
+    if (!videoFile) return NextResponse.json({ error: 'Vidéo de référence requise' }, { status: 400 })
+
+    runDir = path.join('/tmp', `mc_${Date.now()}`)
+    fs.mkdirSync(runDir, { recursive: true })
+
+    const imageExt = imageFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const videoExt = videoFile.name.split('.').pop()?.toLowerCase() || 'mp4'
+    imagePath = path.join(runDir, `concept.${imageExt}`)
+    videoPath = path.join(runDir, `concept.${videoExt}`)
+
+    fs.writeFileSync(imagePath, Buffer.from(await imageFile.arrayBuffer()))
+    fs.writeFileSync(videoPath, Buffer.from(await videoFile.arrayBuffer()))
+  }
 
   // Créer le Run
   const run = await prisma.run.create({
     data: {
       ...(session.user.id ? { user: { connect: { id: session.user.id } } } : {}),
+      ...(conceptId ? { concept: { connect: { id: conceptId } } } : {}),
       inputProfiles: '[]',
       maxPosts: 4,
       modelSetting: 'kling_motion_control',
@@ -86,14 +177,19 @@ export async function POST(req: NextRequest) {
 
   // Lancer le subprocess Python
   const pythonPath = path.join(process.cwd(), '..', 'venv', 'bin', 'python')
+  const pythonArgs = [
+    '-m', 'pipeline.motion_control',
+    '--run-id', run.id,
+    '--concept-image', imagePath,
+    '--concept-video', videoPath,
+    ...(preGeneratedImages && preGeneratedImages.length > 0
+      ? ['--pre-generated-images', ...preGeneratedImages]
+      : []),
+  ]
+
   const proc = spawn(
     pythonPath,
-    [
-      '-m', 'pipeline.motion_control',
-      '--run-id', run.id,
-      '--concept-image', imagePath,
-      '--concept-video', videoPath,
-    ],
+    pythonArgs,
     {
       cwd: path.join(process.cwd(), '..'),
       env: {
@@ -149,8 +245,10 @@ export async function POST(req: NextRequest) {
   proc.on('close', async (code) => {
     runningProcesses.delete(run.id)
     deletePidFile(run.id)
-    // Nettoyer les fichiers temporaires
-    try { fs.rmSync(runDir, { recursive: true, force: true }) } catch {}
+    // Nettoyer les fichiers temporaires (uniquement le répertoire créé par cette route)
+    if (runDir) {
+      try { fs.rmSync(runDir, { recursive: true, force: true }) } catch {}
+    }
     const currentRun = await prisma.run.findUnique({ where: { id: run.id } })
     if (currentRun?.status === 'running') {
       await prisma.run.update({

@@ -389,10 +389,13 @@ async def process_one_outfit(
     concept_video: str,
     drive,
     refresh_token: str = "",
+    pre_generated_image: str | None = None,
 ) -> None:
     """Traite un outfit de bout en bout : Seedream → Kling v3 MC → Drive.
 
-    Si Seedream échoue, on passe directement l'image concept à Kling MC
+    Si `pre_generated_image` est fourni (URL CDN), on saute la phase Seedream et
+    on utilise directement cette image pour Kling MC (mode "depuis bibliothèque").
+    Si Seedream échoue en mode normal, on passe directement l'image concept à Kling MC
     avec un prompt d'outfit en fallback.
     """
     shortcode = f"mc_{i + 1}"
@@ -407,52 +410,70 @@ async def process_one_outfit(
         "scene": scene,
     }), flush=True)
 
-    # Phase 1 : Seedream v4.5 img2img — outfit swap (fallback sur concept_image)
-    print(json.dumps({
-        "type": "warn",
-        "msg": f"[{shortcode}] Phase 1/2 — Seedream outfit ({style['label']})…"
-    }), flush=True)
-
-    seedream_result = await generate_outfit_image(
-        user_token=user_token,
-        concept_image=concept_image,
-        shortcode=shortcode,
-    )
-
-    seedream_ok = bool(seedream_result.get("url"))
     kling_prompt = None
     fallback_used = False
 
-    if seedream_ok:
-        # Resize l'image Seedream avant de la passer à Kling (max 1280px)
+    if pre_generated_image:
+        # Mode "depuis bibliothèque" : skip Seedream, utiliser l'image pré-générée
         print(json.dumps({
             "type": "warn",
-            "msg": f"[{shortcode}] Seedream OK — resize image pour Kling (max {KLING_MAX_PX}px)…"
+            "msg": f"[{shortcode}] Image pré-générée fournie — skip Seedream, resize pour Kling…"
         }), flush=True)
         try:
             image_source = await resize_image_for_kling(
-                seedream_result["url"], user_token, shortcode
+                pre_generated_image, user_token, shortcode
             )
         except Exception as e:
-            # Fallback : passer l'URL directement si le resize échoue
             print(json.dumps({
                 "type": "warn",
                 "msg": f"[{shortcode}] Resize échoué ({e!r}) — URL brute transmise à Kling"
             }), flush=True)
-            image_source = seedream_result["url"]
+            image_source = pre_generated_image
     else:
-        # Fallback : concept image locale
-        seedream_err = seedream_result.get("error", "UNKNOWN")
+        # Mode normal : Phase 1 Seedream v4.5 img2img — outfit swap
         print(json.dumps({
             "type": "warn",
-            "msg": f"[{shortcode}] Fallback → concept image ({seedream_err})"
+            "msg": f"[{shortcode}] Phase 1/2 — Seedream outfit ({style['label']})…"
         }), flush=True)
-        image_source = concept_image
-        kling_prompt = (
-            "Apply motion from reference video exactly. "
-            "Keep same person, same face, same background."
+
+        seedream_result = await generate_outfit_image(
+            user_token=user_token,
+            concept_image=concept_image,
+            shortcode=shortcode,
         )
-        fallback_used = True
+
+        seedream_ok = bool(seedream_result.get("url"))
+
+        if seedream_ok:
+            # Resize l'image Seedream avant de la passer à Kling (max 1280px)
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"[{shortcode}] Seedream OK — resize image pour Kling (max {KLING_MAX_PX}px)…"
+            }), flush=True)
+            try:
+                image_source = await resize_image_for_kling(
+                    seedream_result["url"], user_token, shortcode
+                )
+            except Exception as e:
+                # Fallback : passer l'URL directement si le resize échoue
+                print(json.dumps({
+                    "type": "warn",
+                    "msg": f"[{shortcode}] Resize échoué ({e!r}) — URL brute transmise à Kling"
+                }), flush=True)
+                image_source = seedream_result["url"]
+        else:
+            # Fallback : concept image locale
+            seedream_err = seedream_result.get("error", "UNKNOWN")
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"[{shortcode}] Fallback → concept image ({seedream_err})"
+            }), flush=True)
+            image_source = concept_image
+            kling_prompt = (
+                "Apply motion from reference video exactly. "
+                "Keep same person, same face, same background."
+            )
+            fallback_used = True
 
     print(json.dumps({
         "type": "warn",
@@ -513,10 +534,15 @@ async def run_motion_control(
     concept_image: str,
     concept_video: str,
     refresh_token: str = "",
+    pre_generated_images: list[str] | None = None,
 ) -> None:
     """Orchestre la génération de 4 vidéos Motion Control en parallèle.
 
     Seedream (4 simultanés) + Kling v3 via Higgsfield /chains/motion-control.
+
+    Si `pre_generated_images` est fourni (liste de 4 URLs CDN), la phase Seedream
+    est sautée pour chaque outfit : on utilise directement ces images dans Kling MC.
+    C'est le mode "depuis bibliothèque de concepts".
     """
     from pipeline.drive_uploader import init_drive_uploader_from_env
     drive = init_drive_uploader_from_env()
@@ -534,6 +560,11 @@ async def run_motion_control(
             concept_video=concept_video,
             drive=drive,
             refresh_token=refresh_token,
+            pre_generated_image=(
+                pre_generated_images[i]
+                if pre_generated_images and i < len(pre_generated_images)
+                else None
+            ),
         )
         for i, style in enumerate(OUTFIT_STYLES)
     ]
@@ -554,6 +585,17 @@ def main():
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--concept-image", required=True, help="Chemin local vers l'image concept")
     parser.add_argument("--concept-video", required=True, help="Chemin local vers la vidéo de référence")
+    parser.add_argument(
+        "--pre-generated-images",
+        nargs="+",
+        default=None,
+        metavar="URL",
+        help=(
+            "4 URLs CDN d'images d'outfit déjà générées (mode 'depuis bibliothèque'). "
+            "Quand fourni, la phase Seedream est sautée et ces images sont utilisées "
+            "directement dans Kling MC."
+        ),
+    )
     args = parser.parse_args()
 
     user_token = os.environ.get("HIGGSFIELD_TOKEN")
@@ -576,6 +618,7 @@ def main():
         concept_image=args.concept_image,
         concept_video=args.concept_video,
         refresh_token=refresh_token,
+        pre_generated_images=args.pre_generated_images or None,
     ))
 
 

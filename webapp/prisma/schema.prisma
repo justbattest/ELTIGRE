@@ -9,13 +9,14 @@ datasource db {
 }
 
 model User {
-  id           String           @id @default(cuid())
-  email        String           @unique
-  passwordHash String           @map("password_hash")
-  createdAt    DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
-  generations  Generation[]
-  runs         Run[]
-  credentials  UserCredentials?
+  id             String           @id @default(cuid())
+  email          String           @unique
+  passwordHash   String           @map("password_hash")
+  createdAt      DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+  generations    Generation[]
+  runs           Run[]
+  credentials    UserCredentials?
+  motionConcepts MotionConcept[]
 
   @@map("users")
 }
@@ -45,30 +46,57 @@ model UserCredentials {
 }
 
 model Run {
-  id                String       @id @default(cuid())
-  userId            String?      @map("user_id")
-  inputProfiles     String       @map("input_profiles")
-  maxPosts          Int?         @default(50) @map("max_posts")
-  selectedSoulId    String?      @map("selected_soul_id")
-  selectedElementId String?      @map("selected_element_id")
-  modelSetting      String?      @default("auto") @map("model_setting")
-  aspectRatio       String?      @default("2:3") @map("aspect_ratio")
-  quality           String?      @default("2k")
-  characterName     String?      @map("character_name")
-  createdAt         DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
-  status            String?      @default("running")
-  totalPosts        Int?         @default(0) @map("total_posts")
-  completedPosts    Int?         @default(0) @map("completed_posts")
-  failedPosts       Int?         @default(0) @map("failed_posts")
-  fallbackCount     Int?         @default(0) @map("fallback_count")
-  resourceGroup     String?      @map("resource_group")
-  queuedParams      Json?        @map("queued_params")
+  id                String         @id @default(cuid())
+  userId            String?        @map("user_id")
+  inputProfiles     String         @map("input_profiles")
+  maxPosts          Int?           @default(50) @map("max_posts")
+  selectedSoulId    String?        @map("selected_soul_id")
+  selectedElementId String?        @map("selected_element_id")
+  modelSetting      String?        @default("auto") @map("model_setting")
+  aspectRatio       String?        @default("2:3") @map("aspect_ratio")
+  quality           String?        @default("2k")
+  characterName     String?        @map("character_name")
+  createdAt         DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  status            String?        @default("running")
+  totalPosts        Int?           @default(0) @map("total_posts")
+  completedPosts    Int?           @default(0) @map("completed_posts")
+  failedPosts       Int?           @default(0) @map("failed_posts")
+  fallbackCount     Int?           @default(0) @map("fallback_count")
+  resourceGroup     String?        @map("resource_group")
+  queuedParams      Json?          @map("queued_params")
+  conceptId         String?        @map("concept_id")
   generations       Generation[]
-  user              User?        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user              User?          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  concept           MotionConcept? @relation(fields: [conceptId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([status], map: "idx_runs_status")
   @@index([userId], map: "idx_runs_user_id")
   @@map("runs")
+}
+
+// ─── Motion Concepts ──────────────────────────────────────────────────────────
+
+model MotionConcept {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  name            String?                             // Nom libre (ex: "reel plage juillet")
+  sourceVideoUrl  String?   @map("source_video_url")  // URL Instagram originale
+  localVideoPath  String?   @map("local_video_path")  // Chemin local /tmp/mc_concepts/{id}/video.mp4
+  bestFrameUrl    String?   @map("best_frame_url")    // URL CDN de la frame auto-sélectionnée
+  conceptImageUrl String?   @map("concept_image_url") // URL CDN après person swap (nano_banana_2)
+  outfitImages    Json      @default("[]") @map("outfit_images") // ["url1","url2","url3","url4"]
+  characterName   String?   @map("character_name")    // Nom du personnage Higgsfield
+  elementId       String?   @map("element_id")        // Higgsfield element_id utilisé
+  notes           String?   @db.Text
+  viewCount       Int       @default(0)  @map("view_count")
+  isFavorite      Boolean   @default(false) @map("is_favorite")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  runs            Run[]
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_motion_concepts_user_id")
+  @@index([createdAt], map: "idx_motion_concepts_created_at")
+  @@map("motion_concepts")
 }
 
 model Generation {
