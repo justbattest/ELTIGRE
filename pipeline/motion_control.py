@@ -4,7 +4,8 @@ Motion Control — génération batch de 4 vidéos Kling v3.0 Motion Control.
 Flow par outfit (4 en parallèle) :
 1. Seedream v4.5 img2img : change UNIQUEMENT l'outfit sur l'image concept uploadée
    (pose, angle, fond, éclairage, visage, corps restent identiques)
-2. Kling v3.0 Motion Control via Higgsfield /chains/motion-control (Clerk JWT)
+2. Kling v3.0 Motion Control via CLI Higgsfield (kling3_0 --start-image + --video)
+   ← Plus besoin de Clerk JWT ! Le CLI utilise le token hf_xxx standard.
 3. Upload Drive → Motion Control/<run_id>/mc_<i+1>.mp4
 
 Events JSON stdout (même protocole que video_studio.py / studio.py).
@@ -70,14 +71,13 @@ async def download_image(url: str, suffix: str = ".png") -> str:
     return tmp_path
 
 
-async def resize_image_for_kling(url: str, user_token: str, shortcode: str, refresh_token: str = "") -> str:
-    """Télécharge l'image Seedream, la redimensionne à max 1280px, ré-uploade vers CDN.
+async def prepare_image_for_kling(url: str, shortcode: str) -> str:
+    """Télécharge l'image Seedream et la redimensionne à max 1280px côté long.
 
     Kling Motion Control rejette les images trop grandes (>1280px sur le grand côté).
-    Retourne une URL CDN de l'image redimensionnée.
+    Retourne le chemin local du fichier temporaire redimensionné.
+    Le CALLER est responsable de la suppression du fichier après usage.
     """
-    from pipeline.kling_api import upload_video_for_kling
-
     # Téléchargement
     tmp_orig = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False, prefix="hf_orig_")
     tmp_orig.close()
@@ -86,7 +86,7 @@ async def resize_image_for_kling(url: str, user_token: str, shortcode: str, refr
         resp.raise_for_status()
         Path(tmp_orig.name).write_bytes(resp.content)
 
-    # Redimensionnement
+    # Redimensionnement → fichier final
     tmp_small = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False, prefix="hf_small_")
     tmp_small.close()
     try:
@@ -104,12 +104,7 @@ async def resize_image_for_kling(url: str, user_token: str, shortcode: str, refr
     finally:
         Path(tmp_orig.name).unlink(missing_ok=True)
 
-    # Upload CDN
-    try:
-        cdn_url = await upload_video_for_kling(user_token, tmp_small.name, refresh_token=refresh_token)
-        return cdn_url
-    finally:
-        Path(tmp_small.name).unlink(missing_ok=True)
+    return tmp_small.name  # Le caller doit unlink après usage
 
 
 # ─── Core generation helpers ───────────────────────────────────────────────────
@@ -163,175 +158,45 @@ async def generate_outfit_image(
         return {"url": None, "error": str(e)[:300]}
 
 
-
-def _extract_uuid_from_cdn_url(url: str) -> str:
-    """Extrait l'UUID Higgsfield depuis une URL CDN.
-    Ex: https://d2ol7oe51mr4n9.cloudfront.net/user_XXX/UUID.mp4 → UUID
-    """
-    filename = url.split("/")[-1]
-    name = filename.rsplit(".", 1)[0]
-    name = name.replace("_resize", "")
-    return name
-
-
-async def _resolve_image_url(user_token: str, image_source: str, shortcode: str) -> str:
-    """Retourne une URL CDN pour l'image (upload si chemin local)."""
-    if image_source.startswith("http://") or image_source.startswith("https://"):
-        return image_source
-    from pipeline.kling_api import upload_video_for_kling
-    return await upload_video_for_kling(user_token, image_source)
-
-
-async def _get_fresh_higgsfield_token(user_token: str, refresh_token: str = "") -> str:
-    """Obtient un token Higgsfield frais via 'higgsfield auth token'.
-
-    Le CLI gère le refresh automatiquement si le token Clerk JWT est expiré.
-    Retourne user_token inchangé en cas d'échec (fallback sûr).
-
-    Pourquoi : les appels HTTP directs (POST /chains/motion-control) utilisent
-    le token brut stocké en DB (Clerk JWT, durée ~1h). Si expiré → 401.
-    La CLI (upload, generate) gère le refresh elle-même via credentials.json,
-    c'est pourquoi les uploads fonctionnent mais le POST HTTP échoue.
-    """
-    try:
-        result = await run_higgsfield_for_user(
-            user_token,
-            ["higgsfield", "auth", "token"],
-            timeout=30,
-            refresh_token=refresh_token,
-        )
-        fresh = result.strip()
-        if fresh and len(fresh) > 20:
-            return fresh
-        return user_token
-    except Exception as e:
-        # Non-fatal : on retente avec le token original
-        print(json.dumps({
-            "type": "warn",
-            "msg": f"Token refresh échoué ({e!r}) — utilisation du token stocké"
-        }), flush=True)
-        return user_token
-
-
-async def _create_motion_control_higgsfield(
+async def _run_kling3_motion_control(
     user_token: str,
-    image_cdn_url: str,
-    video_cdn_url: str,
-    refresh_token: str = "",
-) -> dict:
-    """POST /chains/motion-control via Higgsfield (Kling v3).
-    Retourne {job_id, job_set_id}.
-    """
-    # Rafraîchit le token avant l'appel HTTP direct — évite 401 si le Clerk JWT est expiré.
-    fresh_token = await _get_fresh_higgsfield_token(user_token, refresh_token)
-
-    image_uuid = _extract_uuid_from_cdn_url(image_cdn_url)
-    video_uuid = _extract_uuid_from_cdn_url(video_cdn_url)
-
-    payload = {
-        "params": {
-            "mode": "std",
-            "medias": [
-                {
-                    "role": "video",
-                    "data": {"id": video_uuid, "type": "video_input", "url": video_cdn_url},
-                },
-                {
-                    "role": "image",
-                    "data": {"id": image_uuid, "type": "media_input", "url": image_cdn_url},
-                },
-            ],
-            "height": 1280,
-            "width": 720,
-            "background_source": "input_video",
-            "model_name": "kling-v3",
-        },
-        "use_unlim": False,
-        "use_free_gens": False,
-    }
-
-    headers = {
-        "Authorization": f"Bearer {fresh_token}",
-        "Content-Type": "application/json",
-        "Accept": "*/*",
-        "Origin": "https://higgsfield.ai",
-        "Referer": "https://higgsfield.ai/",
-        "User-Agent": "higgsfield-cli/0.1.40",
-    }
-
-    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-        resp = await client.post(
-            "https://fnf.higgsfield.ai/chains/motion-control",
-            json=payload,
-            headers=headers,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
-    job_sets = data.get("job_sets", [])
-    if not job_sets:
-        raise Exception(f"No job_sets in response: {data}")
-    job_set = job_sets[0]
-    jobs = job_set.get("jobs", [])
-    if not jobs:
-        raise Exception(f"No jobs in job_set: {job_set}")
-
-    return {"job_id": jobs[0]["id"], "job_set_id": job_set["id"]}
-
-
-async def _poll_motion_control_higgsfield(
-    user_token: str,
-    job_id: str,
+    image_path: str,
+    video_path: str,
     shortcode: str,
+    prompt: str,
     timeout: int = 900,
-    interval: int = 12,
     refresh_token: str = "",
 ) -> str:
-    """Poll GET /jobs/{job_id} jusqu'à status=complete. Retourne l'URL vidéo."""
-    # Token frais pour le polling aussi (les runs longs peuvent dépasser l'expiry)
-    fresh_token = await _get_fresh_higgsfield_token(user_token, refresh_token)
-    headers = {
-        "Authorization": f"Bearer {fresh_token}",
-        "Accept": "*/*",
-        "Origin": "https://higgsfield.ai",
-        "Referer": "https://higgsfield.ai/",
-        "User-Agent": "higgsfield-cli/0.1.40",
-    }
+    """Lance kling3_0 via le CLI Higgsfield (--start-image + --video).
 
-    start = asyncio.get_event_loop().time()
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        while True:
-            if asyncio.get_event_loop().time() - start > timeout:
-                raise asyncio.TimeoutError(f"Kling v3 MC timeout {timeout}s")
+    Utilise le token hf_xxx standard — pas besoin de Clerk JWT.
+    Le CLI gère automatiquement l'upload des fichiers locaux et le polling.
+    Retourne l'URL de la vidéo générée.
+    """
+    cmd = [
+        "higgsfield", "generate", "create", "kling3_0",
+        "--start-image", image_path,
+        "--video", video_path,
+        "--prompt", prompt,
+        "--aspect_ratio", "9:16",
+        "--mode", "pro",
+        "--sound", "off",
+        "--wait",
+        "--wait-timeout", "15m",
+    ]
 
-            resp = await client.get(
-                f"https://fnf.higgsfield.ai/jobs/{job_id}",
-                headers=headers,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            status = data.get("status", "")
+    print(json.dumps({
+        "type": "warn",
+        "msg": f"[{shortcode}] CLI kling3_0 motion control — upload + soumission…"
+    }), flush=True)
 
-            if status == "complete":
-                for key in ("result", "results"):
-                    val = data.get(key)
-                    if isinstance(val, dict):
-                        url = val.get("url") or val.get("video_url")
-                        if url:
-                            return url
-                    elif isinstance(val, list) and val:
-                        url = val[0].get("url") or val[0].get("video_url")
-                        if url:
-                            return url
-                raise Exception(f"Job complete mais pas d'URL: {data}")
-            elif status in ("failed", "error", "cancelled"):
-                raise Exception(f"Kling v3 MC job {status}: {data}")
-
-            print(json.dumps({
-                "type": "warn",
-                "msg": f"[{shortcode}] Kling v3 job {job_id[:8]}… status={status}"
-            }), flush=True)
-            await asyncio.sleep(interval)
+    result = await run_higgsfield_for_user(
+        user_token, cmd, timeout=timeout, refresh_token=refresh_token
+    )
+    url = result.strip()
+    if not url:
+        raise Exception("kling3_0 : résultat vide (pas d'URL retournée par le CLI)")
+    return url
 
 
 async def generate_motion_video(
@@ -343,66 +208,49 @@ async def generate_motion_video(
     prompt: str | None = None,
     refresh_token: str = "",
 ) -> dict:
-    """Phase 2 : Kling v3.0 Motion Control via Higgsfield /chains/motion-control.
+    """Phase 2 : Kling v3.0 Motion Control via CLI Higgsfield (kling3_0).
 
-    Utilise le user_token Higgsfield (Clerk JWT) — pas de clé Kling nécessaire.
-    Upload image + vidéo sur le CDN Higgsfield, puis POST sur l'endpoint
-    fnf.higgsfield.ai/chains/motion-control, et poll jusqu'au résultat.
-    Le refresh_token permet au CLI d'auto-rafraîchir le Clerk JWT si expiré.
+    Utilise le token hf_xxx standard via le CLI — pas de Clerk JWT nécessaire.
+    Le CLI auto-upload les fichiers locaux et retourne l'URL de la vidéo
+    après polling interne (--wait --wait-timeout 15m).
+
+    image_source : chemin local (déjà préparé par prepare_image_for_kling)
+                   OU URL CDN (sera téléchargée si nécessaire)
+    concept_video_path : chemin local de la vidéo de référence
     """
-    from pipeline.kling_api import upload_video_for_kling
+    img_tmp_created: str | None = None
 
     try:
-        print(json.dumps({
-            "type": "warn",
-            "msg": f"[{shortcode}] Upload image + vidéo vers Higgsfield CDN…"
-        }), flush=True)
-
-        # Upload vidéo toujours (chemin local → CDN)
-        video_upload_coro = upload_video_for_kling(user_token, concept_video_path, refresh_token=refresh_token)
-
+        # Si l'image est une URL, on la télécharge en local
         if image_source.startswith("http://") or image_source.startswith("https://"):
-            # Image déjà sur le CDN Higgsfield → pas besoin de ré-uploader
-            image_cdn_url = image_source
-            video_cdn_url = await video_upload_coro
+            img_tmp_created = await download_image(image_source, suffix=".jpg")
+            img_path = img_tmp_created
         else:
-            # Image locale → upload aussi
-            video_cdn_url, image_cdn_url = await asyncio.gather(
-                video_upload_coro,
-                upload_video_for_kling(user_token, image_source, refresh_token=refresh_token),
-            )
+            img_path = image_source
 
-        print(json.dumps({
-            "type": "warn",
-            "msg": f"[{shortcode}] Upload OK — POST /chains/motion-control (Kling v3)…"
-        }), flush=True)
-
-        chain = await _create_motion_control_higgsfield(
-            user_token=user_token,
-            image_cdn_url=image_cdn_url,
-            video_cdn_url=video_cdn_url,
-            refresh_token=refresh_token,
+        motion_prompt = prompt or (
+            "Apply the exact movements from the reference video to the person in the image. "
+            "Keep the same person, face, outfit, and background perfectly unchanged."
         )
-        job_id = chain["job_id"]
 
-        print(json.dumps({
-            "type": "warn",
-            "msg": f"[{shortcode}] Job Kling v3 soumis — job_id={job_id[:8]}… polling…"
-        }), flush=True)
-
-        result_url = await _poll_motion_control_higgsfield(
+        result_url = await _run_kling3_motion_control(
             user_token=user_token,
-            job_id=job_id,
+            image_path=img_path,
+            video_path=concept_video_path,
             shortcode=shortcode,
+            prompt=motion_prompt,
             timeout=timeout,
             refresh_token=refresh_token,
         )
         return {"url": result_url}
 
     except asyncio.TimeoutError:
-        return {"url": None, "error": "TIMEOUT_KLING_V3_MC"}
+        return {"url": None, "error": "TIMEOUT_KLING3_MC"}
     except Exception as e:
         return {"url": None, "error": f"{type(e).__name__}: {str(e) or repr(e)}"[:300]}
+    finally:
+        if img_tmp_created:
+            Path(img_tmp_created).unlink(missing_ok=True)
 
 
 # ─── Orchestration ─────────────────────────────────────────────────────────────
@@ -440,6 +288,8 @@ async def process_one_outfit(
     kling_prompt = None
     fallback_used = False
 
+    img_tmp_to_clean: str | None = None  # Temp file créé par prepare_image_for_kling
+
     if pre_generated_image:
         # Mode "depuis bibliothèque" : skip Seedream, utiliser l'image pré-générée
         print(json.dumps({
@@ -447,9 +297,10 @@ async def process_one_outfit(
             "msg": f"[{shortcode}] Image pré-générée fournie — skip Seedream, resize pour Kling…"
         }), flush=True)
         try:
-            image_source = await resize_image_for_kling(
-                pre_generated_image, user_token, shortcode, refresh_token=refresh_token
+            img_tmp_to_clean = await prepare_image_for_kling(
+                pre_generated_image, shortcode
             )
+            image_source = img_tmp_to_clean
         except Exception as e:
             print(json.dumps({
                 "type": "warn",
@@ -478,9 +329,10 @@ async def process_one_outfit(
                 "msg": f"[{shortcode}] Seedream OK — resize image pour Kling (max {KLING_MAX_PX}px)…"
             }), flush=True)
             try:
-                image_source = await resize_image_for_kling(
-                    seedream_result["url"], user_token, shortcode, refresh_token=refresh_token
+                img_tmp_to_clean = await prepare_image_for_kling(
+                    seedream_result["url"], shortcode
                 )
+                image_source = img_tmp_to_clean
             except Exception as e:
                 # Fallback : passer l'URL directement si le resize échoue
                 print(json.dumps({
@@ -504,19 +356,23 @@ async def process_one_outfit(
 
     print(json.dumps({
         "type": "warn",
-        "msg": f"[{shortcode}] Phase 2/2 — Kling 3.0 Motion Control (API officielle)…"
+        "msg": f"[{shortcode}] Phase 2/2 — Kling 3.0 Motion Control (CLI kling3_0)…"
     }), flush=True)
 
-    # Phase 2 : Kling 3.0 Motion Control via API officielle
-    # Pas de submit_delay — la sérialisation via _KLING_SUBMIT_LOCK gère l'ordre
-    kling_result = await generate_motion_video(
-        user_token=user_token,
-        image_source=image_source,
-        concept_video_path=concept_video,
-        shortcode=shortcode,
-        prompt=kling_prompt,
-        refresh_token=refresh_token,
-    )
+    try:
+        # Phase 2 : Kling 3.0 Motion Control via CLI kling3_0
+        kling_result = await generate_motion_video(
+            user_token=user_token,
+            image_source=image_source,
+            concept_video_path=concept_video,
+            shortcode=shortcode,
+            prompt=kling_prompt,
+            refresh_token=refresh_token,
+        )
+    finally:
+        # Nettoyage du fichier temporaire créé par prepare_image_for_kling
+        if img_tmp_to_clean:
+            Path(img_tmp_to_clean).unlink(missing_ok=True)
 
     if not kling_result.get("url"):
         print(json.dumps({
@@ -565,7 +421,8 @@ async def run_motion_control(
 ) -> None:
     """Orchestre la génération de 4 vidéos Motion Control en parallèle.
 
-    Seedream (4 simultanés) + Kling v3 via Higgsfield /chains/motion-control.
+    Seedream (4 simultanés) + Kling v3 via CLI kling3_0 (--start-image + --video).
+    Pas de Clerk JWT requis — le CLI utilise le token hf_xxx standard.
 
     Si `pre_generated_images` est fourni (liste de 4 URLs CDN), la phase Seedream
     est sautée pour chaque outfit : on utilise directement ces images dans Kling MC.
