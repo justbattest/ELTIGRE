@@ -406,23 +406,23 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Session Cookie (Motion Control) */}
+            {/* Session Cookies (Motion Control) */}
             <div className="mt-4 pt-4 border-t border-gray-800">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-sm font-medium text-gray-300">
-                  Session Cookie{' '}
+                  Session Cookies{' '}
                   <span className="text-xs bg-violet-900/40 text-violet-400 border border-violet-800 px-2 py-0.5 rounded-full font-normal">Motion Control</span>
                 </label>
                 {higgsClerkConnected && (
-                  <span className="text-green-400 text-xs">✅ Cookie active</span>
+                  <span className="text-green-400 text-xs">✅ Cookies active</span>
                 )}
               </div>
               <p className="text-gray-500 text-xs mb-2">
-                Required for Kling Motion Control. Open <strong className="text-gray-400">higgsfield.ai</strong> → F12 → <strong className="text-gray-400">Application</strong> tab → Cookies → <code className="text-violet-400">higgsfield.ai</code> → copy the value of the <code className="text-violet-400">__session</code> cookie (starts with <code className="text-violet-400">eyJ...</code>). Valid for ~7 days — no more minute-by-minute expiry.
+                Required for Kling Motion Control. Open <strong className="text-gray-400">higgsfield.ai</strong> → F12 → <strong className="text-gray-400">Network</strong> tab → filter by <code className="text-violet-400">clerk.higgsfield.ai</code> → click any GET request → <strong className="text-gray-400">Headers</strong> → Request Headers → <strong className="text-gray-400">Cookie</strong> → copy the <strong className="text-gray-400">entire value</strong> (contains <code className="text-violet-400">__client=...; __session=...; ...</code>). Valid ~7 days.
               </p>
               <input
                 type="password"
-                placeholder={higgsClerkConnected ? '••••••••••••  (cookie active, paste to replace)' : 'eyJ... (paste __session cookie from F12 → Application → Cookies)'}
+                placeholder={higgsClerkConnected ? '•••••••• (cookies active, paste to replace)' : '__client=...; __client_uat=...; __session=... (full Cookie header from Network tab)'}
                 value={higgsClerkToken}
                 onChange={(e) => setHiggsClerkToken(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 font-mono"

@@ -212,19 +212,19 @@ def _decode_jwt_iat(token: str) -> int:
         return 1
 
 
-async def _get_fresh_jwt_from_session(session_cookie: str) -> str:
-    """Exchange a Clerk __session cookie for a fresh API JWT.
+async def _get_fresh_jwt_from_cookies(cookie_string: str) -> str:
+    """Get a fresh Clerk JWT using the full cookie string captured from the browser.
 
-    Sends __session + __client_uat (derived from JWT iat) to the Clerk client endpoint.
-    __client_uat is required: without it Clerk returns sessions:[] (anonymous client).
+    cookie_string must be the raw Cookie header value from a real browser request to
+    clerk.higgsfield.ai (F12 → Network → clerk.higgsfield.ai → Request Headers → Cookie).
+    This includes HTTP-only cookies like __client that make Clerk recognize the session.
+    Without __client, Clerk returns sessions:[] even with a valid __session.
     """
-    client_uat = _decode_jwt_iat(session_cookie)
-
     async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
         resp = await client.get(
             "https://clerk.higgsfield.ai/v1/client",
             headers={
-                "Cookie": f"__session={session_cookie}; __client_uat={client_uat}",
+                "Cookie": cookie_string,
                 "Origin": "https://higgsfield.ai",
                 "Referer": "https://higgsfield.ai/",
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -232,7 +232,7 @@ async def _get_fresh_jwt_from_session(session_cookie: str) -> str:
             },
         )
         if resp.status_code in (401, 403):
-            raise Exception("Session cookie expired or invalid (401/403 from Clerk)")
+            raise Exception(f"Clerk cookie string rejected ({resp.status_code})")
         resp.raise_for_status()
         data = resp.json()
 
@@ -243,19 +243,27 @@ async def _get_fresh_jwt_from_session(session_cookie: str) -> str:
         if jwt:
             return jwt
 
-    raise Exception(f"Could not find JWT in Clerk response (sessions=[]): {str(data)[:200]}")
+    raise Exception(f"Clerk sessions=[] even with full cookie string: {str(data)[:300]}")
 
 
 async def _resolve_clerk_jwt(stored_token: str, shortcode: str = "") -> str:
-    """Try to refresh stored Clerk credential into a fresh JWT. Falls back to direct use."""
+    """Resolve stored Clerk credential to a usable JWT.
+
+    stored_token can be:
+    - A full cookie string from Network tab (preferred — includes __client for session refresh)
+    - A raw Bearer JWT (fallback — might be expired but we try anyway)
+    """
+    if not stored_token:
+        return ""
+    # Try to use it as a cookie string (the full Cookie header from browser Network tab)
     try:
-        jwt = await _get_fresh_jwt_from_session(stored_token)
+        jwt = await _get_fresh_jwt_from_cookies(stored_token)
         if shortcode:
-            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Clerk JWT refreshed ✓"}), flush=True)
+            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Clerk JWT refreshed from cookies ✓"}), flush=True)
         return jwt
     except Exception as e:
         if shortcode:
-            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Clerk refresh failed ({e!r}), using directly"}), flush=True)
+            print(json.dumps({"type": "warn", "msg": f"[{shortcode}] Clerk cookie refresh failed ({e!r}), using directly"}), flush=True)
         return stored_token
 
 

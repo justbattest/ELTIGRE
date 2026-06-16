@@ -19,8 +19,8 @@ const TUTORIALS = [
       },
       {
         emoji: '🔑',
-        title: 'Higgsfield Session Cookie (Motion Control)',
-        desc: 'Separate from the CLI token. Go to higgsfield.ai → F12 → Application tab → Cookies → higgsfield.ai → copy the __session cookie value. Valid for ~7 days. Our system auto-refreshes the short-lived JWT from it before each call.',
+        title: 'Higgsfield Session Cookies (Motion Control)',
+        desc: 'Separate from the CLI token. Go to higgsfield.ai → F12 → Network tab → filter by "clerk.higgsfield.ai" → click any GET request → Headers → Request Headers → Cookie → copy the ENTIRE Cookie header value. Paste it in Settings → Motion Control. Valid ~7 days, auto-refreshes JWT on each run.',
       },
       {
         emoji: '📁',
@@ -98,7 +98,7 @@ const TUTORIALS = [
       {
         emoji: '🎞️',
         title: 'Motion Control',
-        desc: 'Uses Kling v3 to transfer motion from a reference video onto your character image. Requires the Higgsfield Session Cookie set in Settings (F12 → Application → Cookies → __session). Valid ~7 days, JWT auto-refreshed on each run.',
+        desc: 'Uses Kling v3 to transfer motion from a reference video onto your character image. Requires the Higgsfield Session Cookies in Settings (F12 → Network → clerk.higgsfield.ai → Cookie header). Valid ~7 days, JWT auto-refreshed on each run.',
       },
       {
         emoji: '📹',
