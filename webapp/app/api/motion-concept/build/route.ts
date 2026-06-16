@@ -115,6 +115,11 @@ export async function POST(req: NextRequest) {
           // On attend la création DB pour n'envoyer au client qu'un seul event
           // (concept_done avec concept_id garanti) — évite le double-event et
           // le bug où le client ferme le SSE avant de recevoir l'id.
+          //
+          // IMPORTANT : on marque conceptDonePending = true AVANT de lancer l'IIFE
+          // pour que proc.on('close') ne mette pas state.done = true prématurément
+          // (le process Python peut se terminer pendant que la DB écrit encore).
+          state.conceptDonePending = true
           const outfitUrls: string[] = Array.isArray(event.outfit_urls) ? event.outfit_urls : []
           ;(async () => {
             try {
@@ -133,12 +138,14 @@ export async function POST(req: NextRequest) {
               // Un seul event envoyé au client — toujours avec concept_id
               const enriched = { ...event, concept_id: concept.id }
               state.events.push(JSON.stringify(enriched))
+              console.log(`[concept-builder:${runId}] MotionConcept créé: ${concept.id}`)
             } catch (err: unknown) {
               console.error(`[concept-builder:${runId}] DB create error:`, err)
               state.events.push(JSON.stringify({
                 type: 'error', step: 'db', message: String(err),
               }))
             } finally {
+              state.conceptDonePending = false
               state.done = true
             }
           })()
@@ -167,6 +174,14 @@ export async function POST(req: NextRequest) {
   })
 
   proc.on('close', (code) => {
+    // Si l'IIFE de création DB est en cours (conceptDonePending = true), on ne touche
+    // pas à state.done — l'IIFE le mettra à true quand elle aura fini.
+    // Sans ce guard, le process Python peut se terminer AVANT que Prisma réponde,
+    // provoquant une fermeture du SSE avant l'envoi du concept_id au client.
+    if (state.conceptDonePending) {
+      console.log(`[concept-builder:${runId}] process closed, waiting for DB IIFE...`)
+      return
+    }
     if (!state.done) {
       if (code !== 0) {
         state.events.push(JSON.stringify({

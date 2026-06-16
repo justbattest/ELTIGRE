@@ -15,6 +15,12 @@ export type ConceptBuilderState = {
   userId: string
   /** Rempli dès que le concept_done est reçu. */
   conceptId?: string
+  /**
+   * true pendant que l'IIFE async (création MotionConcept en DB + push event enrichi)
+   * est en cours. Empêche proc.on('close') de fermer le SSE prématurément
+   * avant que le concept_id soit disponible pour le client.
+   */
+  conceptDonePending?: boolean
 }
 
 export const conceptBuilderRuns: Map<string, ConceptBuilderState> = new Map()
