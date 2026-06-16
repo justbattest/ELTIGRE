@@ -8,6 +8,7 @@ import { PageWrapper } from '@/components/PageWrapper'
 // ─── Types communs ────────────────────────────────────────────────────────────
 
 type RefElement = { id: string; name: string; type?: string }
+type SoulCharacter = { id: string; name: string; status?: string }
 
 // ─── Types onglet "Upload manuel" ─────────────────────────────────────────────
 
@@ -347,6 +348,11 @@ export default function MotionControlPage() {
   const [selectedElementId, setSelectedElementId] = useState('')
   const [selectedElementName, setSelectedElementName] = useState('')
 
+  // Soul characters pour le concept builder (soul_cinematic swap)
+  const [soulCharacters, setSoulCharacters] = useState<SoulCharacter[]>([])
+  const [selectedSoulId, setSelectedSoulId] = useState('')
+  const [selectedSoulName, setSelectedSoulName] = useState('')
+
   // ── Onglet "Depuis URL" ──────────────────────────────────────────────────────
   const [videoUrl, setVideoUrl] = useState('')
   const [conceptName, setConceptName] = useState('')
@@ -368,21 +374,30 @@ export default function MotionControlPage() {
   const [launching, setLaunching] = useState(false)
   const [submitProgress, setSubmitProgress] = useState<{ done: number; total: number } | null>(null)
 
-  // Fetch reference elements on mount
+  // Fetch soul characters + reference elements on mount
   useEffect(() => {
     fetch('/api/characters')
       .then(r => r.json())
       .then(data => {
+        // Soul characters → concept builder (soul_cinematic swap)
+        const souls: SoulCharacter[] = data.soulCharacters || []
+        setSoulCharacters(souls)
+        if (souls.length) {
+          setSelectedSoulId(souls[0].id)
+          setSelectedSoulName(souls[0].name)
+        }
+
+        // Reference elements → upload manuel + bibliothèque (si besoin)
         const els: RefElement[] = data.referenceElements || []
         setRefElements(els)
-        if (els.length) {
-          // Par défaut : préférer un élément non-soul_2 (compatible nano_banana_2)
+        if (els.length && !selectedElementId) {
           const preferred = els.find(e => e.type !== 'soul_2') || els[0]
           setSelectedElementId(preferred.id)
           setSelectedElementName(preferred.name)
         }
       })
       .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Charger la bibliothèque quand on passe sur l'onglet library
@@ -419,7 +434,7 @@ export default function MotionControlPage() {
   // ── Onglet 1 : Concept builder ───────────────────────────────────────────────
 
   const handleBuild = async () => {
-    if (!videoUrl.trim() || !selectedElementId || building) return
+    if (!videoUrl.trim() || !selectedSoulId || building) return
     setBuildError('')
     setBuilding(true)
     setBuildState({
@@ -438,9 +453,9 @@ export default function MotionControlPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           videoUrl: videoUrl.trim(),
-          elementId: selectedElementId,
+          soulId: selectedSoulId,
+          swapModel: 'soul_cinematic',
           conceptName: conceptName.trim() || undefined,
-          swapModel: 'nano_banana_2',
         }),
       })
       const data = await res.json()
@@ -537,7 +552,7 @@ export default function MotionControlPage() {
       const res = await fetch('/api/motion-control/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conceptId: buildState.conceptId, characterName: selectedElementName }),
+        body: JSON.stringify({ conceptId: buildState.conceptId, characterName: selectedSoulName || selectedElementName }),
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
@@ -584,7 +599,7 @@ export default function MotionControlPage() {
       const res = await fetch('/api/motion-control/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conceptId: concept.id, characterName: selectedElementName }),
+        body: JSON.stringify({ conceptId: concept.id, characterName: selectedSoulName || selectedElementName }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(d.error || `Erreur ${res.status}`)
@@ -633,7 +648,8 @@ export default function MotionControlPage() {
         const fd = new FormData()
         fd.append('image', concept.image!)
         fd.append('video', concept.video!)
-        if (selectedElementName) fd.append('characterName', selectedElementName)
+        const charName = selectedSoulName || selectedElementName
+        if (charName) fd.append('characterName', charName)
         const res = await fetch('/api/motion-control/start', { method: 'POST', body: fd })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
@@ -674,42 +690,34 @@ export default function MotionControlPage() {
               </p>
             </div>
 
-            {/* Sélecteur de personnage (partagé entre les 3 onglets) */}
-            {refElements.length > 0 && (() => {
-              // Pour le concept builder (nano_banana_2), filtrer les éléments soul_2
-              // qui ne sont pas compatibles avec le person swap image-to-image.
-              // Les éléments soul_2 viennent de /reference-elements (Seedance vidéo).
-              // Les custom-references (/agents/custom-references) n'ont pas type='soul_2'.
-              const nanoElements = refElements.filter(e => e.type !== 'soul_2')
-              const displayElements = nanoElements.length > 0 ? nanoElements : refElements
-              return (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Personnage <span className="normal-case font-normal text-zinc-600">(custom reference nano_banana_2)</span>
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {displayElements.map(e => (
-                      <button
-                        key={e.id}
-                        onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                          selectedElementId === e.id
-                            ? 'bg-violet-600 border-violet-500 text-white'
-                            : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
-                        }`}
-                      >
-                        {e.name}
-                      </button>
-                    ))}
-                  </div>
-                  {nanoElements.length === 0 && (
-                    <p className="text-xs text-amber-500/80">
-                      ⚠️ Aucun custom reference détecté. Lance un scan depuis Settings → Personnages → &quot;Scanner mes éléments&quot;.
-                    </p>
-                  )}
+            {/* Sélecteur de personnage — soul_cinematic (soul-id list) */}
+            {soulCharacters.length > 0 ? (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Personnage <span className="normal-case font-normal text-zinc-600">(soul_cinematic)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {soulCharacters.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => { setSelectedSoulId(s.id); setSelectedSoulName(s.name) }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                        selectedSoulId === s.id
+                          ? 'bg-violet-600 border-violet-500 text-white'
+                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
+                      }`}
+                    >
+                      {s.name}
+                    </button>
+                  ))}
                 </div>
-              )
-            })()}
+              </div>
+            ) : (
+              <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl px-4 py-3 text-xs text-amber-400">
+                ⚠️ Aucun soul character détecté. Assure-toi d&apos;avoir au moins un Soul Character
+                complété dans Higgsfield (soul-id list).
+              </div>
+            )}
 
             {/* Onglets */}
             <div className="flex gap-1 bg-zinc-900/60 border border-white/[0.06] rounded-xl p-1">
@@ -836,7 +844,7 @@ export default function MotionControlPage() {
                 {!isBuildDone && (
                   <button
                     onClick={handleBuild}
-                    disabled={!videoUrl.trim() || !selectedElementId || building}
+                    disabled={!videoUrl.trim() || !selectedSoulId || building}
                     className="w-full py-4 rounded-xl font-semibold text-base transition
                       bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white
                       disabled:opacity-40 disabled:cursor-not-allowed"

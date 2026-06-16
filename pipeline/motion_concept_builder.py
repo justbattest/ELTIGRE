@@ -266,12 +266,17 @@ async def _generate_outfit(
 async def run_concept_builder(
     run_id: str,
     video_url: str,
-    element_id: str,
     output_dir: str,
-    swap_model: str = "nano_banana_2",
+    swap_model: str = "soul_cinematic",
+    soul_id: str | None = None,
+    element_id: str | None = None,
     concept_name: str | None = None,
 ) -> None:
-    """Orchestre la création complète d'un Motion Concept."""
+    """Orchestre la création complète d'un Motion Concept.
+
+    swap_model='soul_cinematic' (défaut) : utilise soul_id (--soul-id).
+    swap_model='nano_banana_2'           : utilise element_id (<<<element_id>>> dans prompt).
+    """
 
     user_token = os.environ.get("HIGGSFIELD_TOKEN")
     if not user_token:
@@ -311,12 +316,15 @@ async def run_concept_builder(
     _emit({"type": "concept_step", "step": "swap", "status": "started"})
     try:
         if swap_model == "soul_cinematic":
-            soul_id = os.environ.get("HIGGSFIELD_SOUL_ID", "")
-            if not soul_id:
-                raise ValueError("HIGGSFIELD_SOUL_ID manquant pour soul_cinematic swap")
+            # soul_id passé en argument ou fallback sur env var
+            effective_soul_id = soul_id or os.environ.get("HIGGSFIELD_SOUL_ID", "")
+            if not effective_soul_id:
+                raise ValueError(
+                    "soul_id manquant pour soul_cinematic — passe --soul-id ou HIGGSFIELD_SOUL_ID"
+                )
             cmd = [
                 "higgsfield", "generate", "create", "soul_cinematic",
-                "--soul-id", soul_id,
+                "--soul-id", effective_soul_id,
                 "--image", best_frame,
                 "--prompt", (
                     "Same background, same scene, same lighting, same camera angle. "
@@ -325,7 +333,9 @@ async def run_concept_builder(
                 "--quality", "2k",
                 "--wait", "--wait-timeout", "10m",
             ]
-        else:  # nano_banana_2 (défaut)
+        else:  # nano_banana_2
+            if not element_id:
+                raise ValueError("element_id manquant pour nano_banana_2 swap")
             cmd = [
                 "higgsfield", "generate", "create", "nano_banana_2",
                 "--image", best_frame,
@@ -388,7 +398,7 @@ async def run_concept_builder(
         "outfit_urls": outfit_urls,
         "video_path": video_path,
         "best_frame_t": best_t,
-        "element_id": element_id,
+        "element_id": element_id or "",
         "concept_name": concept_name,
     })
 
@@ -401,14 +411,22 @@ def main() -> None:
     )
     parser.add_argument("--run-id", required=True, help="Identifiant unique du run")
     parser.add_argument("--video-url", required=True, help="URL du reel Instagram à copier")
-    parser.add_argument("--element-id", required=True,
-                        help="Higgsfield element_id du modèle (pour <<<element_id>>> dans nano_banana_2)")
     parser.add_argument("--output-dir", required=True, help="Répertoire de sortie local")
     parser.add_argument(
         "--swap-model",
-        default="nano_banana_2",
+        default="soul_cinematic",
         choices=["nano_banana_2", "soul_cinematic"],
-        help="Modèle Higgsfield pour le person swap (défaut: nano_banana_2)",
+        help="Modèle Higgsfield pour le person swap (défaut: soul_cinematic)",
+    )
+    parser.add_argument(
+        "--soul-id",
+        default=None,
+        help="Soul character ID pour soul_cinematic (ex: higgsfield soul-id list)",
+    )
+    parser.add_argument(
+        "--element-id",
+        default=None,
+        help="Reference element ID pour nano_banana_2 (<<<element_id>>> dans le prompt)",
     )
     parser.add_argument("--concept-name", default=None, help="Nom libre pour ce concept")
     args = parser.parse_args()
@@ -420,9 +438,10 @@ def main() -> None:
     asyncio.run(run_concept_builder(
         run_id=args.run_id,
         video_url=args.video_url,
-        element_id=args.element_id,
         output_dir=args.output_dir,
         swap_model=args.swap_model,
+        soul_id=args.soul_id,
+        element_id=args.element_id,
         concept_name=args.concept_name,
     ))
 

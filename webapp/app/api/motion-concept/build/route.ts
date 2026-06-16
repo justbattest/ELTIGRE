@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
 
   let body: {
     videoUrl?: string
-    elementId?: string
+    soulId?: string      // soul_cinematic (prioritaire — défaut)
+    elementId?: string   // nano_banana_2 (fallback)
     conceptName?: string
     swapModel?: string
   }
@@ -42,10 +43,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Body JSON invalide' }, { status: 400 })
   }
 
-  const { videoUrl, elementId, conceptName, swapModel = 'nano_banana_2' } = body
+  const {
+    videoUrl,
+    soulId,
+    elementId,
+    conceptName,
+    swapModel = soulId ? 'soul_cinematic' : (elementId ? 'nano_banana_2' : 'soul_cinematic'),
+  } = body
 
   if (!videoUrl) return NextResponse.json({ error: 'videoUrl requis' }, { status: 400 })
-  if (!elementId) return NextResponse.json({ error: 'elementId requis' }, { status: 400 })
+  if (!soulId && !elementId) {
+    return NextResponse.json({ error: 'soulId (soul_cinematic) ou elementId (nano_banana_2) requis' }, { status: 400 })
+  }
 
   // Credentials Higgsfield
   const creds = await prisma.userCredentials.findUnique({
@@ -75,9 +84,10 @@ export async function POST(req: NextRequest) {
     '-m', 'pipeline.motion_concept_builder',
     '--run-id', runId,
     '--video-url', videoUrl,
-    '--element-id', elementId,
     '--output-dir', outputDir,
     '--swap-model', swapModel,
+    ...(soulId ? ['--soul-id', soulId] : []),
+    ...(elementId ? ['--element-id', elementId] : []),
     ...(conceptName ? ['--concept-name', conceptName] : []),
   ]
 
