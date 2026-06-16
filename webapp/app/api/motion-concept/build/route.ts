@@ -110,40 +110,44 @@ export async function POST(req: NextRequest) {
         const event = JSON.parse(line)
         console.log(`[concept-builder:${runId}]`, JSON.stringify(event))
 
-        // Stocker l'event brut pour le SSE
-        state.events.push(line)
-
-        // Réagir aux events clés
         if (event.type === 'concept_done') {
-          // Créer le MotionConcept en DB
+          // NE PAS pousser l'event brut sans concept_id.
+          // On attend la création DB pour n'envoyer au client qu'un seul event
+          // (concept_done avec concept_id garanti) — évite le double-event et
+          // le bug où le client ferme le SSE avant de recevoir l'id.
           const outfitUrls: string[] = Array.isArray(event.outfit_urls) ? event.outfit_urls : []
-          prisma.motionConcept.create({
-            data: {
-              userId: session.user.id,
-              name: (event.concept_name as string) || conceptName || null,
-              sourceVideoUrl: videoUrl,
-              localVideoPath: (event.video_path as string) || null,
-              conceptImageUrl: (event.concept_image_url as string) || null,
-              outfitImages: outfitUrls,
-              elementId: event.element_id as string,
-            },
-          }).then((concept) => {
-            state.conceptId = concept.id
-            // Émettre un event enrichi avec l'id DB
-            const enriched = { ...event, concept_id: concept.id }
-            state.events.push(JSON.stringify(enriched))
-            // Remplacer le dernier event (concept_done sans id) par celui enrichi
-            // (le client reçoit les deux — le second prend le dessus)
-          }).catch((err: unknown) => {
-            console.error(`[concept-builder:${runId}] DB create error:`, err)
-            state.events.push(JSON.stringify({
-              type: 'error', step: 'db', message: String(err),
-            }))
-          }).finally(() => {
+          ;(async () => {
+            try {
+              const concept = await prisma.motionConcept.create({
+                data: {
+                  userId: session.user.id,
+                  name: (event.concept_name as string) || conceptName || null,
+                  sourceVideoUrl: videoUrl,
+                  localVideoPath: (event.video_path as string) || null,
+                  conceptImageUrl: (event.concept_image_url as string) || null,
+                  outfitImages: outfitUrls,
+                  elementId: event.element_id as string,
+                },
+              })
+              state.conceptId = concept.id
+              // Un seul event envoyé au client — toujours avec concept_id
+              const enriched = { ...event, concept_id: concept.id }
+              state.events.push(JSON.stringify(enriched))
+            } catch (err: unknown) {
+              console.error(`[concept-builder:${runId}] DB create error:`, err)
+              state.events.push(JSON.stringify({
+                type: 'error', step: 'db', message: String(err),
+              }))
+            } finally {
+              state.done = true
+            }
+          })()
+        } else {
+          // Tous les autres events (concept_step, concept_outfit, error) → push immédiat
+          state.events.push(line)
+          if (event.type === 'error') {
             state.done = true
-          })
-        } else if (event.type === 'error') {
-          state.done = true
+          }
         }
       } catch (parseErr) {
         console.error(`[concept-builder:${runId}] parse error:`, parseErr, '| line:', line.slice(0, 150))

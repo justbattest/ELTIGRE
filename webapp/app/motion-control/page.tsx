@@ -36,6 +36,10 @@ type BuildState = {
   conceptId: string | null
   chosenFrameT: number | null
   error: string | null
+  // Phase MC (auto-lancée après concept_done)
+  mcLaunching: boolean
+  mcLaunched: boolean
+  mcError: string | null
 }
 
 // ─── Types onglet "Mes concepts" ──────────────────────────────────────────────
@@ -210,7 +214,7 @@ function AddZone({ onAdd, disabled }: { onAdd: (concepts: ManualConcept[]) => vo
 const STEP_LABELS: Record<ConceptStep, string> = {
   download: 'Téléchargement vidéo',
   frames: 'Sélection auto de la frame',
-  swap: 'Person swap (nano_banana_2)',
+  swap: 'Person swap (soul_cinematic)',
   outfits: 'Génération 4 outfits',
 }
 
@@ -445,6 +449,9 @@ export default function MotionControlPage() {
       conceptId: null,
       chosenFrameT: null,
       error: null,
+      mcLaunching: false,
+      mcLaunched: false,
+      mcError: null,
     })
 
     try {
@@ -472,6 +479,7 @@ export default function MotionControlPage() {
       sse.onmessage = (e) => {
         try {
           const event = JSON.parse(e.data)
+
           setBuildState(prev => {
             if (!prev) return prev
 
@@ -480,16 +488,12 @@ export default function MotionControlPage() {
               const status: StepStatus =
                 event.status === 'started' ? 'running' :
                 event.status === 'done' ? 'done' : 'error'
-              const extra = step === 'frames' && event.chosen_t !== undefined
-                ? `frame à ${event.chosen_t}s`
-                : undefined
               return {
                 ...prev,
                 steps: { ...prev.steps, [step]: status },
                 chosenFrameT: step === 'frames' && event.chosen_t !== undefined
-                  ? event.chosen_t : prev.chosenFrameT,
+                  ? (event.chosen_t as number) : prev.chosenFrameT,
               }
-              void extra // suppress unused warning
             }
 
             if (event.type === 'concept_outfit') {
@@ -498,10 +502,10 @@ export default function MotionControlPage() {
             }
 
             if (event.type === 'concept_done') {
-              sse.close()
+              // La route garantit que concept_id est toujours présent ici
               return {
                 ...prev,
-                conceptImageUrl: (event.concept_image_url as string) || null,
+                conceptImageUrl: (event.concept_image_url as string) || prev.conceptImageUrl,
                 outfitUrls: Array.isArray(event.outfit_urls) ? event.outfit_urls as string[] : prev.outfitUrls,
                 conceptId: (event.concept_id as string) || null,
                 steps: { download: 'done', frames: 'done', swap: 'done', outfits: 'done' },
@@ -514,24 +518,35 @@ export default function MotionControlPage() {
 
             return prev
           })
+
+          // Auto-lancer le MC dès que concept_done + concept_id reçu
+          if (event.type === 'concept_done' && event.concept_id) {
+            sse.close()
+            setBuilding(false)
+            launchMCForConcept(event.concept_id as string)
+          }
+
+          if (event.type === 'error') {
+            sse.close()
+            setBuilding(false)
+          }
         } catch { /* ignore parse errors */ }
       }
 
       sse.onerror = () => {
-        // Ne pas écraser un message d'erreur déjà reçu depuis le pipeline
         setBuildState(prev => {
           if (!prev) return prev
-          if (prev.error) return prev  // garder l'erreur pipeline (ex: "reference elements not found")
-          // Seulement si le build n'est pas encore terminé
-          const isDone = prev.steps.outfits === 'done'
-          if (isDone) return prev
+          if (prev.error) return prev  // garder l'erreur pipeline déjà reçue
+          // Ne pas afficher une erreur SSE si les outfits sont déjà terminés
+          // (on attendait juste le concept_id de la DB, c'est normal que le SSE ferme)
+          if (prev.steps.outfits === 'done') return prev
           return { ...prev, error: 'Connexion SSE perdue (serveur redémarré ?)' }
         })
         sse.close()
         setBuilding(false)
       }
 
-      // Détecter la fin via concept_done (SSE se ferme)
+      // Fin naturelle du SSE (state.done = true côté serveur)
       sse.addEventListener('close', () => setBuilding(false))
 
       // Fallback: marquer building=false après 15min
@@ -545,24 +560,25 @@ export default function MotionControlPage() {
 
   const isBuildDone = buildState?.steps.outfits === 'done'
 
-  const handleLaunchFromBuild = async () => {
-    if (!buildState?.conceptId) return
-    setLaunchingConceptId(buildState.conceptId)
+  // Lance le Motion Control pour un conceptId donné (appelé auto après concept_done)
+  const launchMCForConcept = async (conceptId: string) => {
+    setBuildState(prev => prev ? { ...prev, mcLaunching: true, mcError: null } : null)
     try {
       const res = await fetch('/api/motion-control/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conceptId: buildState.conceptId, characterName: selectedSoulName || selectedElementName }),
+        body: JSON.stringify({ conceptId, characterName: selectedSoulName || selectedElementName }),
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
         throw new Error(d.error || `Erreur ${res.status}`)
       }
-      await new Promise(r => setTimeout(r, 600))
+      setBuildState(prev => prev ? { ...prev, mcLaunching: false, mcLaunched: true } : null)
+      await new Promise(r => setTimeout(r, 800))
       router.push('/en-cours')
     } catch (err) {
-      setBuildError(err instanceof Error ? err.message : 'Erreur lancement MC')
-      setLaunchingConceptId(null)
+      const msg = err instanceof Error ? err.message : 'Erreur lancement MC'
+      setBuildState(prev => prev ? { ...prev, mcLaunching: false, mcError: msg } : null)
     }
   }
 
@@ -814,27 +830,50 @@ export default function MotionControlPage() {
                       <div className="text-sm text-red-400 pt-1">❌ {buildState.error}</div>
                     )}
 
-                    {/* CTA post-build */}
-                    {isBuildDone && buildState.conceptId && (
-                      <div className="pt-2 flex flex-col gap-2">
-                        <div className="flex items-center gap-2 text-sm text-emerald-400">
-                          ✅ Concept sauvegardé dans &quot;Mes concepts&quot;
+                    {/* Step 5 : lancement MC auto */}
+                    {isBuildDone && (
+                      <div className="pt-1 space-y-2">
+                        {/* Status MC launch */}
+                        <div className={`flex items-center gap-2 text-sm transition ${
+                          buildState.mcLaunching ? 'text-violet-300' :
+                          buildState.mcLaunched ? 'text-emerald-400' :
+                          buildState.mcError ? 'text-red-400' :
+                          !buildState.conceptId ? 'text-zinc-500' : 'text-zinc-600'
+                        }`}>
+                          <span className="w-5 text-center">
+                            {buildState.mcLaunching ? '⏳' :
+                             buildState.mcLaunched ? '✅' :
+                             buildState.mcError ? '❌' :
+                             !buildState.conceptId ? '⏳' : '○'}
+                          </span>
+                          <span>
+                            {buildState.mcLaunching ? 'Lancement Motion Control (4 vidéos)…' :
+                             buildState.mcLaunched ? 'Motion Control lancé — redirection…' :
+                             buildState.mcError ? `Erreur MC : ${buildState.mcError}` :
+                             !buildState.conceptId ? 'Sauvegarde du concept…' :
+                             'Motion Control (4 vidéos)'}
+                          </span>
                         </div>
-                        <button
-                          onClick={handleLaunchFromBuild}
-                          disabled={launchingConceptId === buildState.conceptId}
-                          className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white transition disabled:opacity-50"
-                        >
-                          {launchingConceptId === buildState.conceptId
-                            ? '⏳ Lancement…'
-                            : '▶ Lancer le Motion Control maintenant'}
-                        </button>
-                        <button
-                          onClick={() => { setBuildState(null); setVideoUrl(''); setConceptName(''); setBuilding(false) }}
-                          className="w-full py-2 rounded-xl text-sm text-zinc-500 hover:text-zinc-300 transition"
-                        >
-                          Créer un autre concept
-                        </button>
+
+                        {/* Retry si erreur MC */}
+                        {buildState.mcError && buildState.conceptId && (
+                          <button
+                            onClick={() => launchMCForConcept(buildState.conceptId!)}
+                            className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white transition"
+                          >
+                            🔄 Réessayer le lancement MC
+                          </button>
+                        )}
+
+                        {/* Créer un autre concept */}
+                        {!buildState.mcLaunching && (
+                          <button
+                            onClick={() => { setBuildState(null); setVideoUrl(''); setConceptName(''); setBuilding(false) }}
+                            className="w-full py-2 rounded-xl text-sm text-zinc-500 hover:text-zinc-300 transition"
+                          >
+                            Créer un autre concept
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
