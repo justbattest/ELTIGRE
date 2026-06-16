@@ -91,7 +91,7 @@ const CHIPS: Record<keyof Selections, string[]> = {
 
 // ─── Données niche ───────────────────────────────────────────────────────────
 
-type NicheKey = 'conference' | 'sport' | 'golf' | 'vieux' | 'meteo'
+type NicheKey = 'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse' | 'mcdo' | 'skatepark'
 
 const NICHE_LABELS: Record<NicheKey, string> = {
   conference: '🎓 Conference',
@@ -99,6 +99,9 @@ const NICHE_LABELS: Record<NicheKey, string> = {
   golf: '⛳ Golf',
   vieux: '👴 Elderly',
   meteo: '📺 Weather',
+  serveuse: '🍸 Server',
+  mcdo: '🍔 McDonalds',
+  skatepark: '🛹 Skatepark',
 }
 
 const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>> = {
@@ -164,6 +167,27 @@ const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>>
     outfit: ['Blue lace wrap dress', 'Red fitted blazer mini dress', 'White fitted pencil dress', 'Camel blazer + nude mini'],
     shotType: ['Candid waist-up', 'Selfie chest-up', 'Vlog POV'],
     colorGrade: ['Cool airy', 'Office fluorescent', 'Golden hour'],
+  },
+  serveuse: {
+    lieu: ['Upscale restaurant dining room golden candlelight', 'Cocktail bar low amber lighting', 'Hotel rooftop bar city view', 'Wine bar velvet booths', 'Brasserie mirror walls evening'],
+    activite: ['Carrying cocktail tray both hands', 'Presenting menu tableside smiling', 'Pouring wine glass elegantly', 'Taking order at table notepad', 'Standing behind polished bar'],
+    outfit: ['Black jumpsuit deep-V zipper server', 'White fitted server blouse + black mini', 'Black deep-V fitted server dress', 'Burgundy fitted uniform deep-V', 'Black satin top + fitted mini skirt badge'],
+    shotType: ['Candid waist-up', 'Selfie chest-up', 'Candid full-body'],
+    colorGrade: ['Warm amber restaurant', 'Golden hour', 'Warm morning'],
+  },
+  mcdo: {
+    lieu: ["McDonald's counter register", 'Drive-thru window car background', "McDonald's restaurant floor", 'Fast food kitchen fry station blurred'],
+    activite: ['Handing paper bag at counter smiling', 'Smiling at drive-thru window', 'Taking order on register screen', 'Holding drinks tray', 'Checking order at fryer station'],
+    outfit: ['Grey polo golden M logo + blonde ponytail', 'Black polo golden M logo + brunette', 'Red polo + McDo cap dark hair', 'Grey polo + long red hair loose', 'Navy polo + bun + McDo lanyard'],
+    shotType: ['Candid waist-up', 'Selfie chest-up', 'Candid full-body'],
+    colorGrade: ['Office fluorescent', 'Cool airy', 'Warm morning'],
+  },
+  skatepark: {
+    lieu: ['Concrete skatepark bowl graffiti walls', 'Urban plaza metal rail spot', 'Abandoned warehouse concrete floor', 'Downtown rooftop skatepark city skyline', 'Street corner concrete steps'],
+    activite: ['Sitting on concrete ledge holding skateboard', 'Leaning on metal rail looking away', 'Watching skaters arms crossed', 'Posing board underarm against wall', 'Crouching on halfpipe edge'],
+    outfit: ['Very short mini skirt + black deep-V crop top', 'Very short denim mini skirt + white crop top', 'Very short black pleated skirt + grey crop top high ponytail', 'Very short pink mini skirt + black crop top', 'Very short white mini skirt + red crop top'],
+    shotType: ['Candid full-body', 'Candid waist-up', 'Selfie chest-up'],
+    colorGrade: ['Golden hour', 'Cool airy', 'High contrast sport'],
   },
 }
 
