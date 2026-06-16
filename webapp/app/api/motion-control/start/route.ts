@@ -52,11 +52,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Higgsfield token requis.' }, { status: 400 })
   }
   const higgsRefreshToken = decryptIfPresent(creds?.higgsFieldRefreshToken) || ''
-  const klingAccessKey = decryptIfPresent(creds?.klingAccessKey) || ''
-  const klingSecretKey = decryptIfPresent(creds?.klingSecretKey) || ''
-  if (!klingAccessKey || !klingSecretKey) {
-    return NextResponse.json({ error: 'Clés API Kling requises pour Motion Control. Ajoutez-les dans les Paramètres.' }, { status: 400 })
-  }
+  // Motion Control passe par Higgsfield /chains/motion-control (user_token Higgsfield)
+  // → pas de clé Kling API nécessaire
   const googleRefreshToken = creds?.googleRefreshToken || null
   const driveFolderId = creds?.driveFolderId || null
 
@@ -196,8 +193,6 @@ export async function POST(req: NextRequest) {
         ...process.env,
         HIGGSFIELD_TOKEN: higgsToken,
         ...(higgsRefreshToken ? { HIGGSFIELD_REFRESH_TOKEN: higgsRefreshToken } : {}),
-        KLING_ACCESS_KEY: klingAccessKey,
-        KLING_SECRET_KEY: klingSecretKey,
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
         ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
         ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
