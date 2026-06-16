@@ -161,7 +161,7 @@ export default function CarouselPage() {
 
   const launch = async () => {
     if (files.length < 4) {
-      setError('Il faut au moins 4 images pour créer des carousels.')
+      setError('At least 4 images are required to create carousels.')
       return
     }
     setError('')
@@ -179,7 +179,7 @@ export default function CarouselPage() {
       const res = await fetch('/api/carousel/create', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setError(data.error || 'Erreur lors du lancement')
+        setError(data.error || 'Error during launch')
         setUploading(false)
         return
       }
@@ -197,11 +197,11 @@ export default function CarouselPage() {
 
   const launchVariations = async () => {
     if (files.length === 0) {
-      setVarError('Ajoute au moins 1 photo de référence.')
+      setVarError('Add at least 1 reference photo.')
       return
     }
     if (!selectedSoulId) {
-      setVarError('Sélectionne un Soul Character (nécessaire pour la génération).')
+      setVarError('Select a Soul Character (required for generation).')
       return
     }
     setVarError('')
@@ -219,7 +219,7 @@ export default function CarouselPage() {
       const res = await fetch('/api/carousel/generate-variations', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setVarError(data.error || 'Erreur lors du lancement')
+        setVarError(data.error || 'Error during launch')
         setUploading(false)
         return
       }
@@ -263,7 +263,7 @@ export default function CarouselPage() {
           setVarDone(true)
           es?.close()
         } else if (event.type === 'error') {
-          const msg = (event as { message: string }).message || 'Erreur inconnue'
+          const msg = (event as { message: string }).message || 'Unknown error'
           setVarError(msg)
           closed = true
           setVarDone(true)
@@ -274,7 +274,7 @@ export default function CarouselPage() {
         es?.close()
         if (closed) return
         if (retries >= MAX_RETRIES) {
-          setVarError('Connexion perdue après plusieurs tentatives — vérifie Drive pour les résultats.')
+          setVarError('Connection lost after multiple retries — check Drive for results.')
           setVarDone(true)
           return
         }
@@ -325,12 +325,12 @@ export default function CarouselPage() {
         setDone(true)
         es.close()
       } else if (event.type === 'error') {
-        const msg = (event as { message: string }).message || 'Erreur inconnue'
-        // Si le run est introuvable (serveur redémarré), retour propre à la config
+        const msg = (event as { message: string }).message || 'Unknown error'
+        // If the run is not found (server restarted), return cleanly to config
         if (msg.includes('introuvable')) {
           es.close()
           resetAll()
-          setError('Session expirée (serveur redémarré). Relance un nouveau batch.')
+          setError('Session expired (server restarted). Start a new batch.')
           return
         }
         setError(msg)
@@ -345,7 +345,7 @@ export default function CarouselPage() {
     es.onerror = () => {
       es.close()
       if (retries >= 10) {
-        setError('Connexion SSE perdue — le serveur a peut-être redémarré.')
+        setError('SSE connection lost — the server may have restarted.')
         setDone(true)
         return
       }
@@ -382,7 +382,7 @@ export default function CarouselPage() {
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            🔀 Mix aléatoire
+            🔀 Random mix
           </button>
           <button
             onClick={() => setActiveTab('variations')}
@@ -403,10 +403,10 @@ export default function CarouselPage() {
           <>
             {/* Info */}
             <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4">
-              <p className="text-sm text-violet-300 font-medium mb-1">🎨 Mode Variations — Image à Image</p>
+              <p className="text-sm text-violet-300 font-medium mb-1">🎨 Variations Mode — Image to Image</p>
               <p className="text-xs text-violet-400/70">
-                Pour chaque photo uploadée, SoulCinema génère <strong className="text-violet-300">3 variations</strong> (même décor, pose/angle différent).
-                Résultat : 1 carousel Drive par photo = original + 3 variations cohérentes.
+                For each uploaded photo, SoulCinema generates <strong className="text-violet-300">3 variations</strong> (same setting, different pose/angle).
+                Result: 1 Drive carousel per photo = original + 3 consistent variations.
               </p>
             </div>
 
@@ -415,7 +415,7 @@ export default function CarouselPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium text-zinc-400">Soul Character <span className="text-red-400">*</span></p>
                 <button onClick={loadCharacters} disabled={loadingChars} className="text-xs text-violet-400 hover:text-violet-300 transition disabled:opacity-50">
-                  {loadingChars ? 'Chargement...' : 'Rafraîchir'}
+                  {loadingChars ? 'Loading...' : 'Refresh'}
                 </button>
               </div>
               {soulCharacters.length > 0 ? (
@@ -434,7 +434,7 @@ export default function CarouselPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-500">Aucun Soul Character trouvé — connecte Higgsfield dans les Paramètres.</p>
+                <p className="text-xs text-zinc-500">No Soul Character found — connect Higgsfield in Settings.</p>
               )}
               {selectedSoulId && (
                 <p className="text-[10px] text-zinc-600 mt-2 font-mono">{selectedSoulId}</p>
@@ -450,8 +450,8 @@ export default function CarouselPage() {
               }`}
             >
               <div className="text-4xl mb-3">📸</div>
-              <p className="text-zinc-300 font-medium">Glisse tes photos de référence</p>
-              <p className="text-zinc-500 text-sm mt-1">1 photo = 1 carousel complet (original + 3 variations)</p>
+              <p className="text-zinc-300 font-medium">Drag your reference photos here</p>
+              <p className="text-zinc-500 text-sm mt-1">1 photo = 1 full carousel (original + 3 variations)</p>
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
                 onChange={e => e.target.files && addFiles(e.target.files)} />
             </div>
@@ -461,9 +461,9 @@ export default function CarouselPage() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-zinc-400">
-                    {files.length} photo{files.length > 1 ? 's' : ''} → {files.length} carousel{files.length > 1 ? 's' : ''} de 4 images
+                    {files.length} photo{files.length > 1 ? 's' : ''} → {files.length} carousel{files.length > 1 ? 's' : ''} of 4 images
                   </span>
-                  <button onClick={resetVariations} className="text-xs text-gray-600 hover:text-red-400 transition">Tout effacer</button>
+                  <button onClick={resetVariations} className="text-xs text-gray-600 hover:text-red-400 transition">Clear all</button>
                 </div>
                 <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
                   {previews.map((url, i) => (
@@ -491,11 +491,11 @@ export default function CarouselPage() {
               {uploading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                  Compression + lancement...
+                  Compressing + launching...
                 </span>
               ) : files.length === 0
-                ? 'Ajouter des photos de référence'
-                : `🎨 Générer ${files.length} carousel${files.length > 1 ? 's' : ''} (${files.length * 3} générations Higgsfield)`}
+                ? 'Add reference photos'
+                : `🎨 Generate ${files.length} carousel${files.length > 1 ? 's' : ''} (${files.length * 3} Higgsfield generations)`}
             </button>
           </>
         )}
@@ -506,7 +506,7 @@ export default function CarouselPage() {
             <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-medium text-zinc-100">
-                  {varDone && !varError ? '✅ Variations générées !' : varDone && varError ? '❌ Erreur' : '🎨 Génération en cours...'}
+                  {varDone && !varError ? '✅ Variations generated!' : varDone && varError ? '❌ Error' : '🎨 Generating variations...'}
                 </h2>
                 <span className="text-xs text-zinc-500">{varCompleted}/{varTotal || '?'} carousels</span>
               </div>
@@ -520,13 +520,13 @@ export default function CarouselPage() {
               {varDone && (
                 <button onClick={resetVariations}
                   className="w-full bg-white/[0.08] hover:bg-white/[0.12] text-white text-sm rounded-lg py-2.5 transition">
-                  + Nouvelle session
+                  + New session
                 </button>
               )}
             </div>
             {varLinks.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-zinc-400 mb-3">Carousels créés ({varLinks.length})</h3>
+                <h3 className="text-sm font-medium text-zinc-400 mb-3">Carousels created ({varLinks.length})</h3>
                 <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                   {varLinks.map(({ n, urls }) => (
                     <div key={n} className="bg-zinc-900/60 border border-white/[0.07] rounded-xl p-3 flex items-center justify-between">
@@ -537,10 +537,10 @@ export default function CarouselPage() {
                             <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-zinc-400' : 'bg-violet-500'}`} />
                           ))}
                         </div>
-                        <span className="text-[10px] text-zinc-600">{urls.length} imgs (1 orig + {urls.length - 1} variantes)</span>
+                        <span className="text-[10px] text-zinc-600">{urls.length} imgs (1 orig + {urls.length - 1} variants)</span>
                       </div>
                       <a href={urls[0]} target="_blank" rel="noopener noreferrer"
-                        className="text-[10px] text-violet-400 hover:text-violet-300 transition">Voir Drive →</a>
+                        className="text-[10px] text-violet-400 hover:text-violet-300 transition">View on Drive →</a>
                     </div>
                   ))}
                 </div>
@@ -560,7 +560,7 @@ export default function CarouselPage() {
             {/* Personnage (dossier Drive) — toujours visible */}
             <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-zinc-400">Personnage (dossier Drive)</p>
+                <p className="text-xs font-medium text-zinc-400">Character (Drive folder)</p>
                 <button
                   onClick={loadCharacters}
                   disabled={loadingChars}
@@ -569,9 +569,9 @@ export default function CarouselPage() {
                   {loadingChars ? (
                     <span className="flex items-center gap-1.5">
                       <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                      Scan en cours...
+                      Scanning...
                     </span>
-                  ) : 'Scanner depuis Higgsfield'}
+                  ) : 'Scan from Higgsfield'}
                 </button>
               </div>
               {refElements.length > 0 ? (
@@ -592,7 +592,7 @@ export default function CarouselPage() {
                   <input
                     value={selectedCharacterName}
                     onChange={e => setSelectedCharacterName(e.target.value)}
-                    placeholder="Nom du dossier Drive (ex: EMMA)"
+                    placeholder="Drive folder name (e.g. EMMA)"
                     className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
                   />
                   <button
@@ -603,12 +603,12 @@ export default function CarouselPage() {
                     {loadingChars ? (
                       <span className="flex items-center justify-center gap-1.5">
                         <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                        Scan en cours...
+                        Scanning...
                       </span>
-                    ) : 'Charger depuis Higgsfield'}
+                    ) : 'Load from Higgsfield'}
                   </button>
                   <p className="text-[10px] text-zinc-700 text-center">
-                    Ou tapez directement un nom de dossier Drive ci-dessus
+                    Or type a Drive folder name directly above
                   </p>
                 </div>
               )}
@@ -627,9 +627,9 @@ export default function CarouselPage() {
               }`}
             >
               <div className="text-4xl mb-3">🖼️</div>
-              <p className="text-zinc-300 font-medium">Glisse tes images ici</p>
+              <p className="text-zinc-300 font-medium">Drag your images here</p>
               <p className="text-zinc-500 text-sm mt-1">
-                ou clique pour sélectionner · JPG, PNG, WebP acceptés
+                or click to select · JPG, PNG, WebP accepted
               </p>
               <input
                 ref={fileInputRef}
@@ -646,16 +646,16 @@ export default function CarouselPage() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-zinc-400">
-                    {files.length} image{files.length > 1 ? 's' : ''} sélectionnée{files.length > 1 ? 's' : ''}
+                    {files.length} image{files.length > 1 ? 's' : ''} selected
                     {files.length >= 4 && (
                       <span className="text-violet-400 ml-2">
-                        → jusqu'à {Math.min(maxCarousels, (() => {
+                        → up to {Math.min(maxCarousels, (() => {
                           let n = files.length, k = 4
                           if (n < k) return 0
                           let r = 1
                           for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1)
                           return Math.floor(r)
-                        })())} carousels possibles
+                        })())} possible carousels
                       </span>
                     )}
                   </span>
@@ -663,7 +663,7 @@ export default function CarouselPage() {
                     onClick={resetAll}
                     className="text-xs text-gray-600 hover:text-red-400 transition"
                   >
-                    Tout effacer
+                    Clear all
                   </button>
                 </div>
                 <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
@@ -685,12 +685,12 @@ export default function CarouselPage() {
 
             {/* Réglages */}
             <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-4">
-              <h2 className="text-sm font-medium text-zinc-100">Réglages</h2>
+              <h2 className="text-sm font-medium text-zinc-100">Settings</h2>
 
               {/* Max carousels */}
               <div>
                 <label className="text-[10px] text-zinc-500 uppercase tracking-widest">
-                  Nombre max de carousels
+                  Max carousels
                 </label>
                 <div className="flex items-center gap-3 mt-2">
                   <input
@@ -712,20 +712,20 @@ export default function CarouselPage() {
                   <span className="text-xs text-zinc-500 w-10 text-right">{maxCarousels} max</span>
                 </div>
                 <p className="text-[10px] text-zinc-600 mt-1">
-                  Chaque carousel = 4 photos · combinaisons uniques · EXIF iPhone 17 Pro unique par instance
+                  Each carousel = 4 photos · unique combinations · unique EXIF iPhone 17 Pro per instance
                 </p>
               </div>
 
               {/* Infos */}
               <div className="bg-zinc-900/40 rounded-lg p-3 space-y-1">
                 <p className="text-[10px] text-zinc-500">
-                  ✅ EXIF strippé + iPhone 17 Pro fake (datetime + GPS + ISO uniques par image/carousel)
+                  ✅ EXIF stripped + fake iPhone 17 Pro (unique datetime + GPS + ISO per image/carousel)
                 </p>
                 <p className="text-[10px] text-zinc-500">
-                  ✅ Micro-crop + micro-noise par instance → aucun fichier binaire identique
+                  ✅ Micro-crop + micro-noise per instance → no two binary files are identical
                 </p>
                 <p className="text-[10px] text-zinc-500">
-                  ✅ Upload organisé dans Drive : <code className="text-violet-400">carousel_N/1.jpg … 4.jpg</code>
+                  ✅ Organized upload to Drive: <code className="text-violet-400">carousel_N/1.jpg … 4.jpg</code>
                 </p>
               </div>
             </div>
@@ -746,11 +746,11 @@ export default function CarouselPage() {
               {uploading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                  Compression + Upload en cours...
+                  Compressing + uploading...
                 </span>
               ) : files.length < 4
-                ? `Ajouter au moins ${4 - files.length} image${4 - files.length > 1 ? 's' : ''} de plus`
-                : `Générer ${maxCarousels > 0 ? `jusqu'à ${maxCarousels}` : ''} carousels`}
+                ? `Add at least ${4 - files.length} more image${4 - files.length > 1 ? 's' : ''}`
+                : `Generate ${maxCarousels > 0 ? `up to ${maxCarousels}` : ''} carousels`}
             </button>
           </>
         )}
@@ -761,10 +761,10 @@ export default function CarouselPage() {
             <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-medium text-zinc-100">
-                  {done && !error ? 'Carousels générés !' : done && error ? 'Erreur' : 'Génération en cours...'}
+                  {done && !error ? '✅ Carousels generated!' : done && error ? '❌ Error' : '⏳ Generating...'}
                 </h2>
                 <span className="text-xs text-zinc-500">
-                  {imageCount} images · C({imageCount},4) = {combinationsPossible.toLocaleString()} combos possibles
+                  {imageCount} images · C({imageCount},4) = {combinationsPossible.toLocaleString()} possible combos
                 </span>
               </div>
 
@@ -796,7 +796,7 @@ export default function CarouselPage() {
                     onClick={resetAll}
                     className="flex-1 bg-white/[0.08] hover:bg-white/[0.08] text-white text-sm rounded-lg py-2.5 transition"
                   >
-                    + Nouveau batch
+                    + New batch
                   </button>
                 </div>
               )}
@@ -806,7 +806,7 @@ export default function CarouselPage() {
             {carouselDriveLinks.length > 0 && (
               <div>
                 <h3 className="text-sm font-medium text-zinc-400 mb-3">
-                  Carousels prêts ({carouselDriveLinks.length})
+                  Carousels ready ({carouselDriveLinks.length})
                 </h3>
                 <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                   {carouselDriveLinks.map(({ n, urls }) => (
@@ -829,7 +829,7 @@ export default function CarouselPage() {
                         rel="noopener noreferrer"
                         className="text-[10px] text-violet-400 hover:text-violet-300 transition"
                       >
-                        Voir Drive →
+                        View on Drive →
                       </a>
                     </div>
                   ))}

@@ -17,12 +17,12 @@ export default function RegisterPage() {
     setError('')
 
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas')
+      setError('Passwords do not match')
       return
     }
 
     if (password.length < 8) {
-      setError('Le mot de passe doit faire au moins 8 caractères')
+      setError('Password must be at least 8 characters')
       return
     }
 
@@ -38,14 +38,14 @@ export default function RegisterPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Erreur lors de la création du compte')
+        setError(data.error || 'Error creating account')
         return
       }
 
       // Compte créé → rediriger vers login avec message de succès
       router.push('/login?registered=1')
     } catch {
-      setError('Erreur réseau, réessaie.')
+      setError('Network error, please try again.')
     } finally {
       setLoading(false)
     }
@@ -58,7 +58,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🐯</div>
           <h1 className="text-2xl font-bold text-white">LOS TIGRES FACTORY</h1>
-          <p className="text-gray-400 text-sm mt-1">Créer un compte</p>
+          <p className="text-gray-400 text-sm mt-1">Create an account</p>
         </div>
 
         {/* Card */}
@@ -80,19 +80,19 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Mot de passe</label>
+            <label className="block text-sm text-gray-400 mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
-              placeholder="8 caractères minimum"
+              placeholder="8 characters minimum"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Confirmer le mot de passe</label>
+            <label className="block text-sm text-gray-400 mb-1">Confirm password</label>
             <input
               type="password"
               value={confirmPassword}
@@ -114,14 +114,14 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-violet-800 disabled:cursor-not-allowed text-white font-medium rounded-lg py-2.5 transition"
           >
-            {loading ? 'Création...' : 'Créer mon compte'}
+            {loading ? 'Creating...' : 'Create account'}
           </button>
         </form>
 
         <p className="text-center text-gray-500 text-sm mt-4">
-          Déjà un compte ?{' '}
+          Already have an account?{' '}
           <Link href="/login" className="text-violet-400 hover:text-violet-300 transition">
-            Se connecter
+            Sign in
           </Link>
         </p>
       </div>

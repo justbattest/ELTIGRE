@@ -84,7 +84,7 @@ const CHIPS: Record<keyof Selections, string[]> = {
     'Overcast grey', 'Bright midday', 'Blue hour twilight', 'Hard flash night',
   ],
   features: [
-    'Freckles extensifs', 'Curly hair', 'Beauty mark',
+    'Extensive freckles', 'Curly hair', 'Beauty mark',
     'Dimples', 'Long nails sculpted', 'High cheekbones',
   ],
 }
@@ -94,11 +94,11 @@ const CHIPS: Record<keyof Selections, string[]> = {
 type NicheKey = 'conference' | 'sport' | 'golf' | 'vieux' | 'meteo'
 
 const NICHE_LABELS: Record<NicheKey, string> = {
-  conference: '🎓 Conférence',
+  conference: '🎓 Conference',
   sport: '🏃 Coach',
   golf: '⛳ Golf',
-  vieux: '👴 Vieux',
-  meteo: '📺 Météo',
+  vieux: '👴 Elderly',
+  meteo: '📺 Weather',
 }
 
 const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>> = {
@@ -168,14 +168,14 @@ const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>>
 }
 
 const CATEGORY_LABELS: Record<keyof Selections, { emoji: string; label: string; multi: boolean }> = {
-  lieu:       { emoji: '📍', label: 'LIEU',                   multi: true },
-  activite:   { emoji: '🏃', label: 'ACTIVITÉ',               multi: true },
+  lieu:       { emoji: '📍', label: 'LOCATION',                multi: true },
+  activite:   { emoji: '🏃', label: 'ACTIVITY',                multi: true },
   outfit:     { emoji: '👗', label: 'OUTFIT',                  multi: true },
-  bijoux:     { emoji: '💎', label: 'BIJOUX',                  multi: true },
+  bijoux:     { emoji: '💎', label: 'JEWELRY',                 multi: true },
   background: { emoji: '🌆', label: 'BACKGROUND',              multi: true },
   shotType:   { emoji: '📸', label: 'SHOT TYPE',               multi: true },
   colorGrade: { emoji: '🎨', label: 'COLOR GRADE',             multi: true },
-  features:   { emoji: '✨', label: 'FEATURES DISTINCTIFS',    multi: true },
+  features:   { emoji: '✨', label: 'DISTINCTIVE FEATURES',    multi: true },
 }
 
 // ─── Composant Chip ──────────────────────────────────────────────────────────
@@ -252,7 +252,7 @@ function CategorySection({
         <div className="flex items-center gap-2">
           {count > 0 && (
             <span className="text-[10px] bg-violet-900/60 text-violet-300 px-2 py-0.5 rounded-full border border-violet-800/50">
-              {count} sélectionné{count > 1 ? 's' : ''}
+              {count} selected
             </span>
           )}
           {count > 0 && (
@@ -284,14 +284,14 @@ function CategorySection({
             value={customVal}
             onChange={(e) => setCustomVal(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            placeholder={`autre ${label.toLowerCase()}...`}
+            placeholder={`other ${label.toLowerCase()}...`}
             className="h-[34px] bg-black/40 border border-white/[0.08] rounded-full px-3 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition w-36"
           />
           <button
             onClick={handleAdd}
             className="h-[34px] px-3 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-xs text-zinc-400 hover:text-white transition whitespace-nowrap"
           >
-            + ajouter
+            + add
           </button>
         </div>
       </div>
@@ -317,7 +317,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <div className="w-6 h-6 border-2 border-violet-500/50 border-t-violet-400 rounded-full animate-spin" />
             <span className="text-[10px] text-gray-500">
-              {card.status === 'pending' ? 'en attente...' : 'génération...'}
+              {card.status === 'pending' ? 'pending...' : 'generating...'}
             </span>
           </div>
         </div>
@@ -350,7 +350,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
             <button
               onClick={() => setShowPrompt(!showPrompt)}
               className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-lg p-1.5"
-              title="Voir le prompt"
+              title="View prompt"
             >
               <svg className="w-3.5 h-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -364,7 +364,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
       {card.status === 'failed' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
           <span className="text-2xl">❌</span>
-          <span className="text-[10px] text-gray-500">Échec génération</span>
+          <span className="text-[10px] text-gray-500">Generation failed</span>
         </div>
       )}
 
@@ -594,10 +594,10 @@ export default function StudioPage() {
 
   // Lancement d'un batch
   const launch = async (mode: 'batch_config' | 'random_full') => {
-    if (!selectedSoulId) return setLaunchError('Sélectionner un Soul Character')
-    if (!selectedElementId) return setLaunchError('Sélectionner un Reference Element')
+    if (!selectedSoulId) return setLaunchError('Select a Soul Character')
+    if (!selectedElementId) return setLaunchError('Select a Reference Element')
     if (mode === 'batch_config' && totalSelected === 0) {
-      return setLaunchError('Sélectionner au moins une option pour ce mode')
+      return setLaunchError('Select at least one option for this mode')
     }
 
     setLaunching(true)
@@ -619,7 +619,7 @@ export default function StudioPage() {
       if (data.error) {
         setLaunchError(data.error)
       } else {
-        const label = `${count} · ${mode === 'random_full' ? '🎲 aléatoire' : '✨ sélection'}`
+        const label = `${count} · ${mode === 'random_full' ? '🎲 random' : '✨ selection'}`
         startBatch(data.runId, count, label)
       }
     } catch (e) {
@@ -630,7 +630,7 @@ export default function StudioPage() {
   }
 
   const launchNiche = async () => {
-    if (!selectedSoulId) return setLaunchError('Sélectionner un Soul Character.')
+    if (!selectedSoulId) return setLaunchError('Select a Soul Character.')
 
     setLaunchError('')
     setLaunching(true)
@@ -663,7 +663,7 @@ export default function StudioPage() {
       })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setLaunchError(data.error || 'Erreur lors du lancement')
+        setLaunchError(data.error || 'Error during launch')
       } else {
         const label = `${nicheCount} · ${NICHE_LABELS[selectedNiche]}`
         startBatch(data.runId, nicheCount, label)
@@ -703,7 +703,7 @@ export default function StudioPage() {
 
           {/* Character */}
           <div className="space-y-3">
-            <h3 className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">🎭 Personnage</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">🎭 Character</h3>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
@@ -712,7 +712,7 @@ export default function StudioPage() {
               {loadingChars ? (
               <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
             ) : null}
-            Charger depuis Higgsfield
+            Load from Higgsfield
             </button>
 
             {charsError && (
@@ -773,7 +773,7 @@ export default function StudioPage() {
             <div className="grid grid-cols-3 gap-1.5">
               {/* Model */}
               <div className="col-span-3">
-                <label className="text-[10px] text-zinc-600 block mb-1">Modèle</label>
+                <label className="text-[10px] text-zinc-600 block mb-1">Model</label>
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
@@ -787,7 +787,7 @@ export default function StudioPage() {
               </div>
               {/* Aspect */}
               <div>
-                <label className="text-[10px] text-zinc-600 block mb-1">Format</label>
+                <label className="text-[10px] text-zinc-600 block mb-1">Aspect Ratio</label>
                 <select
                   value={aspectRatio}
                   onChange={(e) => setAspectRatio(e.target.value)}
@@ -801,7 +801,7 @@ export default function StudioPage() {
               </div>
               {/* Quality */}
               <div className="col-span-2">
-                <label className="text-[10px] text-zinc-600 block mb-1">Qualité</label>
+                <label className="text-[10px] text-zinc-600 block mb-1">Quality</label>
                 <select
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
@@ -828,7 +828,7 @@ export default function StudioPage() {
           {/* Count selector */}
           <div className="space-y-2">
             <label className="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">
-              Nombre de générations
+              Number of generations
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -861,7 +861,7 @@ export default function StudioPage() {
                   : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200'
               }`}
             >
-              ✨ Ma sélection
+              ✨ My selection
             </button>
             <button
               onClick={() => setStudioMode('niche')}
@@ -871,7 +871,7 @@ export default function StudioPage() {
                   : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200'
               }`}
             >
-              🎯 Par niche
+              🎯 By niche
             </button>
           </div>
 
@@ -887,10 +887,10 @@ export default function StudioPage() {
                   {launching ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Lancement...
+                      Launching...
                     </span>
                   ) : (
-                    <>🎨 {count} prompt{count > 1 ? 's' : ''} · ma sélection</>
+                    <>🎨 {count} prompt{count > 1 ? 's' : ''} · my selection</>
                   )}
                 </button>
 
@@ -900,7 +900,7 @@ export default function StudioPage() {
                   className="w-full border-2 border-dashed border-white/[0.08] hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 hover:text-white font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <span>🎲</span>
-                  <span>{count} prompt{count > 1 ? 's' : ''} · full aléatoire</span>
+                  <span>{count} prompt{count > 1 ? 's' : ''} · fully random</span>
                 </button>
               </>
             ) : (
@@ -910,20 +910,20 @@ export default function StudioPage() {
                 className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-4 transition-all duration-200"
               >
                 {launching
-                  ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Lancement...</span>
-                  : `🎯 Générer ${nicheCount} image${nicheCount > 1 ? 's' : ''} ${NICHE_LABELS[selectedNiche]}`
+                  ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Launching...</span>
+                  : `🎯 Generate ${nicheCount} image${nicheCount > 1 ? 's' : ''} ${NICHE_LABELS[selectedNiche]}`
                 }
               </button>
             )}
           </div>
 
-          {/* Effacer tous les batches */}
+          {/* Clear all batches */}
           {runs.length > 0 && (
             <button
               onClick={clearAllRuns}
               className="w-full text-xs text-gray-600 hover:text-gray-400 transition py-1"
             >
-              ✕ Effacer tous les résultats
+              ✕ Clear all results
             </button>
           )}
         </div>
@@ -936,17 +936,17 @@ export default function StudioPage() {
             <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900/40 border border-white/[0.07] rounded-xl px-4 py-2.5">
               <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
               <span>
-                <span className="text-white font-medium">{totalSelected}</span> option{totalSelected > 1 ? 's' : ''} sélectionnée{totalSelected > 1 ? 's' : ''}
+                <span className="text-white font-medium">{totalSelected}</span> option{totalSelected > 1 ? 's' : ''} selected
               </span>
               <span className="text-zinc-600">·</span>
               <span>
-                {Object.values(selections).filter(arr => arr.length > 0).length} catégorie{Object.values(selections).filter(arr => arr.length > 0).length > 1 ? 's' : ''} actives
+                {Object.values(selections).filter(arr => arr.length > 0).length} active categor{Object.values(selections).filter(arr => arr.length > 0).length > 1 ? 'ies' : 'y'}
               </span>
               <button
                 onClick={() => setSelections(emptySelections())}
                 className="ml-auto text-zinc-600 hover:text-zinc-300 transition"
               >
-                tout effacer
+                clear all
               </button>
             </div>
           )}
@@ -995,7 +995,7 @@ export default function StudioPage() {
               {/* Count */}
               <div>
                 <p className="text-xs text-zinc-400 mb-2">
-                  Nombre d&apos;images : <span className="text-white font-medium">{nicheCount}</span>
+                  Number of images: <span className="text-white font-medium">{nicheCount}</span>
                 </p>
                 <div className="flex items-center gap-3">
                   <input
@@ -1013,8 +1013,8 @@ export default function StudioPage() {
               {/* Preview of what will be used */}
               <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
                 <p className="text-[11px] text-zinc-600">
-                  Génère {nicheCount} image{nicheCount > 1 ? 's' : ''} avec chips aléatoires {NICHE_LABELS[selectedNiche]} —
-                  lieux, tenues, activités et cadrage adaptés à la niche.
+                  Generates {nicheCount} image{nicheCount > 1 ? 's' : ''} with random chips {NICHE_LABELS[selectedNiche]} —
+                  locations, outfits, activities and framing adapted to the niche.
                 </p>
               </div>
             </div>
@@ -1085,7 +1085,7 @@ export default function StudioPage() {
                 <button
                   onClick={() => removeRun(run.runId)}
                   className="text-zinc-600 hover:text-zinc-300 transition text-xs shrink-0"
-                  title="Retirer ce batch"
+                  title="Remove this batch"
                 >
                   ✕
                 </button>

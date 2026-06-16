@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
+  BookOpen,
 } from 'lucide-react'
 
 const GROUPS = [
@@ -39,17 +40,17 @@ const GROUPS = [
     href: '/video',
     pages: ['/video', '/prompt-lab', '/motion-control'],
     subTabs: [
-      { label: 'Vidéos', href: '/video' },
+      { label: 'Videos', href: '/video' },
       { label: 'Prompt Lab', href: '/prompt-lab' },
       { label: 'Motion Control', href: '/motion-control' },
     ],
     separate: false,
   },
-  { key: 'carousel', icon: LayoutGrid, label: 'CARROUSEL', href: '/carousel',  pages: ['/carousel'],  subTabs: [], separate: false },
+  { key: 'carousel', icon: LayoutGrid, label: 'CAROUSEL',  href: '/carousel',  pages: ['/carousel'],  subTabs: [], separate: false },
   { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata',  pages: ['/metadata'],  subTabs: [], separate: false },
   { key: 'spoofer',  icon: Shuffle,    label: 'SPOOFER',   href: '/spoofer',   pages: ['/spoofer'],   subTabs: [], separate: false },
   { key: 'poster',   icon: Send,       label: 'POSTER',    href: '/poster',    pages: ['/poster'],    subTabs: [], separate: true  },
-  { key: 'en-cours', icon: Timer,      label: 'EN COURS',  href: '/en-cours',  pages: ['/en-cours'],  subTabs: [], separate: false },
+  { key: 'en-cours', icon: Timer,      label: 'IN PROGRESS', href: '/en-cours', pages: ['/en-cours'],  subTabs: [], separate: false },
 ]
 
 export function Sidebar() {
@@ -201,6 +202,25 @@ export function Sidebar() {
                 className="text-[11px] whitespace-nowrap"
               >
                 KPI
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+        <Link
+          href="/tutorials"
+          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition"
+        >
+          <BookOpen size={16} strokeWidth={1.75} className="shrink-0" />
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                key="tutorials-label"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-[11px] whitespace-nowrap"
+              >
+                Tutorials
               </motion.span>
             )}
           </AnimatePresence>

@@ -30,7 +30,7 @@ function LoginForm() {
     setLoading(false)
 
     if (res?.error) {
-      setError('Email ou mot de passe incorrect')
+      setError('Incorrect email or password')
     } else {
       router.push('/')
     }
@@ -43,13 +43,13 @@ function LoginForm() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🐯</div>
           <h1 className="text-2xl font-bold text-white">LOS TIGRES FACTORY</h1>
-          <p className="text-gray-400 text-sm mt-1">Pipeline de génération automatisé</p>
+          <p className="text-gray-400 text-sm mt-1">Automated content generation pipeline</p>
         </div>
 
         {/* Message succès inscription */}
         {justRegistered && (
           <div className="mb-4 bg-emerald-900/30 border border-emerald-800 text-emerald-400 text-sm rounded-xl px-4 py-3 text-center">
-            ✅ Compte créé ! Connecte-toi maintenant.
+            ✅ Account created! Sign in now.
           </div>
         )}
 
@@ -72,7 +72,7 @@ function LoginForm() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Mot de passe</label>
+            <label className="block text-sm text-gray-400 mb-1">Password</label>
             <input
               type="password"
               value={password}
@@ -94,14 +94,14 @@ function LoginForm() {
             disabled={loading}
             className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-violet-800 disabled:cursor-not-allowed text-white font-medium rounded-lg py-2.5 transition"
           >
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <p className="text-center text-gray-500 text-sm mt-4">
-          Pas encore de compte ?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="text-violet-400 hover:text-violet-300 transition">
-            S&apos;inscrire
+            Sign up
           </Link>
         </p>
       </div>

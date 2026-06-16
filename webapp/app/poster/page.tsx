@@ -76,19 +76,19 @@ type DriveCarousel = {
 
 const WARMUP_LIMITS: Record<number, number> = { 1: 1, 2: 1, 3: 2, 4: 3 }
 const WARMUP_LABELS: Record<number, string> = {
-  1: 'Warm-up S1 (1/j)',
-  2: 'Warm-up S2 (1/j)',
-  3: 'Warm-up S3 (2/j)',
-  4: 'Actif (3/j)',
+  1: 'Warm-up W1 (1/day)',
+  2: 'Warm-up W2 (1/day)',
+  3: 'Warm-up W3 (2/day)',
+  4: 'Active (3/day)',
 }
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-    pending:    { color: 'bg-zinc-700 text-zinc-300',   icon: <Clock className="w-3 h-3" />,        label: 'Planifié' },
-    processing: { color: 'bg-amber-900/60 text-amber-300', icon: <RefreshCw className="w-3 h-3 animate-spin" />, label: 'En cours' },
-    posted:     { color: 'bg-emerald-900/60 text-emerald-400', icon: <CheckCircle className="w-3 h-3" />,  label: 'Publié ✓' },
-    failed:     { color: 'bg-red-900/60 text-red-400',    icon: <XCircle className="w-3 h-3" />,     label: 'Échec' },
-    cancelled:  { color: 'bg-zinc-800 text-zinc-500',    icon: <X className="w-3 h-3" />,            label: 'Annulé' },
+    pending:    { color: 'bg-zinc-700 text-zinc-300',   icon: <Clock className="w-3 h-3" />,        label: 'Scheduled' },
+    processing: { color: 'bg-amber-900/60 text-amber-300', icon: <RefreshCw className="w-3 h-3 animate-spin" />, label: 'In progress' },
+    posted:     { color: 'bg-emerald-900/60 text-emerald-400', icon: <CheckCircle className="w-3 h-3" />,  label: 'Posted ✓' },
+    failed:     { color: 'bg-red-900/60 text-red-400',    icon: <XCircle className="w-3 h-3" />,     label: 'Failed' },
+    cancelled:  { color: 'bg-zinc-800 text-zinc-500',    icon: <X className="w-3 h-3" />,            label: 'Cancelled' },
   }
   const s = map[status] ?? { color: 'bg-zinc-800 text-zinc-400', icon: null, label: status }
   return (
@@ -162,8 +162,8 @@ function QuickCarouselModal({
   }
 
   const scan = async () => {
-    if (!selectedAccount) return setError('Sélectionner un compte')
-    if (!selectedAccount.characterName) return setError('Ce compte n\'a pas de personnage lié (va dans Comptes → modifier)')
+    if (!selectedAccount) return setError('Select an account')
+    if (!selectedAccount.characterName) return setError('This account has no linked character (go to Accounts → edit)')
     setStep('scanning')
     setError('')
     try {
@@ -173,16 +173,16 @@ function QuickCarouselModal({
         body: JSON.stringify({ characterName: selectedAccount.characterName }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur scan')
+      if (!res.ok) throw new Error(data.error || 'Scan error')
       if (!data.carousels?.length) {
-        setError(data.message || 'Aucun carousel trouvé dans Drive pour ce personnage.')
+        setError(data.message || 'No carousel found in Drive for this character.')
         setStep('config')
         return
       }
       setCarousels(data.carousels)
       setAlreadyPostedCount(data.alreadyPosted || 0)
 
-      // Sélection aléatoire de N carousels (tous sont déjà filtrés = non postés)
+      // Random selection of N carousels (all already filtered = not yet posted)
       const shuffled = [...data.carousels].sort(() => Math.random() - 0.5)
       const picked = shuffled.slice(0, Math.min(total, shuffled.length))
       setSelected(picked)
@@ -197,8 +197,8 @@ function QuickCarouselModal({
     setStep('scheduling')
     setError('')
 
-    // Générer toutes les captions en parallèle avec Claude
-    setProgress('Génération des captions avec Claude...')
+    // Generate all captions in parallel with Claude
+    setProgress('Generating captions with Claude...')
     let generatedCaptions: string[] = []
     try {
       const captionResults = await Promise.all(
@@ -221,8 +221,8 @@ function QuickCarouselModal({
       generatedCaptions = selected.map(() => '')
     }
 
-    // Planification bulk
-    setProgress('Planification en cours...')
+    // Bulk scheduling
+    setProgress('Scheduling...')
     try {
       const res = await fetch('/api/poster/bulk-schedule', {
         method: 'POST',
@@ -242,7 +242,7 @@ function QuickCarouselModal({
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur planification')
+      if (!res.ok) throw new Error(data.error || 'Scheduling error')
       setResult({ scheduled: data.scheduled, firstPostAt: data.firstPostAt })
       setStep('done')
       onScheduled()
@@ -259,8 +259,8 @@ function QuickCarouselModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
           <div>
-            <h2 className="font-semibold text-white">Planifier des Carousels</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Scan Drive auto · Horaires US optimaux · Captions Claude</p>
+            <h2 className="font-semibold text-white">Schedule Carousels</h2>
+            <p className="text-xs text-zinc-500 mt-0.5">Auto Drive scan · Optimal US times · Claude captions</p>
           </div>
           <button onClick={onClose}><X className="w-5 h-5 text-zinc-500 hover:text-white" /></button>
         </div>
@@ -272,26 +272,26 @@ function QuickCarouselModal({
             <>
               {/* Compte */}
               <div>
-                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Compte</label>
+                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Account</label>
                 <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)}
                   className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
                 >
                   {accounts.filter(a => a.status !== 'banned').map(a => (
                     <option key={a.id} value={a.id}>
-                      @{a.username}{a.characterName ? ` · ${a.characterName}` : ' (pas de personnage)'} — {a.networkName}
+                      @{a.username}{a.characterName ? ` · ${a.characterName}` : ' (no character)'} — {a.networkName}
                     </option>
                   ))}
                 </select>
                 {selectedAccount?.characterName && (
                   <p className="text-xs text-zinc-600 mt-1">
-                    Scan Drive : <span className="text-violet-400">{selectedAccount.characterName}/carousels/</span>
+                    Drive scan: <span className="text-violet-400">{selectedAccount.characterName}/carousels/</span>
                   </p>
                 )}
               </div>
 
               {/* Par jour */}
               <div>
-                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-2">Par jour</label>
+                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-2">Per day</label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map(n => (
                     <button key={n} onClick={() => setPerDay(n)}
@@ -308,7 +308,7 @@ function QuickCarouselModal({
               {/* Nombre de jours */}
               <div>
                 <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-2">
-                  Nombre de jours — <span className="text-violet-400">{total} carousels au total</span>
+                  Number of days — <span className="text-violet-400">{total} carousels total</span>
                 </label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 5, 7].map(n => (
@@ -317,7 +317,7 @@ function QuickCarouselModal({
                         numDays === n ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-400 hover:text-white'
                       }`}
                     >
-                      {n}j
+                      {n}d
                     </button>
                   ))}
                 </div>
@@ -326,11 +326,11 @@ function QuickCarouselModal({
               {/* Premier post */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs text-zinc-400 uppercase tracking-wider">Premier post (optionnel)</label>
+                  <label className="text-xs text-zinc-400 uppercase tracking-wider">First post (optional)</label>
                   <button onClick={setNowPlus2}
                     className="text-xs text-violet-400 hover:text-violet-300 transition font-medium"
                   >
-                    Test : maintenant + 2 min
+                    Test: now + 2 min
                   </button>
                 </div>
                 <input
@@ -340,15 +340,15 @@ function QuickCarouselModal({
                   className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
                 />
                 <p className="text-xs text-zinc-600 mt-1">
-                  Entre ton heure locale (France). Vide = horaires US optimaux automatiques dès demain.
+                  Enter your local time. Empty = optimal US times automatically starting tomorrow.
                 </p>
               </div>
 
               {/* Info horaires */}
               <div className="bg-zinc-800/40 border border-white/[0.05] rounded-xl px-4 py-3 text-xs text-zinc-500 space-y-0.5">
-                <p className="text-zinc-400 font-medium mb-1">Horaires US (EST) automatiques :</p>
-                <p>☀️ Matin : 6h-9h EST · 🌆 Midi : 11h30-13h30 EST · 🌙 Soir : 19h-21h30 EST</p>
-                <p>Variation aléatoire ±7-25 min · jamais H:00 ou H:30 exacte</p>
+                <p className="text-zinc-400 font-medium mb-1">Automatic US times (EST):</p>
+                <p>☀️ Morning: 6–9 AM EST · 🌆 Noon: 11:30 AM–1:30 PM EST · 🌙 Evening: 7–9:30 PM EST</p>
+                <p>Random offset ±7–25 min · never exactly H:00 or H:30</p>
               </div>
 
               {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
@@ -359,7 +359,7 @@ function QuickCarouselModal({
           {step === 'scanning' && (
             <div className="flex flex-col items-center py-8 gap-3">
               <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
-              <p className="text-sm text-zinc-400">Scan Drive en cours...</p>
+              <p className="text-sm text-zinc-400">Scanning Drive...</p>
               <p className="text-xs text-zinc-600">{selectedAccount?.characterName}/carousels/</p>
             </div>
           )}
@@ -369,10 +369,10 @@ function QuickCarouselModal({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-white font-medium">
-                  <span className="text-violet-400">{selected.length}</span> carousels sélectionnés
-                  <span className="text-zinc-500 text-xs ml-2">sur {carousels.length} disponibles</span>
+                  <span className="text-violet-400">{selected.length}</span> carousels selected
+                  <span className="text-zinc-500 text-xs ml-2">out of {carousels.length} available</span>
                   {alreadyPostedCount > 0 && (
-                    <span className="text-zinc-600 text-xs ml-2">· {alreadyPostedCount} déjà postés exclus</span>
+                    <span className="text-zinc-600 text-xs ml-2">· {alreadyPostedCount} already posted excluded</span>
                   )}
                 </p>
                 <button
@@ -382,7 +382,7 @@ function QuickCarouselModal({
                   }}
                   className="text-xs text-zinc-400 hover:text-white flex items-center gap-1"
                 >
-                  <RefreshCw className="w-3 h-3" /> Reshuffler
+                  <RefreshCw className="w-3 h-3" /> Reshuffle
                 </button>
               </div>
 
@@ -404,8 +404,8 @@ function QuickCarouselModal({
               </div>
 
               <div className="bg-zinc-800/40 rounded-xl px-4 py-3 text-xs text-zinc-500">
-                Captions générées automatiquement en anglais par Claude (question ouverte).
-                Premier post demain aux meilleurs horaires US.
+                Captions auto-generated in English by Claude (open-ended question).
+                First post tomorrow at optimal US times.
               </div>
 
               {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
@@ -424,13 +424,13 @@ function QuickCarouselModal({
           {step === 'done' && result && (
             <div className="flex flex-col items-center py-8 gap-3 text-center">
               <CheckCircle className="w-10 h-10 text-emerald-400" />
-              <p className="text-lg font-bold text-white">{result.scheduled} carousels planifiés ✓</p>
+              <p className="text-lg font-bold text-white">{result.scheduled} carousels scheduled ✓</p>
               <p className="text-sm text-zinc-400">
-                Premier post : {result.firstPostAt
-                  ? new Date(result.firstPostAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-                  : 'demain'}
+                First post: {result.firstPostAt
+                  ? new Date(result.firstPostAt).toLocaleString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                  : 'tomorrow'}
               </p>
-              <p className="text-xs text-zinc-600">Captions en anglais générées · Horaires US optimaux · Voir dans Queue posts</p>
+              <p className="text-xs text-zinc-600">English captions generated · Optimal US times · Check Queue posts</p>
             </div>
           )}
         </div>
@@ -438,14 +438,14 @@ function QuickCarouselModal({
         {/* Footer */}
         <div className="flex gap-2 p-5 border-t border-white/[0.07]">
           <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white transition">
-            {step === 'done' ? 'Fermer' : 'Annuler'}
+            {step === 'done' ? 'Close' : 'Cancel'}
           </button>
           {step === 'config' && (
             <button onClick={scan} disabled={!selectedAccount?.characterName}
               className="flex-1 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium disabled:opacity-50 transition flex items-center justify-center gap-2"
             >
               <LayoutGrid className="w-4 h-4" />
-              Scanner Drive ({total} carousels)
+              Scan Drive ({total} carousels)
             </button>
           )}
           {step === 'preview' && (
@@ -453,7 +453,7 @@ function QuickCarouselModal({
               className="flex-1 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium transition flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" />
-              Planifier {selected.length} carousels
+              Schedule {selected.length} carousels
             </button>
           )}
         </div>
@@ -504,7 +504,7 @@ function ScheduleModal({
         body: JSON.stringify({ generationId: generation.id }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur génération')
+      if (!res.ok) throw new Error(data.error || 'Caption generation error')
       setCaption(data.caption || '')
     } catch (e) {
       setError(String(e))
@@ -514,9 +514,9 @@ function ScheduleModal({
   }
 
   const schedule = async () => {
-    if (!selectedAccountId) return setError('Sélectionner un compte')
+    if (!selectedAccountId) return setError('Select an account')
     if (!generation.driveGeneratedUrl && !generation.generatedImageUrl) {
-      return setError('Aucun fichier Drive disponible pour ce contenu')
+      return setError('No Drive file available for this content')
     }
 
     setScheduling(true)
@@ -535,7 +535,7 @@ function ScheduleModal({
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur planification')
+      if (!res.ok) throw new Error(data.error || 'Scheduling error')
       onScheduled()
       onClose()
     } catch (e) {
@@ -552,7 +552,7 @@ function ScheduleModal({
       <div className="bg-zinc-900 border border-white/[0.07] rounded-2xl w-full max-w-lg shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
-          <h2 className="font-semibold text-white">Planifier un post</h2>
+          <h2 className="font-semibold text-white">Schedule a post</h2>
           <button onClick={onClose} className="text-zinc-500 hover:text-white transition">
             <X className="w-5 h-5" />
           </button>
@@ -564,7 +564,7 @@ function ScheduleModal({
             <div className="relative w-full aspect-[9/16] max-h-48 rounded-xl overflow-hidden bg-zinc-800">
               {thumbUrl.includes('.mp4') || thumbUrl.includes('video') ? (
                 <div className="absolute inset-0 flex items-center justify-center text-zinc-500 text-sm">
-                  Vidéo — {generation.modelUsed || 'unknown'}
+                  Video — {generation.modelUsed || 'unknown'}
                 </div>
               ) : (
                 <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
@@ -585,7 +585,7 @@ function ScheduleModal({
           {/* Compte cible */}
           <div>
             <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider block mb-1.5">
-              Compte cible
+              Target account
             </label>
             <select
               value={selectedAccountId}
@@ -631,13 +631,13 @@ function ScheduleModal({
                 ) : (
                   <Sparkles className="w-3 h-3" />
                 )}
-                {generating ? 'Génération...' : 'Générer avec Claude'}
+                {generating ? 'Generating...' : 'Generate with Claude'}
               </button>
             </div>
             <textarea
               value={caption}
               onChange={e => setCaption(e.target.value)}
-              placeholder="Caption Instagram (optionnel — générer avec Claude ou écrire manuellement)..."
+              placeholder="Instagram caption (optional — generate with Claude or write manually)..."
               rows={3}
               className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 resize-none focus:outline-none focus:border-violet-500/50"
             />
@@ -646,7 +646,7 @@ function ScheduleModal({
           {/* Date/heure */}
           <div>
             <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider block mb-1.5">
-              Planifier pour (laisser vide = dès que possible)
+              Schedule for (leave empty = as soon as possible)
             </label>
             <input
               type="datetime-local"
@@ -655,7 +655,7 @@ function ScheduleModal({
               className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
             />
             <p className="text-xs text-zinc-600 mt-1">
-              Note : les heures exactes (:00 et :30) sont automatiquement décalées de ±7-23 min
+              Note: exact times (:00 and :30) are automatically offset by ±7–23 min
             </p>
           </div>
 
@@ -669,7 +669,7 @@ function ScheduleModal({
             onClick={onClose}
             className="flex-1 py-2 rounded-xl text-sm font-medium bg-zinc-800 text-zinc-400 hover:text-white transition"
           >
-            Annuler
+            Cancel
           </button>
           <button
             onClick={schedule}
@@ -677,7 +677,7 @@ function ScheduleModal({
             className="flex-1 py-2 rounded-xl text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50 transition flex items-center justify-center gap-2"
           >
             {scheduling ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {scheduling ? 'Planification...' : 'Planifier'}
+            {scheduling ? 'Scheduling...' : 'Schedule'}
           </button>
         </div>
       </div>
@@ -715,8 +715,8 @@ function AddAccountModal({
   }, [])
 
   const save = async () => {
-    if (!username.trim()) return setError('Username requis')
-    if (!networkName.trim()) return setError('Réseau requis')
+    if (!username.trim()) return setError('Username required')
+    if (!networkName.trim()) return setError('Network required')
     setSaving(true)
     setError('')
     try {
@@ -726,7 +726,7 @@ function AddAccountModal({
         body: JSON.stringify({ username: username.trim(), password, totpSecret: totpSecret.trim() || null, characterName: characterName || null, networkName, warmupPhase }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur')
+      if (!res.ok) throw new Error(data.error || 'Error')
       onAdded()
       onClose()
     } catch (e) {
@@ -740,32 +740,32 @@ function AddAccountModal({
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-white/[0.07] rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
-          <h2 className="font-semibold text-white">Ajouter un compte Instagram</h2>
+          <h2 className="font-semibold text-white">Add an Instagram account</h2>
           <button onClick={onClose}><X className="w-5 h-5 text-zinc-500 hover:text-white" /></button>
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Username Instagram</label>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Instagram username</label>
             <input
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="@username (sans le @)"
+              placeholder="@username (without the @)"
               className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
             />
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Mot de passe (chiffré en DB)</label>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Password (encrypted in DB)</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder="Mot de passe Instagram"
+              placeholder="Instagram password"
               className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
             />
           </div>
           <div>
             <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">
-              Clé 2FA Google Authenticator
+              Google Authenticator 2FA key
             </label>
             <input
               value={totpSecret}
@@ -774,11 +774,11 @@ function AddAccountModal({
               className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 font-mono"
             />
             <p className="text-xs text-zinc-600 mt-1">
-              Instagram → Sécurité → Auth. 2 facteurs → Application → "Entrer la clé manuellement"
+              Instagram → Security → Two-factor auth → App → "Enter key manually"
             </p>
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Personnage (modèle)</label>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Character (model)</label>
             {characters.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 <button
@@ -787,7 +787,7 @@ function AddAccountModal({
                     characterName === '' ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-500 hover:text-white'
                   }`}
                 >
-                  Aucun
+                  None
                 </button>
                 {characters.map(c => (
                   <button
@@ -809,10 +809,10 @@ function AddAccountModal({
                 className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
               />
             )}
-            <p className="text-xs text-zinc-600 mt-1">Lie ce compte à un seul personnage — évite les croisements de contenu</p>
+            <p className="text-xs text-zinc-600 mt-1">Link this account to a single character — avoids content crossovers</p>
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Téléphone hotspot</label>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Hotspot phone</label>
             <select
               value={networkName}
               onChange={e => setNetworkName(e.target.value)}
@@ -828,7 +828,7 @@ function AddAccountModal({
             </select>
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Phase warm-up</label>
+            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Warm-up phase</label>
             <div className="flex gap-2">
               {[1, 2, 3, 4].map(p => (
                 <button
@@ -850,7 +850,7 @@ function AddAccountModal({
         </div>
         <div className="flex gap-2 p-5 border-t border-white/[0.07]">
           <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white transition">
-            Annuler
+            Cancel
           </button>
           <button
             onClick={save}
@@ -858,7 +858,7 @@ function AddAccountModal({
             className="flex-1 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white font-medium disabled:opacity-50 transition flex items-center justify-center gap-2"
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            {saving ? 'Enregistrement...' : 'Ajouter'}
+            {saving ? 'Saving...' : 'Add'}
           </button>
         </div>
       </div>
@@ -968,7 +968,7 @@ export default function PosterPage() {
   }
 
   const deleteAccount = async (accountId: string) => {
-    if (!confirm('Supprimer ce compte ? Les posts associés seront aussi supprimés.')) return
+    if (!confirm('Delete this account? Associated posts will also be deleted.')) return
     try {
       await fetch(`/api/instagram/accounts/${accountId}`, { method: 'DELETE' })
       loadAccounts()
@@ -997,9 +997,9 @@ export default function PosterPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-bold text-white">Poster Instagram</h1>
+                <h1 className="text-xl font-bold text-white">Instagram Poster</h1>
                 <p className="text-sm text-zinc-500 mt-0.5">
-                  {accounts.length} compte{accounts.length !== 1 ? 's' : ''} · IPs carrier via hotspot iPhone
+                  {accounts.length} account{accounts.length !== 1 ? 's' : ''} · Carrier IPs via iPhone hotspot
                 </p>
               </div>
               <div className="flex gap-2">
@@ -1009,7 +1009,7 @@ export default function PosterPage() {
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-600 hover:bg-violet-500 text-white transition"
                   >
                     <Plus className="w-4 h-4" />
-                    Ajouter un compte
+                    Add account
                   </button>
                 )}
                 {tab === 'gallery' && (
@@ -1037,11 +1037,11 @@ export default function PosterPage() {
             <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-3 flex items-start gap-3">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div className="text-sm text-amber-300/80">
-                <strong className="text-amber-300">Mac poster requis :</strong> le script local{' '}
+                <strong className="text-amber-300">Mac poster required:</strong> the local script{' '}
                 <code className="text-amber-200 bg-amber-900/40 px-1 rounded">instagram_poster/main.py</code>{' '}
-                doit tourner sur ton Mac pour exécuter les posts. Lance{' '}
+                must be running on your Mac to execute posts. Run{' '}
                 <code className="text-amber-200 bg-amber-900/40 px-1 rounded">./instagram_poster/install.sh</code>{' '}
-                pour l'installer en service automatique.
+                to install it as an automatic service.
               </div>
             </div>
 
@@ -1049,8 +1049,8 @@ export default function PosterPage() {
             <div className="flex gap-1 bg-zinc-900/60 border border-white/[0.07] rounded-xl p-1 w-fit">
               {([
                 { id: 'queue',    label: 'Queue posts', icon: Calendar },
-                { id: 'gallery', label: 'Contenu',      icon: Send },
-                { id: 'accounts', label: 'Comptes',      icon: User },
+                { id: 'gallery', label: 'Content',      icon: Send },
+                { id: 'accounts', label: 'Accounts',     icon: User },
               ] as const).map(t => (
                 <button
                   key={t.id}
@@ -1082,19 +1082,19 @@ export default function PosterPage() {
                           : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'
                       }`}
                     >
-                      {s === 'all' ? 'Tous' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
                     </button>
                   ))}
                 </div>
 
                 {loadingPosts ? (
-                  <p className="text-sm text-zinc-500">Chargement...</p>
+                  <p className="text-sm text-zinc-500">Loading...</p>
                 ) : posts.length === 0 ? (
                   <div className="bg-zinc-900/60 border border-white/[0.07] rounded-2xl p-8 text-center">
                     <Calendar className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
-                    <p className="text-zinc-500 text-sm">Aucun post planifié</p>
+                    <p className="text-zinc-500 text-sm">No scheduled posts</p>
                     <p className="text-zinc-600 text-xs mt-1">
-                      Va dans l'onglet "Contenu" pour planifier depuis tes générations
+                      Go to the "Content" tab to schedule from your generations
                     </p>
                   </div>
                 ) : (
@@ -1128,7 +1128,7 @@ export default function PosterPage() {
                           {post.scheduledFor && (
                             <p className="text-xs text-zinc-500">
                               <Clock className="w-3 h-3 inline mr-1" />
-                              {new Date(post.scheduledFor).toLocaleString('fr-FR', {
+                              {new Date(post.scheduledFor).toLocaleString('en-US', {
                                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
                               })}
                             </p>
@@ -1136,7 +1136,7 @@ export default function PosterPage() {
                           {post.status === 'posted' && post.postedAt && (
                             <p className="text-xs text-emerald-400">
                               <CheckCircle className="w-3 h-3 inline mr-1" />
-                              Publié le {new Date(post.postedAt).toLocaleString('fr-FR', {
+                              Posted on {new Date(post.postedAt).toLocaleString('en-US', {
                                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
                               })}
                               {post.igPostId && ` — ID: ${post.igPostId}`}
@@ -1155,7 +1155,7 @@ export default function PosterPage() {
                           {post.status === 'failed' && (
                             <button
                               onClick={() => retryPost(post.id)}
-                              title="Réessayer"
+                              title="Retry"
                               className="p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition"
                             >
                               <RefreshCw className="w-4 h-4" />
@@ -1164,7 +1164,7 @@ export default function PosterPage() {
                           {(post.status === 'pending' || post.status === 'failed') && (
                             <button
                               onClick={() => cancelPost(post.id)}
-                              title="Annuler"
+                              title="Cancel"
                               className="p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-red-400 transition"
                             >
                               <X className="w-4 h-4" />
@@ -1190,7 +1190,7 @@ export default function PosterPage() {
                       onClick={() => setFilterChar('all')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterChar === 'all' ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
                     >
-                      Tous
+                      All
                     </button>
                     {allCharacters.map(c => (
                       <button key={c} onClick={() => setFilterChar(c === filterChar ? 'all' : c)}
@@ -1209,7 +1209,7 @@ export default function PosterPage() {
                     <button key={t} onClick={() => setFilterType(t)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterType === t ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
                     >
-                      {t === 'all' ? 'Tout' : t === 'video' ? 'Vidéos' : 'Photos'}
+                      {t === 'all' ? 'All' : t === 'video' ? 'Videos' : 'Photos'}
                     </button>
                   ))}
 
@@ -1231,12 +1231,12 @@ export default function PosterPage() {
 
                 {/* ── Info ── */}
                 <p className="text-xs text-zinc-600">
-                  {generations.length} contenu{generations.length > 1 ? 's' : ''} disponible{generations.length > 1 ? 's' : ''} — déjà postés masqués automatiquement
+                  {generations.length} item{generations.length > 1 ? 's' : ''} available — already posted hidden automatically
                 </p>
 
                 {accounts.length === 0 && (
                   <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-3 text-sm text-amber-300">
-                    Aucun compte configuré — va dans l'onglet Comptes d'abord.
+                    No account configured — go to the Accounts tab first.
                   </div>
                 )}
 
@@ -1250,9 +1250,9 @@ export default function PosterPage() {
                 ) : generations.length === 0 ? (
                   <div className="bg-zinc-900/60 border border-white/[0.07] rounded-2xl p-10 text-center">
                     <Video className="w-8 h-8 text-zinc-700 mx-auto mb-3" />
-                    <p className="text-zinc-500 text-sm">Aucun contenu disponible</p>
+                    <p className="text-zinc-500 text-sm">No content available</p>
                     <p className="text-zinc-700 text-xs mt-1">
-                      {filterChar !== 'all' || filterType !== 'all' ? 'Essaie de changer les filtres' : 'Génère du contenu depuis les autres onglets'}
+                      {filterChar !== 'all' || filterType !== 'all' ? 'Try changing the filters' : 'Generate content from the other tabs'}
                     </p>
                   </div>
                 ) : (
@@ -1287,7 +1287,7 @@ export default function PosterPage() {
                                 <img src={thumb} alt="" className="w-full h-full object-cover" />
                               )
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-zinc-700 text-xs">Pas d'aperçu</div>
+                              <div className="absolute inset-0 flex items-center justify-center text-zinc-700 text-xs">No preview</div>
                             )}
 
                             {/* Badges top */}
@@ -1300,7 +1300,7 @@ export default function PosterPage() {
                                 )}
                                 {gen.isPending && (
                                   <span className="bg-amber-900/90 text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                    Planifié
+                                    Scheduled
                                   </span>
                                 )}
                               </div>
@@ -1319,7 +1319,7 @@ export default function PosterPage() {
                             {/* Badge type vidéo/image */}
                             <div className="absolute bottom-1.5 left-1.5">
                               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${gen.isVideo ? 'bg-blue-900/90 text-blue-300' : 'bg-emerald-900/90 text-emerald-300'}`}>
-                                {gen.isVideo ? 'VIDÉO' : 'PHOTO'}
+                                {gen.isVideo ? 'VIDEO' : 'PHOTO'}
                               </span>
                             </div>
                           </div>
@@ -1331,7 +1331,7 @@ export default function PosterPage() {
                             )}
                             {gen.generatedAt && (
                               <p className="text-[9px] text-zinc-700">
-                                {new Date(gen.generatedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                {new Date(gen.generatedAt).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                               </p>
                             )}
                             <button
@@ -1340,7 +1340,7 @@ export default function PosterPage() {
                               className="w-full py-1.5 rounded-lg text-[11px] font-semibold bg-violet-600/80 hover:bg-violet-600 text-white transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                             >
                               <Send className="w-3 h-3" />
-                              {!hasUrl ? 'Pas d\'URL' : gen.isPending ? 'Déjà planifié' : 'Planifier'}
+                              {!hasUrl ? 'No URL' : gen.isPending ? 'Already scheduled' : 'Schedule'}
                             </button>
                           </div>
                         </div>
@@ -1356,13 +1356,13 @@ export default function PosterPage() {
               <div className="space-y-4">
                 {/* Guide warmup */}
                 <div className="bg-zinc-900/60 border border-white/[0.07] rounded-xl p-4">
-                  <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">Guide warm-up</p>
+                  <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">Warm-up guide</p>
                   <div className="grid grid-cols-4 gap-3 text-center">
                     {[
-                      { phase: 1, label: 'Semaine 1', desc: '1 post/jour', sub: 'Posts manuels conseillés' },
-                      { phase: 2, label: 'Semaine 2', desc: '1 post/jour', sub: 'Premiers posts auto' },
-                      { phase: 3, label: 'Semaine 3', desc: '2 posts/jour', sub: 'Montée en régime' },
-                      { phase: 4, label: 'Actif', desc: '3 posts/jour', sub: 'Régime normal' },
+                      { phase: 1, label: 'Week 1', desc: '1 post/day', sub: 'Manual posts recommended' },
+                      { phase: 2, label: 'Week 2', desc: '1 post/day', sub: 'First auto posts' },
+                      { phase: 3, label: 'Week 3', desc: '2 posts/day', sub: 'Warmup phase' },
+                      { phase: 4, label: 'Active', desc: '3 posts/day', sub: 'Normal phase' },
                     ].map(g => (
                       <div key={g.phase} className="bg-zinc-800/50 rounded-lg p-2">
                         <div className="text-xs font-medium text-violet-400 mb-0.5">{g.label}</div>
@@ -1377,8 +1377,8 @@ export default function PosterPage() {
                 <div className="bg-zinc-900/60 border border-white/[0.07] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Proxies 4G mobiles</p>
-                      <p className="text-xs text-zinc-600 mt-0.5">1 proxy par téléphone · remplace le hotspot iPhone</p>
+                      <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Mobile 4G proxies</p>
+                      <p className="text-xs text-zinc-600 mt-0.5">1 proxy per phone · replaces iPhone hotspot</p>
                     </div>
                     <button
                       onClick={async () => {
@@ -1397,7 +1397,7 @@ export default function PosterPage() {
                       disabled={savingProxies}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium bg-violet-600 hover:bg-violet-500 text-white transition disabled:opacity-50"
                     >
-                      {proxySaved ? '✓ Sauvegardé' : savingProxies ? '...' : 'Sauvegarder'}
+                      {proxySaved ? '✓ Saved' : savingProxies ? '...' : 'Save'}
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -1410,13 +1410,13 @@ export default function PosterPage() {
                             <p className="text-[10px] text-zinc-600">
                               {accountsOnNetwork.length > 0
                                 ? accountsOnNetwork.map(a => `@${a.username}`).join(', ')
-                                : 'aucun compte'}
+                                : 'no accounts'}
                             </p>
                           </div>
                           <input
                             value={proxyDraft[network] || ''}
                             onChange={e => setProxyDraft(prev => ({ ...prev, [network]: e.target.value }))}
-                            placeholder="http://user:pass@host:port (vide = hotspot iPhone)"
+                            placeholder="http://user:pass@host:port (empty = iPhone hotspot)"
                             className={`flex-1 bg-zinc-800 border rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-600 font-mono focus:outline-none transition ${
                               proxyDraft[network]
                                 ? 'border-emerald-600/50 focus:border-emerald-500'
@@ -1434,21 +1434,21 @@ export default function PosterPage() {
                     })}
                   </div>
                   <p className="text-[10px] text-zinc-700 mt-3">
-                    Services recommandés : ProxyRack · Infatica · Brightdata (~$25-40/mois par proxy)
+                    Recommended services: ProxyRack · Infatica · Brightdata (~$25–40/month per proxy)
                   </p>
                 </div>
 
                 {loadingAccounts ? (
-                  <p className="text-sm text-zinc-500">Chargement...</p>
+                  <p className="text-sm text-zinc-500">Loading...</p>
                 ) : accounts.length === 0 ? (
                   <div className="bg-zinc-900/60 border border-white/[0.07] rounded-2xl p-8 text-center">
                     <User className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
-                    <p className="text-zinc-500 text-sm">Aucun compte configuré</p>
+                    <p className="text-zinc-500 text-sm">No account configured</p>
                     <button
                       onClick={() => setShowAddAccount(true)}
                       className="mt-3 px-4 py-2 rounded-xl text-sm bg-violet-600 hover:bg-violet-500 text-white transition"
                     >
-                      Ajouter le premier compte
+                      Add the first account
                     </button>
                   </div>
                 ) : (
@@ -1479,9 +1479,9 @@ export default function PosterPage() {
                                 <Wifi className="w-3 h-3" />
                                 {acc.networkName}
                               </span>
-                              <span>{acc.postsToday} post{acc.postsToday !== 1 ? 's' : ''} aujourd'hui</span>
+                              <span>{acc.postsToday} post{acc.postsToday !== 1 ? 's' : ''} today</span>
                               {acc.lastPostedAt && (
-                                <span>Dernier: {new Date(acc.lastPostedAt).toLocaleDateString('fr-FR')}</span>
+                                <span>Last: {new Date(acc.lastPostedAt).toLocaleDateString('en-US')}</span>
                               )}
                             </div>
                             <div className="flex items-center gap-3">
@@ -1516,14 +1516,14 @@ export default function PosterPage() {
                           <div className="mt-3 bg-red-900/20 border border-red-700/30 rounded-lg px-3 py-2 text-xs text-red-400 flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                             <span>
-                              <strong>Vérification requise !</strong> Ouvre l'app Instagram sur l'iPhone{' '}
-                              et valide la vérification SMS/email pour @{acc.username}.
+                              <strong>Verification required!</strong> Open the Instagram app on the iPhone{' '}
+                              and complete the SMS/email verification for @{acc.username}.
                             </span>
                           </div>
                         )}
                         {acc.status === 'suspended' && (
                           <div className="mt-3 bg-orange-900/20 border border-orange-700/30 rounded-lg px-3 py-2 text-xs text-orange-400">
-                            Compte suspendu temporairement (FeedbackRequired). Attendre 24h.
+                            Account temporarily suspended (FeedbackRequired). Wait 24h.
                           </div>
                         )}
                       </div>

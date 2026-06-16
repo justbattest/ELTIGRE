@@ -74,7 +74,7 @@ function BankButton({ genId }: { genId: number }) {
     finally { setSaving(false) }
   }
 
-  if (saved) return <span className="text-xs text-emerald-400">✅ Sauvegardé dans la banque</span>
+  if (saved) return <span className="text-xs text-emerald-400">✅ Saved to bank</span>
 
   return (
     <div className="mt-2">
@@ -84,7 +84,7 @@ function BankButton({ genId }: { genId: number }) {
             autoFocus
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            placeholder="Note optionnelle"
+            placeholder="Optional note"
             className="flex-1 text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white placeholder-gray-600 focus:outline-none"
             onKeyDown={e => e.key === 'Enter' && save()}
           />
@@ -102,7 +102,7 @@ function BankButton({ genId }: { genId: number }) {
           onClick={() => setShowNotes(true)}
           className="text-xs text-violet-400 hover:text-violet-300 transition"
         >
-          ✨ Garder ce prompt
+          ✨ Keep this prompt
         </button>
       )}
     </div>
@@ -198,14 +198,14 @@ export default function KPIPage() {
   }
 
   const formatDate = (s: string) =>
-    new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    new Date(s).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="min-h-screen">
       {/* Nav */}
       <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
         <Link href="/" className="text-gray-400 hover:text-white transition text-sm">
-          ← Nouveau Run
+          ← New Run
         </Link>
         <Link href="/settings" className="text-gray-400 hover:text-white transition text-sm">
           ⚙️ Settings
@@ -214,7 +214,7 @@ export default function KPIPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold">📊 Résultats</h1>
+          <h1 className="text-xl font-bold">📊 Results</h1>
           <button
             onClick={exportCSV}
             className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white text-sm rounded-lg px-4 py-2 transition"
@@ -242,7 +242,7 @@ export default function KPIPage() {
             onChange={(e) => { setFilterModel(e.target.value); load(selectedRunId, sortBy, e.target.value) }}
             className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
           >
-            <option value="all">Tous modèles</option>
+            <option value="all">All models</option>
             <option value="soul_cinematic">Soul Cinema</option>
             <option value="seedream_v4_5">Seedream 4.5</option>
             <option value="nano_banana_2">Nano Banana</option>
@@ -253,10 +253,10 @@ export default function KPIPage() {
             onChange={(e) => { setSortBy(e.target.value); load(selectedRunId, e.target.value, filterModel) }}
             className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
           >
-            <option value="likes">Trier : likes ↓</option>
-            <option value="comments">Trier : comments ↓</option>
-            <option value="rank">Trier : rang ↑</option>
-            <option value="generated">Trier : plus récents</option>
+            <option value="likes">Sort: likes ↓</option>
+            <option value="comments">Sort: comments ↓</option>
+            <option value="rank">Sort: rank ↑</option>
+            <option value="generated">Sort: most recent</option>
           </select>
         </div>
 
@@ -265,10 +265,10 @@ export default function KPIPage() {
           <div className="grid grid-cols-4 gap-3 mb-6">
             {[
               { label: 'Total', value: data.summary.completed, sub: `${data.summary.failed} failed` },
-              { label: 'Soul Cinema', value: data.summary.soulCinema, sub: 'primaire' },
+              { label: 'Soul Cinema', value: data.summary.soulCinema, sub: 'primary' },
               { label: 'Fallbacks', value: data.summary.fallbacks, sub: 'Seedream + Nano Banana' },
               {
-                label: 'Taux succès',
+                label: 'Success rate',
                 value: `${data.summary.total > 0 ? Math.round((data.summary.completed / data.summary.total) * 100) : 0}%`,
                 sub: `${data.summary.total} posts`
               },
@@ -284,10 +284,10 @@ export default function KPIPage() {
 
         {/* Résultats */}
         {loading ? (
-          <div className="text-center py-20 text-gray-500">⏳ Chargement...</div>
+          <div className="text-center py-20 text-gray-500">⏳ Loading...</div>
         ) : !data?.generations?.length ? (
           <div className="text-center py-20 text-gray-500">
-            Aucune génération complétée pour ce run.
+            No completed generations for this run.
           </div>
         ) : (
           <div className="space-y-3">
@@ -312,7 +312,7 @@ export default function KPIPage() {
 
                       {/* Image générée (Higgsfield) */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-gray-600">Généré</span>
+                        <span className="text-xs text-gray-600">Generated</span>
                         {g.generatedImageUrl ? (
                           <a href={g.generatedImageUrl} target="_blank" rel="noopener noreferrer">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -350,10 +350,10 @@ export default function KPIPage() {
                         <div className="flex items-center gap-3 text-xs flex-shrink-0">
                           {/* Engagement du post source */}
                           <span className="text-red-400 font-medium">
-                            ❤️ {(g.sourceLikes || 0).toLocaleString('fr-FR')}
+                            ❤️ {(g.sourceLikes || 0).toLocaleString('en-US')}
                           </span>
                           <span className="text-gray-500">
-                            💬 {(g.sourceComments || 0).toLocaleString('fr-FR')}
+                            💬 {(g.sourceComments || 0).toLocaleString('en-US')}
                           </span>
                           {g.sourcePostUrl && (
                             <a
@@ -378,7 +378,7 @@ export default function KPIPage() {
                             onClick={() => setExpandedPrompt(expandedPrompt === g.id ? null : g.id)}
                             className="text-xs text-gray-500 hover:text-gray-300 transition mb-1"
                           >
-                            {expandedPrompt === g.id ? '▲ Masquer prompt' : '▼ Voir prompt'}
+                            {expandedPrompt === g.id ? '▲ Hide prompt' : '▼ View prompt'}
                           </button>
                           {expandedPrompt === g.id && (
                             <p className="text-xs text-gray-400 bg-gray-800 rounded-lg p-3 font-mono leading-relaxed">

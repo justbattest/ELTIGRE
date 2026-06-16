@@ -18,13 +18,13 @@ type HistoryEntry = {
 }
 
 const CATEGORIES = [
-  { key: 'conference', label: '🎓 Conférence' },
+  { key: 'conference', label: '🎓 Conference' },
   { key: 'sport',      label: '🏃 Coach' },
   { key: 'golf',       label: '⛳ Golf' },
-  { key: 'nurse',      label: '🏥 Vieux — Infirmière' },
-  { key: 'restaurant', label: '🍽️ Vieux — Restaurant' },
-  { key: 'meteo',      label: '📺 Météo' },
-  { key: 'reporter',   label: '🌪️ Météo — Reporter' },
+  { key: 'nurse',      label: '🏥 Elderly — Nurse' },
+  { key: 'restaurant', label: '🍽️ Elderly — Restaurant' },
+  { key: 'meteo',      label: '📺 Weather' },
+  { key: 'reporter',   label: '🌪️ Weather — Reporter' },
 ] as const
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -103,8 +103,8 @@ export default function PromptLabPage() {
 
   // ── Génération streaming ───────────────────────────────────────────────────
   const generate = async () => {
-    if (!images.length) return setError('Uploade au moins un screenshot.')
-    if (!description.trim()) return setError('Décris la scène.')
+    if (!images.length) return setError('Upload at least one screenshot.')
+    if (!description.trim()) return setError('Describe the scene.')
 
     setError('')
     setAnalysisText('')
@@ -195,7 +195,7 @@ export default function PromptLabPage() {
           }
           saveHistory([entry, ...history])
         } catch {
-          setError('Le JSON généré est invalide — réessaie.')
+          setError('The generated JSON is invalid — please try again.')
         }
       }
 
@@ -239,7 +239,7 @@ export default function PromptLabPage() {
       })
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error)
-      setSaveSuccess(`✅ "${data.title}" ajouté à l'onglet Vidéos !`)
+      setSaveSuccess(`✅ "${data.title}" added to the Videos tab!`)
       setTimeout(() => setShowSaveDialog(false), 2500)
     } catch (e) {
       setSaveSuccess(`❌ ${String(e)}`)
@@ -267,12 +267,12 @@ export default function PromptLabPage() {
 
         <div>
           <h1 className="text-xl font-bold">🧪 Prompt Lab</h1>
-          <p className="text-zinc-400 text-sm mt-1">Upload des screenshots d&apos;une vidéo à reproduire + décris la scène → Claude génère le prompt Seedance parfait.</p>
+          <p className="text-zinc-400 text-sm mt-1">Upload screenshots of a video to reproduce + describe the scene → Claude generates the perfect Seedance prompt.</p>
         </div>
 
         {/* ── Upload screenshots ── */}
         <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] space-y-3">
-          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Screenshots de la vidéo <span className="text-zinc-600 font-normal normal-case">(1–10 frames, dans l&apos;ordre)</span></p>
+          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Video screenshots <span className="text-zinc-600 font-normal normal-case">(1–10 frames, in order)</span></p>
 
           <div
             onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
@@ -282,7 +282,7 @@ export default function PromptLabPage() {
             <input id="pl-file-input" type="file" multiple accept="image/*" className="hidden"
               onChange={e => { if (e.target.files) addFiles(e.target.files) }} />
             <p className="text-zinc-400 text-sm">
-              {images.length > 0 ? `${images.length} frame${images.length > 1 ? 's' : ''} — clique ou glisse pour en ajouter` : 'Glisse tes screenshots ici ou clique'}
+              {images.length > 0 ? `${images.length} frame${images.length > 1 ? 's' : ''} — click or drag to add more` : 'Drop your screenshots here or click'}
             </p>
             <p className="text-zinc-600 text-xs mt-1">JPG · PNG · WEBP · max 10 images</p>
           </div>
@@ -304,11 +304,11 @@ export default function PromptLabPage() {
 
         {/* ── Description ── */}
         <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
-          <p className="text-xs text-zinc-400 mb-3 font-medium uppercase tracking-wider">Description de la scène</p>
+          <p className="text-xs text-zinc-400 mb-3 font-medium uppercase tracking-wider">Scene description</p>
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="Décris ce qui se passe : tenue de la femme, actions, dialogue exact, réactions des autres personnes, ambiance (indoor/outdoor/nuit/jour), effets voulus (culotte visible, jupe qui se lève, distraction)..."
+            placeholder="Describe what happens: the woman's outfit, actions, exact dialogue, reactions from other people, atmosphere (indoor/outdoor/night/day), desired effects (visible underwear, skirt lifting, distraction)..."
             rows={4}
             className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none"
           />
@@ -324,9 +324,9 @@ export default function PromptLabPage() {
             {isRunning ? (
             <span className="flex items-center justify-center gap-2">
               <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-              Analyse en cours...
+              Analyzing...
             </span>
-          ) : 'Analyser & Générer le prompt'}
+          ) : 'Analyze & Generate prompt'}
           </button>
           {isRunning && (
             <button onClick={stopGeneration} className="px-5 py-3 rounded-xl font-semibold text-white bg-red-700 hover:bg-red-600 transition">Stop</button>
@@ -340,7 +340,7 @@ export default function PromptLabPage() {
           <div className="space-y-4">
             {viewingEntry && (
               <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-2 text-xs text-amber-400">
-                📋 Historique {viewingEntry.timestamp} — {viewingEntry.description.slice(0, 60)}
+                📋 History {viewingEntry.timestamp} — {viewingEntry.description.slice(0, 60)}
               </div>
             )}
 
@@ -348,7 +348,7 @@ export default function PromptLabPage() {
             {analysisText && (
               <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07]">
                 <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-                  <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Analyse Claude</p>
+                  <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Claude Analysis</p>
                   {isRunning && <span className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />}
                 </div>
                 <div
@@ -365,12 +365,12 @@ export default function PromptLabPage() {
             {promptJson && (
               <div className="bg-gray-900 rounded-2xl border border-violet-800/50">
                 <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-                  <p className="text-xs text-violet-400 font-medium uppercase tracking-wider">🎬 Prompt Seedance généré</p>
+                  <p className="text-xs text-violet-400 font-medium uppercase tracking-wider">🎬 Seedance Prompt Generated</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(promptJson) }}
                     className="text-xs text-zinc-500 hover:text-zinc-300 transition"
                   >
-                    Copier
+                    Copy
                   </button>
                 </div>
                 <pre className="px-5 pb-4 text-xs text-zinc-300 overflow-x-auto whitespace-pre-wrap">
@@ -392,7 +392,7 @@ export default function PromptLabPage() {
         {/* ── Historique session ── */}
         {history.length > 0 && (
           <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
-            <p className="text-xs text-zinc-400 mb-3 font-medium uppercase tracking-wider">Historique session ({history.length})</p>
+            <p className="text-xs text-zinc-400 mb-3 font-medium uppercase tracking-wider">Session history ({history.length})</p>
             <div className="space-y-2">
               {history.map(entry => (
                 <div key={entry.id} className="flex items-center gap-3 bg-black/40 rounded-xl px-3 py-2">
@@ -406,8 +406,8 @@ export default function PromptLabPage() {
                     <p className="text-xs text-zinc-300 truncate">{entry.description}</p>
                     <p className="text-xs text-zinc-600">{entry.timestamp}</p>
                   </div>
-                  <button onClick={() => reviewEntry(entry)} className="text-xs text-violet-400 hover:text-violet-300 transition whitespace-nowrap">Revoir</button>
-                  <button onClick={() => openSaveDialog(entry.promptJson)} className="text-xs text-emerald-400 hover:text-emerald-300 transition whitespace-nowrap">Sauvegarder</button>
+                  <button onClick={() => reviewEntry(entry)} className="text-xs text-violet-400 hover:text-violet-300 transition whitespace-nowrap">Review</button>
+                  <button onClick={() => openSaveDialog(entry.promptJson)} className="text-xs text-emerald-400 hover:text-emerald-300 transition whitespace-nowrap">Save</button>
                 </div>
               ))}
             </div>
@@ -421,11 +421,11 @@ export default function PromptLabPage() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900/90 border border-white/[0.08] rounded-2xl p-6 w-full max-w-md space-y-4">
             <h2 className="font-bold text-lg">💾 Save to Video</h2>
-            <p className="text-xs text-zinc-500">Ce prompt apparaîtra dans l&apos;onglet Vidéos avec ton nom.</p>
+            <p className="text-xs text-zinc-500">This prompt will appear in the Videos tab with your name.</p>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Ton prénom / pseudo</label>
+                <label className="block text-xs text-zinc-400 mb-1">Your first name / username</label>
                 <input
                   type="text"
                   value={saveAuthor}
@@ -435,18 +435,18 @@ export default function PromptLabPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Description courte du concept</label>
+                <label className="block text-xs text-zinc-400 mb-1">Short concept description</label>
                 <input
                   type="text"
                   value={saveDescription}
                   onChange={e => setSaveDescription(e.target.value.slice(0, 80))}
-                  placeholder="Femme dos au public, culotte visible, copine réagit..."
+                  placeholder="Woman with back to audience, visible underwear, friend reacts..."
                   className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm"
                 />
                 <p className="text-xs text-zinc-600 mt-0.5">{saveDescription.length}/80</p>
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Catégorie</label>
+                <label className="block text-xs text-zinc-400 mb-1">Category</label>
                 <select
                   value={saveCategoryKey}
                   onChange={e => setSaveCategoryKey(e.target.value)}
@@ -455,7 +455,7 @@ export default function PromptLabPage() {
                   {CATEGORIES.map(c => (
                     <option key={c.key} value={c.key}>{c.label}</option>
                   ))}
-                  <option value="custom">➕ Nouvelle catégorie...</option>
+                  <option value="custom">➕ New category...</option>
                 </select>
               </div>
             </div>
@@ -463,10 +463,10 @@ export default function PromptLabPage() {
             {saveCategoryKey === 'custom' && (
               <div className="space-y-2 p-3 bg-black/40 rounded-xl">
                 <input type="text" value={customLabel} onChange={e => setCustomLabel(e.target.value)}
-                  placeholder="Nom de la catégorie (ex: Cuisine, Voiture...)"
+                  placeholder="Category name (e.g. Cooking, Car...)"
                   className="w-full bg-zinc-900 border border-white/[0.08] rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 text-sm" />
                 <input type="text" value={customNiche} onChange={e => setCustomNiche(e.target.value)}
-                  placeholder="Clé interne (ex: cuisine, voiture — sans espaces)"
+                  placeholder="Internal key (e.g. cooking, car — no spaces)"
                   className="w-full bg-zinc-900 border border-white/[0.08] rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 text-sm font-mono" />
               </div>
             )}
@@ -480,7 +480,7 @@ export default function PromptLabPage() {
                 onClick={() => setShowSaveDialog(false)}
                 className="flex-1 py-2 rounded-xl text-sm text-zinc-400 bg-white/[0.05] hover:bg-white/[0.08] transition"
               >
-                Annuler
+                Cancel
               </button>
               <button
                 onClick={saveToVideo}
@@ -490,9 +490,9 @@ export default function PromptLabPage() {
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                    Sauvegarde...
+                    Saving...
                   </span>
-                ) : 'Sauvegarder'}
+                ) : 'Save'}
               </button>
             </div>
           </div>

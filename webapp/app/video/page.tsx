@@ -35,11 +35,11 @@ const GOLF_OUTFITS = [
 ]
 
 const NURSE_OUTFITS = [
-  { label: 'Uniforme blanc deep-V + black heels', value: 'extremely short white nurse uniform deep V-neckline hemline top of thighs, black heels' },
-  { label: 'Uniforme rose pastel + nude heels', value: 'extremely short pastel pink nurse uniform deep open neckline hemline top of thighs, nude heels' },
+  { label: 'White deep-V uniform + black heels', value: 'extremely short white nurse uniform deep V-neckline hemline top of thighs, black heels' },
+  { label: 'Pastel pink uniform + nude heels', value: 'extremely short pastel pink nurse uniform deep open neckline hemline top of thighs, nude heels' },
   { label: 'Scrubs navy fitted + black heels', value: 'extremely short fitted navy scrubs deep open neckline hemline top of thighs, black heels' },
-  { label: 'Uniforme bleu clair + white heels', value: 'extremely short light blue nurse uniform deep plunging neckline hemline top of thighs, white heels' },
-  { label: 'Uniforme menthe pale + black stilettos', value: 'extremely short pale mint nurse uniform deep V-neckline hemline top of thighs, black stiletto heels' },
+  { label: 'Light blue uniform + white heels', value: 'extremely short light blue nurse uniform deep plunging neckline hemline top of thighs, white heels' },
+  { label: 'Pale mint uniform + black stilettos', value: 'extremely short pale mint nurse uniform deep V-neckline hemline top of thighs, black stiletto heels' },
 ]
 
 const RESTAURANT_OUTFITS = [
@@ -85,20 +85,20 @@ const SERVEUSE_OUTFITS = [
 ]
 
 const MCDO_OUTFITS = [
-  { label: 'Polo gris + queue blonde (original)', value: 'fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings' },
-  { label: 'Polo noir + brune', value: 'fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, dark brown hair in high ponytail with loose strands framing face, small silver hoop earrings' },
-  { label: 'Polo rouge + casquette McDo', value: 'fitted red polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, red baseball cap with golden M logo, dark hair in low ponytail, small gold stud earrings' },
-  { label: 'Polo gris + rousse cheveux longs', value: 'fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, long wavy red hair loose past shoulders, small gold hoop earrings' },
-  { label: 'Polo bleu marine + chignon + lanyard', value: "fitted navy blue polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in messy bun with loose strands framing face, small gold hoop earrings, McDonald's branded lanyard around neck" },
-  { label: "Polo noir + casquette à l'envers", value: 'fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, black baseball cap with golden M logo worn backwards, long dark wavy hair underneath, small gold hoop earrings' },
+  { label: 'Grey polo + blonde ponytail (original)', value: 'fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in high ponytail with loose strands framing face, small gold hoop earrings' },
+  { label: 'Black polo + brunette', value: 'fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, dark brown hair in high ponytail with loose strands framing face, small silver hoop earrings' },
+  { label: 'Red polo + McDo cap', value: 'fitted red polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, red baseball cap with golden M logo, dark hair in low ponytail, small gold stud earrings' },
+  { label: 'Grey polo + long red hair', value: 'fitted dark grey polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, long wavy red hair loose past shoulders, small gold hoop earrings' },
+  { label: 'Navy polo + bun + lanyard', value: "fitted navy blue polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, blonde hair in messy bun with loose strands framing face, small gold hoop earrings, McDonald's branded lanyard around neck" },
+  { label: 'Black polo + backwards cap', value: 'fitted black polo shirt with golden M logo on chest, deep open V-neck showing prominent cleavage, short sleeves, black baseball cap with golden M logo worn backwards, long dark wavy hair underneath, small gold hoop earrings' },
 ]
 
 const SKATEPARK_OUTFITS = [
-  { label: 'Mini jupe + crop top noir, brune (original)', value: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair' },
-  { label: 'Jupe en jean + crop top blanc, blonde', value: 'very short denim mini skirt, tight white deep V-neck crop top deep cleavage, long blonde wavy hair' },
-  { label: 'Jupe plissée noire + crop top gris, queue haute', value: 'very short black pleated mini skirt, tight grey deep V-neck crop top deep cleavage, long dark hair in high ponytail' },
-  { label: 'Jupe rose + crop top noir, châtain', value: 'very short pink mini skirt, tight black deep V-neck crop top deep cleavage, long brown wavy hair' },
-  { label: 'Jupe blanche + crop top rouge, brune', value: 'very short white mini skirt, tight red deep V-neck crop top deep cleavage, long dark wavy hair' },
+  { label: 'Mini skirt + black crop top, brunette (original)', value: 'very short mini skirt, tight deep V-neck crop top deep cleavage, long dark wavy hair' },
+  { label: 'Denim skirt + white crop top, blonde', value: 'very short denim mini skirt, tight white deep V-neck crop top deep cleavage, long blonde wavy hair' },
+  { label: 'Black pleated skirt + gray crop top, high ponytail', value: 'very short black pleated mini skirt, tight grey deep V-neck crop top deep cleavage, long dark hair in high ponytail' },
+  { label: 'Pink skirt + black crop top, brunette', value: 'very short pink mini skirt, tight black deep V-neck crop top deep cleavage, long brown wavy hair' },
+  { label: 'White skirt + red crop top, dark hair', value: 'very short white mini skirt, tight red deep V-neck crop top deep cleavage, long dark wavy hair' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -106,11 +106,11 @@ const SKATEPARK_OUTFITS = [
 function SubNicheLabel({ subNiche }: { subNiche: string }) {
   if (subNiche === 'sport') return <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400 font-medium">🏃 Coach</span>
   if (subNiche === 'golf') return <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400 font-medium">⛳ Golf</span>
-  if (subNiche === 'nurse') return <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-400 font-medium">🏥 Infirmière</span>
+  if (subNiche === 'nurse') return <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-400 font-medium">🏥 Nurse</span>
   if (subNiche === 'restaurant') return <span className="text-xs px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-400 font-medium">🍽️ Restaurant</span>
-  if (subNiche === 'meteo') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">📺 Météo</span>
+  if (subNiche === 'meteo') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">📺 Weather</span>
   if (subNiche === 'reporter') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">🌪️ Reporter</span>
-  if (subNiche === 'serveuse') return <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-400 font-medium">🍾 Serveuse</span>
+  if (subNiche === 'serveuse') return <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-400 font-medium">🍾 Waitress</span>
   if (subNiche === 'mcdo') return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-900/50 text-yellow-400 font-medium">🍔 McDo</span>
   if (subNiche === 'skatepark') return <span className="text-xs px-1.5 py-0.5 rounded bg-rose-900/50 text-rose-400 font-medium">🛴 Skatepark</span>
   return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
@@ -187,7 +187,7 @@ export default function VideoPage() {
     try {
       const res = await fetch('/api/characters/scan-elements')
       const data = await res.json()
-      if (!res.ok) { setCharsError(data.error || 'Scan échoué'); return }
+      if (!res.ok) { setCharsError(data.error || 'Scan failed'); return }
       // Recharger la liste après scan
       loadChars()
     } catch (e) {
@@ -267,7 +267,7 @@ export default function VideoPage() {
 
   // ── Launch ──
   const launch = async () => {
-    if (!selectedElementId) return setLaunchError('Sélectionner un personnage')
+    if (!selectedElementId) return setLaunchError('Select a character')
     setLaunchError('')
     setLaunching(true)
 
@@ -276,7 +276,7 @@ export default function VideoPage() {
 
       if (uiMode === 'direct') {
         if (!selectedIds.size) {
-          setLaunchError('Sélectionner au moins un prompt')
+          setLaunchError('Select at least one prompt')
           setLaunching(false)
           return
         }
@@ -290,7 +290,7 @@ export default function VideoPage() {
         }
       } else {
         if (!varBaseId) {
-          setLaunchError('Sélectionner un prompt de base')
+          setLaunchError('Select a base prompt')
           setLaunching(false)
           return
         }
@@ -313,13 +313,13 @@ export default function VideoPage() {
       })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setLaunchError(data.error || 'Erreur lors du lancement')
+        setLaunchError(data.error || 'Error launching')
         setLaunching(false)
         return
       }
-      // Succès — rester sur la page pour pouvoir relancer immédiatement
+      // Success — stay on page to allow relaunching immediately
       setLaunching(false)
-      setLaunchSuccess('Run lancé ✓')
+      setLaunchSuccess('Run started ✓')
       setTimeout(() => setLaunchSuccess(''), 3000)
     } catch (e) {
       setLaunchError(String(e))
@@ -329,8 +329,8 @@ export default function VideoPage() {
 
   // ── Launch Random ──
   const launchRandom = async () => {
-    if (!selectedElementId) return setLaunchError('Sélectionner un personnage.')
-    if (filteredPrompts.length === 0) return setLaunchError('Aucun prompt disponible pour cette niche.')
+    if (!selectedElementId) return setLaunchError('Select a character.')
+    if (filteredPrompts.length === 0) return setLaunchError('No prompts available for this niche.')
 
     setLaunchError('')
     setLaunchSuccess('')
@@ -360,12 +360,12 @@ export default function VideoPage() {
       })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setLaunchError(data.error || 'Erreur lors du lancement')
+        setLaunchError(data.error || 'Error launching')
       } else {
-        setLaunchSuccess(`✓ ${ids.length} vidéo${ids.length > 1 ? 's' : ''} lancée${ids.length > 1 ? 's' : ''} — prompts aléatoires`)
+        setLaunchSuccess(`✓ ${ids.length} video${ids.length > 1 ? 's' : ''} launched — random prompts`)
       }
     } catch {
-      setLaunchError('Erreur réseau')
+      setLaunchError('Network error')
     } finally {
       setLaunching(false)
     }
@@ -382,12 +382,12 @@ export default function VideoPage() {
         {/* ── Sélecteur de niche — 3 onglets séparés ── */}
         <div className="flex gap-2 flex-wrap">
           {([
-            { id: 'conference' as const, emoji: '🎓', label: 'Conférence' },
+            { id: 'conference' as const, emoji: '🎓', label: 'Conference' },
             { id: 'sport' as const,      emoji: '🏃', label: 'Coach' },
             { id: 'golf' as const,       emoji: '⛳', label: 'Golf' },
-            { id: 'vieux' as const,      emoji: '👴', label: 'Vieux' },
-            { id: 'meteo' as const,      emoji: '📺', label: 'Météo' },
-            { id: 'serveuse' as const,   emoji: '🍾', label: 'Serveuse' },
+            { id: 'vieux' as const,      emoji: '👴', label: 'Old' },
+            { id: 'meteo' as const,      emoji: '📺', label: 'Weather' },
+            { id: 'serveuse' as const,   emoji: '🍾', label: 'Waitress' },
             { id: 'mcdo' as const,       emoji: '🍔', label: 'McDo' },
             { id: 'skatepark' as const,  emoji: '🛴', label: 'Skatepark' },
           ]).map(n => (
@@ -408,7 +408,7 @@ export default function VideoPage() {
         {/* ── Personnage ── */}
         <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Personnage</p>
+            <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Character</p>
             <button
               onClick={scanFromHiggsfield}
               disabled={scanning || loadingChars}
@@ -417,17 +417,17 @@ export default function VideoPage() {
               {scanning ? (
                 <>
                   <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                  Scan en cours...
+                  Scanning...
                 </>
-              ) : 'Scanner depuis Higgsfield'}
+              ) : 'Scan from Higgsfield'}
             </button>
           </div>
           {loadingChars || scanning ? (
-            <p className="text-xs text-zinc-500">{scanning ? 'Scan en cours...' : 'Chargement...'}</p>
+            <p className="text-xs text-zinc-500">{scanning ? 'Scanning...' : 'Loading...'}</p>
           ) : charsError ? (
             <p className="text-xs text-red-400">{charsError}</p>
           ) : refElements.length === 0 ? (
-            <p className="text-xs text-zinc-500">Aucun Reference Element trouvé. Clique sur "Scanner Higgsfield" pour charger tes personnages.</p>
+            <p className="text-xs text-zinc-500">No Reference Element found. Click "Scan from Higgsfield" to load your characters.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {refElements.map(e => (
@@ -453,7 +453,7 @@ export default function VideoPage() {
         <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] flex items-center gap-6">
           <div className="flex-1">
             <label className="block text-xs text-zinc-400 mb-1.5">
-              Durée vidéo : <span className="text-white font-medium">{duration}s</span>
+              Video duration: <span className="text-white font-medium">{duration}s</span>
             </label>
             <input type="range" min={3} max={15} value={duration}
               onChange={e => setDuration(Number(e.target.value))}
@@ -473,7 +473,7 @@ export default function VideoPage() {
                 ? 'bg-violet-600 border-violet-500 text-white'
                 : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
             }`}>
-            🎯 Directs — prompt exact
+            🎯 Direct — exact prompt
           </button>
           <button onClick={() => setUiMode('variation')}
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
@@ -481,7 +481,7 @@ export default function VideoPage() {
                 ? 'bg-violet-600 border-violet-500 text-white'
                 : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
             }`}>
-            🔀 Variations — outfit + réplique
+            🔀 Variations — outfit + line
           </button>
           <button
             onClick={() => setUiMode('random')}
@@ -491,7 +491,7 @@ export default function VideoPage() {
                 : 'text-zinc-500 hover:text-zinc-200 bg-white/[0.03] border border-white/[0.07]'
             }`}
           >
-            🎲 Aléatoire
+            🎲 Random
           </button>
         </div>
 
@@ -504,11 +504,11 @@ export default function VideoPage() {
             {/* Header + filtres */}
             <div className="p-5 border-b border-white/[0.07] flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-white">Prompts validés</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Chaque prompt est généré copie exacte — zéro modification.</p>
+                <p className="text-sm font-semibold text-white">Validated prompts</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Each prompt is generated as an exact copy — zero modification.</p>
               </div>
               <span className="text-xs text-zinc-500">
-                {niche === 'conference' ? '🎓 Conférence' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Météo' : niche === 'serveuse' ? '🍾 Serveuse' : niche === 'mcdo' ? '🍔 McDo' : niche === 'skatepark' ? '🛴 Skatepark' : '👴 Vieux'}
+                {niche === 'conference' ? '🎓 Conference' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Weather' : niche === 'serveuse' ? '🍾 Waitress' : niche === 'mcdo' ? '🍔 McDo' : niche === 'skatepark' ? '🛴 Skatepark' : '👴 Old'}
               </span>
             </div>
 
@@ -516,19 +516,19 @@ export default function VideoPage() {
             <div className="px-5 py-3 border-b border-white/[0.07] flex items-center justify-between">
               <button onClick={toggleSelectAll} className="text-xs text-violet-400 hover:text-violet-300 transition">
                 {selectedIds.size === filteredPrompts.length && filteredPrompts.length > 0
-                  ? '☑ Tout désélectionner' : '☐ Tout sélectionner'}
+                  ? '☑ Deselect all' : '☐ Select all'}
               </button>
               <span className="text-xs text-zinc-500">
-                {selectedIds.size} / {filteredPrompts.length} sélectionné{selectedIds.size > 1 ? 's' : ''}
+                {selectedIds.size} / {filteredPrompts.length} selected
               </span>
             </div>
 
             {/* Liste */}
             <div className="divide-y divide-white/[0.06]">
               {loadingPrompts ? (
-                <div className="p-6 text-center text-xs text-zinc-500">Chargement des prompts...</div>
+                <div className="p-6 text-center text-xs text-zinc-500">Loading prompts...</div>
               ) : filteredPrompts.length === 0 ? (
-                <div className="p-6 text-center text-xs text-zinc-500">Aucun prompt pour cette niche.</div>
+                <div className="p-6 text-center text-xs text-zinc-500">No prompts for this niche.</div>
               ) : (
                 filteredPrompts.map(p => (
                   <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
@@ -571,13 +571,13 @@ export default function VideoPage() {
                           <button
                             onClick={async (e) => {
                               e.preventDefault()
-                              if (!confirm('Supprimer ce prompt ?')) return
+                              if (!confirm('Delete this prompt?')) return
                               await fetch(`/api/video/validated-prompts/${p.id}`, { method: 'DELETE' })
                               setPrompts(prev => prev.filter(x => x.id !== p.id))
                               setSelectedIds(prev => { const s = new Set(prev); s.delete(p.id); return s })
                             }}
                             className="text-gray-700 hover:text-red-400 transition text-xs"
-                            title="Supprimer ce prompt communautaire"
+                            title="Delete this community prompt"
                           >🗑</button>
                         </div>
                       )}
@@ -591,7 +591,7 @@ export default function VideoPage() {
             <div className="p-5 border-t border-white/[0.07] space-y-4">
               <div>
                 <p className="text-xs text-zinc-400 mb-2">
-                  Générer <span className="text-white font-medium">×{batchCount}</span> fois chaque prompt sélectionné
+                  Generate <span className="text-white font-medium">×{batchCount}</span> times each selected prompt
                 </p>
                 <div className="flex bg-white/[0.03] border border-white/[0.07] rounded-xl p-1 gap-1">
                   {[1, 2, 3, 5].map(n => (
@@ -608,7 +608,7 @@ export default function VideoPage() {
               {launchSuccess && (
                 <p className="text-sm text-emerald-400 flex items-center gap-2">
                   {launchSuccess}
-                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ En cours</a>
+                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
                 </p>
               )}
               <button onClick={launch}
@@ -617,9 +617,9 @@ export default function VideoPage() {
                 {launching ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                    Lancement en cours...
+                    Launching...
                   </span>
-                ) : `Générer ${totalDirect} vidéo${totalDirect > 1 ? 's' : ''} — ${selectedIds.size} prompt${selectedIds.size > 1 ? 's' : ''} × ${batchCount}`}
+                ) : `Generate ${totalDirect} video${totalDirect > 1 ? 's' : ''} — ${selectedIds.size} prompt${selectedIds.size > 1 ? 's' : ''} × ${batchCount}`}
               </button>
             </div>
           </div>
@@ -637,21 +637,21 @@ export default function VideoPage() {
 
             {/* Info */}
             <div className="bg-amber-950/30 border border-amber-800/50 rounded-xl px-4 py-3">
-              <p className="text-xs text-amber-300 font-medium mb-0.5">Variations ultra-légères — structure du prompt intacte</p>
+              <p className="text-xs text-amber-300 font-medium mb-0.5">Ultra-light variations — prompt structure unchanged</p>
               <p className="text-xs text-amber-400/70">
-                Seuls l&apos;outfit et la réplique changent. Répliques calibrées sur LE contexte exact du concept. 🔴 Culotte rouge : toujours fixe.
+                Only the outfit and line change. Lines calibrated to the exact context of the concept. 🔴 Red underwear: always fixed.
               </p>
             </div>
 
             {/* ── ÉTAPE 1 : Sélectionner le concept de base ── */}
             <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
               <div className="px-5 py-4 border-b border-white/[0.07]">
-                <p className="text-sm font-semibold text-white">① Choisir le concept de base</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Les répliques et l&apos;outfit pool s&apos;adaptent automatiquement au concept sélectionné.</p>
+                <p className="text-sm font-semibold text-white">① Choose the base concept</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Lines and outfit pool adapt automatically to the selected concept.</p>
               </div>
               <div className="divide-y divide-white/[0.06] max-h-72 overflow-y-auto">
                 {loadingPrompts ? (
-                  <div className="p-4 text-center text-xs text-zinc-500">Chargement...</div>
+                  <div className="p-4 text-center text-xs text-zinc-500">Loading...</div>
                 ) : (
                   prompts.map(p => (
                     <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
@@ -669,7 +669,7 @@ export default function VideoPage() {
                           </span>
                           <SubNicheLabel subNiche={p.subNiche} />
                           {!p.phraseVariations && (
-                            <span className="text-xs text-zinc-600 italic">outfit uniquement</span>
+                            <span className="text-xs text-zinc-600 italic">outfit only</span>
                           )}
                         </div>
                         {p.userDescription ? (
@@ -691,10 +691,10 @@ export default function VideoPage() {
             {varBaseId && currentPhrasePool && (
               <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
                 <div className="px-5 py-4 border-b border-white/[0.07]">
-                  <p className="text-sm font-semibold text-white">② Réplique</p>
+                  <p className="text-sm font-semibold text-white">② Line</p>
                   <p className="text-xs text-zinc-500 mt-0.5">
-                    {currentPhrasePool.length} répliques calibrées sur ce concept précis.
-                    En mode aléatoire, elles tournent sans répétition.
+                    {currentPhrasePool.length} lines calibrated to this specific concept.
+                    In random mode, they cycle without repetition.
                   </p>
                 </div>
                 <div className="divide-y divide-white/[0.06] max-h-80 overflow-y-auto">
@@ -706,9 +706,9 @@ export default function VideoPage() {
                       checked={varPhrase === ''}
                       onChange={() => setVarPhrase('')}
                       className="accent-violet-500 w-4 h-4 shrink-0" />
-                    <span className="text-sm text-zinc-200">🎲 Aléatoire — cycle sans répétition</span>
+                    <span className="text-sm text-zinc-200">🎲 Random — cycle without repetition</span>
                   </label>
-                  {/* Phrases dédiées */}
+                  {/* Dedicated lines */}
                   {currentPhrasePool.map((ph, i) => (
                     <label key={i} className={`flex items-start gap-3 px-5 py-3 cursor-pointer transition ${
                       varPhrase === ph ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
@@ -732,9 +732,9 @@ export default function VideoPage() {
                     <p className="text-sm font-semibold text-white">
                       {currentPhrasePool ? '③' : '②'} Outfit
                     </p>
-                    <p className="text-xs text-zinc-500 mt-0.5">Pool adapté à la niche du concept.</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">Pool adapted to the concept's niche.</p>
                   </div>
-                  <span className="text-xs text-zinc-600">🔴 Culotte rouge — fixe</span>
+                  <span className="text-xs text-zinc-600">🔴 Red underwear — fixed</span>
                 </div>
                 <div className="divide-y divide-white/[0.06]">
                   <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
@@ -744,7 +744,7 @@ export default function VideoPage() {
                       checked={varOutfit === ''}
                       onChange={() => setVarOutfit('')}
                       className="accent-violet-500 w-4 h-4 shrink-0" />
-                    <span className="text-sm text-zinc-200">🎲 Aléatoire — cycle sans répétition</span>
+                    <span className="text-sm text-zinc-200">🎲 Random — cycle without repetition</span>
                   </label>
                   {outfitPool.map(o => (
                     <label key={o.value} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
@@ -765,9 +765,9 @@ export default function VideoPage() {
             <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] space-y-4">
               <div>
                 <p className="text-xs text-zinc-400 mb-2">
-                  Générer <span className="text-white font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} de ce concept
+                  Generate <span className="text-white font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} of this concept
                   {varBatchCount > 1 && currentPhrasePool && (
-                    <span className="text-zinc-600"> — répliques et outfits différents à chaque fois</span>
+                    <span className="text-zinc-600"> — different lines and outfits each time</span>
                   )}
                 </p>
                 <div className="flex gap-2">
@@ -783,13 +783,13 @@ export default function VideoPage() {
               </div>
 
               {!varBaseId && (
-                <p className="text-xs text-zinc-600 italic">← Sélectionner un concept de base pour continuer</p>
+                <p className="text-xs text-zinc-600 italic">← Select a base concept to continue</p>
               )}
               {launchError && <p className="text-sm text-red-400">{launchError}</p>}
               {launchSuccess && (
                 <p className="text-sm text-emerald-400 flex items-center gap-2">
                   {launchSuccess}
-                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ En cours</a>
+                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
                 </p>
               )}
 
@@ -799,11 +799,11 @@ export default function VideoPage() {
                 {launching ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                    Lancement en cours...
+                    Launching...
                   </span>
                 ) : varBaseId
-                    ? `Générer ${totalVar} variation${totalVar > 1 ? 's' : ''}`
-                    : 'Lancer'}
+                    ? `Generate ${totalVar} variation${totalVar > 1 ? 's' : ''}`
+                    : 'Launch'}
               </button>
             </div>
 
@@ -814,17 +814,17 @@ export default function VideoPage() {
         {uiMode === 'random' && (
           <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-2xl overflow-hidden">
             <div className="p-5 border-b border-white/[0.06]">
-              <p className="text-sm font-semibold text-white">Génération aléatoire</p>
+              <p className="text-sm font-semibold text-white">Random generation</p>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Tire {randomCount} prompt{randomCount > 1 ? 's' : ''} au hasard dans la niche sélectionnée et génère 1 vidéo par prompt.
+                Picks {randomCount} random prompt{randomCount > 1 ? 's' : ''} from the selected niche and generates 1 video per prompt.
               </p>
             </div>
             <div className="p-5 space-y-4">
               <div>
                 <p className="text-xs text-zinc-400 mb-2">
-                  Nombre de vidéos : <span className="text-white font-medium">{randomCount}</span>
+                  Number of videos: <span className="text-white font-medium">{randomCount}</span>
                   {filteredPrompts.length > 0 && (
-                    <span className="text-zinc-600 ml-1">({filteredPrompts.length} prompts disponibles)</span>
+                    <span className="text-zinc-600 ml-1">({filteredPrompts.length} prompts available)</span>
                   )}
                 </p>
                 <div className="flex items-center gap-3">
@@ -843,7 +843,7 @@ export default function VideoPage() {
               {launchSuccess && (
                 <p className="text-sm text-emerald-400 flex items-center gap-2">
                   {launchSuccess}
-                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ En cours</a>
+                  <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
                 </p>
               )}
               <button
@@ -852,8 +852,8 @@ export default function VideoPage() {
                 className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {launching
-                  ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Lancement...</span>
-                  : `🎲 Générer ${Math.min(randomCount, filteredPrompts.length)} vidéo${Math.min(randomCount, filteredPrompts.length) > 1 ? 's' : ''} aléatoires`
+                  ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Launching...</span>
+                  : `🎲 Generate ${Math.min(randomCount, filteredPrompts.length)} random video${Math.min(randomCount, filteredPrompts.length) > 1 ? 's' : ''}`
                 }
               </button>
             </div>

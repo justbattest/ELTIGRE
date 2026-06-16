@@ -172,7 +172,7 @@ export default function SettingsPage() {
       )
 
       if (!popup) {
-        setDriveError('Popup bloquée par le navigateur — autorise les popups pour localhost:3000')
+        setDriveError('Popup blocked by the browser — allow popups for localhost:3000')
         setDriveAuthState('error')
         return
       }
@@ -200,7 +200,7 @@ export default function SettingsPage() {
       }, 1000)
 
     } catch {
-      setDriveError('Erreur réseau inattendue')
+      setDriveError('Unexpected network error')
       setDriveAuthState('error')
     }
   }
@@ -232,7 +232,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/characters/scan-elements')
       const data = await res.json()
       if (!res.ok || data.error) {
-        setScanError(data.error || 'Erreur lors du scan')
+        setScanError(data.error || 'Scan error')
         return
       }
       const scanned: RefElement[] = (data.elements || []).map((e: { id: string; name: string }) => ({
@@ -244,7 +244,7 @@ export default function SettingsPage() {
       const newOnes = scanned.filter(e => !existingIds.has(e.id))
       setReferenceElements([...referenceElements, ...newOnes])
       if (newOnes.length === 0 && scanned.length > 0) {
-        setScanError(`${scanned.length} personnage(s) trouvé(s) — déjà tous présents.`)
+        setScanError(`${scanned.length} character(s) found — all already added.`)
       }
     } catch (e) {
       setScanError(String(e))
@@ -258,7 +258,7 @@ export default function SettingsPage() {
       {/* Nav */}
       <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-gray-400 hover:text-white transition text-sm">← Nouveau Run</Link>
+          <Link href="/" className="text-gray-400 hover:text-white transition text-sm">← New Run</Link>
           <span className="text-gray-600">|</span>
           <Link href="/kpi" className="text-gray-400 hover:text-white transition text-sm">📊 KPI</Link>
         </div>
@@ -268,14 +268,14 @@ export default function SettingsPage() {
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="text-gray-500 hover:text-gray-300 text-sm transition"
           >
-            Déconnexion
+            Sign out
           </button>
         </div>
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="text-xl font-bold mb-6 flex items-center gap-2">
-          ⚙️ Paramètres
+          ⚙️ Settings
         </h1>
 
         <div className="space-y-6">
@@ -283,14 +283,14 @@ export default function SettingsPage() {
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <h2 className="font-medium mb-1 text-gray-200">
               🔍 HikerAPI — Scraping Instagram
-              <span className="ml-2 text-xs bg-green-900/40 text-green-400 border border-green-800 px-2 py-0.5 rounded-full font-normal">Recommandé</span>
+              <span className="ml-2 text-xs bg-green-900/40 text-green-400 border border-green-800 px-2 py-0.5 rounded-full font-normal">Recommended</span>
             </h2>
             <p className="text-gray-500 text-xs mb-3">
-              Méthode principale pour le scraping — proxies résidentiels inclus, fonctionne depuis Railway sans configuration. $0.0006/requête (≈ $0.20/mois).{' '}
+              Primary scraping method — residential proxies included, works on Railway without any extra setup. $0.0006/request (≈ $0.20/month).{' '}
               <a href="https://hikerapi.com/p/hsazcgym" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 underline">
                 hikerapi.com
               </a>
-              {' '}→ Tokens → copier l'Access Key.
+              {' '}→ Tokens → copy the Access Key.
             </p>
             <input
               type="password"
@@ -300,7 +300,7 @@ export default function SettingsPage() {
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
             />
             {hikerApiKey && !hikerApiKey.includes('...') && (
-              <p className="text-green-500 text-xs mt-1.5">✓ HikerAPI configuré — scraping via proxies managés</p>
+              <p className="text-green-500 text-xs mt-1.5">✓ HikerAPI configured — scraping via managed proxies</p>
             )}
           </div>
 
@@ -326,7 +326,7 @@ export default function SettingsPage() {
               <span className="ml-2 text-xs bg-blue-900/40 text-blue-400 border border-blue-800 px-2 py-0.5 rounded-full font-normal">Motion Control</span>
             </h2>
             <p className="text-gray-500 text-xs mb-3">
-              Requis pour Motion Control (Kling 3.0). Crée une clé sur{' '}
+              Required for Motion Control (Kling 3.0). Create a key at{' '}
               <a href="https://app.klingai.com/dev" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 underline">
                 app.klingai.com/dev
               </a>
@@ -364,44 +364,44 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-green-400 text-sm">
                   <span>✅</span>
-                  <span>Connecté</span>
+                  <span>Connected</span>
                 </div>
                 <button
                   onClick={startHiggsAuth}
                   className="text-xs text-gray-500 hover:text-gray-300 transition"
                 >
-                  Reconnecter
+                  Reconnect
                 </button>
               </div>
             ) : higgsAuthState === 'waiting' ? (
               <div className="space-y-3">
-                <p className="text-sm text-amber-400">⏳ En attente d'approbation...</p>
+                <p className="text-sm text-amber-400">⏳ Waiting for approval...</p>
                 <a
                   href={higgsDeviceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition"
                 >
-                  🔗 Autoriser sur Higgsfield
+                  🔗 Authorize on Higgsfield
                 </a>
                 <p className="text-gray-500 text-xs break-all">{higgsDeviceUrl}</p>
               </div>
             ) : higgsAuthState === 'approved' ? (
-              <div className="text-green-400 text-sm">✅ Higgsfield connecté !</div>
+              <div className="text-green-400 text-sm">✅ Higgsfield connected!</div>
             ) : (
               <div className="space-y-2">
                 <p className="text-gray-400 text-sm">
-                  Connectez votre compte Higgsfield en 1 clic — aucun token à copier.
+                  Connect your Higgsfield account in one click — no token copying needed.
                 </p>
                 <button
                   onClick={startHiggsAuth}
                   disabled={higgsAuthState === 'starting'}
                   className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 border border-gray-700 text-white text-sm rounded-lg px-4 py-2 transition"
                 >
-                  {higgsAuthState === 'starting' ? '⏳ Démarrage...' : '🔗 Connecter Higgsfield'}
+                  {higgsAuthState === 'starting' ? '⏳ Starting...' : '🔗 Connect Higgsfield'}
                 </button>
                 {higgsAuthState === 'error' && (
-                  <p className="text-red-400 text-xs">Erreur lors de la connexion. Réessayez.</p>
+                  <p className="text-red-400 text-xs">Connection error. Try again.</p>
                 )}
               </div>
             )}
@@ -414,15 +414,15 @@ export default function SettingsPage() {
                   <span className="text-xs bg-violet-900/40 text-violet-400 border border-violet-800 px-2 py-0.5 rounded-full font-normal">Motion Control</span>
                 </label>
                 {higgsClerkConnected && (
-                  <span className="text-green-400 text-xs">✅ Token actif</span>
+                  <span className="text-green-400 text-xs">✅ Token active</span>
                 )}
               </div>
               <p className="text-gray-500 text-xs mb-2">
-                Requis pour Kling Motion Control. Ouvre <strong className="text-gray-400">higgsfield.ai</strong> → F12 → Onglet Réseau → n&apos;importe quelle requête vers <code className="text-violet-400">fnf.higgsfield.ai</code> → En-têtes de requête → copie la valeur après <code className="text-violet-400">Authorization: Bearer </code> (commence par <code className="text-violet-400">eyJ...</code>).
+                Required for Kling Motion Control. Open <strong className="text-gray-400">higgsfield.ai</strong> → F12 → Network tab → any request to <code className="text-violet-400">fnf.higgsfield.ai</code> → Request Headers → copy the value after <code className="text-violet-400">Authorization: Bearer </code> (starts with <code className="text-violet-400">eyJ...</code>).
               </p>
               <input
                 type="password"
-                placeholder={higgsClerkConnected ? '••••••••••••  (token actif, colle pour remplacer)' : 'eyJ... (colle ton Clerk JWT ici)'}
+                placeholder={higgsClerkConnected ? '••••••••••••  (token active, paste to replace)' : 'eyJ... (paste your Clerk JWT here)'}
                 value={higgsClerkToken}
                 onChange={(e) => setHiggsClerkToken(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 font-mono"
@@ -437,15 +437,15 @@ export default function SettingsPage() {
               <button
                 onClick={scanElements}
                 disabled={scanning || !higgsConnected}
-                title={!higgsConnected ? 'Connecter Higgsfield d\'abord' : 'Scanner automatiquement les personnages depuis Higgsfield'}
+                title={!higgsConnected ? 'Connect Higgsfield first' : 'Auto-scan characters from Higgsfield'}
                 className="text-xs bg-violet-700 hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg transition font-medium"
               >
-                {scanning ? '⏳ Scan...' : '🔍 Scanner depuis Higgsfield'}
+                {scanning ? '⏳ Scanning...' : '🔍 Scan from Higgsfield'}
               </button>
             </div>
             <p className="text-gray-500 text-xs mb-1">
-              🖼 <strong className="text-gray-400">Images (Nano Banana)</strong> — détectés automatiquement par le bouton Scanner.<br/>
-              🎬 <strong className="text-gray-400">Vidéos (Seedance)</strong> — à ajouter manuellement : ouvre <strong className="text-gray-400">app.higgsfield.ai → Elements → Characters</strong>, active DevTools (F12) → Network, clique ton personnage → copie l&apos;UUID dans l&apos;URL de la requête <code className="text-violet-400">/reference-elements/UUID-ICI</code>.
+              🖼 <strong className="text-gray-400">Images (Nano Banana)</strong> — auto-detected via the Scan button.<br/>
+              🎬 <strong className="text-gray-400">Videos (Seedance)</strong> — add manually: open <strong className="text-gray-400">app.higgsfield.ai → Elements → Characters</strong>, open DevTools (F12) → Network, click your character → copy the UUID from the request URL <code className="text-violet-400">/reference-elements/UUID-HERE</code>.
             </p>
             {scanError && (
               <p className="text-xs text-amber-400 mb-2">{scanError}</p>
@@ -461,7 +461,7 @@ export default function SettingsPage() {
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-white text-sm font-medium">{el.name}</span>
-                      {el.type === 'soul_2' && <span className="text-emerald-400 text-xs">🎬 Vidéo</span>}
+                      {el.type === 'soul_2' && <span className="text-emerald-400 text-xs">🎬 Video</span>}
                       {el.type === 'soul_cinematic' && <span className="text-gray-500 text-xs">🖼 Image</span>}
                       <span className="text-gray-600 text-xs font-mono">{el.id.substring(0, 8)}…</span>
                     </div>
@@ -482,7 +482,7 @@ export default function SettingsPage() {
                 type="text"
                 value={newElementName}
                 onChange={(e) => setNewElementName(e.target.value)}
-                placeholder="Nom (ex: NINA HYBRID)"
+                placeholder="Name (e.g. NINA HYBRID)"
                 className="flex-1 min-w-[120px] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
               />
               <input
@@ -497,7 +497,7 @@ export default function SettingsPage() {
                 onChange={(e) => setNewElementType(e.target.value as 'soul_2' | 'soul_cinematic')}
                 className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
               >
-                <option value="soul_2">🎬 Vidéo (Seedance)</option>
+                <option value="soul_2">🎬 Video (Seedance)</option>
                 <option value="soul_cinematic">🖼 Image (Nano Banana)</option>
               </select>
               <button
@@ -511,10 +511,10 @@ export default function SettingsPage() {
 
           {/* Avancé */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-3 text-gray-200">Paramètres par défaut</h2>
+            <h2 className="font-medium mb-3 text-gray-200">Default settings</h2>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Modèle</label>
+                <label className="block text-xs text-gray-500 mb-1">Model</label>
                 <select
                   value={defaultModel}
                   onChange={(e) => setDefaultModel(e.target.value)}
@@ -527,7 +527,7 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Format</label>
+                <label className="block text-xs text-gray-500 mb-1">Ratio</label>
                 <select
                   value={defaultAspectRatio}
                   onChange={(e) => setDefaultAspectRatio(e.target.value)}
@@ -540,7 +540,7 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Qualité</label>
+                <label className="block text-xs text-gray-500 mb-1">Quality</label>
                 <select
                   value={defaultQuality}
                   onChange={(e) => setDefaultQuality(e.target.value)}
@@ -560,19 +560,19 @@ export default function SettingsPage() {
               <h2 className="font-medium text-gray-200">
                 🗂️ Google Drive
                 <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${driveConnected ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
-                  {driveConnected ? '● Connecté' : '○ Non connecté'}
+                  {driveConnected ? '● Connected' : '○ Not connected'}
                 </span>
               </h2>
             </div>
             <p className="text-gray-500 text-xs mb-4">
-              Images source (Instagram) + générées (Higgsfield) uploadées automatiquement dans votre Drive après chaque génération.
+              Source images (Instagram) + generated images (Higgsfield) automatically uploaded to your Drive after each generation.
             </p>
 
             {/* Folder ID — toujours visible */}
             <div className="mb-4">
               <label className="block text-xs text-gray-500 mb-1">
-                Dossier Drive cible{' '}
-                <span className="text-gray-600">(ID dans l&apos;URL : drive.google.com/drive/folders/<strong>ID</strong>)</span>
+                Target Drive folder{' '}
+                <span className="text-gray-600">(ID from the URL: drive.google.com/drive/folders/<strong>ID</strong>)</span>
               </label>
               <input
                 type="text"
@@ -588,37 +588,37 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between bg-green-900/20 border border-green-800 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2">
                   <span className="text-green-400">✅</span>
-                  <span className="text-green-300 text-sm">Compte Google connecté</span>
+                  <span className="text-green-300 text-sm">Google account connected</span>
                 </div>
                 <button
                   onClick={disconnectDrive}
                   className="text-xs text-gray-500 hover:text-red-400 transition"
                 >
-                  Déconnecter
+                  Disconnect
                 </button>
               </div>
             ) : driveAuthState === 'waiting' ? (
               <div className="bg-blue-900/20 border border-blue-800 rounded-lg px-4 py-3 flex items-center gap-3">
                 <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full flex-shrink-0" />
                 <div>
-                  <p className="text-blue-300 text-sm font-medium">Fenêtre Google ouverte…</p>
-                  <p className="text-gray-500 text-xs mt-0.5">Connecte-toi et accepte les permissions dans la popup.</p>
+                  <p className="text-blue-300 text-sm font-medium">Google window open…</p>
+                  <p className="text-gray-500 text-xs mt-0.5">Sign in and accept the permissions in the popup.</p>
                 </div>
               </div>
             ) : driveAuthState === 'approved' ? (
               <div className="bg-green-900/20 border border-green-800 rounded-lg px-4 py-3">
-                <span className="text-green-400 text-sm">✅ Drive connecté avec succès !</span>
+                <span className="text-green-400 text-sm">✅ Drive connected successfully!</span>
               </div>
             ) : driveAuthState === 'error' ? (
               <div className="space-y-2">
                 <p className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">
-                  ❌ {driveError || 'Erreur de connexion'}
+                  ❌ {driveError || 'Connection error'}
                 </p>
                 <button
                   onClick={startDriveAuth}
                   className="text-sm text-violet-400 hover:text-violet-300 transition"
                 >
-                  ↺ Réessayer
+                  ↺ Try again
                 </button>
               </div>
             ) : (
@@ -628,7 +628,7 @@ export default function SettingsPage() {
                 className="w-full bg-gray-800 hover:bg-gray-700 disabled:opacity-50 border border-gray-700 text-white text-sm rounded-lg px-4 py-2.5 transition flex items-center justify-center gap-2"
               >
                 <span>🗂️</span>
-                {driveAuthState === 'starting' ? '⏳ Connexion...' : 'Connecter Google Drive'}
+                {driveAuthState === 'starting' ? '⏳ Connecting...' : 'Connect Google Drive'}
               </button>
             )}
           </div>
@@ -640,14 +640,14 @@ export default function SettingsPage() {
               disabled={saving}
               className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-medium rounded-lg py-2.5 transition"
             >
-              {saving ? 'Sauvegarde...' : saved ? '✅ Sauvegardé' : '💾 Sauvegarder'}
+              {saving ? 'Saving...' : saved ? '✅ Saved' : '💾 Save'}
             </button>
             <button
               onClick={testConnections}
               disabled={testing}
               className="flex-1 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 border border-gray-700 text-white font-medium rounded-lg py-2.5 transition"
             >
-              {testing ? '⏳ Test...' : '🔍 Tester les connexions'}
+              {testing ? '⏳ Testing...' : '🔍 Test connections'}
             </button>
           </div>
 

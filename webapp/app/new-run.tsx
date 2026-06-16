@@ -115,11 +115,11 @@ export default function NewRunPage() {
 
   const launch = async () => {
     const validProfiles = profiles.filter((p) => p.trim())
-    if (!validProfiles.length) return setLaunchError('Au moins un profil requis')
-    if (!selectedSoulId) return setLaunchError('Sélectionner un Soul Character')
-    // Reference Element requis uniquement si modèle fallback est possible
+    if (!validProfiles.length) return setLaunchError('At least one profile is required')
+    if (!selectedSoulId) return setLaunchError('Select a Soul Character')
+    // Reference Element required only if fallback model is possible
     const needsElement = model !== 'soul_cinematic'
-    if (needsElement && !selectedElementId) return setLaunchError('Sélectionner un Reference Element (requis pour Auto/Seedream/Nano Banana)')
+    if (needsElement && !selectedElementId) return setLaunchError('Select a Reference Element (required for Auto/Seedream/Nano Banana)')
 
     setLaunching(true)
     setLaunchError('')
@@ -162,11 +162,11 @@ export default function NewRunPage() {
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-white">Profils Instagram</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">Colle tes liens Instagram — séparés par des sauts de ligne</p>
+              <h2 className="text-base font-semibold text-white">Instagram Profiles</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">Paste your Instagram links — separated by line breaks</p>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-zinc-500">Max posts :</label>
+              <label className="text-xs text-zinc-500">Max posts:</label>
               <input
                 type="number"
                 value={maxPosts}
@@ -182,7 +182,7 @@ export default function NewRunPage() {
           <textarea
             value={pasteInput}
             onChange={(e) => handlePasteInput(e.target.value)}
-            placeholder={"Colle ici tous tes liens Instagram d'un coup :\nhttps://www.instagram.com/username1/\nhttps://www.instagram.com/username2/\n...\n\n(séparés par des sauts de ligne, virgules ou espaces)"}
+            placeholder={"Paste all your Instagram links at once:\nhttps://www.instagram.com/username1/\nhttps://www.instagram.com/username2/\n...\n\n(separated by line breaks, commas, or spaces)"}
             rows={5}
             className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none font-mono"
           />
@@ -191,7 +191,7 @@ export default function NewRunPage() {
           {profiles.filter(p => p.trim()).length > 0 && (
             <div>
               <p className="text-xs text-zinc-500 mb-2">
-                {profiles.filter(p => p.trim()).length} profil{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} détecté{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} :
+                {profiles.filter(p => p.trim()).length} profile{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} detected:
               </p>
               <div className="flex flex-wrap gap-2">
                 {profiles.map((p, i) => {
@@ -221,7 +221,7 @@ export default function NewRunPage() {
         {/* Personnages */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-medium text-zinc-100">Personnage</h2>
+            <h2 className="font-medium text-zinc-100">Character</h2>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
@@ -230,7 +230,7 @@ export default function NewRunPage() {
               {loadingChars ? (
                 <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
               ) : null}
-              Charger depuis Higgsfield
+              Load from Higgsfield
             </button>
           </div>
 
@@ -242,7 +242,7 @@ export default function NewRunPage() {
 
           {soulChars.length === 0 && refElements.length === 0 ? (
             <p className="text-zinc-500 text-sm">
-              Cliquez &quot;Charger depuis Higgsfield&quot; pour voir vos personnages.
+              Click &quot;Load from Higgsfield&quot; to see your characters.
             </p>
           ) : (
             <div className="space-y-4">
@@ -301,14 +301,14 @@ export default function NewRunPage() {
 
         {/* Modèle & Format */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
-          <h2 className="font-medium mb-3 text-zinc-100">Modèle & Format</h2>
+          <h2 className="font-medium mb-3 text-zinc-100">Model & Format</h2>
 
-          {/* Modèle */}
+          {/* Model */}
           <div className="mb-4">
-            <label className="block text-xs text-zinc-500 mb-2">Modèle</label>
+            <label className="block text-xs text-zinc-500 mb-2">Model</label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { value: 'auto', label: 'Auto (cascade)', badge: 'Recommandé' },
+                { value: 'auto', label: 'Auto (cascade)', badge: 'Recommended' },
                 { value: 'soul_cinematic', label: 'Soul Cinema', badge: null },
                 { value: 'seedream_v4_5', label: 'Seedream 4.5', badge: null },
                 { value: 'nano_banana_2', label: 'Nano Banana Pro', badge: null },
@@ -332,7 +332,7 @@ export default function NewRunPage() {
           {/* Format & Qualité */}
           <div className="flex gap-3">
             <div>
-              <label className="block text-xs text-zinc-500 mb-1.5">Format</label>
+              <label className="block text-xs text-zinc-500 mb-1.5">Aspect Ratio</label>
               <select
                 value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value)}
@@ -345,7 +345,7 @@ export default function NewRunPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-1.5">Qualité</label>
+              <label className="block text-xs text-zinc-500 mb-1.5">Quality</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
@@ -375,9 +375,9 @@ export default function NewRunPage() {
           {launching ? (
             <span className="flex items-center justify-center gap-2">
               <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-              Lancement en cours...
+              Launching...
             </span>
-          ) : 'Lancer'}
+          ) : 'Launch'}
         </button>
       </div>
       </PageWrapper>

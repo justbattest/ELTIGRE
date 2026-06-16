@@ -54,9 +54,9 @@ type BatchRunInfo = {
 }
 
 const SPOOFER_LEVEL_LABELS: Record<string, string> = {
-  light: '🟢 Léger',
-  medium: '🟡 Moyen',
-  aggressive: '🔴 Agressif',
+  light: '🟢 Light',
+  medium: '🟡 Medium',
+  aggressive: '🔴 Aggressive',
 }
 
 // ─── Prompt Bank Button ────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ function BankButton({ gen }: { gen: Generation }) {
     }
   }
 
-  if (saved) return <span className="text-[10px] text-emerald-400">✅ Sauvegardé</span>
+  if (saved) return <span className="text-[10px] text-emerald-400">✅ Saved</span>
 
   return (
     <div>
@@ -94,7 +94,7 @@ function BankButton({ gen }: { gen: Generation }) {
             autoFocus
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            placeholder="Note (optionnel)"
+            placeholder="Note (optional)"
             className="flex-1 text-[10px] bg-black/40 border border-white/[0.08] rounded px-1.5 py-0.5 text-white placeholder-zinc-600 focus:outline-none"
             onKeyDown={e => e.key === 'Enter' && save()}
           />
@@ -114,9 +114,9 @@ function BankButton({ gen }: { gen: Generation }) {
         <button
           onClick={() => setShowNotes(true)}
           className="text-[10px] text-violet-400 hover:text-violet-300 transition"
-          title="Sauvegarder ce prompt dans la banque pour améliorer les futures générations"
+          title="Save this prompt to the bank to improve future generations"
         >
-          ✨ Garder ce prompt
+          ✨ Keep this prompt
         </button>
       )}
     </div>
@@ -131,7 +131,7 @@ function VideoCard({ gen }: { gen: Generation }) {
   const isComplete = gen.generationStatus === 'complete'
   const isFailed = gen.generationStatus === 'failed'
   const rankDisplay = gen.sourceRank !== null ? gen.sourceRank + 1 : gen.id
-  const scene = gen.sceneDescription || `Vidéo #${rankDisplay}`
+  const scene = gen.sceneDescription || `Video #${rankDisplay}`
 
   const promptFormatted = (() => {
     if (!gen.promptUsed) return null
@@ -157,14 +157,14 @@ function VideoCard({ gen }: { gen: Generation }) {
                 rel="noopener noreferrer"
                 className="opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs px-3 py-1.5 rounded-full hover:bg-white/20"
               >
-                ↗ Ouvrir
+                ↗ Open
               </a>
             </div>
           </>
         ) : isFailed ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 px-3">
             <span className="text-3xl">❌</span>
-            <span className="text-xs text-zinc-500">Échec</span>
+            <span className="text-xs text-zinc-500">Failed</span>
             {gen.fallbackReason && (
               <span className="text-[10px] text-red-400 text-center leading-tight">{gen.fallbackReason}</span>
             )}
@@ -174,7 +174,7 @@ function VideoCard({ gen }: { gen: Generation }) {
             <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-zinc-900 via-violet-950/20 to-zinc-900" />
             <div className="relative w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
             <span className="relative text-xs text-zinc-500">
-              {gen.generationStatus === 'processing' ? 'Génération…' : 'En attente…'}
+              {gen.generationStatus === 'processing' ? 'Generating…' : 'Waiting…'}
             </span>
           </div>
         )}
@@ -191,7 +191,7 @@ function VideoCard({ gen }: { gen: Generation }) {
               onClick={() => setShowPrompt(p => !p)}
               className="text-[10px] text-zinc-600 hover:text-zinc-400 transition"
             >
-              {showPrompt ? '▲ Masquer' : '👁 Prompt'}
+              {showPrompt ? '▲ Hide' : '👁 Prompt'}
             </button>
             {showPrompt && (
               <pre className="mt-1.5 text-[9px] text-zinc-400 bg-black/40 border border-white/[0.06] rounded-lg p-2 overflow-auto max-h-40 whitespace-pre-wrap leading-relaxed">
@@ -227,7 +227,7 @@ function ImageCard({ gen }: { gen: Generation }) {
                 rel="noopener noreferrer"
                 className="opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs px-3 py-1.5 rounded-full hover:bg-white/20"
               >
-                ↗ Ouvrir
+                ↗ Open
               </a>
             </div>
           </>
@@ -260,7 +260,7 @@ function RunCard({ run }: { run: RunMeta }) {
   const [stopping, setStopping] = useState(false)
 
   const handleStop = async () => {
-    if (!confirm('Arrêter ce run ? Les générations en cours seront perdues.')) return
+    if (!confirm('Stop this run? Generations in progress will be lost.')) return
     setStopping(true)
     try {
       await fetch(`/api/run/${run.id}`, {
@@ -304,7 +304,7 @@ function RunCard({ run }: { run: RunMeta }) {
 
   const isMotionControl = run.modelSetting === 'kling_motion_control'
   const typeIcon = run.runType === 'video' ? (isMotionControl ? '🎭' : '🎬') : run.runType === 'bulk_edit' ? '🖼' : run.runType === 'studio' ? '✨' : '🔄'
-  const typeLabel = run.runType === 'video' ? (isMotionControl ? 'Motion Control' : 'Vidéos') : run.runType === 'bulk_edit' ? 'Bulk Edit' : run.runType === 'studio' ? 'Prompt Studio' : 'Scraping'
+  const typeLabel = run.runType === 'video' ? (isMotionControl ? 'Motion Control' : 'Videos') : run.runType === 'bulk_edit' ? 'Bulk Edit' : run.runType === 'studio' ? 'Prompt Studio' : 'Scraping'
   const gridCols = run.runType === 'video'
     ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
     : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6'
@@ -325,7 +325,7 @@ function RunCard({ run }: { run: RunMeta }) {
           {isQueued && (
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-medium text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
-                En attente
+                Pending
               </span>
               <button
                 onClick={handleStop}
@@ -334,7 +334,7 @@ function RunCard({ run }: { run: RunMeta }) {
               >
                 {stopping ? (
                   <svg className="w-3 h-3 animate-spin inline" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-                ) : 'Annuler'}
+                ) : 'Cancel'}
               </button>
             </div>
           )}
@@ -342,7 +342,7 @@ function RunCard({ run }: { run: RunMeta }) {
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 text-[11px] font-medium text-violet-300 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 rounded-full">
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                En cours
+                In progress
               </span>
               <button
                 onClick={handleStop}
@@ -357,12 +357,12 @@ function RunCard({ run }: { run: RunMeta }) {
           )}
           {status === 'completed' && (
             <span className="text-[11px] font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-              Terminé
+              Done
             </span>
           )}
           {status === 'failed' && (
             <span className="text-[11px] font-medium text-red-300 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full">
-              Échec
+              Failed
             </span>
           )}
         </div>
@@ -372,7 +372,7 @@ function RunCard({ run }: { run: RunMeta }) {
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-zinc-400">
           <span>
-            {completed} / {total} · {failed > 0 ? `${failed} échec${failed > 1 ? 's' : ''}` : ''}
+            {completed} / {total} · {failed > 0 ? `${failed} failure${failed > 1 ? 's' : ''}` : ''}
           </span>
           <span>{Math.round((completed / Math.max(total, 1)) * 100)}%</span>
         </div>
@@ -401,13 +401,13 @@ function RunCard({ run }: { run: RunMeta }) {
       {gens.length === 0 && isQueued && (
         <div className="flex items-center gap-3 text-sm text-gray-500">
           <div className="w-4 h-4 border-2 border-amber-800 border-t-amber-400 rounded-full animate-spin" />
-          En attente d&apos;un slot disponible…
+          Waiting for an available slot…
         </div>
       )}
       {gens.length === 0 && isRunning && (
         <div className="flex items-center gap-3 text-sm text-gray-500">
           <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
-          Préparation des générations…
+          Preparing generations…
         </div>
       )}
       </div>
@@ -479,7 +479,7 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
 
   const subLabel = run.runType === 'spoofer'
     ? [
-        run.totalFiles ? `${run.totalFiles} fichier${run.totalFiles > 1 ? 's' : ''}` : null,
+        run.totalFiles ? `${run.totalFiles} file${run.totalFiles > 1 ? 's' : ''}` : null,
         run.level ? (SPOOFER_LEVEL_LABELS[run.level] || run.level) : null,
       ].filter(Boolean).join(' · ')
     : run.characterName
@@ -499,13 +499,13 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
         </div>
         <div className="shrink-0 ml-2">
           {hasError ? (
-            <span className="text-xs text-red-400">❌ Erreur</span>
+            <span className="text-xs text-red-400">❌ Error</span>
           ) : isDone ? (
-            <span className="text-xs text-emerald-400">✅ Terminé</span>
+            <span className="text-xs text-emerald-400">✅ Done</span>
           ) : (
             <span className={`flex items-center gap-1 text-xs ${textColor}`}>
               <span className={`w-2 h-2 rounded-full ${dotColor} animate-pulse`} />
-              En cours
+              Running
             </span>
           )}
         </div>
@@ -513,7 +513,7 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
 
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-zinc-400">
-          <span>{completed} / {total || '?'} fichiers</span>
+          <span>{completed} / {total || '?'} files</span>
           <span>{pct}%</span>
         </div>
         <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
@@ -529,7 +529,7 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
           href={`/api/spoofer/download/${run.runId}`}
           className="inline-flex items-center gap-1.5 text-xs bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white font-medium rounded-lg px-3 py-1.5 transition"
         >
-          ⬇️ Télécharger le ZIP
+          ⬇️ Download ZIP
         </a>
       )}
     </div>
@@ -604,16 +604,16 @@ export default function EnCoursPage() {
         {loading && (
           <div className="flex items-center gap-3 text-gray-500">
             <div className="w-5 h-5 border-2 border-gray-600 border-t-violet-500 rounded-full animate-spin" />
-            Chargement...
+            Loading...
           </div>
         )}
 
         {!loading && runs.length === 0 && batchRuns.length === 0 && (
           <div className="text-center py-20 space-y-4">
-            <p className="text-gray-500 text-lg">Aucune génération récente.</p>
+            <p className="text-gray-500 text-lg">No recent generations.</p>
             <div className="flex justify-center gap-4">
               <Link href="/video" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition">
-                🎬 Générer des vidéos
+                🎬 Generate videos
               </Link>
               <Link href="/studio" className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] text-zinc-300 rounded-lg text-sm font-medium transition">
                 ✨ Prompt Studio
@@ -625,7 +625,7 @@ export default function EnCoursPage() {
         {/* Batch actifs (metadata + carousel en mémoire) */}
         {activeBatch.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Traitements actifs</h2>
+            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Active processes</h2>
             {activeBatch.map(r => <BatchRunCard key={r.runId} run={r} />)}
           </div>
         )}
@@ -633,7 +633,7 @@ export default function EnCoursPage() {
         {/* Runs actifs DB (vidéos / studio / scraping) */}
         {activeRuns.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Actifs</h2>
+            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Active</h2>
             {activeRuns.map(r => <RunCard key={r.id} run={r} />)}
           </div>
         )}
@@ -641,7 +641,7 @@ export default function EnCoursPage() {
         {/* Batch terminés récents */}
         {doneBatch.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Traitements récents</h2>
+            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Recent processes</h2>
             {doneBatch.map(r => <BatchRunCard key={r.runId} run={r} />)}
           </div>
         )}
@@ -649,7 +649,7 @@ export default function EnCoursPage() {
         {/* Runs récents terminés DB */}
         {recentRuns.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Récents (2h)</h2>
+            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Recent (2h)</h2>
             {recentRuns.map(r => <RunCard key={r.id} run={r} />)}
           </div>
         )}

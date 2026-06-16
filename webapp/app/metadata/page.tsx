@@ -44,7 +44,7 @@ function waitForRun(
   return new Promise((resolve, reject) => {
     const es = new EventSource(`/api/metadata/events/${runId}`)
     const cleanup = () => es.close()
-    signal.addEventListener('abort', () => { cleanup(); reject(new Error('Annulé')) }, { once: true })
+    signal.addEventListener('abort', () => { cleanup(); reject(new Error('Cancelled')) }, { once: true })
 
     es.onmessage = (e) => {
       try {
@@ -54,11 +54,11 @@ function waitForRun(
         } else if (ev.type === 'done') {
           cleanup(); resolve()
         } else if (ev.type === 'error') {
-          cleanup(); reject(new Error(ev.message || 'Erreur Python'))
+          cleanup(); reject(new Error(ev.message || 'Python error'))
         }
       } catch { /* ignore malformed */ }
     }
-    es.onerror = () => { cleanup(); reject(new Error('SSE perdu (serveur redémarré ?)')) }
+    es.onerror = () => { cleanup(); reject(new Error('SSE lost (server restarted?)')) }
   })
 }
 
@@ -166,7 +166,7 @@ export default function MetadataPage() {
   // Résultat Drive : <PERSO>/metadata/<run_id>/ avec TOUS les fichiers dedans
 
   const launch = async () => {
-    if (entries.length === 0) { setError('Ajoute au moins un fichier.'); return }
+    if (entries.length === 0) { setError('Add at least one file.'); return }
 
     setError('')
     setPhase('compressing')
@@ -247,7 +247,7 @@ export default function MetadataPage() {
         signal: abort.signal,
       })
       const startData = await startRes.json()
-      if (!startRes.ok || startData.error) throw new Error(startData.error || 'Erreur démarrage')
+      if (!startRes.ok || startData.error) throw new Error(startData.error || 'Startup error')
 
       // Le subprocess Python tourne indépendamment côté serveur.
       // On redirige vers En cours qui se reconnecte au SSE et affiche la progression.
@@ -287,7 +287,7 @@ export default function MetadataPage() {
             {/* Sélecteur personnage */}
             {characters.length > 0 && (
               <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4">
-                <p className="text-xs text-zinc-500 mb-2">Personnage (dossier Drive)</p>
+                <p className="text-xs text-zinc-500 mb-2">Character (Drive folder)</p>
                 <div className="flex flex-wrap gap-2">
                   {characters.map(c => (
                     <button
@@ -315,8 +315,8 @@ export default function MetadataPage() {
               }`}
             >
               <div className="text-4xl mb-3">🧹</div>
-              <p className="text-zinc-300 font-medium">Glisse tes photos &amp; vidéos ici</p>
-              <p className="text-zinc-500 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · quantité illimitée · tout arrive dans 1 seul dossier Drive</p>
+              <p className="text-zinc-300 font-medium">Drag your photos &amp; videos here</p>
+              <p className="text-zinc-500 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · unlimited quantity · all land in a single Drive folder</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -334,15 +334,15 @@ export default function MetadataPage() {
                   <span className="text-sm text-zinc-400">
                     {imgCount > 0 && <span>{imgCount} photo{imgCount > 1 ? 's' : ''}</span>}
                     {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
-                    {videoCount > 0 && <span>{videoCount} vidéo{videoCount > 1 ? 's' : ''}</span>}
+                    {videoCount > 0 && <span>{videoCount} video{videoCount > 1 ? 's' : ''}</span>}
                     {entries.length > UPLOAD_CHUNK_SIZE && (
                       <span className="text-zinc-600 ml-2">
-                        · envoyé en {nChunks} tranches de {UPLOAD_CHUNK_SIZE}, dans 1 dossier Drive
+                        · sent in {nChunks} batches of {UPLOAD_CHUNK_SIZE}, in 1 Drive folder
                       </span>
                     )}
                   </span>
                   <button onClick={resetAll} className="text-xs text-gray-600 hover:text-red-400 transition">
-                    Tout effacer
+                    Clear all
                   </button>
                 </div>
                 <div className="grid grid-cols-6 sm:grid-cols-10 gap-1">
@@ -370,7 +370,7 @@ export default function MetadataPage() {
             <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-xl p-4 space-y-1.5">
               <p className="text-[10px] text-zinc-500">🖼️ <strong className="text-zinc-400">Images</strong> — EXIF iPhone 17 Pro (iOS 26.x, GPS, ISO uniques) · ICC Display P3 · DQT Apple</p>
               <p className="text-[10px] text-zinc-500">🎬 <strong className="text-zinc-400">Vidéos</strong> — com.apple.quicktime.* · handler Core Media Video · strip Kling/Lavf</p>
-              <p className="text-[10px] text-zinc-500">📂 <strong className="text-zinc-400">Drive</strong> — <code className="text-violet-400">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 seul dossier, tous les fichiers dedans</p>
+              <p className="text-[10px] text-zinc-500">📂 <strong className="text-zinc-400">Drive</strong> — <code className="text-violet-400">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 single folder, all files inside</p>
             </div>
 
             {error && (
@@ -383,8 +383,8 @@ export default function MetadataPage() {
               className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
             >
               {entries.length === 0
-                ? 'Ajoute des fichiers pour commencer'
-                : `Nettoyer et uploader ${entries.length} fichier${entries.length > 1 ? 's' : ''} — 1 dossier Drive`}
+                ? 'Add files to get started'
+                : `Clean and upload ${entries.length} file${entries.length > 1 ? 's' : ''} — 1 Drive folder`}
             </button>
           </>
         )}
@@ -398,7 +398,7 @@ export default function MetadataPage() {
               {phase === 'compressing' && (
                 <div className="flex items-center gap-3 text-xs text-zinc-400">
                   <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
-                  <span>🗜 Compression des images… (traitement local, quelques secondes)</span>
+                  <span>🗜 Compressing images… (local processing, a few seconds)</span>
                 </div>
               )}
 
@@ -407,7 +407,7 @@ export default function MetadataPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-medium text-zinc-400">
-                    {phase === 'uploading' ? '⬆️ Envoi vers le serveur…' : '⬆️ Fichiers reçus'}
+                    {phase === 'uploading' ? '⬆️ Sending to server…' : '⬆️ Files received'}
                   </span>
                   <span className="text-xs text-zinc-500">{uploadedFiles}/{total}</span>
                 </div>
@@ -424,10 +424,10 @@ export default function MetadataPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-medium text-zinc-400">
-                    {phase === 'uploading'   ? '⏳ En attente…'
-                    : isDone && !error       ? '✅ Nettoyage terminé !'
-                    : phase === 'processing' ? '🧹 Nettoyage + upload Drive…'
-                    : '❌ Erreur'}
+                    {phase === 'uploading'   ? '⏳ Waiting…'
+                    : isDone && !error       ? '✅ Cleanup done!'
+                    : phase === 'processing' ? '🧹 Cleanup + Drive upload…'
+                    : '❌ Error'}
                   </span>
                   <span className="text-xs text-zinc-500">{completed}/{total}</span>
                 </div>
@@ -448,13 +448,13 @@ export default function MetadataPage() {
                   onClick={() => { abortRef.current?.abort(); resetAll() }}
                   className="w-full bg-red-900/40 hover:bg-red-900/60 border border-red-800 text-red-400 hover:text-red-300 text-sm rounded-lg py-2.5 transition"
                 >
-                  ✕ Annuler
+                  ✕ Cancel
                 </button>
               )}
 
               {isDone && (
                 <button onClick={resetAll} className="w-full bg-white/[0.08] hover:bg-white/[0.08] text-white text-sm rounded-lg py-2.5 transition">
-                  + Nouveau batch
+                  + New batch
                 </button>
               )}
             </div>
@@ -463,7 +463,7 @@ export default function MetadataPage() {
             {results.length > 0 && (
               <div>
                 <h3 className="text-sm font-medium text-zinc-400 mb-2">
-                  Fichiers traités ({results.length}/{total})
+                  Files processed ({results.length}/{total})
                 </h3>
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
                   {results.map((r, i) => (

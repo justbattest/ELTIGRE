@@ -17,7 +17,7 @@ const GROUPS = [
     key: 'video', label: '🎬 VIDEO', href: '/video',
     pages: ['/video', '/prompt-lab', '/motion-control'],
     subTabs: [
-      { label: 'Vidéos', href: '/video' },
+      { label: 'Videos', href: '/video' },
       { label: 'Prompt Lab', href: '/prompt-lab' },
       { label: 'Motion Control', href: '/motion-control' },
     ]

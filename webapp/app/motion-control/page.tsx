@@ -122,19 +122,19 @@ function ConceptRow({ concept, onRemove }: { concept: ManualConcept; onRemove: (
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white truncate">{concept.folderName}</p>
         <p className="text-xs text-zinc-500 mt-0.5">
-          {!concept.image && !concept.video ? '⚠️ Image + vidéo manquantes'
-           : !concept.image ? '⚠️ Image manquante'
-           : !concept.video ? '⚠️ Vidéo manquante'
+          {!concept.image && !concept.video ? '⚠️ Image + video missing'
+           : !concept.image ? '⚠️ Image missing'
+           : !concept.video ? '⚠️ Video missing'
            : concept.status === 'error' ? `❌ ${concept.errorMsg}`
-           : concept.status === 'submitted' ? '🚀 Run lancé'
-           : concept.status === 'submitting' ? '⏳ Envoi…'
-           : '✅ Prêt · 4 vidéos seront générées'}
+           : concept.status === 'submitted' ? '🚀 Run started'
+           : concept.status === 'submitting' ? '⏳ Uploading…'
+           : '✅ Ready · 4 videos will be generated'}
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <span className="text-lg">{statusIcon}</span>
         {concept.status === 'pending' && (
-          <button onClick={onRemove} className="text-gray-600 hover:text-red-400 transition text-lg leading-none" title="Supprimer">×</button>
+          <button onClick={onRemove} className="text-gray-600 hover:text-red-400 transition text-lg leading-none" title="Delete">×</button>
         )}
       </div>
     </div>
@@ -202,9 +202,9 @@ function AddZone({ onAdd, disabled }: { onAdd: (concepts: ManualConcept[]) => vo
         // @ts-expect-error webkitdirectory non-standard
         webkitdirectory="" className="hidden" onChange={handleInputChange} />
       <p className="text-3xl mb-2">📁</p>
-      <p className="text-sm font-medium text-zinc-300">Glisse tes dossiers ici</p>
-      <p className="text-xs text-zinc-500 mt-1">Autant de dossiers que tu veux — chaque dossier = 1 image + 1 vidéo = 4 vidéos générées</p>
-      <p className="text-xs text-zinc-600 mt-1">ou clique pour sélectionner</p>
+      <p className="text-sm font-medium text-zinc-300">Drop your folders here</p>
+      <p className="text-xs text-zinc-500 mt-1">As many folders as you want — each folder = 1 image + 1 video = 4 videos generated</p>
+      <p className="text-xs text-zinc-600 mt-1">or click to select</p>
     </div>
   )
 }
@@ -212,10 +212,10 @@ function AddZone({ onAdd, disabled }: { onAdd: (concepts: ManualConcept[]) => vo
 // ─── Composant : indicateur d'étape ──────────────────────────────────────────
 
 const STEP_LABELS: Record<ConceptStep, string> = {
-  download: 'Téléchargement vidéo',
-  frames: 'Sélection auto de la frame',
+  download: 'Downloading video',
+  frames: 'Auto frame selection',
   swap: 'Person swap (soul_cinematic)',
-  outfits: 'Génération 4 outfits',
+  outfits: 'Generating 4 outfits',
 }
 
 function StepIndicator({ step, status, extra }: { step: ConceptStep; status: StepStatus; extra?: string }) {
@@ -304,12 +304,12 @@ function ConceptCard({
           <button
             onClick={() => setEditing(true)}
             className="text-zinc-600 hover:text-zinc-300 transition text-xs flex-shrink-0"
-            title="Renommer"
+            title="Rename"
           >✎</button>
           <button
             onClick={onToggleFav}
             className={`text-sm flex-shrink-0 transition ${concept.isFavorite ? 'text-yellow-400' : 'text-zinc-600 hover:text-yellow-400'}`}
-            title={concept.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            title={concept.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >★</button>
         </div>
 
@@ -325,11 +325,11 @@ function ConceptCard({
           <button
             onClick={onLaunch}
             className="flex-1 py-2 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition"
-          >▶ Lancer MC</button>
+          >▶ Launch MC</button>
           <button
             onClick={onDelete}
             className="px-3 py-2 rounded-lg text-xs text-zinc-500 hover:text-red-400 hover:bg-red-900/20 border border-white/[0.06] transition"
-            title="Supprimer"
+            title="Delete"
           >🗑</button>
         </div>
       </div>
@@ -466,7 +466,7 @@ export default function MotionControlPage() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`)
+      if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
 
       const runId: string = data.runId
       setBuildState(prev => prev ? { ...prev, runId } : null)
@@ -513,7 +513,7 @@ export default function MotionControlPage() {
             }
 
             if (event.type === 'error') {
-              return { ...prev, error: (event.message as string) || 'Erreur inconnue' }
+              return { ...prev, error: (event.message as string) || 'Unknown error' }
             }
 
             return prev
@@ -540,7 +540,7 @@ export default function MotionControlPage() {
           // Ne pas afficher une erreur SSE si les outfits sont déjà terminés
           // (on attendait juste le concept_id de la DB, c'est normal que le SSE ferme)
           if (prev.steps.outfits === 'done') return prev
-          return { ...prev, error: 'Connexion SSE perdue (serveur redémarré ?)' }
+          return { ...prev, error: 'SSE connection lost (server restarted?)' }
         })
         sse.close()
         setBuilding(false)
@@ -553,7 +553,7 @@ export default function MotionControlPage() {
       setTimeout(() => setBuilding(false), 15 * 60 * 1000)
 
     } catch (err) {
-      setBuildError(err instanceof Error ? err.message : 'Erreur inconnue')
+      setBuildError(err instanceof Error ? err.message : 'Unknown error')
       setBuilding(false)
     }
   }
@@ -571,13 +571,13 @@ export default function MotionControlPage() {
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
-        throw new Error(d.error || `Erreur ${res.status}`)
+        throw new Error(d.error || `Error ${res.status}`)
       }
       setBuildState(prev => prev ? { ...prev, mcLaunching: false, mcLaunched: true } : null)
       await new Promise(r => setTimeout(r, 800))
       router.push('/en-cours')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erreur lancement MC'
+      const msg = err instanceof Error ? err.message : 'MC launch error'
       setBuildState(prev => prev ? { ...prev, mcLaunching: false, mcError: msg } : null)
     }
   }
@@ -603,7 +603,7 @@ export default function MotionControlPage() {
   }
 
   const handleDelete = async (concept: SavedConcept) => {
-    if (!confirm(`Supprimer le concept "${concept.name || concept.id}" ?`)) return
+    if (!confirm(`Delete concept "${concept.name || concept.id}"?`)) return
     await fetch(`/api/motion-concept/${concept.id}`, { method: 'DELETE' })
     setConcepts(prev => prev.filter(c => c.id !== concept.id))
   }
@@ -618,13 +618,13 @@ export default function MotionControlPage() {
         body: JSON.stringify({ conceptId: concept.id, characterName: selectedSoulName || selectedElementName }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(d.error || `Erreur ${res.status}`)
-      // Incrémenter viewCount localement
+      if (!res.ok) throw new Error(d.error || `Error ${res.status}`)
+      // Increment viewCount locally
       setConcepts(prev => prev.map(c => c.id === concept.id ? { ...c, viewCount: c.viewCount + 1 } : c))
       await new Promise(r => setTimeout(r, 600))
       router.push('/en-cours')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erreur lancement MC')
+      alert(err instanceof Error ? err.message : 'MC launch error')
       setLaunchingConceptId(null)
     }
   }
@@ -669,13 +669,13 @@ export default function MotionControlPage() {
         const res = await fetch('/api/motion-control/start', { method: 'POST', body: fd })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          throw new Error(body.error || `Erreur ${res.status}`)
+          throw new Error(body.error || `Error ${res.status}`)
         }
         setManualConcepts(prev => prev.map(c => c.id === concept.id ? { ...c, status: 'submitted' } : c))
         done++
         setSubmitProgress({ done, total: readyConcepts.length })
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Erreur inconnue'
+        const msg = e instanceof Error ? e.message : 'Unknown error'
         setManualConcepts(prev => prev.map(c => c.id === concept.id ? { ...c, status: 'error', errorMsg: msg } : c))
       }
     }
@@ -686,9 +686,9 @@ export default function MotionControlPage() {
   // ── Rendu ─────────────────────────────────────────────────────────────────────
 
   const TAB_LABELS: { key: Tab; label: string }[] = [
-    { key: 'url', label: '🔗 Depuis URL' },
-    { key: 'library', label: '🎬 Mes concepts' },
-    { key: 'manual', label: '📁 Upload manuel' },
+    { key: 'url', label: '🔗 From URL' },
+    { key: 'library', label: '🎬 My concepts' },
+    { key: 'manual', label: '📁 Manual upload' },
   ]
 
   return (
@@ -702,7 +702,7 @@ export default function MotionControlPage() {
             <div>
               <h1 className="text-2xl font-bold text-white">🎭 Motion Control</h1>
               <p className="text-zinc-400 text-sm mt-1">
-                Pipeline complet : URL Instagram → person swap → 4 outfits → 4 vidéos Kling 3.0
+                Full pipeline: Instagram URL → person swap → 4 outfits → 4 Kling 3.0 videos
               </p>
             </div>
 
@@ -710,7 +710,7 @@ export default function MotionControlPage() {
             {soulCharacters.length > 0 ? (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Personnage <span className="normal-case font-normal text-zinc-600">(soul_cinematic)</span>
+                  Character <span className="normal-case font-normal text-zinc-600">(soul_cinematic)</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {soulCharacters.map(s => (
@@ -730,8 +730,8 @@ export default function MotionControlPage() {
               </div>
             ) : (
               <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl px-4 py-3 text-xs text-amber-400">
-                ⚠️ Aucun soul character détecté. Assure-toi d&apos;avoir au moins un Soul Character
-                complété dans Higgsfield (soul-id list).
+                ⚠️ No soul character detected. Make sure you have at least one Soul Character
+                completed in Higgsfield (soul-id list).
               </div>
             )}
 
@@ -758,7 +758,7 @@ export default function MotionControlPage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      URL du reel Instagram
+                      Instagram Reel URL
                     </label>
                     <input
                       type="url"
@@ -771,13 +771,13 @@ export default function MotionControlPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Nom du concept <span className="normal-case font-normal text-zinc-600">(optionnel)</span>
+                      Concept name <span className="normal-case font-normal text-zinc-600">(optional)</span>
                     </label>
                     <input
                       type="text"
                       value={conceptName}
                       onChange={e => setConceptName(e.target.value)}
-                      placeholder="ex : reel plage juillet"
+                      placeholder="e.g. beach reel july"
                       disabled={building}
                       className="w-full bg-zinc-900/80 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-violet-500/50 transition disabled:opacity-50"
                     />
@@ -793,7 +793,7 @@ export default function MotionControlPage() {
                 {/* Progress */}
                 {buildState && (
                   <div className="bg-zinc-900/60 border border-white/[0.08] rounded-2xl p-5 space-y-3">
-                    <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1">Progression</p>
+                    <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1">Progress</p>
                     {(['download', 'frames', 'swap', 'outfits'] as ConceptStep[]).map(step => (
                       <StepIndicator
                         key={step}
@@ -801,7 +801,7 @@ export default function MotionControlPage() {
                         status={buildState.steps[step]}
                         extra={
                           step === 'frames' && buildState.chosenFrameT !== null
-                            ? `frame retenue : ${buildState.chosenFrameT}s`
+                            ? `frame selected: ${buildState.chosenFrameT}s`
                             : undefined
                         }
                       />
@@ -810,7 +810,7 @@ export default function MotionControlPage() {
                     {/* Aperçu des outfits en cours de génération */}
                     {buildState.outfitUrls.length > 0 && (
                       <div className="pt-2">
-                        <p className="text-xs text-zinc-500 mb-2">Outfits générés :</p>
+                        <p className="text-xs text-zinc-500 mb-2">Generated outfits:</p>
                         <div className="flex gap-2 flex-wrap">
                           {buildState.outfitUrls.map((url, i) => (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -847,11 +847,11 @@ export default function MotionControlPage() {
                              !buildState.conceptId ? '⏳' : '○'}
                           </span>
                           <span>
-                            {buildState.mcLaunching ? 'Lancement Motion Control (4 vidéos)…' :
-                             buildState.mcLaunched ? 'Motion Control lancé — redirection…' :
-                             buildState.mcError ? `Erreur MC : ${buildState.mcError}` :
-                             !buildState.conceptId ? 'Sauvegarde du concept…' :
-                             'Motion Control (4 vidéos)'}
+                            {buildState.mcLaunching ? 'Launching Motion Control (4 videos)…' :
+                             buildState.mcLaunched ? 'Motion Control launched — redirecting…' :
+                             buildState.mcError ? `MC error: ${buildState.mcError}` :
+                             !buildState.conceptId ? 'Saving concept…' :
+                             'Motion Control (4 videos)'}
                           </span>
                         </div>
 
@@ -861,7 +861,7 @@ export default function MotionControlPage() {
                             onClick={() => launchMCForConcept(buildState.conceptId!)}
                             className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white transition"
                           >
-                            🔄 Réessayer le lancement MC
+                            🔄 Retry MC launch
                           </button>
                         )}
 
@@ -871,7 +871,7 @@ export default function MotionControlPage() {
                             onClick={() => { setBuildState(null); setVideoUrl(''); setConceptName(''); setBuilding(false) }}
                             className="w-full py-2 rounded-xl text-sm text-zinc-500 hover:text-zinc-300 transition"
                           >
-                            Créer un autre concept
+                            Create another concept
                           </button>
                         )}
                       </div>
@@ -891,14 +891,14 @@ export default function MotionControlPage() {
                     {building ? (
                       <span className="flex items-center justify-center gap-2">
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Analyse en cours…
+                        Analyzing…
                       </span>
-                    ) : '🔍 Analyser la vidéo'}
+                    ) : '🔍 Analyze video'}
                   </button>
                 )}
 
                 <p className="text-xs text-center text-zinc-600">
-                  Sélection de frame automatique (OpenCV) · 0 coût API · ~10 min total
+                  Automatic frame selection (OpenCV) · 0 API cost · ~10 min total
                 </p>
               </div>
             )}
@@ -913,7 +913,7 @@ export default function MotionControlPage() {
                     value={libSearch}
                     onChange={e => setLibSearch(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') loadLibrary() }}
-                    placeholder="Rechercher…"
+                    placeholder="Search…"
                     className="flex-1 bg-zinc-900/80 border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-violet-500/50 transition"
                   />
                   <button
@@ -923,7 +923,7 @@ export default function MotionControlPage() {
                         ? 'bg-yellow-600/20 border-yellow-500/50 text-yellow-400'
                         : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-white/[0.20]'
                     }`}
-                    title="Favoris uniquement"
+                    title="Favorites only"
                   >★</button>
                   <button
                     onClick={loadLibrary}
@@ -932,12 +932,12 @@ export default function MotionControlPage() {
                 </div>
 
                 {libLoading ? (
-                  <div className="text-center text-zinc-500 py-12">Chargement…</div>
+                  <div className="text-center text-zinc-500 py-12">Loading…</div>
                 ) : filteredConcepts.length === 0 ? (
                   <div className="text-center text-zinc-600 py-12">
                     <p className="text-4xl mb-3">🎬</p>
-                    <p className="text-sm">Aucun concept pour l&apos;instant</p>
-                    <p className="text-xs mt-1">Crée ton premier concept depuis l&apos;onglet &quot;Depuis URL&quot;</p>
+                    <p className="text-sm">No concepts yet</p>
+                    <p className="text-xs mt-1">Create your first concept from the &quot;From URL&quot; tab</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
@@ -958,11 +958,11 @@ export default function MotionControlPage() {
                 {confirmConcept && (
                   <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
                     <div className="bg-zinc-900 border border-white/[0.10] rounded-2xl p-6 max-w-sm w-full space-y-4">
-                      <h3 className="text-base font-semibold text-white">Lancer Motion Control</h3>
+                      <h3 className="text-base font-semibold text-white">Launch Motion Control</h3>
                       <p className="text-sm text-zinc-400">
-                        Lancer 4 × Kling 3.0 Motion Control pour le concept
-                        <strong className="text-white"> «&nbsp;{confirmConcept.name || confirmConcept.id.slice(0, 8)}&nbsp;»</strong> ?
-                        La phase Seedream sera sautée (outfits déjà générés).
+                        Launch 4 × Kling 3.0 Motion Control for concept
+                        <strong className="text-white"> «&nbsp;{confirmConcept.name || confirmConcept.id.slice(0, 8)}&nbsp;»</strong>?
+                        The Seedream phase will be skipped (outfits already generated).
                       </p>
                       {/* Aperçu 4 outfits */}
                       {(() => {
@@ -984,14 +984,14 @@ export default function MotionControlPage() {
                           onClick={() => setConfirmConcept(null)}
                           className="flex-1 py-2.5 rounded-xl text-sm border border-white/[0.08] text-zinc-400 hover:text-white transition"
                         >
-                          Annuler
+                          Cancel
                         </button>
                         <button
                           onClick={() => handleLaunchFromLibrary(confirmConcept)}
                           disabled={launchingConceptId === confirmConcept.id}
                           className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white transition disabled:opacity-50"
                         >
-                          {launchingConceptId === confirmConcept.id ? '⏳ Lancement…' : '▶ Lancer'}
+                          {launchingConceptId === confirmConcept.id ? '⏳ Launching…' : '▶ Launch'}
                         </button>
                       </div>
                     </div>
@@ -1005,7 +1005,7 @@ export default function MotionControlPage() {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Concepts <span className="text-gray-600 normal-case font-normal">(1 dossier = 1 image + 1 vidéo = 4 vidéos générées)</span>
+                    Concepts <span className="text-gray-600 normal-case font-normal">(1 folder = 1 image + 1 video = 4 videos generated)</span>
                   </label>
                   <AddZone onAdd={handleAdd} disabled={launching} />
                 </div>
@@ -1014,7 +1014,7 @@ export default function MotionControlPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                        {manualConcepts.length} concept{manualConcepts.length > 1 ? 's' : ''} · {readyConcepts.length} prêt{readyConcepts.length > 1 ? 's' : ''}
+                        {manualConcepts.length} concept{manualConcepts.length > 1 ? 's' : ''} · {readyConcepts.length} ready
                       </span>
                       {!launching && (
                         <button
@@ -1027,7 +1027,7 @@ export default function MotionControlPage() {
                           }}
                           className="text-xs text-gray-600 hover:text-red-400 transition"
                         >
-                          Tout supprimer
+                          Delete all
                         </button>
                       )}
                     </div>
@@ -1042,7 +1042,7 @@ export default function MotionControlPage() {
                 {submitProgress && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-zinc-400">
-                      <span>Soumission des runs…</span>
+                      <span>Submitting runs…</span>
                       <span>{submitProgress.done}/{submitProgress.total}</span>
                     </div>
                     <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
@@ -1064,18 +1064,18 @@ export default function MotionControlPage() {
                   {launching ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Lancement {submitProgress ? `${submitProgress.done}/${submitProgress.total}` : ''}…
+                      Launching {submitProgress ? `${submitProgress.done}/${submitProgress.total}` : ''}…
                     </span>
                   ) : readyConcepts.length === 0 ? (
-                    'Glisse des dossiers pour démarrer'
+                    'Drop folders to get started'
                   ) : (
-                    `Générer ${readyConcepts.length * 4} vidéos (${readyConcepts.length} batch${readyConcepts.length > 1 ? 'es' : ''} × 4)`
+                    `Generate ${readyConcepts.length * 4} videos (${readyConcepts.length} batch${readyConcepts.length > 1 ? 'es' : ''} × 4)`
                   )}
                 </button>
 
                 {readyConcepts.length > 0 && !launching && (
                   <p className="text-xs text-center text-zinc-600">
-                    Chaque batch génère 4 outfits via Seedream + 4 vidéos via Kling · Tout tourne en arrière-plan
+                    Each batch generates 4 outfits via Seedream + 4 videos via Kling · Everything runs in the background
                   </p>
                 )}
               </div>

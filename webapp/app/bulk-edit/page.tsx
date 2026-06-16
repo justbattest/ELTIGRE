@@ -78,8 +78,8 @@ export default function BulkEditPage() {
 
   // ── Launch ─────────────────────────────────────────────────────────────
   const launch = async () => {
-    if (!entries.length) return setError('Ajoute au moins une image.')
-    if (!prompt.trim()) return setError('Saisis un prompt.')
+    if (!entries.length) return setError('Add at least one image.')
+    if (!prompt.trim()) return setError('Enter a prompt.')
 
     setError('')
     setSuccess('')
@@ -133,12 +133,12 @@ export default function BulkEditPage() {
       })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setError(data.error || 'Erreur au lancement')
+        setError(data.error || 'Launch error')
         setPhase('idle')
         return
       }
 
-      setSuccess(`✓ ${data.imageCount} images envoyées en génération`)
+      setSuccess(`✓ ${data.imageCount} images sent for generation`)
       setTimeout(() => router.push('/en-cours'), 1500)
 
     } catch (e) {
@@ -165,15 +165,15 @@ export default function BulkEditPage() {
 
         <div>
           <h1 className="text-xl font-bold">🖼 Bulk Edit — Seedream 4.5</h1>
-          <p className="text-zinc-400 text-sm mt-1">Glisse tes images, entre un prompt, et relance Seedream sur chaque photo d&apos;un coup.</p>
+          <p className="text-zinc-400 text-sm mt-1">Drop your images, enter a prompt, and run Seedream on every photo at once.</p>
         </div>
 
         {/* ── Dossier Drive ── */}
         <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
-          <p className="text-xs text-zinc-400 mb-1 font-medium uppercase tracking-wider">Dossier Drive</p>
-          <p className="text-xs text-zinc-600 mb-3">Organise les résultats dans le bon sous-dossier Drive. Pas d&apos;impact sur la génération.</p>
+          <p className="text-xs text-zinc-400 mb-1 font-medium uppercase tracking-wider">Drive Folder</p>
+          <p className="text-xs text-zinc-600 mb-3">Organizes results into the right Drive subfolder. No impact on generation.</p>
           {loadingChars ? (
-            <p className="text-xs text-gray-500">Chargement...</p>
+            <p className="text-xs text-gray-500">Loading...</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               <button
@@ -182,7 +182,7 @@ export default function BulkEditPage() {
                   !selectedCharName ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-violet-500/50'
                 }`}
               >
-                Aucun
+                None
               </button>
               {refElements.map(e => (
                 <button
@@ -201,7 +201,7 @@ export default function BulkEditPage() {
 
         {/* ── Prompt ── */}
         <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] space-y-3">
-          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Prompt (appliqué à toutes les images)</p>
+          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Prompt (applied to all images)</p>
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
@@ -210,7 +210,7 @@ export default function BulkEditPage() {
             className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none"
           />
           <div className="flex items-center gap-3">
-            <p className="text-xs text-zinc-500">Qualité :</p>
+            <p className="text-xs text-zinc-500">Quality:</p>
             {(['low', 'medium', 'high'] as const).map(q => (
               <button
                 key={q}
@@ -248,8 +248,8 @@ export default function BulkEditPage() {
           </svg>
           <p className="text-zinc-300 font-medium text-sm">
             {entries.length > 0
-              ? `${entries.length} image${entries.length > 1 ? 's' : ''} sélectionnée${entries.length > 1 ? 's' : ''} — clique ou glisse pour en ajouter`
-              : 'Glisse tes images ici ou clique pour sélectionner'}
+              ? `${entries.length} image${entries.length > 1 ? 's' : ''} selected — click or drag to add more`
+              : 'Drop your images here or click to select'}
           </p>
           <p className="text-zinc-600 text-xs mt-2">JPG · PNG · WEBP</p>
         </div>
@@ -276,7 +276,7 @@ export default function BulkEditPage() {
         {phase === 'compressing' && (
           <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07] flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
-            <p className="text-sm text-zinc-300">🗜 Compression des images… (quelques secondes)</p>
+            <p className="text-sm text-zinc-300">🗜 Compressing images... (a few seconds)</p>
           </div>
         )}
 
@@ -284,7 +284,7 @@ export default function BulkEditPage() {
         {phase === 'uploading' && (
           <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07]">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-zinc-300">⬆️ Envoi vers le serveur...</p>
+              <p className="text-sm text-zinc-300">⬆️ Uploading to server...</p>
               <p className="text-sm text-zinc-400">{uploadedCount}/{entries.length}</p>
             </div>
             <div className="w-full bg-white/[0.05] rounded-full h-1.5">
@@ -298,7 +298,7 @@ export default function BulkEditPage() {
 
         {phase === 'launching' && (
           <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07]">
-            <p className="text-sm text-zinc-300">🚀 Lancement du batch...</p>
+            <p className="text-sm text-zinc-300">🚀 Launching batch...</p>
           </div>
         )}
 
@@ -307,7 +307,7 @@ export default function BulkEditPage() {
         {success && (
           <p className="text-sm text-emerald-400 flex items-center gap-2">
             {success}
-            <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ En cours</a>
+            <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
           </p>
         )}
 
@@ -321,9 +321,9 @@ export default function BulkEditPage() {
             {isRunning ? (
             <span className="flex items-center justify-center gap-2">
               <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-              En cours...
+              In progress...
             </span>
-          ) : `Lancer Seedream sur ${entries.length} image${entries.length !== 1 ? 's' : ''}`}
+          ) : `Run Seedream on ${entries.length} image${entries.length !== 1 ? 's' : ''}`}
           </button>
           {isRunning && (
             <button
