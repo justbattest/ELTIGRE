@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { compressImage } from '@/lib/compress-image'
 import { Sidebar } from '@/components/Sidebar'
@@ -89,6 +89,45 @@ function waitForRun(runId: string, handlers: SSEHandlers, signal: AbortSignal): 
   })
 }
 
+// ── Composants guide d'installation ──────────────────────────────────────────
+
+function CodeBlock({ children }: { children: string }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    navigator.clipboard.writeText(children.trim()).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    })
+  }
+  return (
+    <div className="relative group">
+      <pre className="bg-zinc-950 border border-white/[0.06] rounded-lg px-4 py-3 text-xs text-emerald-300 font-mono overflow-x-auto whitespace-pre-wrap">
+        {children.trim()}
+      </pre>
+      <button
+        onClick={copy}
+        className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] bg-zinc-800 text-zinc-400 opacity-0 group-hover:opacity-100 hover:text-white transition"
+      >
+        {copied ? '✅ Copié' : '📋 Copier'}
+      </button>
+    </div>
+  )
+}
+
+function SetupSection({ step, title, children }: { step: string; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-4">
+      <div className="w-7 h-7 rounded-full bg-violet-600/30 border border-violet-500/40 text-violet-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+        {step}
+      </div>
+      <div className="flex-1 min-w-0 space-y-2">
+        <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 // ── Composant ─────────────────────────────────────────────────────────────────
 
 export default function SpooferPage() {
@@ -113,6 +152,7 @@ export default function SpooferPage() {
   const [infos,     setInfos]     = useState<string[]>([])
 
   const [runId, setRunId] = useState('')
+  const [showSetup, setShowSetup] = useState(false)
 
   const abortRef = useRef<AbortController | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -291,13 +331,172 @@ export default function SpooferPage() {
       <PageWrapper>
       <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
-        <div>
-          <h1 className="text-xl font-semibold text-white">🔀 Spoofer 2.0</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Génère plusieurs variations visuellement quasi-identiques de chaque image/vidéo,
-            mais techniquement différentes — pour échapper à la détection de duplicatas Instagram.
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-white">🔀 Spoofer 2.0</h1>
+            <p className="text-sm text-zinc-500 mt-1">
+              Génère plusieurs variations visuellement quasi-identiques de chaque image/vidéo,
+              mais techniquement différentes — pour échapper à la détection de duplicatas Instagram.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowSetup(v => !v)}
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+              showSetup
+                ? 'bg-violet-600/20 border-violet-500/50 text-violet-300'
+                : 'bg-white/[0.04] border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:border-white/[0.20]'
+            }`}
+          >
+            📖 {showSetup ? 'Masquer le guide' : 'Guide d\'installation'}
+          </button>
         </div>
+
+        {/* ── Guide d'installation ────────────────────────────────────────────── */}
+        {showSetup && (
+          <div className="bg-zinc-900/70 border border-white/[0.08] rounded-2xl p-6 space-y-6 text-sm">
+            <div>
+              <h2 className="text-base font-semibold text-white mb-1">🛠 Installation — Première utilisation</h2>
+              <p className="text-zinc-500 text-xs">
+                À faire une seule fois. Durée estimée : 10–20 min (selon ta connexion).
+              </p>
+            </div>
+
+            {/* Étape 0 — Prérequis */}
+            <SetupSection step="0" title="Prérequis — ce dont tu as besoin">
+              <ul className="space-y-1 text-zinc-400">
+                <li>✅ <strong className="text-zinc-300">macOS</strong> (Mac Intel ou Apple Silicon) ou <strong className="text-zinc-300">Windows 10/11</strong></li>
+                <li>✅ <strong className="text-zinc-300">~8 Go d&apos;espace disque</strong> libre (PyTorch pèse environ 2 Go)</li>
+                <li>✅ <strong className="text-zinc-300">Connexion internet</strong> pour télécharger les packages</li>
+                <li>✅ Accès au terminal / invite de commande</li>
+              </ul>
+            </SetupSection>
+
+            {/* Étape 1 — Python */}
+            <SetupSection step="1" title="Installer Python 3.11">
+              <p className="text-zinc-400 mb-2">Le moteur du Spoofer tourne en Python. Minimum : version 3.10.</p>
+              <p className="text-zinc-500 text-xs mb-2">Mac avec Homebrew (recommandé) :</p>
+              <CodeBlock>{`# Si tu n'as pas Homebrew :
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Installer Python 3.11
+brew install python@3.11`}</CodeBlock>
+              <p className="text-zinc-500 text-xs mt-3 mb-2">Windows :</p>
+              <p className="text-zinc-400 text-xs">Va sur <span className="text-violet-400">python.org/downloads</span> → télécharge l&apos;installateur Python 3.11 → coche bien <span className="font-semibold text-zinc-300">«&nbsp;Add Python to PATH&nbsp;»</span> avant d&apos;installer.</p>
+              <p className="text-zinc-500 text-xs mt-3 mb-2">Vérification :</p>
+              <CodeBlock>{`python3 --version
+# Doit afficher : Python 3.11.x`}</CodeBlock>
+            </SetupSection>
+
+            {/* Étape 2 — Node.js */}
+            <SetupSection step="2" title="Installer Node.js 18+">
+              <p className="text-zinc-400 mb-2">Nécessaire pour l&apos;interface web (Next.js).</p>
+              <p className="text-zinc-500 text-xs mb-2">Mac :</p>
+              <CodeBlock>{`brew install node`}</CodeBlock>
+              <p className="text-zinc-500 text-xs mt-3 mb-2">Windows :</p>
+              <p className="text-zinc-400 text-xs">Va sur <span className="text-violet-400">nodejs.org</span> → télécharge la version LTS → installe normalement.</p>
+            </SetupSection>
+
+            {/* Étape 3 — ffmpeg */}
+            <SetupSection step="3" title="Installer ffmpeg (REQUIS pour les vidéos)">
+              <p className="text-zinc-400 mb-2">Le Spoofer utilise ffmpeg pour modifier les vidéos. Sans lui, seules les images fonctionnent.</p>
+              <p className="text-zinc-500 text-xs mb-2">Mac :</p>
+              <CodeBlock>{`brew install ffmpeg`}</CodeBlock>
+              <p className="text-zinc-500 text-xs mt-3 mb-2">Windows :</p>
+              <CodeBlock>{`# Via winget (Windows 11) :
+winget install ffmpeg
+
+# Ou via Chocolatey :
+choco install ffmpeg`}</CodeBlock>
+              <p className="text-zinc-500 text-xs mt-3 mb-2">Vérification :</p>
+              <CodeBlock>{`ffmpeg -version
+# Doit afficher la version (ex: ffmpeg version 6.x)`}</CodeBlock>
+            </SetupSection>
+
+            {/* Étape 4 — Code */}
+            <SetupSection step="4" title="Récupérer le code">
+              <p className="text-zinc-400 mb-2">Place-toi dans le dossier où tu veux installer l&apos;app.</p>
+              <CodeBlock>{`git clone https://github.com/justbattest/ELTIGRE.git
+cd ELTIGRE`}</CodeBlock>
+              <p className="text-zinc-400 text-xs mt-2">Pas de git ? Télécharge le ZIP depuis GitHub → extrais → ouvre le terminal dans ce dossier.</p>
+            </SetupSection>
+
+            {/* Étape 5 — Virtualenv Python */}
+            <SetupSection step="5" title="Créer l'environnement Python (venv)">
+              <p className="text-zinc-400 mb-2">Le venv isole les dépendances du projet (ne touche pas au reste de ton système).</p>
+              <p className="text-zinc-500 text-xs mb-2">Mac / Linux :</p>
+              <CodeBlock>{`python3.11 -m venv venv
+source venv/bin/activate
+# Tu verras (venv) au début de ta ligne`}</CodeBlock>
+              <p className="text-zinc-500 text-xs mt-3 mb-2">Windows (PowerShell) :</p>
+              <CodeBlock>{`python -m venv venv
+venv\\Scripts\\Activate.ps1
+# Si erreur "scripts désactivés" : Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`}</CodeBlock>
+            </SetupSection>
+
+            {/* Étape 6 — pip install */}
+            <SetupSection step="6" title="Installer les dépendances Python">
+              <p className="text-zinc-400 mb-2">⚠️ PyTorch pèse environ 2 Go — ça peut prendre 5–15 minutes selon ta connexion. C&apos;est normal.</p>
+              <CodeBlock>{`pip install -r requirements.txt`}</CodeBlock>
+              <p className="text-zinc-400 text-xs mt-2 text-amber-400/80">
+                ⚠️ Si tu es sur Mac Apple Silicon (M1/M2/M3/M4) et que torch plante :
+              </p>
+              <CodeBlock>{`pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt`}</CodeBlock>
+            </SetupSection>
+
+            {/* Étape 7 — npm install */}
+            <SetupSection step="7" title="Installer les dépendances Node.js">
+              <CodeBlock>{`cd webapp
+npm install
+cd ..`}</CodeBlock>
+            </SetupSection>
+
+            {/* Étape 8 — .env */}
+            <SetupSection step="8" title="Configurer les variables d'environnement">
+              <p className="text-zinc-400 mb-2">Copie le fichier exemple et remplis tes clés API :</p>
+              <CodeBlock>{`cp webapp/.env.example webapp/.env.local
+# Ouvre webapp/.env.local dans un éditeur et remplis les valeurs`}</CodeBlock>
+              <p className="text-zinc-400 text-xs mt-2">Les clés Higgsfield, Kling, Google Drive se configurent aussi depuis <strong className="text-zinc-300">Settings → API</strong> dans l&apos;interface.</p>
+            </SetupSection>
+
+            {/* Étape 9 — Lancer */}
+            <SetupSection step="9" title="Lancer l'application">
+              <CodeBlock>{`cd webapp
+npm run dev`}</CodeBlock>
+              <p className="text-zinc-400 text-xs mt-2">Puis ouvre <span className="text-violet-400">http://localhost:3000</span> dans ton navigateur.</p>
+              <div className="mt-3 bg-emerald-900/20 border border-emerald-700/30 rounded-lg px-3 py-2 text-emerald-400 text-xs">
+                ✅ Si tu vois la page de connexion → tout est installé correctement !
+              </div>
+            </SetupSection>
+
+            {/* Problèmes courants */}
+            <div className="border-t border-white/[0.06] pt-5 space-y-3">
+              <h3 className="text-sm font-semibold text-zinc-300">🔧 Problèmes courants</h3>
+              <div className="space-y-2 text-xs text-zinc-400">
+                <div className="flex gap-2">
+                  <span className="text-red-400 shrink-0">❌</span>
+                  <div><strong className="text-zinc-300">&quot;command not found: python3&quot;</strong> → Réinstalle Python en cochant &quot;Add to PATH&quot;</div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-red-400 shrink-0">❌</span>
+                  <div><strong className="text-zinc-300">&quot;ffmpeg not found&quot;</strong> → Lance <code className="bg-zinc-800 px-1 rounded">brew install ffmpeg</code> et redémarre le terminal</div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-red-400 shrink-0">❌</span>
+                  <div><strong className="text-zinc-300">Spoofer lent au premier lancement</strong> → Normal ! Les modèles CLIP se chargent en mémoire (30–60s). Les suivants sont instantanés.</div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-red-400 shrink-0">❌</span>
+                  <div><strong className="text-zinc-300">Erreur &quot;torch CUDA&quot; sur Mac</strong> → Lance <code className="bg-zinc-800 px-1 rounded">pip install torch --index-url https://download.pytorch.org/whl/cpu</code></div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-red-400 shrink-0">❌</span>
+                  <div><strong className="text-zinc-300">Port 3000 déjà utilisé</strong> → Arrête les autres apps, ou modifie le port dans <code className="bg-zinc-800 px-1 rounded">package.json</code></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Config (idle uniquement) ────────────────────────────────────── */}
         {phase === 'idle' && (

@@ -390,6 +390,8 @@ async def process_one_outfit(
     drive,
     refresh_token: str = "",
     pre_generated_image: str | None = None,
+    kling_access_key: str = "",
+    kling_secret_key: str = "",
 ) -> None:
     """Traite un outfit de bout en bout : Seedream → Kling v3 MC → Drive.
 
@@ -489,6 +491,8 @@ async def process_one_outfit(
         shortcode=shortcode,
         prompt=kling_prompt,
         refresh_token=refresh_token,
+        kling_access_key=kling_access_key,
+        kling_secret_key=kling_secret_key,
     )
 
     if not kling_result.get("url"):
@@ -535,6 +539,8 @@ async def run_motion_control(
     concept_video: str,
     refresh_token: str = "",
     pre_generated_images: list[str] | None = None,
+    kling_access_key: str = "",
+    kling_secret_key: str = "",
 ) -> None:
     """Orchestre la génération de 4 vidéos Motion Control en parallèle.
 
@@ -565,6 +571,8 @@ async def run_motion_control(
                 if pre_generated_images and i < len(pre_generated_images)
                 else None
             ),
+            kling_access_key=kling_access_key,
+            kling_secret_key=kling_secret_key,
         )
         for i, style in enumerate(OUTFIT_STYLES)
     ]
@@ -612,6 +620,16 @@ def main():
         sys.exit(1)
 
     refresh_token = os.environ.get("HIGGSFIELD_REFRESH_TOKEN", "")
+    kling_access_key = os.environ.get("KLING_ACCESS_KEY", "")
+    kling_secret_key = os.environ.get("KLING_SECRET_KEY", "")
+
+    if not kling_access_key or not kling_secret_key:
+        print(json.dumps({
+            "type": "error",
+            "message": "KLING_ACCESS_KEY et KLING_SECRET_KEY requis (ajouter dans les Paramètres)",
+        }), flush=True)
+        sys.exit(1)
+
     asyncio.run(run_motion_control(
         run_id=args.run_id,
         user_token=user_token,
@@ -619,6 +637,8 @@ def main():
         concept_video=args.concept_video,
         refresh_token=refresh_token,
         pre_generated_images=args.pre_generated_images or None,
+        kling_access_key=kling_access_key,
+        kling_secret_key=kling_secret_key,
     ))
 
 
