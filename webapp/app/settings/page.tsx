@@ -34,6 +34,8 @@ export default function SettingsPage() {
   const [higgsConnected, setHiggsConnected] = useState(false)
   const [higgsAuthState, setHiggsAuthState] = useState<HiggsAuthState>('idle')
   const [higgsDeviceUrl, setHiggsDeviceUrl] = useState('')
+  const [higgsClerkToken, setHiggsClerkToken] = useState('')
+  const [higgsClerkConnected, setHiggsClerkConnected] = useState(false)
 
   // Google Drive
   const [driveFolderId, setDriveFolderId] = useState('')
@@ -65,6 +67,8 @@ export default function SettingsPage() {
         setKlingAccessKey(data.klingAccessKey || '')
         setKlingSecretKey(data.klingSecretKey || '')
         setHiggsConnected(data.higgsFieldConnected || false)
+        setHiggsClerkToken(data.higgsFieldClerkToken || '')
+        setHiggsClerkConnected(data.higgsFieldClerkConnected || false)
         setDriveConnected(data.driveConnected || false)
         setDriveFolderId(data.driveFolderId || '')
         setScrapingProxyUrl(data.scrapingProxyUrl || '')
@@ -118,6 +122,7 @@ export default function SettingsPage() {
           anthropicApiKey: anthropicKey,
           klingAccessKey,
           klingSecretKey,
+          higgsFieldClerkToken: higgsClerkToken,
           defaultModel,
           defaultAspectRatio,
           defaultQuality,
@@ -400,6 +405,29 @@ export default function SettingsPage() {
                 )}
               </div>
             )}
+
+            {/* Session Token (Motion Control) */}
+            <div className="mt-4 pt-4 border-t border-gray-800">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium text-gray-300">
+                  Session Token{' '}
+                  <span className="text-xs bg-violet-900/40 text-violet-400 border border-violet-800 px-2 py-0.5 rounded-full font-normal">Motion Control</span>
+                </label>
+                {higgsClerkConnected && (
+                  <span className="text-green-400 text-xs">✅ Token actif</span>
+                )}
+              </div>
+              <p className="text-gray-500 text-xs mb-2">
+                Requis pour Kling Motion Control. Ouvre <strong className="text-gray-400">higgsfield.ai</strong> → F12 → Onglet Réseau → n&apos;importe quelle requête vers <code className="text-violet-400">fnf.higgsfield.ai</code> → En-têtes de requête → copie la valeur après <code className="text-violet-400">Authorization: Bearer </code> (commence par <code className="text-violet-400">eyJ...</code>).
+              </p>
+              <input
+                type="password"
+                placeholder={higgsClerkConnected ? '••••••••••••  (token actif, colle pour remplacer)' : 'eyJ... (colle ton Clerk JWT ici)'}
+                value={higgsClerkToken}
+                onChange={(e) => setHiggsClerkToken(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 font-mono"
+              />
+            </div>
           </div>
 
           {/* Reference Elements */}

@@ -39,6 +39,7 @@ export async function GET() {
   const rawInstagramCookie = decryptIfPresent(creds.instagramSessionCookie)
   const rawKlingAccess = decryptIfPresent(creds.klingAccessKey)
   const rawKlingSecret = decryptIfPresent(creds.klingSecretKey)
+  const rawClerkToken = decryptIfPresent(creds.higgsFieldClerkToken)
 
   return NextResponse.json({
     apifyApiKey: maskKey(rawApify),
@@ -47,6 +48,8 @@ export async function GET() {
     anthropicApiKeyFull: rawAnthropic || '',
     higgsFieldConnected: !!rawHiggsfield,
     higgsFieldEmail: null,
+    higgsFieldClerkToken: maskKey(rawClerkToken),
+    higgsFieldClerkConnected: !!rawClerkToken,
     klingAccessKey: maskKey(rawKlingAccess),
     klingSecretKey: maskKey(rawKlingSecret),
     defaultModel: creds.defaultModel,
@@ -74,6 +77,7 @@ export async function POST(req: NextRequest) {
     klingSecretKey,
     higgsFieldToken,
     higgsFieldRefreshToken,
+    higgsFieldClerkToken,
     defaultModel,
     defaultAspectRatio,
     defaultQuality,
@@ -104,6 +108,9 @@ export async function POST(req: NextRequest) {
   }
   if (higgsFieldRefreshToken) {
     data.higgsFieldRefreshToken = encrypt(higgsFieldRefreshToken)
+  }
+  if (higgsFieldClerkToken && !higgsFieldClerkToken.includes('...')) {
+    data.higgsFieldClerkToken = encrypt(higgsFieldClerkToken)
   }
   if (defaultModel) data.defaultModel = defaultModel
   if (defaultAspectRatio) data.defaultAspectRatio = defaultAspectRatio
