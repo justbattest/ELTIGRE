@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# requirements-cloud.txt — Dépendances légères pour Railway (sans torch/CLIP)
+#
+# Ce fichier est utilisé par Dockerfile.railway pour le déploiement Railway.
+# Il exclut torch et open_clip_torch (2GB+, RAM insuffisante en plan Railway standard).
+#
+# Tiers disponibles en mode Cloud :
+#   Spoofer images : Tier 1 + 2 (light + medium — géométrie, couleur, grain)
+#   Spoofer vidéos : Tier 1 + 2 + 4 (aggressive complet — vitesse, pitch, GOP)
+#   Tier 3 (adversarial CLIP pour images) → non disponible, dégradation silencieuse
+#
+# Motion Control + Concept Builder : 100% fonctionnels (pas de torch requis)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── HTTP + async ──────────────────────────────────────────────────────────────
+httpx>=0.27.0
+aiofiles>=23.0.0
+
+# ── Auth + crypto ─────────────────────────────────────────────────────────────
+PyJWT>=2.8.0
+cryptography>=42.0.0
+
+# ── Images ────────────────────────────────────────────────────────────────────
+Pillow>=10.0.0
+piexif>=1.1.3
+numpy>=1.26.0
+scipy>=1.13.0
+
+# ── Vidéo : ffmpeg bundlé (pas besoin d'apt install ffmpeg) ──────────────────
+imageio-ffmpeg>=0.5.0
+
+# ── Spoofer : warp perspective + motion concept frame scoring ────────────────
+# opencv sans GPU, headless (~20MB) — nécessaire pour Tier 2 warp + frame picker
+opencv-python-headless>=4.10.0,<5.0.0
+
+# ── Instagram / scraping ──────────────────────────────────────────────────────
+instagrapi==2.7.10
+instaloader>=4.10.3
+yt-dlp>=2024.1.0
+
+# ── Google Drive ──────────────────────────────────────────────────────────────
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+
+# ── Divers pipeline ──────────────────────────────────────────────────────────
+apify-client>=1.8.0
+anthropic>=0.40.0
+
+# ── EXCLU intentionnellement ─────────────────────────────────────────────────
+# torch>=2.2.0        → 2GB+, crash sur Railway 512MB/1GB RAM
+# open_clip_torch     → dépend de torch
+# rembg               → dépend de torch
+# Ces packages sont dans requirements.txt pour l'install locale complète.

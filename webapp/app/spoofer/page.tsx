@@ -153,6 +153,8 @@ export default function SpooferPage() {
 
   const [runId, setRunId] = useState('')
   const [showSetup, setShowSetup] = useState(false)
+  // Mode Cloud (Railway, aucune install) vs Mode Local (torch/CLIP disponible)
+  const [cloudMode, setCloudMode] = useState(true)
 
   const abortRef = useRef<AbortController | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -331,28 +333,81 @@ export default function SpooferPage() {
       <PageWrapper>
       <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-white">🔀 Spoofer 2.0</h1>
-            <p className="text-sm text-zinc-500 mt-1">
-              Génère plusieurs variations visuellement quasi-identiques de chaque image/vidéo,
-              mais techniquement différentes — pour échapper à la détection de duplicatas Instagram.
-            </p>
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold text-white">🔀 Spoofer 2.0</h1>
+              <p className="text-sm text-zinc-500 mt-1">
+                Génère plusieurs variations visuellement quasi-identiques de chaque image/vidéo,
+                mais techniquement différentes — pour échapper à la détection de duplicatas Instagram.
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => setShowSetup(v => !v)}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-              showSetup
-                ? 'bg-violet-600/20 border-violet-500/50 text-violet-300'
-                : 'bg-white/[0.04] border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:border-white/[0.20]'
-            }`}
-          >
-            📖 {showSetup ? 'Masquer le guide' : 'Guide d\'installation'}
-          </button>
+
+          {/* ── Mode toggle Cloud / Local ─────────────────────────────────── */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setCloudMode(true); setShowSetup(false) }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                cloudMode
+                  ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300'
+                  : 'bg-white/[0.04] border-white/[0.08] text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              ☁️ Mode Cloud
+              {cloudMode && <span className="text-[10px] text-emerald-500">● actif</span>}
+            </button>
+            <button
+              onClick={() => setCloudMode(false)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                !cloudMode
+                  ? 'bg-violet-600/20 border-violet-500/50 text-violet-300'
+                  : 'bg-white/[0.04] border-white/[0.08] text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              🔥 Mode Local (CLIP adversarial)
+              {!cloudMode && <span className="text-[10px] text-violet-500">● actif</span>}
+            </button>
+            {!cloudMode && (
+              <button
+                onClick={() => setShowSetup(v => !v)}
+                className={`ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                  showSetup
+                    ? 'bg-violet-600/20 border-violet-500/50 text-violet-300'
+                    : 'bg-white/[0.04] border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:border-white/[0.20]'
+                }`}
+              >
+                📖 {showSetup ? 'Masquer le guide' : 'Guide d\'installation'}
+              </button>
+            )}
+          </div>
+
+          {/* ── Bandeau info selon le mode ──────────────────────────────────── */}
+          {cloudMode ? (
+            <div className="bg-emerald-950/40 border border-emerald-800/30 rounded-xl px-4 py-3 flex flex-wrap gap-3 text-[11px]">
+              <span className="text-emerald-300 font-medium">✅ Aucune installation requise</span>
+              <span className="text-zinc-500">·</span>
+              <span className="text-zinc-400">🖼 Images : Tier 1+2 — géométrie, couleur, grain, métadonnées</span>
+              <span className="text-zinc-500">·</span>
+              <span className="text-zinc-400">🎬 Vidéos : Tier 1+2+4 — vitesse, pitch audio, GOP/CRF, métadonnées</span>
+              <span className="text-zinc-500">·</span>
+              <span className="text-zinc-600">CLIP adversarial (images) → Mode Local uniquement</span>
+            </div>
+          ) : (
+            <div className="bg-violet-950/40 border border-violet-800/30 rounded-xl px-4 py-3 flex flex-wrap gap-3 text-[11px]">
+              <span className="text-violet-300 font-medium">🔥 Mode complet — PyTorch + CLIP requis</span>
+              <span className="text-zinc-500">·</span>
+              <span className="text-zinc-400">🖼 Images : Tier 1+2+3 — + protection adversariale CLIP (casse les embeddings IA)</span>
+              <span className="text-zinc-500">·</span>
+              <span className="text-zinc-400">🎬 Vidéos : Tier 1+2+4 — identique au mode Cloud</span>
+              <span className="text-zinc-500">·</span>
+              <span className="text-zinc-600">Installe les dépendances avec le guide ci-dessous</span>
+            </div>
+          )}
         </div>
 
         {/* ── Guide d'installation ────────────────────────────────────────────── */}
-        {showSetup && (
+        {!cloudMode && showSetup && (
           <div className="bg-zinc-900/70 border border-white/[0.08] rounded-2xl p-6 space-y-6 text-sm">
             <div>
               <h2 className="text-base font-semibold text-white mb-1">🛠 Installation — Première utilisation</h2>
