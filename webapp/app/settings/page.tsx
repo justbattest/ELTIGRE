@@ -172,7 +172,7 @@ export default function SettingsPage() {
       )
 
       if (!popup) {
-        setDriveError('Popup blocked by the browser — allow popups for localhost:3000')
+        setDriveError('Popup blocked by the browser — allow popups for modelify.ai')
         setDriveAuthState('error')
         return
       }

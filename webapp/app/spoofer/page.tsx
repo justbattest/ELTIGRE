@@ -518,7 +518,7 @@ cd ..`}</CodeBlock>
             <SetupSection step="9" title="Launch the application">
               <CodeBlock>{`cd webapp
 npm run dev`}</CodeBlock>
-              <p className="text-zinc-400 text-xs mt-2">Then open <span className="text-violet-400">http://localhost:3000</span> in your browser.</p>
+              <p className="text-zinc-400 text-xs mt-2">Then open <span className="text-violet-400">https://modelify.ai</span> in your browser.</p>
               <div className="mt-3 bg-emerald-900/20 border border-emerald-700/30 rounded-lg px-3 py-2 text-emerald-400 text-xs">
                 ✅ If you see the login page → everything is installed correctly!
               </div>
