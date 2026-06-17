@@ -4,6 +4,7 @@ Génère un prompt Higgsfield pour la meilleure image d'un post Instagram.
 Fonctionne aussi bien pour les images simples que les carousels multi-slides.
 """
 
+import asyncio
 import io
 import json
 import re
@@ -145,7 +146,8 @@ def analyze_post(slides: list[str], anthropic_key: str) -> dict:
     slides_to_use = slides[:2]
     n = len(slides_to_use)
 
-    client = anthropic.Anthropic(api_key=anthropic_key)
+    # Timeout 45s par appel — évite de bloquer le pipeline entier sur une requête Anthropic lente
+    client = anthropic.Anthropic(api_key=anthropic_key, timeout=45.0)
 
     content = []
     for path in slides_to_use:
@@ -235,48 +237,59 @@ EXEMPLE BANGER :
 async def analyze_all_posts(
     post_data: list[dict],
     anthropic_key: str,
+    max_concurrent: int = 5,
 ) -> list[dict]:
-    """Analyse tous les posts séquentiellement.
+    """Analyse tous les posts en parallèle (max 5 simultanés).
     Émet des événements JSON sur stdout.
 
     Args:
         post_data: Liste de {post, local_images}
         anthropic_key: Clé API Anthropic
+        max_concurrent: Nombre max d'appels Claude simultanés (défaut 5)
 
     Returns:
         Liste de {post, local_images, analysis} ou {post, local_images, analysis_error}
+        Dans le même ordre que post_data.
     """
-    results = []
     total = len(post_data)
+    results = [None] * total
+    processed_count = 0
+    sem = asyncio.Semaphore(max_concurrent)
 
-    for i, item in enumerate(post_data):
+    async def analyze_one(i: int, item: dict) -> None:
+        nonlocal processed_count
         post = item["post"]
         shortcode = post.get("shortCode", f"post_{i}")
         slides = item["local_images"]
 
-        try:
-            analysis = analyze_post(slides, anthropic_key)
-            item["analysis"] = analysis
-            print(json.dumps({
-                "type": "analysis",
-                "processed": i + 1,
-                "total": total,
-                "shortcode": shortcode,
-                "recommended_model": analysis["recommended_model"],
-                "scene": analysis["scene_description"]
-            }), flush=True)
-        except Exception as e:
-            item["analysis_error"] = str(e)
-            print(json.dumps({
-                "type": "analysis_error",
-                "processed": i + 1,
-                "total": total,
-                "shortcode": shortcode,
-                "error": str(e)
-            }), flush=True)
+        async with sem:
+            try:
+                # analyze_post est synchrone → on_thread pour ne pas bloquer l'event loop
+                analysis = await asyncio.to_thread(analyze_post, slides, anthropic_key)
+                item["analysis"] = analysis
+                processed_count += 1
+                print(json.dumps({
+                    "type": "analysis",
+                    "processed": processed_count,
+                    "total": total,
+                    "shortcode": shortcode,
+                    "recommended_model": analysis["recommended_model"],
+                    "scene": analysis["scene_description"]
+                }), flush=True)
+            except Exception as e:
+                item["analysis_error"] = str(e)
+                processed_count += 1
+                print(json.dumps({
+                    "type": "analysis_error",
+                    "processed": processed_count,
+                    "total": total,
+                    "shortcode": shortcode,
+                    "error": str(e)[:200]
+                }), flush=True)
 
-        results.append(item)
+        results[i] = item
 
+    await asyncio.gather(*[analyze_one(i, item) for i, item in enumerate(post_data)])
     return results
 
 
