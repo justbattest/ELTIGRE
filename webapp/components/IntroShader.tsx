@@ -9,12 +9,9 @@ export function IntroShader() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    if (!sessionStorage.getItem('modelify_v1')) {
-      setVisible(true)
-      sessionStorage.setItem('modelify_v1', '1')
-      const t = setTimeout(() => setVisible(false), 2400)
-      return () => clearTimeout(t)
-    }
+    setVisible(true)
+    const t = setTimeout(() => setVisible(false), 2400)
+    return () => clearTimeout(t)
   }, [])
 
   return (

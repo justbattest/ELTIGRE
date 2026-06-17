@@ -56,8 +56,13 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">🐯</div>
-          <h1 className="text-2xl font-bold text-white">LOS TIGRES FACTORY</h1>
+          <div className="flex justify-center mb-3">
+            <div className="w-14 h-14 rounded-[16px] bg-white flex items-center justify-center overflow-hidden" style={{ boxShadow: '0 0 24px rgba(91,33,245,0.5)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/LOGO.png" alt="Modelify" width={44} height={44} style={{ objectFit: 'contain' }} />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Modelify</h1>
           <p className="text-gray-400 text-sm mt-1">Create an account</p>
         </div>
 
