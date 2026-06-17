@@ -381,7 +381,14 @@ async def run_carousel_variations(
         return
 
     # Créer le dossier run dans Drive
-    run_folder_id = await uploader._ensure_carousel_run_folder(run_id)
+    try:
+        run_folder_id = await uploader._ensure_carousel_run_folder(run_id)
+    except Exception as drive_exc:
+        print(json.dumps({
+            "type": "error",
+            "message": f"Google Drive token expired or revoked — go to Settings → Reconnect Drive. ({drive_exc})"
+        }), flush=True)
+        return
 
     # Répertoire temp pour les images générées
     tmp_dir = Path(images_dir).parent / f"variations_{run_id}"

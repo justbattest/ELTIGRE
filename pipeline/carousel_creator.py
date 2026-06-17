@@ -155,7 +155,14 @@ async def run_carousel_creator(
     cleaned_dir.mkdir(parents=True, exist_ok=True)
 
     # Pré-créer le dossier racine du run dans Drive
-    run_folder_id = await uploader._ensure_carousel_run_folder(run_id)
+    try:
+        run_folder_id = await uploader._ensure_carousel_run_folder(run_id)
+    except Exception as drive_exc:
+        print(json.dumps({
+            "type": "error",
+            "message": f"Google Drive token expired or revoked — go to Settings → Reconnect Drive. ({drive_exc})"
+        }), flush=True)
+        return
 
     # Semaphore : max 6 carousels en parallèle (24 uploads Drive simultanés max)
     sem = asyncio.Semaphore(6)
