@@ -596,8 +596,13 @@ def scrape_profile_hikerapi(profile_url: str, max_posts: int, hikerapi_token: st
         posts = []
         next_page_id = None
         fetch_target = min(max_posts * 2, max_posts + 30)  # Over-fetch pour trier par engagement
+        page_count = 0
+        MAX_PAGES = 20  # Hard cap : 20 pages × 12 items = 240 items max par profil
+        # Évite la boucle infinie sur les profils à majorité vidéo (media_type==2 filtrés
+        # mais non comptés dans len(posts) → boucle en théorie infinie sans ce cap)
 
-        while len(posts) < fetch_target:
+        while len(posts) < fetch_target and page_count < MAX_PAGES:
+            page_count += 1
             params: dict = {"user_id": user_id, "amount": 12}
             if next_page_id:
                 params["end_cursor"] = next_page_id
@@ -652,6 +657,12 @@ def scrape_profile_hikerapi(profile_url: str, max_posts: int, hikerapi_token: st
                 break
             _time.sleep(0.5)  # Légère pause entre pages
 
+        if page_count >= MAX_PAGES:
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"HikerAPI: @{username} — cap de {MAX_PAGES} pages atteint (profil à majorité vidéo ?). {len(posts)} posts image trouvés."
+            }), flush=True)
+
     # Trier par engagement et couper au max demandé
     posts.sort(
         key=lambda p: (p.get("likesCount") or 0) + (p.get("commentsCount") or 0) * 3,
@@ -661,7 +672,7 @@ def scrape_profile_hikerapi(profile_url: str, max_posts: int, hikerapi_token: st
 
     print(json.dumps({
         "type": "info",
-        "msg": f"HikerAPI: {len(posts)} posts récupérés pour @{username} (triés par engagement)"
+        "msg": f"HikerAPI: {len(posts)} posts récupérés pour @{username} en {page_count} pages (triés par engagement)"
     }), flush=True)
     return posts
 
