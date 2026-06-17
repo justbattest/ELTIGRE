@@ -66,17 +66,35 @@ async def run_pipeline(
         per_profile_max = max(15, math.ceil(max_posts / n_profiles))
 
         all_post_data = []
+        failed_profiles = []
         for profile_url in profiles:
-            data = await scrape_and_download_all(
-                profile_url=profile_url,
-                max_posts=per_profile_max,
-                apify_key=apify_key,
-                run_dir=work_dir,
-                session_cookie=session_cookie,
-                proxy_url=scraping_proxy,
-                hikerapi_token=hikerapi_token,
-            )
-            all_post_data.extend(data)
+            try:
+                data = await scrape_and_download_all(
+                    profile_url=profile_url,
+                    max_posts=per_profile_max,
+                    apify_key=apify_key,
+                    run_dir=work_dir,
+                    session_cookie=session_cookie,
+                    proxy_url=scraping_proxy,
+                    hikerapi_token=hikerapi_token,
+                )
+                all_post_data.extend(data)
+            except Exception as exc:
+                username = profile_url.rstrip('/').split('/')[-1].lstrip('@')
+                failed_profiles.append(username)
+                print(json.dumps({
+                    "type": "warn",
+                    "msg": f"@{username} skipped (scrape failed): {str(exc)[:200]}"
+                }), flush=True)
+
+        if failed_profiles:
+            print(json.dumps({
+                "type": "warn",
+                "msg": f"{len(failed_profiles)} profile(s) skipped: {', '.join('@' + u for u in failed_profiles)}"
+            }), flush=True)
+
+        if not all_post_data:
+            raise RuntimeError("All profiles failed to scrape — no posts collected.")
 
         # Tri cross-profils par engagement (best posts de tous les profils confondus)
         all_post_data.sort(
