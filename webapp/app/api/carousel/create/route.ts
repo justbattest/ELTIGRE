@@ -57,14 +57,15 @@ export async function POST(req: NextRequest) {
   const uploadDir = path.join('/tmp', runId, 'uploads')
   fs.mkdirSync(uploadDir, { recursive: true })
 
-  let savedCount = 0
-  for (const file of files) {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const filePath = path.join(uploadDir, safeName)
-    const buffer = await file.arrayBuffer()
+  // ⚠️ Noms séquentiels — évite les collisions si plusieurs fichiers partagent
+  // le même nom (ex: "1.jpg" provenant de 10 carousels Drive différents).
+  for (let i = 0; i < files.length; i++) {
+    const seq = String(i + 1).padStart(4, '0')
+    const filePath = path.join(uploadDir, `img_${seq}.jpg`)
+    const buffer = await files[i].arrayBuffer()
     fs.writeFileSync(filePath, Buffer.from(buffer))
-    savedCount++
   }
+  const savedCount = files.length
   console.log(`[carousel:${runId}] ${savedCount} images saved to ${uploadDir}`)
 
   // Initialiser le slot en mémoire (singleton partagé via lib/carousel-state)

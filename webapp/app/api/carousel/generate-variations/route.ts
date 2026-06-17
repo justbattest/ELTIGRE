@@ -76,10 +76,14 @@ export async function POST(req: NextRequest) {
   const uploadDir = path.join('/tmp', runId, 'uploads')
   fs.mkdirSync(uploadDir, { recursive: true })
 
-  for (const file of files) {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const filePath = path.join(uploadDir, safeName)
-    const buffer = await file.arrayBuffer()
+  // ⚠️ NE PAS utiliser file.name comme nom de fichier — si plusieurs fichiers
+  // ont le même nom (ex: "1.jpg" de 10 carousels Drive différents), ils s'écrasent
+  // mutuellement et le Python reçoit moins de fichiers que prévu.
+  // Fix : noms séquentiels garantis uniques (img_0001.jpg, img_0002.jpg, …).
+  for (let i = 0; i < files.length; i++) {
+    const seq = String(i + 1).padStart(4, '0')
+    const filePath = path.join(uploadDir, `img_${seq}.jpg`)
+    const buffer = await files[i].arrayBuffer()
     fs.writeFileSync(filePath, Buffer.from(buffer))
   }
   console.log(`[variations:${runId}] ${files.length} images saved to ${uploadDir}`)
