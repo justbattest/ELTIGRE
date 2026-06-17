@@ -9,7 +9,6 @@ type RefElement = { id: string; name: string; type?: string }
 type TestResults = {
   anthropic?: { ok: boolean; message: string }
   higgsfield?: { ok: boolean; message: string }
-  kling?: { ok: boolean; message: string }
   drive?: { ok: boolean; message: string }
 }
 
@@ -28,14 +27,9 @@ export default function SettingsPage() {
   const [newElementName, setNewElementName] = useState('')
   const [newElementType, setNewElementType] = useState<'soul_2' | 'soul_cinematic'>('soul_2')
 
-  const [klingAccessKey, setKlingAccessKey] = useState('')
-  const [klingSecretKey, setKlingSecretKey] = useState('')
-
   const [higgsConnected, setHiggsConnected] = useState(false)
   const [higgsAuthState, setHiggsAuthState] = useState<HiggsAuthState>('idle')
   const [higgsDeviceUrl, setHiggsDeviceUrl] = useState('')
-  const [higgsClerkToken, setHiggsClerkToken] = useState('')
-  const [higgsClerkConnected, setHiggsClerkConnected] = useState(false)
 
   // Google Drive
   const [driveFolderId, setDriveFolderId] = useState('')
@@ -64,11 +58,7 @@ export default function SettingsPage() {
         setDefaultAspectRatio(data.defaultAspectRatio || '2:3')
         setDefaultQuality(data.defaultQuality || '2k')
         setReferenceElements(data.referenceElements || [])
-        setKlingAccessKey(data.klingAccessKey || '')
-        setKlingSecretKey(data.klingSecretKey || '')
         setHiggsConnected(data.higgsFieldConnected || false)
-        setHiggsClerkToken(data.higgsFieldClerkToken || '')
-        setHiggsClerkConnected(data.higgsFieldClerkConnected || false)
         setDriveConnected(data.driveConnected || false)
         setDriveFolderId(data.driveFolderId || '')
         setScrapingProxyUrl(data.scrapingProxyUrl || '')
@@ -120,9 +110,6 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           anthropicApiKey: anthropicKey,
-          klingAccessKey,
-          klingSecretKey,
-          higgsFieldClerkToken: higgsClerkToken,
           defaultModel,
           defaultAspectRatio,
           defaultQuality,
@@ -279,7 +266,12 @@ export default function SettingsPage() {
         </h1>
 
         <div className="space-y-6">
-          {/* HikerAPI */}
+          {/* HikerAPI — maintenance */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gray-950/75 rounded-xl z-10 flex items-center justify-center gap-2 backdrop-blur-[1px] cursor-not-allowed">
+              <span className="text-amber-400">🚧</span>
+              <span className="text-amber-300 text-sm font-medium">Under maintenance</span>
+            </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <h2 className="font-medium mb-1 text-gray-200">
               🔍 HikerAPI — Scraping Instagram
@@ -303,6 +295,7 @@ export default function SettingsPage() {
               <p className="text-green-500 text-xs mt-1.5">✓ HikerAPI configured — scraping via managed proxies</p>
             )}
           </div>
+          </div>{/* end maintenance wrapper */}
 
           {/* Anthropic */}
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
@@ -317,43 +310,6 @@ export default function SettingsPage() {
             <p className="text-gray-500 text-xs mt-1.5">
               console.anthropic.com → API Keys
             </p>
-          </div>
-
-          {/* Kling AI API */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-1 text-gray-200">
-              🎬 Kling AI API
-              <span className="ml-2 text-xs bg-blue-900/40 text-blue-400 border border-blue-800 px-2 py-0.5 rounded-full font-normal">Motion Control</span>
-            </h2>
-            <p className="text-gray-500 text-xs mb-3">
-              Required for Motion Control (Kling 3.0). Create a key at{' '}
-              <a href="https://app.klingai.com/dev" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 underline">
-                app.klingai.com/dev
-              </a>
-              {' '}→ API Keys.
-            </p>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Access Key</label>
-                <input
-                  type="password"
-                  value={klingAccessKey}
-                  onChange={(e) => setKlingAccessKey(e.target.value)}
-                  placeholder="xxxxxxxxxxxxxxxx"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Secret Key</label>
-                <input
-                  type="password"
-                  value={klingSecretKey}
-                  onChange={(e) => setKlingSecretKey(e.target.value)}
-                  placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Higgsfield — Device Code Flow */}
@@ -406,28 +362,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Session Cookies (Motion Control) */}
-            <div className="mt-4 pt-4 border-t border-gray-800">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-gray-300">
-                  Session Cookies{' '}
-                  <span className="text-xs bg-violet-900/40 text-violet-400 border border-violet-800 px-2 py-0.5 rounded-full font-normal">Motion Control</span>
-                </label>
-                {higgsClerkConnected && (
-                  <span className="text-green-400 text-xs">✅ Cookies active</span>
-                )}
-              </div>
-              <p className="text-gray-500 text-xs mb-2">
-                Required for Kling Motion Control. Open <strong className="text-gray-400">higgsfield.ai</strong> → F12 → <strong className="text-gray-400">Network</strong> tab → filter by <code className="text-violet-400">clerk.higgsfield.ai</code> → click any GET request → <strong className="text-gray-400">Headers</strong> → Request Headers → <strong className="text-gray-400">Cookie</strong> → copy the <strong className="text-gray-400">entire value</strong> (contains <code className="text-violet-400">__client=...; __session=...; ...</code>). Valid ~7 days.
-              </p>
-              <input
-                type="password"
-                placeholder={higgsClerkConnected ? '•••••••• (cookies active, paste to replace)' : '__client=...; __client_uat=...; __session=... (full Cookie header from Network tab)'}
-                value={higgsClerkToken}
-                onChange={(e) => setHiggsClerkToken(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 font-mono"
-              />
-            </div>
           </div>
 
           {/* Reference Elements */}
@@ -657,7 +591,6 @@ export default function SettingsPage() {
               {([
                 { key: 'anthropic', label: 'Anthropic' },
                 { key: 'higgsfield', label: 'Higgsfield' },
-                { key: 'kling', label: 'Kling AI' },
                 { key: 'drive', label: 'Google Drive' },
               ] as { key: keyof TestResults; label: string }[]).map(({ key, label }) => {
                 const r = testResults[key]

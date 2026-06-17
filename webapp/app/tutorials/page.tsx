@@ -11,6 +11,7 @@ const TUTORIALS = [
     title: 'Settings',
     subtitle: 'Connect every integration — Higgsfield, Drive, Anthropic, HikerAPI',
     color: 'text-violet-400',
+    warning: '⚠️ HikerAPI connection is useless for now — the Instagram scraper is currently under maintenance and will be back soon. No need to configure it.',
     bullets: [
       {
         emoji: '🔄',
@@ -240,6 +241,13 @@ export default function TutorialsPage() {
                       <p className="text-xs text-zinc-500 leading-tight mt-0.5">{tut.subtitle}</p>
                     </div>
                   </div>
+
+                  {/* Warning (if any) */}
+                  {'warning' in tut && tut.warning && (
+                    <div className="bg-red-950/40 border border-red-800/50 rounded-lg px-4 py-3 text-red-300 text-sm leading-relaxed">
+                      {tut.warning}
+                    </div>
+                  )}
 
                   {/* 16:9 YouTube embed */}
                   <div className="relative w-full rounded-xl overflow-hidden shadow-xl" style={{ paddingBottom: '56.25%' }}>

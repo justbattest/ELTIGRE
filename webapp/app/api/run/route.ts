@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
   const apifyKey = decryptIfPresent(creds?.apifyApiKey)
   const anthropicKey = decryptIfPresent(creds?.anthropicApiKey)
   const higgsToken = decryptIfPresent(creds?.higgsFieldToken)
+  const higgsRefreshToken = decryptIfPresent(creds?.higgsFieldRefreshToken) || ''
   const googleRefreshToken = creds?.googleRefreshToken || null
   const driveFolderId = creds?.driveFolderId || null
   const instagramSessionCookie = decryptIfPresent(creds?.instagramSessionCookie) || null
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
         ...(apifyKey ? { APIFY_KEY: apifyKey } : {}),
         ANTHROPIC_KEY: anthropicKey || '',
         HIGGSFIELD_TOKEN: higgsToken || '',
+        ...(higgsRefreshToken ? { HIGGSFIELD_REFRESH_TOKEN: higgsRefreshToken } : {}),
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
         ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
         ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),
@@ -164,6 +166,7 @@ export async function POST(req: NextRequest) {
         ...(apifyKey ? { APIFY_KEY: apifyKey } : {}),
         ANTHROPIC_KEY: anthropicKey,
         HIGGSFIELD_TOKEN: higgsToken,
+        ...(higgsRefreshToken ? { HIGGSFIELD_REFRESH_TOKEN: higgsRefreshToken } : {}),
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
         ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
         ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),

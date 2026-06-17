@@ -11,6 +11,8 @@ import re
 import tempfile
 from pathlib import Path
 
+from pipeline.hf_token import refresh_hf_access_token, is_session_expired, _hf_token_cache
+
 
 # ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -82,27 +84,57 @@ async def run_higgsfield_for_user(user_token: str, cmd_args: list, timeout: int 
     refresh_token : si fourni, le CLI peut auto-renouveler le token → évite Session expired sur les longs runs.
     """
     with tempfile.TemporaryDirectory(prefix="hf_") as tmp_home:
-        # Écrire les credentials de cet user dans son HOME isolé
+        # HOME isolé — credentials écrits à chaque tentative (mis à jour si refresh)
         creds_dir = Path(tmp_home) / ".config" / "higgsfield"
         creds_dir.mkdir(parents=True)
-        (creds_dir / "credentials.json").write_text(
-            json.dumps({"access_token": user_token, "refresh_token": refresh_token})
-        )
 
         env = {**os.environ, "HOME": tmp_home}
-        proc = await asyncio.create_subprocess_exec(
-            *cmd_args,
-            env=env,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
 
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+        # Retry loop: max 3 attempts to handle silent token refresh on session expiry
+        current_token = user_token
+        for attempt in range(3):
+            # (Re)write credentials each attempt in case token was refreshed
+            (creds_dir / "credentials.json").write_text(
+                json.dumps({"access_token": current_token, "refresh_token": refresh_token})
+            )
 
-        if proc.returncode != 0:
-            raise Exception(stderr.decode().strip())
+            proc = await asyncio.create_subprocess_exec(
+                *cmd_args,
+                env=env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
 
-        return stdout.decode().strip()
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+
+            if proc.returncode == 0:
+                return stdout.decode().strip()
+
+            err_str = stderr.decode().strip()
+
+            # Auto-refresh on session expiry — no popup needed
+            if is_session_expired(err_str) and refresh_token and attempt < 2:
+                print(json.dumps({
+                    "type": "info",
+                    "msg": f"Token Higgsfield expiré — refresh automatique en cours... (tentative {attempt + 1}/3)"
+                }), flush=True)
+                try:
+                    current_token = await refresh_hf_access_token(refresh_token)
+                    _hf_token_cache["access_token"] = current_token
+                    print(json.dumps({
+                        "type": "info",
+                        "msg": "Token Higgsfield rafraîchi ✓ — retry..."
+                    }), flush=True)
+                    continue
+                except Exception as refresh_err:
+                    raise Exception(
+                        f"Token Higgsfield expiré et refresh échoué ({refresh_err}). "
+                        "Reconnecte Higgsfield dans les Paramètres."
+                    )
+
+            raise Exception(err_str)
+
+        raise Exception("run_higgsfield_for_user: max retries atteint")
 
 
 # ─── Device Code Flow (auth) ──────────────────────────────────────────────────
@@ -195,7 +227,8 @@ async def generate_with_fallback(
     aspect_ratio: str = "2:3",
     quality: str = "2k",
     model_setting: str = "auto",
-    shortcode: str = ""
+    shortcode: str = "",
+    refresh_token: str = "",
 ) -> dict:
     """Génère une image avec fallback automatique de modèle.
 
@@ -222,7 +255,7 @@ async def generate_with_fallback(
         async with sem:
             try:
                 cmd = build_cmd(model, prompt, soul_id, element_id, aspect_ratio, quality)
-                result_url = await run_higgsfield_for_user(user_token, cmd, timeout=600)
+                result_url = await run_higgsfield_for_user(user_token, cmd, timeout=600, refresh_token=refresh_token)
 
                 if result_url:
                     return {
@@ -249,7 +282,7 @@ async def generate_with_fallback(
                     await asyncio.sleep(15)
                     # Retry le même modèle (on le remet dans la queue)
                     try:
-                        result_url = await run_higgsfield_for_user(user_token, cmd, timeout=600)
+                        result_url = await run_higgsfield_for_user(user_token, cmd, timeout=600, refresh_token=refresh_token)
                         if result_url:
                             return {
                                 "url": result_url,

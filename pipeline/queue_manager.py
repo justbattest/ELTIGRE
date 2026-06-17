@@ -33,6 +33,7 @@ async def run_pipeline(
     session_cookie: str | None = None,
     scraping_proxy: str | None = None,
     hikerapi_token: str | None = None,       # Token HikerAPI — méthode scraping principale
+    higgsfield_refresh_token: str = "",      # Refresh token — auto-renouvellement du token HF
 ) -> None:
     """Pipeline complet pour un run.
 
@@ -180,7 +181,8 @@ async def run_pipeline(
                 aspect_ratio=aspect_ratio,
                 quality=quality,
                 model_setting=effective_model,
-                shortcode=shortcode
+                shortcode=shortcode,
+                refresh_token=higgsfield_refresh_token,
             )
 
             if result.get("url"):

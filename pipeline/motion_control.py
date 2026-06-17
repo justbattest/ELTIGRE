@@ -369,6 +369,7 @@ async def _poll_motion_control_higgsfield(
     shortcode: str,
     timeout: int = 900,
     interval: int = 12,
+    refresh_token: str = "",
 ) -> str:
     """Poll GET /jobs/{job_id} jusqu'à status=complete. Retourne l'URL vidéo."""
     headers = {
@@ -390,7 +391,23 @@ async def _poll_motion_control_higgsfield(
                 headers=headers,
             )
             if resp.status_code == 401:
-                raise Exception("Token Higgsfield expiré pendant le polling (401).")
+                # Tentative de refresh silencieux avant d'échouer
+                if refresh_token:
+                    try:
+                        from pipeline.hf_token import refresh_hf_access_token
+                        new_tok = await refresh_hf_access_token(refresh_token)
+                        headers["Authorization"] = f"Bearer {new_tok}"
+                        print(json.dumps({
+                            "type": "info",
+                            "msg": f"[{shortcode}] Token Higgsfield rafraîchi pendant polling ✓"
+                        }), flush=True)
+                        continue
+                    except Exception:
+                        pass
+                raise Exception(
+                    "Token Higgsfield expiré pendant le polling Motion Control (401). "
+                    "Reconnecte Higgsfield dans les Paramètres."
+                )
             resp.raise_for_status()
             data = resp.json()
             status = data.get("status", "")
@@ -477,6 +494,7 @@ async def generate_motion_video(
             job_id=job_id,
             shortcode=shortcode,
             timeout=timeout,
+            refresh_token=refresh_token,
         )
         return {"url": result_url}
 

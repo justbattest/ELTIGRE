@@ -79,47 +79,13 @@ def _release_hf_slot(slot_path: Path) -> None:
     except Exception: pass
 
 
-# Cache du token Higgsfield (rafraîchi automatiquement quand il expire)
-# Structure: {"access_token": "...", "refresh_token": "..."}
-_hf_token_cache: dict = {}
-_hf_token_lock: asyncio.Lock | None = None
-
-
-def _get_token_lock() -> asyncio.Lock:
-    global _hf_token_lock
-    if _hf_token_lock is None:
-        _hf_token_lock = asyncio.Lock()
-    return _hf_token_lock
-
-
-async def _refresh_hf_access_token(refresh_token: str) -> str:
-    """Rafraîchit le token Higgsfield via l'API de refresh.
-    Token Higgsfield expire après 3600s (1h) — nécessaire pour les longs runs.
-    Endpoint découvert : POST https://fnf-device-auth.higgsfield.ai/refresh
-    """
-    import urllib.request
-    import ssl
-    ctx = ssl.create_default_context()
-    req = urllib.request.Request(
-        "https://fnf-device-auth.higgsfield.ai/refresh",
-        data=json.dumps({"refresh_token": refresh_token}).encode(),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    loop = asyncio.get_event_loop()
-    def _do_refresh():
-        with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
-            return json.loads(r.read().decode())
-    data = await loop.run_in_executor(None, _do_refresh)
-
-    new_token = data.get("access_token")
-    new_refresh = data.get("refresh_token", refresh_token)
-    if not new_token:
-        raise RuntimeError(f"Refresh API: access_token absent dans la réponse: {data}")
-
-    _hf_token_cache["access_token"] = new_token
-    _hf_token_cache["refresh_token"] = new_refresh
-    return new_token
+# Token cache + refresh partagés — module hf_token.py
+from pipeline.hf_token import (
+    _hf_token_cache,
+    _get_token_lock,
+    refresh_hf_access_token as _refresh_hf_access_token,
+    is_session_expired as _is_session_expired,
+)
 
 
 # ── Prompt template (Carousel Completer) ──────────────────────────────────────
@@ -284,7 +250,7 @@ async def higgsfield_img2img(
             err = str(e)
 
             # Token expiré → refresh automatique et retry immédiat
-            if "session expired" in err.lower() or "hint: run" in err.lower():
+            if _is_session_expired(err):
                 refresh_tok = _hf_token_cache.get("refresh_token", higgsfield_refresh_token)
                 if not refresh_tok:
                     raise RuntimeError(

@@ -10,6 +10,8 @@ import { PageWrapper } from '@/components/PageWrapper'
 type SoulChar = { id: string; name: string; type: string; status: string }
 type RefElement = { id: string; name: string }
 
+const SCRAPER_MAINTENANCE = true  // Scraper temporairement désactivé
+
 export default function NewRunPage() {
   const { data: session } = useSession()
   const router = useRouter()
@@ -158,6 +160,21 @@ export default function NewRunPage() {
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
       <div className="max-w-2xl mx-auto px-8 py-8 space-y-6">
+
+        {/* ── Maintenance banner ── */}
+        {SCRAPER_MAINTENANCE && (
+          <div className="bg-amber-950/40 border border-amber-800/50 rounded-xl px-4 py-3 flex items-start gap-3">
+            <span className="text-amber-400 mt-0.5 shrink-0 text-base">🚧</span>
+            <div>
+              <p className="text-amber-300 text-sm font-medium">Scraper under maintenance</p>
+              <p className="text-amber-500/70 text-xs mt-0.5">Instagram scraping is temporarily unavailable. Use Prompt Studio or Bulk Edit in the meantime.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Form — grisé si maintenance */}
+        <div className={SCRAPER_MAINTENANCE ? 'opacity-50 pointer-events-none select-none' : ''}>
+
         {/* Profils Instagram */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
@@ -379,6 +396,8 @@ export default function NewRunPage() {
             </span>
           ) : 'Launch'}
         </button>
+
+        </div>{/* end maintenance wrapper */}
       </div>
       </PageWrapper>
       </main>

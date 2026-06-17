@@ -28,11 +28,15 @@ export default function ImagePage() {
         <h1 className="text-2xl font-bold">📸 Image</h1>
         <p className="text-gray-400">Instagram scraping + Higgsfield image generation.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link href="/" className="bg-gray-900 border border-gray-800 rounded-2xl p-6 hover:border-violet-500 transition group">
+          {/* Scraping — temporairement désactivé (maintenance) */}
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 opacity-40 cursor-not-allowed select-none">
             <div className="text-3xl mb-3">🔄</div>
-            <h2 className="font-semibold text-white group-hover:text-violet-300 transition">Scraping</h2>
+            <div className="flex items-center gap-2 mb-0.5">
+              <h2 className="font-semibold text-white">Scraping</h2>
+              <span className="text-xs bg-amber-900/50 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded-full font-normal">🚧 Maintenance</span>
+            </div>
             <p className="text-gray-500 text-sm mt-1">Scrape Instagram profiles, analyze posts and generate images.</p>
-          </Link>
+          </div>
           <Link href="/studio" className="bg-gray-900 border border-gray-800 rounded-2xl p-6 hover:border-violet-500 transition group">
             <div className="text-3xl mb-3">✨</div>
             <h2 className="font-semibold text-white group-hover:text-violet-300 transition">Prompt Studio</h2>
