@@ -10,8 +10,13 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "LOS TIGRES FACTORY",
-  description: "Automated content generation pipeline",
+  title: "Modelify",
+  description: "AI Content Automation Platform",
+  icons: {
+    icon: '/brand/LOGO.png',
+    shortcut: '/brand/LOGO.png',
+    apple: '/brand/LOGO.png',
+  },
 };
 
 export default function RootLayout({

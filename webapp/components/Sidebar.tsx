@@ -66,10 +66,14 @@ export function Sidebar() {
     >
       {/* ── Logo ──────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-[18px] border-b border-white/[0.05] shrink-0">
-        {/* Tiger icon — minimal SVG */}
-        <svg viewBox="0 0 24 24" className="w-6 h-6 shrink-0 text-violet-400" fill="currentColor">
-          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1 14.5v-3l-2 1-1-1.732 2-1.155L8 9.5l1.5-.866L12 11l2.5-2.366L16 9.5l-2 2.113 2 1.155L15 14.5l-2-1v3h-2z"/>
-        </svg>
+        {/* Modelify icon — white app-icon card */}
+        <div
+          className="w-7 h-7 rounded-[8px] bg-white flex items-center justify-center shrink-0 overflow-hidden"
+          style={{ boxShadow: '0 0 14px rgba(91,33,245,0.45)' }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/LOGO.png" alt="Modelify" width={22} height={22} style={{ objectFit: 'contain' }} />
+        </div>
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -80,11 +84,8 @@ export function Sidebar() {
               transition={{ duration: 0.15 }}
               className="min-w-0"
             >
-              <p className="text-[13px] font-bold text-white whitespace-nowrap tracking-wide leading-tight">
-                LOS TIGRES
-              </p>
-              <p className="text-[9px] text-zinc-500 whitespace-nowrap tracking-[0.2em] uppercase leading-tight">
-                Factory
+              <p className="text-[14px] font-bold text-white whitespace-nowrap tracking-wide leading-tight">
+                Modelify
               </p>
             </motion.div>
           )}

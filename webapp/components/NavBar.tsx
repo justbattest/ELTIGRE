@@ -36,8 +36,14 @@ export function NavBar() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-2.5">
-          <span className="text-xl">🐯</span>
-          <span className="font-semibold text-white tracking-tight">EL TIGRE FACTORY</span>
+          <div
+            className="w-6 h-6 rounded-[6px] bg-white flex items-center justify-center overflow-hidden shrink-0"
+            style={{ boxShadow: '0 0 10px rgba(91,33,245,0.4)' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/LOGO.png" alt="Modelify" width={18} height={18} style={{ objectFit: 'contain' }} />
+          </div>
+          <span className="font-bold text-white tracking-wide">Modelify</span>
         </div>
         <div className="flex items-center gap-5 text-sm">
           <Link href="/kpi" className="text-zinc-400 hover:text-white transition-colors duration-150">KPI</Link>
