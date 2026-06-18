@@ -54,15 +54,16 @@ from pipeline.metadata_optimizer import _find_ffmpeg
 # Clé du prompt : "image 1 is the scene" / "image 2 is the face reference ONLY"
 # Ne pas dire "replace the person" → ça laisse l'ambiguïté sur quelle image est la base
 SWAP_PROMPT = (
-    "Face swap only. "
-    "Image 1 is the scene: keep everything from image 1 100% unchanged — "
-    "the complete background, environment, all other people present, "
-    "the person's exact body, pose, action, position in frame, clothing, accessories, "
-    "lighting, shadows, camera angle, and composition. "
-    "Image 2 is the face reference: take ONLY the face and facial identity from image 2 "
-    "and apply it to the person already present in image 1. "
-    "Do not import any object, background, clothing, or environment from image 2. "
-    "The result must look exactly like image 1 but with the face of the person from image 2. "
+    "Person swap. "
+    "Image 1 defines the scene: keep the background, environment, all other people, "
+    "the exact pose and body position, the action being performed, the clothing and outfit, "
+    "the lighting, shadows, camera angle, and composition — all unchanged from image 1. "
+    "Image 2 defines the person's identity: replace the person in image 1 with the person "
+    "from image 2 (their face, skin tone, hair, and physical appearance). "
+    "The person from image 2 must be performing the exact same action, in the exact same pose, "
+    "wearing the exact same outfit, and standing in the exact same position as the person in image 1. "
+    "Do not import any background, object, or environment from image 2. "
+    "The result is image 1's scene with image 2's person identity. "
     "Photorealistic, seamless, high quality."
 )
 
