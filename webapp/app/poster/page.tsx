@@ -262,7 +262,7 @@ function QuickCarouselModal({
             <h2 className="font-semibold text-slate-900">Schedule Carousels</h2>
             <p className="text-xs text-slate-500 mt-0.5">Auto Drive scan · Optimal US times · Claude captions</p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-700" /></button>
+          <button onClick={onClose}><X className="w-5 h-5 text-slate-600 hover:text-slate-700" /></button>
         </div>
 
         <div className="p-5 space-y-5">
@@ -283,7 +283,7 @@ function QuickCarouselModal({
                   ))}
                 </select>
                 {selectedAccount?.characterName && (
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-600 mt-1">
                     Drive scan: <span className="text-violet-600">{selectedAccount.characterName}/carousels/</span>
                   </p>
                 )}
@@ -339,7 +339,7 @@ function QuickCarouselModal({
                   onChange={e => setStartDatetime(e.target.value)}
                   className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500"
                 />
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1">
                   Enter your local time. Empty = optimal US times automatically starting tomorrow.
                 </p>
               </div>
@@ -360,7 +360,7 @@ function QuickCarouselModal({
             <div className="flex flex-col items-center py-8 gap-3">
               <RefreshCw className="w-8 h-8 text-violet-500 animate-spin" />
               <p className="text-sm text-slate-500">Scanning Drive...</p>
-              <p className="text-xs text-slate-400">{selectedAccount?.characterName}/carousels/</p>
+              <p className="text-xs text-slate-600">{selectedAccount?.characterName}/carousels/</p>
             </div>
           )}
 
@@ -372,7 +372,7 @@ function QuickCarouselModal({
                   <span className="text-violet-600">{selected.length}</span> carousels selected
                   <span className="text-slate-500 text-xs ml-2">out of {carousels.length} available</span>
                   {alreadyPostedCount > 0 && (
-                    <span className="text-slate-400 text-xs ml-2">· {alreadyPostedCount} already posted excluded</span>
+                    <span className="text-slate-600 text-xs ml-2">· {alreadyPostedCount} already posted excluded</span>
                   )}
                 </p>
                 <button
@@ -430,7 +430,7 @@ function QuickCarouselModal({
                   ? new Date(result.firstPostAt).toLocaleString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
                   : 'tomorrow'}
               </p>
-              <p className="text-xs text-slate-400">English captions generated · Optimal US times · Check Queue posts</p>
+              <p className="text-xs text-slate-600">English captions generated · Optimal US times · Check Queue posts</p>
             </div>
           )}
         </div>
@@ -553,7 +553,7 @@ function ScheduleModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <h2 className="font-semibold text-slate-900">Schedule a post</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition">
+          <button onClick={onClose} className="text-slate-600 hover:text-slate-700 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -563,7 +563,7 @@ function ScheduleModal({
           {thumbUrl && (
             <div className="relative w-full aspect-[9/16] max-h-48 rounded-xl overflow-hidden bg-slate-100">
               {thumbUrl.includes('.mp4') || thumbUrl.includes('video') ? (
-                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
+                <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-sm">
                   Video — {generation.modelUsed || 'unknown'}
                 </div>
               ) : (
@@ -654,7 +654,7 @@ function ScheduleModal({
               onChange={e => setScheduledFor(e.target.value)}
               className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500"
             />
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 mt-1">
               Note: exact times (:00 and :30) are automatically offset by ±7–23 min
             </p>
           </div>
@@ -741,7 +741,7 @@ function AddAccountModal({
       <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-xl">
         <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <h2 className="font-semibold text-slate-900">Add an Instagram account</h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-700" /></button>
+          <button onClick={onClose}><X className="w-5 h-5 text-slate-600 hover:text-slate-700" /></button>
         </div>
         <div className="p-5 space-y-4">
           <div>
@@ -773,7 +773,7 @@ function AddAccountModal({
               placeholder="Ex: JBSW Y3DP EHPK 3PXP (espaces ok)"
               className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 font-mono"
             />
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 mt-1">
               Instagram → Security → Two-factor auth → App → "Enter key manually"
             </p>
           </div>
@@ -809,7 +809,7 @@ function AddAccountModal({
                 className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500"
               />
             )}
-            <p className="text-xs text-slate-400 mt-1">Link this account to a single character — avoids content crossovers</p>
+            <p className="text-xs text-slate-600 mt-1">Link this account to a single character — avoids content crossovers</p>
           </div>
           <div>
             <label className="text-xs text-slate-500 uppercase tracking-wider block mb-1.5">Hotspot phone</label>
@@ -1088,12 +1088,12 @@ export default function PosterPage() {
                 </div>
 
                 {loadingPosts ? (
-                  <p className="text-sm text-slate-400">Loading...</p>
+                  <p className="text-sm text-slate-600">Loading...</p>
                 ) : posts.length === 0 ? (
                   <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm">
                     <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500 text-sm">No scheduled posts</p>
-                    <p className="text-slate-400 text-xs mt-1">
+                    <p className="text-slate-600 text-xs mt-1">
                       Go to the "Content" tab to schedule from your generations
                     </p>
                   </div>
@@ -1109,7 +1109,7 @@ export default function PosterPage() {
                           {post.driveFileUrl && !post.driveFileUrl.includes('.mp4') ? (
                             <img src={post.driveFileUrl} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <div className="w-full h-full flex items-center justify-center text-slate-600">
                               <Video className="w-5 h-5" />
                             </div>
                           )}
@@ -1120,13 +1120,13 @@ export default function PosterPage() {
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <StatusBadge status={post.status} />
                             <span className="text-xs text-slate-500">@{post.account.username}</span>
-                            <span className="text-xs text-slate-400">{post.account.networkName}</span>
+                            <span className="text-xs text-slate-600">{post.account.networkName}</span>
                           </div>
                           {post.caption && (
                             <p className="text-xs text-slate-500 truncate mb-1">{post.caption}</p>
                           )}
                           {post.scheduledFor && (
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-600">
                               <Clock className="w-3 h-3 inline mr-1" />
                               {new Date(post.scheduledFor).toLocaleString('en-US', {
                                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
@@ -1156,7 +1156,7 @@ export default function PosterPage() {
                             <button
                               onClick={() => retryPost(post.id)}
                               title="Retry"
-                              className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-green-600 transition"
+                              className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:text-green-600 transition"
                             >
                               <RefreshCw className="w-4 h-4" />
                             </button>
@@ -1165,7 +1165,7 @@ export default function PosterPage() {
                             <button
                               onClick={() => cancelPost(post.id)}
                               title="Cancel"
-                              className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-red-500 transition"
+                              className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:text-red-500 transition"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -1216,7 +1216,7 @@ export default function PosterPage() {
                   {/* Bouton carousel + refresh */}
                   <div className="ml-auto flex gap-2">
                     <button onClick={loadGenerations} disabled={loadingGens}
-                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-slate-900 transition disabled:opacity-50"
+                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 transition disabled:opacity-50"
                     >
                       <RefreshCw className={`w-4 h-4 ${loadingGens ? 'animate-spin' : ''}`} />
                     </button>
@@ -1230,7 +1230,7 @@ export default function PosterPage() {
                 </div>
 
                 {/* ── Info ── */}
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   {generations.length} item{generations.length > 1 ? 's' : ''} available — already posted hidden automatically
                 </p>
 
@@ -1251,7 +1251,7 @@ export default function PosterPage() {
                   <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
                     <Video className="w-8 h-8 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500 text-sm">No content available</p>
-                    <p className="text-slate-400 text-xs mt-1">
+                    <p className="text-slate-600 text-xs mt-1">
                       {filterChar !== 'all' || filterType !== 'all' ? 'Try changing the filters' : 'Generate content from the other tabs'}
                     </p>
                   </div>
@@ -1280,14 +1280,14 @@ export default function PosterPage() {
                                 ) : (
                                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-slate-50">
                                     <Video className="w-7 h-7 text-violet-500" />
-                                    <span className="text-[10px] text-slate-400 px-2 text-center">{gen.modelUsed || 'video'}</span>
+                                    <span className="text-[10px] text-slate-600 px-2 text-center">{gen.modelUsed || 'video'}</span>
                                   </div>
                                 )
                               ) : (
                                 <img src={thumb} alt="" className="w-full h-full object-cover" />
                               )
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-xs">No preview</div>
+                              <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-xs">No preview</div>
                             )}
 
                             {/* Badges top */}
@@ -1330,7 +1330,7 @@ export default function PosterPage() {
                               <p className="text-[10px] text-slate-500 line-clamp-2 leading-tight">{gen.sceneDescription}</p>
                             )}
                             {gen.generatedAt && (
-                              <p className="text-[9px] text-slate-400">
+                              <p className="text-[9px] text-slate-600">
                                 {new Date(gen.generatedAt).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                               </p>
                             )}
@@ -1367,7 +1367,7 @@ export default function PosterPage() {
                       <div key={g.phase} className="bg-slate-50 border border-slate-200 rounded-lg p-2">
                         <div className="text-xs font-medium text-violet-600 mb-0.5">{g.label}</div>
                         <div className="text-sm font-bold text-slate-900">{g.desc}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">{g.sub}</div>
+                        <div className="text-[10px] text-slate-600 mt-0.5">{g.sub}</div>
                       </div>
                     ))}
                   </div>

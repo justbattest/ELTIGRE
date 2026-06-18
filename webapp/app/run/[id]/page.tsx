@@ -38,7 +38,7 @@ function ProgressBar({ value, total }: { value: number; total: number }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-xs text-slate-400 w-10 text-right">{pct}%</span>
+      <span className="text-xs text-slate-600 w-10 text-right">{pct}%</span>
     </div>
   )
 }
@@ -103,7 +103,7 @@ export default function MonitoringPage() {
     running: 'text-amber-400',
     completed: 'text-green-400',
     failed: 'text-red-400',
-    paused: 'text-slate-400',
+    paused: 'text-slate-600',
   }
 
   const statusLabel = {
@@ -127,7 +127,7 @@ export default function MonitoringPage() {
 
       <div className="max-w-2xl mx-auto px-6 py-8">
         {!run ? (
-          <div className="text-center py-20 text-slate-400">⏳ Connecting to run...</div>
+          <div className="text-center py-20 text-slate-600">⏳ Connecting to run...</div>
         ) : (
           <div className="space-y-6">
             {/* Header */}
@@ -136,7 +136,7 @@ export default function MonitoringPage() {
                 <h1 className="text-xl font-bold">Run #{id.substring(0, 8)}</h1>
                 <span
                   className={`text-sm ${
-                    statusColor[run.status as keyof typeof statusColor] || 'text-slate-400'
+                    statusColor[run.status as keyof typeof statusColor] || 'text-slate-600'
                   }`}
                 >
                   {statusLabel[run.status as keyof typeof statusLabel] || run.status}
@@ -173,14 +173,14 @@ export default function MonitoringPage() {
                           ? 'text-amber-400'
                           : run.totalPosts > 0
                           ? 'text-green-400'
-                          : 'text-slate-400'
+                          : 'text-slate-600'
                       }
                     >
                       ①
                     </span>
                     Scraping
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-600">
                     {run.totalPosts > 0 ? `${run.totalPosts} posts` : '—'}
                   </span>
                 </div>
@@ -197,14 +197,14 @@ export default function MonitoringPage() {
                           ? 'text-amber-400'
                           : run.completedPosts > 0
                           ? 'text-green-400'
-                          : 'text-slate-400'
+                          : 'text-slate-600'
                       }
                     >
                       ②
                     </span>
                     Claude Analysis
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-600">
                     {run.totalPosts > 0
                       ? `${run.generations?.length || 0}/${run.totalPosts} prompts`
                       : '—'}
@@ -226,14 +226,14 @@ export default function MonitoringPage() {
                           ? 'text-amber-400'
                           : run.status === 'completed'
                           ? 'text-green-400'
-                          : 'text-slate-400'
+                          : 'text-slate-600'
                       }
                     >
                       ③
                     </span>
                     Higgsfield Generation
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-600">
                     {run.totalPosts > 0
                       ? `${run.completedPosts}/${run.totalPosts}`
                       : '—'}
@@ -245,22 +245,22 @@ export default function MonitoringPage() {
               {/* Détails génération */}
               {run.totalPosts > 0 && (
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     Active jobs: <span className="text-slate-900">{run.activeJobs}</span>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     Fallbacks: <span className="text-amber-400">{run.fallbackCount}</span>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     Soul Cinema: <span className="text-green-400">{run.soulCount} ✓</span>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     Seedream: <span className="text-blue-400">{run.seedreamCount}</span>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     Failed: <span className="text-red-400">{run.failedPosts}</span>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     Nano Banana: <span className="text-orange-400">{run.nanoBananaCount}</span>
                   </div>
                 </div>
@@ -308,7 +308,7 @@ export default function MonitoringPage() {
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => setExpandedPrompt(isExpanded ? null : g.id)}
-                                  className="text-xs text-slate-400 hover:text-slate-600 transition"
+                                  className="text-xs text-slate-600 hover:text-slate-600 transition"
                                 >
                                   {isExpanded ? '▲' : '▼ tout voir'}
                                 </button>
@@ -330,7 +330,7 @@ export default function MonitoringPage() {
                             </div>
                           ) : (
                             <div className="p-3 border-t border-slate-200">
-                              <p className="text-xs text-slate-400 italic">Prompt not available</p>
+                              <p className="text-xs text-slate-600 italic">Prompt not available</p>
                             </div>
                           )}
                         </div>

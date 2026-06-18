@@ -213,7 +213,7 @@ export default function MotionControlPage() {
   const mcUploadStatus = mcUploadDone ? 'done' : mcUploadStarted ? 'running' : 'idle'
 
   const stepColor = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
-    s === 'done' ? 'text-emerald-500' : s === 'running' ? 'text-violet-600' : s === 'error' ? 'text-red-500' : s === 'skipped' ? 'text-amber-600' : 'text-slate-400'
+    s === 'done' ? 'text-emerald-500' : s === 'running' ? 'text-violet-600' : s === 'error' ? 'text-red-500' : s === 'skipped' ? 'text-amber-600' : 'text-slate-600'
   const stepIcon = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
     s === 'done' ? '✅' : s === 'running' ? '⏳' : s === 'error' ? '❌' : s === 'skipped' ? '⚠️' : '○'
 
@@ -269,8 +269,8 @@ export default function MotionControlPage() {
             {/* Sélecteur de personnage */}
             {soulCharacters.length > 0 ? (
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Character <span className="normal-case font-normal text-slate-400">(Drive folder)</span>
+                <label className="text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Character <span className="normal-case font-normal text-slate-600">(Drive folder)</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {soulCharacters.map(s => (
@@ -290,7 +290,7 @@ export default function MotionControlPage() {
               </div>
             ) : refElements.length > 0 ? (
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Character</label>
+                <label className="text-xs font-medium text-slate-600 uppercase tracking-wider">Character</label>
                 <div className="flex flex-wrap gap-2">
                   {refElements.map(el => (
                     <button
@@ -359,7 +359,7 @@ export default function MotionControlPage() {
                     <span className="text-xs text-emerald-600">✅ {mcModelPhotoName}</span>
                     <button
                       onClick={() => modelPhotoInputRef.current?.click()}
-                      className="text-xs text-slate-400 hover:text-slate-700 transition underline"
+                      className="text-xs text-slate-600 hover:text-slate-700 transition underline"
                     >
                       Change photo
                     </button>
@@ -367,7 +367,7 @@ export default function MotionControlPage() {
                 ) : (
                   <button
                     onClick={() => modelPhotoInputRef.current?.click()}
-                    className="w-full py-3 rounded-xl text-sm border-2 border-dashed border-slate-200 text-slate-400 hover:border-violet-300 hover:text-slate-700 transition"
+                    className="w-full py-3 rounded-xl text-sm border-2 border-dashed border-slate-200 text-slate-600 hover:border-violet-300 hover:text-slate-700 transition"
                   >
                     📷 Upload model reference photo
                   </button>
@@ -385,7 +385,7 @@ export default function MotionControlPage() {
                     onKeyDown={e => { if (e.key === 'Enter') handleExtractFrames() }}
                     placeholder="https://www.instagram.com/reel/..."
                     disabled={mcExtracting || mcGenerating}
-                    className="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-violet-400 transition disabled:opacity-50"
+                    className="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-violet-400 transition disabled:opacity-50"
                   />
                   <button
                     onClick={handleExtractFrames}
@@ -483,7 +483,7 @@ export default function MotionControlPage() {
               {/* Progress */}
               {mcRunId && (
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Progress</p>
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">Progress</p>
 
                   {/* Swap */}
                   <div className="space-y-1">
@@ -520,7 +520,7 @@ export default function MotionControlPage() {
                       ))}
                       {mcVariationsDone.length < mcNumVariations && mcGenerating && (
                         <div className="w-14 h-14 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center">
-                          <span className="text-slate-400 text-xs animate-pulse">⏳</span>
+                          <span className="text-slate-600 text-xs animate-pulse">⏳</span>
                         </div>
                       )}
                     </div>
@@ -594,13 +594,13 @@ export default function MotionControlPage() {
                     setMcPrepError('')
                     setMcVideoUrl('')
                   }}
-                  className="w-full py-3 rounded-xl text-sm text-slate-400 hover:text-slate-700 transition"
+                  className="w-full py-3 rounded-xl text-sm text-slate-600 hover:text-slate-700 transition"
                 >
                   Prepare another reel
                 </button>
               )}
 
-              <p className="text-xs text-center text-slate-400">
+              <p className="text-xs text-center text-slate-600">
                 Seedream 4.5 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
               </p>
             </div>

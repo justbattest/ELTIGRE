@@ -108,7 +108,7 @@ function BankButton({ gen }: { gen: Generation }) {
           </button>
           <button
             onClick={() => setShowNotes(false)}
-            className="text-[10px] text-slate-400 px-1"
+            className="text-[10px] text-slate-600 px-1"
           >✕</button>
         </div>
       ) : (
@@ -165,7 +165,7 @@ function VideoCard({ gen }: { gen: Generation }) {
         ) : isFailed ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 px-3">
             <span className="text-3xl">❌</span>
-            <span className="text-xs text-slate-400">Failed</span>
+            <span className="text-xs text-slate-600">Failed</span>
             {gen.fallbackReason && (
               <span className="text-[10px] text-red-600 text-center leading-tight">{gen.fallbackReason}</span>
             )}
@@ -174,7 +174,7 @@ function VideoCard({ gen }: { gen: Generation }) {
           <div className="w-full h-full relative flex flex-col items-center justify-center gap-3">
             <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-100 via-violet-50 to-slate-100" />
             <div className="relative w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="relative text-xs text-slate-400">
+            <span className="relative text-xs text-slate-600">
               {gen.generationStatus === 'processing' ? 'Generating…' : 'Waiting…'}
             </span>
           </div>
@@ -185,12 +185,12 @@ function VideoCard({ gen }: { gen: Generation }) {
       </div>
       <div className="p-3 space-y-1.5">
         <p className="text-xs font-medium text-slate-900 truncate">{scene}</p>
-        <p className="text-[10px] text-slate-400">{gen.modelUsed || 'seedance_2_0'}</p>
+        <p className="text-[10px] text-slate-600">{gen.modelUsed || 'seedance_2_0'}</p>
         {isComplete && promptFormatted && (
           <div>
             <button
               onClick={() => setShowPrompt(p => !p)}
-              className="text-[10px] text-slate-400 hover:text-slate-600 transition"
+              className="text-[10px] text-slate-600 hover:text-slate-600 transition"
             >
               {showPrompt ? '▲ Hide' : '👁 Prompt'}
             </button>
@@ -247,7 +247,7 @@ function ImageCard({ gen }: { gen: Generation }) {
         </div>
       </div>
       <div className="p-2">
-        <p className="text-[10px] text-slate-400">{gen.modelUsed || '—'} · #{rankDisplay}</p>
+        <p className="text-[10px] text-slate-600">{gen.modelUsed || '—'} · #{rankDisplay}</p>
       </div>
     </div>
   )
@@ -320,7 +320,7 @@ function RunCard({ run }: { run: RunMeta }) {
         <div className="flex items-center gap-2">
           <span>{typeIcon}</span>
           <span className="font-semibold text-slate-900 text-sm">{typeLabel}</span>
-          <span className="text-xs text-slate-400">· {createdAt}</span>
+          <span className="text-xs text-slate-600">· {createdAt}</span>
         </div>
         <div className="flex items-center gap-2">
           {isQueued && (
@@ -400,13 +400,13 @@ function RunCard({ run }: { run: RunMeta }) {
 
       {/* Placeholders si aucune génération en DB */}
       {gens.length === 0 && isQueued && (
-        <div className="flex items-center gap-3 text-sm text-slate-400">
+        <div className="flex items-center gap-3 text-sm text-slate-600">
           <div className="w-4 h-4 border-2 border-amber-300 border-t-amber-500 rounded-full animate-spin" />
           Waiting for an available slot…
         </div>
       )}
       {gens.length === 0 && isRunning && (
-        <div className="flex items-center gap-3 text-sm text-slate-400">
+        <div className="flex items-center gap-3 text-sm text-slate-600">
           <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
           Preparing generations…
         </div>
@@ -486,16 +486,16 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
     : run.characterName
 
   return (
-    <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-3">
+    <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <span>{icon}</span>
           <span className="font-semibold text-slate-900 text-sm">{label}</span>
           {subLabel && (
-            <span className="text-xs text-slate-400 truncate">· {subLabel}</span>
+            <span className="text-xs text-slate-600 truncate">· {subLabel}</span>
           )}
           {timeStr && (
-            <span className="text-xs text-slate-400 shrink-0">· {timeStr}</span>
+            <span className="text-xs text-slate-600 shrink-0">· {timeStr}</span>
           )}
         </div>
         <div className="shrink-0 ml-2">
@@ -604,7 +604,7 @@ export default function EnCoursPage() {
       <div className="max-w-5xl mx-auto px-8 py-8 space-y-8">
         <TutorialVideo videoId="ihQJvJnV3cY" title="Results" />
         {loading && (
-          <div className="flex items-center gap-3 text-slate-400">
+          <div className="flex items-center gap-3 text-slate-600">
             <div className="w-5 h-5 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin" />
             Loading...
           </div>
@@ -612,7 +612,7 @@ export default function EnCoursPage() {
 
         {!loading && runs.length === 0 && batchRuns.length === 0 && (
           <div className="text-center py-20 space-y-4">
-            <p className="text-slate-400 text-lg">No recent generations.</p>
+            <p className="text-slate-600 text-lg">No recent generations.</p>
             <div className="flex justify-center gap-4">
               <Link href="/video" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition">
                 🎬 Generate videos
@@ -627,7 +627,7 @@ export default function EnCoursPage() {
         {/* Batch actifs (metadata + carousel en mémoire) */}
         {activeBatch.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active processes</h2>
+            <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider">Active processes</h2>
             {activeBatch.map(r => <BatchRunCard key={r.runId} run={r} />)}
           </div>
         )}
@@ -635,7 +635,7 @@ export default function EnCoursPage() {
         {/* Runs actifs DB (vidéos / studio / scraping) */}
         {activeRuns.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active</h2>
+            <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider">Active</h2>
             {activeRuns.map(r => <RunCard key={r.id} run={r} />)}
           </div>
         )}
@@ -643,7 +643,7 @@ export default function EnCoursPage() {
         {/* Batch terminés récents */}
         {doneBatch.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Recent processes</h2>
+            <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider">Recent processes</h2>
             {doneBatch.map(r => <BatchRunCard key={r.runId} run={r} />)}
           </div>
         )}
@@ -651,7 +651,7 @@ export default function EnCoursPage() {
         {/* Runs récents terminés DB */}
         {recentRuns.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Recent (2h)</h2>
+            <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider">Recent (2h)</h2>
             {recentRuns.map(r => <RunCard key={r.id} run={r} />)}
           </div>
         )}

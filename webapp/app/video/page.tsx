@@ -409,7 +409,7 @@ export default function VideoPage() {
         </div>
 
         {/* ── Personnage ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Character</p>
             <button
@@ -426,11 +426,11 @@ export default function VideoPage() {
             </button>
           </div>
           {loadingChars || scanning ? (
-            <p className="text-xs text-slate-400">{scanning ? 'Scanning...' : 'Loading...'}</p>
+            <p className="text-xs text-slate-600">{scanning ? 'Scanning...' : 'Loading...'}</p>
           ) : charsError ? (
             <p className="text-xs text-red-600">{charsError}</p>
           ) : refElements.length === 0 ? (
-            <p className="text-xs text-slate-400">No Reference Element found. Click "Scan from Higgsfield" to load your characters.</p>
+            <p className="text-xs text-slate-600">No Reference Element found. Click "Scan from Higgsfield" to load your characters.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {refElements.map(e => (
@@ -445,7 +445,7 @@ export default function VideoPage() {
                 >
                   {e.name}
                   {e.type === 'soul_2' && <span className="ml-1 text-emerald-400 text-xs">🎬</span>}
-                  {e.type === 'soul_cinematic' && <span className="ml-1 text-slate-400 text-xs">🖼</span>}
+                  {e.type === 'soul_cinematic' && <span className="ml-1 text-slate-600 text-xs">🖼</span>}
                 </button>
               ))}
             </div>
@@ -453,7 +453,7 @@ export default function VideoPage() {
         </div>
 
         {/* ── Durée ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center gap-6">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center gap-6">
           <div className="flex-1">
             <label className="block text-xs text-slate-500 mb-1.5">
               Video duration: <span className="text-slate-900 font-medium">{duration}s</span>
@@ -462,7 +462,7 @@ export default function VideoPage() {
               onChange={e => setDuration(Number(e.target.value))}
               className="w-full accent-violet-500" />
           </div>
-          <div className="text-xs text-slate-400 text-right leading-relaxed">
+          <div className="text-xs text-slate-600 text-right leading-relaxed">
             <div>9:16 · 720p</div>
             <div>Seedance 2.0</div>
           </div>
@@ -502,15 +502,15 @@ export default function VideoPage() {
             MODE DIRECTS
         ════════════════════════════════════════════════════════════ */}
         {uiMode === 'direct' && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
 
             {/* Header + filtres */}
             <div className="p-5 border-b border-slate-200 flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Validated prompts</p>
-                <p className="text-xs text-slate-400 mt-0.5">Each prompt is generated as an exact copy — zero modification.</p>
+                <p className="text-xs text-slate-600 mt-0.5">Each prompt is generated as an exact copy — zero modification.</p>
               </div>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-600">
                 {niche === 'conference' ? '🎓 Conference' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Weather' : niche === 'serveuse' ? '🍾 Waitress' : niche === 'mcdo' ? '🍔 McDo' : niche === 'skatepark' ? '🛴 Skatepark' : '👴 Old'}
               </span>
             </div>
@@ -521,7 +521,7 @@ export default function VideoPage() {
                 {selectedIds.size === filteredPrompts.length && filteredPrompts.length > 0
                   ? '☑ Deselect all' : '☐ Select all'}
               </button>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-600">
                 {selectedIds.size} / {filteredPrompts.length} selected
               </span>
             </div>
@@ -529,9 +529,9 @@ export default function VideoPage() {
             {/* Liste */}
             <div className="divide-y divide-slate-100">
               {loadingPrompts ? (
-                <div className="p-6 text-center text-xs text-slate-400">Loading prompts...</div>
+                <div className="p-6 text-center text-xs text-slate-600">Loading prompts...</div>
               ) : filteredPrompts.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-400">No prompts for this niche.</div>
+                <div className="p-6 text-center text-xs text-slate-600">No prompts for this niche.</div>
               ) : (
                 filteredPrompts.map(p => (
                   <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
@@ -564,9 +564,9 @@ export default function VideoPage() {
                         <SubNicheLabel subNiche={p.subNiche} />
                       </div>
                       {p.userDescription ? (
-                        <p className="text-xs text-slate-400 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
+                        <p className="text-xs text-slate-600 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
                       ) : p.speakerLine && (
-                        <p className="text-xs text-slate-400 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
+                        <p className="text-xs text-slate-600 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
                       )}
                       {p.authorName && (
                         <div className="flex items-center justify-between mt-0.5">
@@ -647,14 +647,14 @@ export default function VideoPage() {
             </div>
 
             {/* ── ÉTAPE 1 : Sélectionner le concept de base ── */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-200">
                 <p className="text-sm font-semibold text-slate-900">① Choose the base concept</p>
-                <p className="text-xs text-slate-400 mt-0.5">Lines and outfit pool adapt automatically to the selected concept.</p>
+                <p className="text-xs text-slate-600 mt-0.5">Lines and outfit pool adapt automatically to the selected concept.</p>
               </div>
               <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
                 {loadingPrompts ? (
-                  <div className="p-4 text-center text-xs text-slate-400">Loading...</div>
+                  <div className="p-4 text-center text-xs text-slate-600">Loading...</div>
                 ) : (
                   prompts.map(p => (
                     <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
@@ -672,13 +672,13 @@ export default function VideoPage() {
                           </span>
                           <SubNicheLabel subNiche={p.subNiche} />
                           {!p.phraseVariations && (
-                            <span className="text-xs text-slate-400 italic">outfit only</span>
+                            <span className="text-xs text-slate-600 italic">outfit only</span>
                           )}
                         </div>
                         {p.userDescription ? (
-                          <p className="text-xs text-slate-400 truncate italic mt-0.5">&ldquo;{p.userDescription}&rdquo;</p>
+                          <p className="text-xs text-slate-600 truncate italic mt-0.5">&ldquo;{p.userDescription}&rdquo;</p>
                         ) : p.speakerLine && varBaseId !== p.id && (
-                          <p className="text-xs text-slate-400 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
+                          <p className="text-xs text-slate-600 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
                         )}
                         {p.authorName && (
                           <p className="text-xs text-violet-600/60 mt-0.5">by {p.authorName}</p>
@@ -692,10 +692,10 @@ export default function VideoPage() {
 
             {/* ── ÉTAPE 2 : Répliques dédiées (seulement si prompt sélectionné avec phrases) ── */}
             {varBaseId && currentPhrasePool && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200">
                   <p className="text-sm font-semibold text-slate-900">② Line</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-600 mt-0.5">
                     {currentPhrasePool.length} lines calibrated to this specific concept.
                     In random mode, they cycle without repetition.
                   </p>
@@ -729,15 +729,15 @@ export default function VideoPage() {
 
             {/* ── ÉTAPE 3 : Outfit ── */}
             {varBaseId && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">
                       {currentPhrasePool ? '③' : '②'} Outfit
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">Pool adapted to the concept's niche.</p>
+                    <p className="text-xs text-slate-600 mt-0.5">Pool adapted to the concept's niche.</p>
                   </div>
-                  <span className="text-xs text-slate-400">🔴 Red underwear — fixed</span>
+                  <span className="text-xs text-slate-600">🔴 Red underwear — fixed</span>
                 </div>
                 <div className="divide-y divide-slate-100">
                   <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
@@ -765,12 +765,12 @@ export default function VideoPage() {
             )}
 
             {/* ── Batch count + CTA ── */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] space-y-4">
               <div>
                 <p className="text-xs text-slate-500 mb-2">
                   Generate <span className="text-slate-900 font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} of this concept
                   {varBatchCount > 1 && currentPhrasePool && (
-                    <span className="text-slate-400"> — different lines and outfits each time</span>
+                    <span className="text-slate-600"> — different lines and outfits each time</span>
                   )}
                 </p>
                 <div className="flex gap-2">
@@ -786,7 +786,7 @@ export default function VideoPage() {
               </div>
 
               {!varBaseId && (
-                <p className="text-xs text-slate-400 italic">← Select a base concept to continue</p>
+                <p className="text-xs text-slate-600 italic">← Select a base concept to continue</p>
               )}
               {launchError && <p className="text-sm text-red-600">{launchError}</p>}
               {launchSuccess && (
@@ -815,10 +815,10 @@ export default function VideoPage() {
 
         {/* ── Mode Aléatoire ─────────────────────────────────────── */}
         {uiMode === 'random' && (
-          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+          <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl overflow-hidden">
             <div className="p-5 border-b border-slate-200">
               <p className="text-sm font-semibold text-slate-900">Random generation</p>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 mt-0.5">
                 Picks {randomCount} random prompt{randomCount > 1 ? 's' : ''} from the selected niche and generates 1 video per prompt.
               </p>
             </div>
@@ -827,7 +827,7 @@ export default function VideoPage() {
                 <p className="text-xs text-slate-500 mb-2">
                   Number of videos: <span className="text-slate-900 font-medium">{randomCount}</span>
                   {filteredPrompts.length > 0 && (
-                    <span className="text-slate-400 ml-1">({filteredPrompts.length} prompts available)</span>
+                    <span className="text-slate-600 ml-1">({filteredPrompts.length} prompts available)</span>
                   )}
                 </p>
                 <div className="flex items-center gap-3">

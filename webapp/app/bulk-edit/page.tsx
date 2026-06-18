@@ -172,11 +172,11 @@ export default function BulkEditPage() {
         <TutorialVideo videoId="kA53iyKKKgM" title="Bulk Edit" />
 
         {/* ── Dossier Drive ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <p className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wider">Drive Folder</p>
-          <p className="text-xs text-slate-400 mb-3">Organizes results into the right Drive subfolder. No impact on generation.</p>
+          <p className="text-xs text-slate-600 mb-3">Organizes results into the right Drive subfolder. No impact on generation.</p>
           {loadingChars ? (
-            <p className="text-xs text-slate-400">Loading...</p>
+            <p className="text-xs text-slate-600">Loading...</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               <button
@@ -203,7 +203,7 @@ export default function BulkEditPage() {
         </div>
 
         {/* ── Prompt ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] space-y-3">
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Prompt (applied to all images)</p>
           <textarea
             value={prompt}
@@ -213,7 +213,7 @@ export default function BulkEditPage() {
             className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm resize-none"
           />
           <div className="flex items-center gap-3">
-            <p className="text-xs text-slate-400">Quality:</p>
+            <p className="text-xs text-slate-600">Quality:</p>
             {(['low', 'medium', 'high'] as const).map(q => (
               <button
                 key={q}
@@ -246,7 +246,7 @@ export default function BulkEditPage() {
             className="hidden"
             onChange={onFileInput}
           />
-          <svg className="w-12 h-12 text-slate-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+          <svg className="w-12 h-12 text-slate-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
           <p className="text-slate-700 font-medium text-sm">
@@ -254,7 +254,7 @@ export default function BulkEditPage() {
               ? `${entries.length} image${entries.length > 1 ? 's' : ''} selected — click or drag to add more`
               : 'Drop your images here or click to select'}
           </p>
-          <p className="text-slate-400 text-xs mt-2">JPG · PNG · WEBP</p>
+          <p className="text-slate-600 text-xs mt-2">JPG · PNG · WEBP</p>
         </div>
 
         {/* ── Grid aperçu ── */}
@@ -277,7 +277,7 @@ export default function BulkEditPage() {
 
         {/* ── Compression locale ── */}
         {phase === 'compressing' && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3">
+          <div className="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
             <p className="text-sm text-slate-700">🗜 Compressing images... (a few seconds)</p>
           </div>
@@ -285,7 +285,7 @@ export default function BulkEditPage() {
 
         {/* ── Progress upload ── */}
         {phase === 'uploading' && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-slate-700">⬆️ Uploading to server...</p>
               <p className="text-sm text-slate-500">{uploadedCount}/{entries.length}</p>
@@ -300,7 +300,7 @@ export default function BulkEditPage() {
         )}
 
         {phase === 'launching' && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <p className="text-sm text-slate-700">🚀 Launching batch...</p>
           </div>
         )}

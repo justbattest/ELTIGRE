@@ -414,7 +414,7 @@ export default function CarouselPage() {
             </div>
 
             {/* Soul Character (obligatoire pour img2img) */}
-            <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4">
+            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium text-slate-500">Soul Character <span className="text-red-500">*</span></p>
                 <button onClick={loadCharacters} disabled={loadingChars} className="text-xs text-violet-600 hover:text-violet-700 transition disabled:opacity-50">
@@ -437,10 +437,10 @@ export default function CarouselPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400">No Soul Character found — connect Higgsfield in Settings.</p>
+                <p className="text-xs text-slate-600">No Soul Character found — connect Higgsfield in Settings.</p>
               )}
               {selectedSoulId && (
-                <p className="text-[10px] text-slate-400 mt-2 font-mono">{selectedSoulId}</p>
+                <p className="text-[10px] text-slate-600 mt-2 font-mono">{selectedSoulId}</p>
               )}
             </div>
 
@@ -466,7 +466,7 @@ export default function CarouselPage() {
                   <span className="text-sm text-slate-500">
                     {files.length} photo{files.length > 1 ? 's' : ''} → {files.length} carousel{files.length > 1 ? 's' : ''} of 4 images
                   </span>
-                  <button onClick={resetVariations} className="text-xs text-slate-400 hover:text-red-500 transition">Clear all</button>
+                  <button onClick={resetVariations} className="text-xs text-slate-600 hover:text-red-500 transition">Clear all</button>
                 </div>
                 <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
                   {previews.map((url, i) => (
@@ -506,12 +506,12 @@ export default function CarouselPage() {
         {/* Variations — Progression */}
         {activeTab === 'variations' && varRunId && (
           <div className="space-y-5">
-            <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 space-y-4">
+            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-medium text-slate-800">
                   {varDone && !varError ? '✅ Variations generated!' : varDone && varError ? '❌ Error' : '🎨 Generating variations...'}
                 </h2>
-                <span className="text-xs text-slate-400">{varCompleted}/{varTotal || '?'} carousels</span>
+                <span className="text-xs text-slate-600">{varCompleted}/{varTotal || '?'} carousels</span>
               </div>
               <div>
                 <div className="bg-slate-200 rounded-full h-2">
@@ -534,13 +534,13 @@ export default function CarouselPage() {
                   {varLinks.map(({ n, urls }) => (
                     <div key={n} className="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-400 w-24">carousel_{n}</span>
+                        <span className="text-xs text-slate-600 w-24">carousel_{n}</span>
                         <div className="flex gap-1">
                           {urls.map((_, i) => (
                             <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-slate-400' : 'bg-violet-500'}`} />
                           ))}
                         </div>
-                        <span className="text-[10px] text-slate-400">{urls.length} imgs (1 orig + {urls.length - 1} variants)</span>
+                        <span className="text-[10px] text-slate-600">{urls.length} imgs (1 orig + {urls.length - 1} variants)</span>
                       </div>
                       <a href={urls[0]} target="_blank" rel="noopener noreferrer"
                         className="text-[10px] text-violet-600 hover:text-violet-700 transition">View on Drive →</a>
@@ -561,7 +561,7 @@ export default function CarouselPage() {
         {!runId && (
           <>
             {/* Personnage (dossier Drive) — toujours visible */}
-            <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4">
+            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium text-slate-500">Character (Drive folder)</p>
                 <button
@@ -610,7 +610,7 @@ export default function CarouselPage() {
                       </span>
                     ) : 'Load from Higgsfield'}
                   </button>
-                  <p className="text-[10px] text-slate-400 text-center">
+                  <p className="text-[10px] text-slate-600 text-center">
                     Or type a Drive folder name directly above
                   </p>
                 </div>
@@ -664,7 +664,7 @@ export default function CarouselPage() {
                   </span>
                   <button
                     onClick={resetAll}
-                    className="text-xs text-slate-400 hover:text-red-500 transition"
+                    className="text-xs text-slate-600 hover:text-red-500 transition"
                   >
                     Clear all
                   </button>
@@ -687,12 +687,12 @@ export default function CarouselPage() {
             )}
 
             {/* Réglages */}
-            <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 space-y-4">
+            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-5 space-y-4">
               <h2 className="text-sm font-medium text-slate-800">Settings</h2>
 
               {/* Max carousels */}
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-widest">
+                <label className="text-[10px] text-slate-600 uppercase tracking-widest">
                   Max carousels
                 </label>
                 <div className="flex items-center gap-3 mt-2">
@@ -712,9 +712,9 @@ export default function CarouselPage() {
                     onChange={e => setMaxCarousels(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
                   />
-                  <span className="text-xs text-slate-400 w-10 text-right">{maxCarousels} max</span>
+                  <span className="text-xs text-slate-600 w-10 text-right">{maxCarousels} max</span>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">
+                <p className="text-[10px] text-slate-600 mt-1">
                   Each carousel = 4 photos · unique combinations · unique EXIF iPhone 17 Pro per instance
                 </p>
               </div>
@@ -761,12 +761,12 @@ export default function CarouselPage() {
         {/* ── Progression ────────────────────────────────────────────────── */}
         {runId && (
           <div className="space-y-5">
-            <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 space-y-4">
+            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-medium text-slate-800">
                   {done && !error ? '✅ Carousels generated!' : done && error ? '❌ Error' : '⏳ Generating...'}
                 </h2>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-600">
                   {imageCount} images · C({imageCount},4) = {combinationsPossible.toLocaleString()} possible combos
                 </span>
               </div>
@@ -777,7 +777,7 @@ export default function CarouselPage() {
                   <span className="text-sm text-slate-500">
                     {completedCarousels} / {totalCarousels || '...'} carousels
                   </span>
-                  <span className="text-xs text-slate-400">{pct}%</span>
+                  <span className="text-xs text-slate-600">{pct}%</span>
                 </div>
                 <div className="bg-slate-200 rounded-full h-2">
                   <div
@@ -815,16 +815,16 @@ export default function CarouselPage() {
                   {carouselDriveLinks.map(({ n, urls }) => (
                     <div
                       key={n}
-                      className="bg-white border border-slate-200 shadow-sm rounded-xl p-3 flex items-center justify-between"
+                      className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-3 flex items-center justify-between"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-400 w-20">carousel_{n}</span>
+                        <span className="text-xs text-slate-600 w-20">carousel_{n}</span>
                         <div className="flex gap-1">
                           {urls.map((_, i) => (
                             <div key={i} className="w-2 h-2 rounded-full bg-violet-500 opacity-80" />
                           ))}
                         </div>
-                        <span className="text-[10px] text-slate-400">{urls.length} photos</span>
+                        <span className="text-[10px] text-slate-600">{urls.length} photos</span>
                       </div>
                       <a
                         href={urls[0]}

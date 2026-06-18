@@ -31,18 +31,18 @@ export default function ImagePage() {
         <p className="text-slate-500">Instagram scraping + Higgsfield image generation.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Scraping — temporairement désactivé (maintenance) */}
-          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 opacity-40 cursor-not-allowed select-none">
+          <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl p-6 opacity-40 cursor-not-allowed select-none">
             <div className="text-3xl mb-3">🔄</div>
             <div className="flex items-center gap-2 mb-0.5">
               <h2 className="font-semibold text-slate-900">Scraping</h2>
               <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-normal">🚧 Maintenance</span>
             </div>
-            <p className="text-slate-400 text-sm mt-1">Scrape Instagram profiles, analyze posts and generate images.</p>
+            <p className="text-slate-600 text-sm mt-1">Scrape Instagram profiles, analyze posts and generate images.</p>
           </div>
-          <Link href="/studio" className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 hover:border-violet-500 transition group">
+          <Link href="/studio" className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl p-6 hover:border-violet-500 transition group">
             <div className="text-3xl mb-3">✨</div>
             <h2 className="font-semibold text-slate-900 group-hover:text-violet-700 transition">Prompt Studio</h2>
-            <p className="text-slate-400 text-sm mt-1">Generate images with custom prompts and advanced settings.</p>
+            <p className="text-slate-600 text-sm mt-1">Generate images with custom prompts and advanced settings.</p>
           </Link>
         </div>
       </div>

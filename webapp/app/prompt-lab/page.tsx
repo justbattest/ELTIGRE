@@ -274,8 +274,8 @@ export default function PromptLabPage() {
         <TutorialVideo videoId="nO8e2riPWVY" title="Videos / Prompt Lab" />
 
         {/* ── Upload screenshots ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
-          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Video screenshots <span className="text-slate-400 font-normal normal-case">(1–10 frames, in order)</span></p>
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] space-y-3">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Video screenshots <span className="text-slate-600 font-normal normal-case">(1–10 frames, in order)</span></p>
 
           <div
             onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
@@ -287,7 +287,7 @@ export default function PromptLabPage() {
             <p className="text-slate-500 text-sm">
               {images.length > 0 ? `${images.length} frame${images.length > 1 ? 's' : ''} — click or drag to add more` : 'Drop your screenshots here or click'}
             </p>
-            <p className="text-slate-400 text-xs mt-1">JPG · PNG · WEBP · max 10 images</p>
+            <p className="text-slate-600 text-xs mt-1">JPG · PNG · WEBP · max 10 images</p>
           </div>
 
           {images.length > 0 && (
@@ -306,7 +306,7 @@ export default function PromptLabPage() {
         </div>
 
         {/* ── Description ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <p className="text-xs text-slate-500 mb-3 font-medium uppercase tracking-wider">Scene description</p>
           <textarea
             value={description}
@@ -349,7 +349,7 @@ export default function PromptLabPage() {
 
             {/* Analyse */}
             {analysisText && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
                 <div className="px-5 pt-4 pb-2 flex items-center justify-between">
                   <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Claude Analysis</p>
                   {isRunning && <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />}
@@ -371,7 +371,7 @@ export default function PromptLabPage() {
                   <p className="text-xs text-violet-600 font-medium uppercase tracking-wider">🎬 Seedance Prompt Generated</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(promptJson) }}
-                    className="text-xs text-slate-400 hover:text-slate-700 transition"
+                    className="text-xs text-slate-600 hover:text-slate-700 transition"
                   >
                     Copy
                   </button>
@@ -394,7 +394,7 @@ export default function PromptLabPage() {
 
         {/* ── Historique session ── */}
         {history.length > 0 && (
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <p className="text-xs text-slate-500 mb-3 font-medium uppercase tracking-wider">Session history ({history.length})</p>
             <div className="space-y-2">
               {history.map(entry => (
@@ -407,7 +407,7 @@ export default function PromptLabPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-slate-700 truncate">{entry.description}</p>
-                    <p className="text-xs text-slate-400">{entry.timestamp}</p>
+                    <p className="text-xs text-slate-600">{entry.timestamp}</p>
                   </div>
                   <button onClick={() => reviewEntry(entry)} className="text-xs text-violet-600 hover:text-violet-700 transition whitespace-nowrap">Review</button>
                   <button onClick={() => openSaveDialog(entry.promptJson)} className="text-xs text-emerald-700 hover:text-emerald-600 transition whitespace-nowrap">Save</button>
@@ -446,7 +446,7 @@ export default function PromptLabPage() {
                   placeholder="Woman with back to audience, visible underwear, friend reacts..."
                   className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
                 />
-                <p className="text-xs text-slate-400 mt-0.5">{saveDescription.length}/80</p>
+                <p className="text-xs text-slate-600 mt-0.5">{saveDescription.length}/80</p>
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Category</label>

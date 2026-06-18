@@ -339,12 +339,12 @@ export default function MetadataPage() {
                     {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
                     {videoCount > 0 && <span>{videoCount} video{videoCount > 1 ? 's' : ''}</span>}
                     {entries.length > UPLOAD_CHUNK_SIZE && (
-                      <span className="text-slate-400 ml-2">
+                      <span className="text-slate-600 ml-2">
                         · sent in {nChunks} batches of {UPLOAD_CHUNK_SIZE}, in 1 Drive folder
                       </span>
                     )}
                   </span>
-                  <button onClick={resetAll} className="text-xs text-slate-400 hover:text-red-500 transition">
+                  <button onClick={resetAll} className="text-xs text-slate-600 hover:text-red-500 transition">
                     Clear all
                   </button>
                 </div>
@@ -412,7 +412,7 @@ export default function MetadataPage() {
                   <span className="text-xs font-medium text-slate-500">
                     {phase === 'uploading' ? '⬆️ Sending to server…' : '⬆️ Files received'}
                   </span>
-                  <span className="text-xs text-slate-400">{uploadedFiles}/{total}</span>
+                  <span className="text-xs text-slate-600">{uploadedFiles}/{total}</span>
                 </div>
                 <div className="bg-slate-200 rounded-full h-1.5">
                   <div
@@ -432,7 +432,7 @@ export default function MetadataPage() {
                     : phase === 'processing' ? '🧹 Cleanup + Drive upload…'
                     : '❌ Error'}
                   </span>
-                  <span className="text-xs text-slate-400">{completed}/{total}</span>
+                  <span className="text-xs text-slate-600">{completed}/{total}</span>
                 </div>
                 <div className="bg-slate-200 rounded-full h-1.5">
                   <div

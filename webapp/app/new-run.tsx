@@ -223,7 +223,7 @@ export default function NewRunPage() {
                       @{username}
                       <button
                         onClick={() => removeProfile(i)}
-                        className="text-slate-400 hover:text-red-500 transition ml-1 leading-none text-sm"
+                        className="text-slate-600 hover:text-red-500 transition ml-1 leading-none text-sm"
                       >
                         ×
                       </button>
@@ -281,7 +281,7 @@ export default function NewRunPage() {
                         }`}
                       >
                         <p className="text-sm font-medium">{c.name}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{c.type === 'soul_cinematic' ? 'Cinema' : 'Soul v2'}</p>
+                        <p className="text-[11px] text-slate-600 mt-0.5">{c.type === 'soul_cinematic' ? 'Cinema' : 'Soul v2'}</p>
                       </button>
                     ))}
                   </div>
@@ -306,7 +306,7 @@ export default function NewRunPage() {
                         }`}
                       >
                         <p className="text-sm font-medium">{e.name}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Seedream / Nano Banana</p>
+                        <p className="text-[11px] text-slate-600 mt-0.5">Seedream / Nano Banana</p>
                       </button>
                     ))}
                   </div>

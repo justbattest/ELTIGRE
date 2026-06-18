@@ -95,7 +95,7 @@ function BankButton({ genId }: { genId: number }) {
           >
             {saving ? '…' : '✓'}
           </button>
-          <button onClick={() => setShowNotes(false)} className="text-xs text-slate-400 px-1">✕</button>
+          <button onClick={() => setShowNotes(false)} className="text-xs text-slate-600 px-1">✕</button>
         </div>
       ) : (
         <button
@@ -120,7 +120,7 @@ function SourceImage({ gen }: { gen: Generation }) {
   if (err || !localSrc) {
     return (
       <a href={gen.sourcePostUrl} target="_blank" rel="noopener noreferrer">
-        <div className="w-24 h-32 bg-slate-100 rounded-lg flex flex-col items-center justify-center gap-1 text-slate-400 hover:bg-slate-200 transition cursor-pointer">
+        <div className="w-24 h-32 bg-slate-100 rounded-lg flex flex-col items-center justify-center gap-1 text-slate-600 hover:bg-slate-200 transition cursor-pointer">
           <span className="text-xl">📸</span>
           <span className="text-xs">Source ↗</span>
         </div>
@@ -274,9 +274,9 @@ export default function KPIPage() {
               },
             ].map((stat) => (
               <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                <p className="text-slate-400 text-xs">{stat.label}</p>
+                <p className="text-slate-600 text-xs">{stat.label}</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
-                <p className="text-slate-400 text-xs mt-0.5">{stat.sub}</p>
+                <p className="text-slate-600 text-xs mt-0.5">{stat.sub}</p>
               </div>
             ))}
           </div>
@@ -284,9 +284,9 @@ export default function KPIPage() {
 
         {/* Résultats */}
         {loading ? (
-          <div className="text-center py-20 text-slate-400">⏳ Loading...</div>
+          <div className="text-center py-20 text-slate-600">⏳ Loading...</div>
         ) : !data?.generations?.length ? (
-          <div className="text-center py-20 text-slate-400">
+          <div className="text-center py-20 text-slate-600">
             No completed generations for this run.
           </div>
         ) : (
@@ -303,16 +303,16 @@ export default function KPIPage() {
                     <div className="flex items-start gap-2 flex-shrink-0">
                       {/* Image source (Instagram original) */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-slate-400">Original</span>
+                        <span className="text-xs text-slate-600">Original</span>
                         <SourceImage gen={g} />
                       </div>
 
                       {/* Flèche */}
-                      <div className="flex items-center h-32 text-slate-400 text-lg">→</div>
+                      <div className="flex items-center h-32 text-slate-600 text-lg">→</div>
 
                       {/* Image générée (Higgsfield) */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-slate-400">Generated</span>
+                        <span className="text-xs text-slate-600">Generated</span>
                         {g.generatedImageUrl ? (
                           <a href={g.generatedImageUrl} target="_blank" rel="noopener noreferrer">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -323,7 +323,7 @@ export default function KPIPage() {
                             />
                           </a>
                         ) : (
-                          <div className="w-24 h-32 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 text-xs">
+                          <div className="w-24 h-32 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 text-xs">
                             —
                           </div>
                         )}
@@ -344,7 +344,7 @@ export default function KPIPage() {
                             </span>
                           )}
                           {g.sourceRank && (
-                            <span className="text-xs text-slate-400">#{g.sourceRank}</span>
+                            <span className="text-xs text-slate-600">#{g.sourceRank}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-xs flex-shrink-0">
@@ -352,7 +352,7 @@ export default function KPIPage() {
                           <span className="text-red-400 font-medium">
                             ❤️ {(g.sourceLikes || 0).toLocaleString('en-US')}
                           </span>
-                          <span className="text-slate-400">
+                          <span className="text-slate-600">
                             💬 {(g.sourceComments || 0).toLocaleString('en-US')}
                           </span>
                           {g.sourcePostUrl && (
@@ -376,7 +376,7 @@ export default function KPIPage() {
                         <div>
                           <button
                             onClick={() => setExpandedPrompt(expandedPrompt === g.id ? null : g.id)}
-                            className="text-xs text-slate-400 hover:text-slate-600 transition mb-1"
+                            className="text-xs text-slate-600 hover:text-slate-600 transition mb-1"
                           >
                             {expandedPrompt === g.id ? '▲ Hide prompt' : '▼ View prompt'}
                           </button>

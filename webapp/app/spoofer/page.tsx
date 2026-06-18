@@ -389,22 +389,22 @@ export default function SpooferPage() {
           {cloudMode ? (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex flex-wrap gap-3 text-[11px]">
               <span className="text-emerald-700 font-medium">✅ No installation required</span>
-              <span className="text-slate-400">·</span>
+              <span className="text-slate-600">·</span>
               <span className="text-slate-500">🖼 Images: Tier 1+2 — geometry, color, grain, metadata</span>
-              <span className="text-slate-400">·</span>
+              <span className="text-slate-600">·</span>
               <span className="text-slate-500">🎬 Videos: Tier 1+2+4 — speed, audio pitch, GOP/CRF, metadata</span>
-              <span className="text-slate-400">·</span>
-              <span className="text-slate-400">CLIP adversarial (images) → Local Mode only</span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-600">CLIP adversarial (images) → Local Mode only</span>
             </div>
           ) : (
             <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 flex flex-wrap gap-3 text-[11px]">
               <span className="text-violet-700 font-medium">🔥 Full mode — PyTorch + CLIP required</span>
-              <span className="text-slate-400">·</span>
+              <span className="text-slate-600">·</span>
               <span className="text-slate-500">🖼 Images: Tier 1+2+3 — + CLIP adversarial protection (breaks AI embeddings)</span>
-              <span className="text-slate-400">·</span>
+              <span className="text-slate-600">·</span>
               <span className="text-slate-500">🎬 Videos: Tier 1+2+4 — same as Cloud Mode</span>
-              <span className="text-slate-400">·</span>
-              <span className="text-slate-400">Install dependencies using the guide below</span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-600">Install dependencies using the guide below</span>
             </div>
           )}
         </div>
@@ -414,7 +414,7 @@ export default function SpooferPage() {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 text-sm shadow-sm">
             <div>
               <h2 className="text-base font-semibold text-slate-900 mb-1">🛠 Installation — First-time setup</h2>
-              <p className="text-slate-400 text-xs">
+              <p className="text-slate-600 text-xs">
                 One-time setup. Estimated time: 10–20 min (depending on your connection).
               </p>
             </div>
@@ -564,7 +564,7 @@ npm run dev`}</CodeBlock>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-500">Variations per file</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Each source file generates N unique variations — never the same combination twice.</p>
+                  <p className="text-[10px] text-slate-600 mt-0.5">Each source file generates N unique variations — never the same combination twice.</p>
                 </div>
                 <input
                   type="number"
@@ -579,7 +579,7 @@ npm run dev`}</CodeBlock>
               <label className="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 cursor-pointer">
                 <div>
                   <p className="text-xs text-slate-700">🪞 Mirror effect (horizontal flip)</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="text-[10px] text-slate-600 mt-0.5">
                     Enabled by default. Uncheck if your photos/videos contain on-screen text
                     — the mirror would reverse it and make it unreadable.
                   </p>
@@ -622,11 +622,11 @@ npm run dev`}</CodeBlock>
                     {imgCount > 0 && <span>{imgCount} photo{imgCount > 1 ? 's' : ''}</span>}
                     {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
                     {videoCount > 0 && <span>{videoCount} video{videoCount > 1 ? 's' : ''}</span>}
-                    <span className="text-slate-400 ml-2">
+                    <span className="text-slate-600 ml-2">
                       → {entries.length * variations} output file{entries.length * variations > 1 ? 's' : ''}
                     </span>
                   </span>
-                  <button onClick={resetAll} className="text-xs text-slate-400 hover:text-red-500 transition">
+                  <button onClick={resetAll} className="text-xs text-slate-600 hover:text-red-500 transition">
                     Clear all
                   </button>
                 </div>
@@ -711,7 +711,7 @@ npm run dev`}</CodeBlock>
                     <span className="text-xs font-medium text-slate-500">
                       {phase === 'uploading' ? '⬆️ Uploading to server…' : '⬆️ Files received'}
                     </span>
-                    <span className="text-xs text-slate-400">{uploadedFiles}/{uploadTotal}</span>
+                    <span className="text-xs text-slate-600">{uploadedFiles}/{uploadTotal}</span>
                   </div>
                   <div className="bg-slate-200 rounded-full h-1.5">
                     <div
@@ -728,7 +728,7 @@ npm run dev`}</CodeBlock>
                     <span className="text-xs font-medium text-slate-500">
                       {isDone && !error ? '✅ Done!' : phase === 'processing' ? `🔀 Generating variations… (${level})` : '❌ Error'}
                     </span>
-                    <span className="text-xs text-slate-400">{completed}/{total || '…'}</span>
+                    <span className="text-xs text-slate-600">{completed}/{total || '…'}</span>
                   </div>
                   <div className="bg-slate-200 rounded-full h-1.5">
                     <div
@@ -788,7 +788,7 @@ npm run dev`}</CodeBlock>
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-sm shrink-0">🔀</span>
-                        <span className="text-xs text-slate-700 truncate">{r.file} <span className="text-slate-400">→ v{r.variation}</span></span>
+                        <span className="text-xs text-slate-700 truncate">{r.file} <span className="text-slate-600">→ v{r.variation}</span></span>
                       </div>
                       <div className="flex gap-1 shrink-0 flex-wrap justify-end">
                         {r.tiersApplied.map(t => (

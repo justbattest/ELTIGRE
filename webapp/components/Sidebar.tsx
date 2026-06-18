@@ -62,17 +62,24 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: collapsed ? 64 : 240 }}
       transition={{ duration: 0.25, ease: 'easeInOut' }}
-      className="flex-shrink-0 flex flex-col h-screen sticky top-0 bg-white/95 backdrop-blur-xl border-r border-slate-200/60 z-40 overflow-hidden"
+      className="flex-shrink-0 flex flex-col h-screen sticky top-0 z-40 overflow-hidden"
+      style={{
+        background: '#ffffff',
+        borderRight: '1px solid rgba(0,0,0,0.08)',
+        boxShadow: '2px 0 12px rgba(0,0,0,0.04)',
+      }}
     >
       {/* ── Logo ──────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-4 py-[18px] border-b border-slate-200/60 shrink-0">
-        {/* Modelify icon — white app-icon card */}
+      <div
+        className="flex items-center gap-3 px-4 shrink-0"
+        style={{ height: 60, borderBottom: '1px solid rgba(0,0,0,0.07)' }}
+      >
         <div
-          className="w-7 h-7 rounded-[8px] bg-white flex items-center justify-center shrink-0 overflow-hidden"
-          style={{ boxShadow: '0 0 14px rgba(91,33,245,0.25)' }}
+          className="w-8 h-8 rounded-[10px] bg-white flex items-center justify-center shrink-0 overflow-hidden"
+          style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(109,40,217,0.22)' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/LOGO.png" alt="Modelify" width={22} height={22} style={{ objectFit: 'contain' }} />
+          <img src="/brand/LOGO.png" alt="Modelify" width={24} height={24} style={{ objectFit: 'contain' }} />
         </div>
         <AnimatePresence>
           {!collapsed && (
@@ -82,45 +89,49 @@ export function Sidebar() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.15 }}
-              className="min-w-0"
+              className="min-w-0 flex flex-col"
             >
-              <p className="text-[14px] font-bold text-slate-900 whitespace-nowrap tracking-wide leading-tight">
+              <p className="text-[15px] font-bold text-gray-900 whitespace-nowrap leading-tight tracking-tight">
                 Modelify
+              </p>
+              <p className="text-[10px] text-gray-400 whitespace-nowrap leading-tight tracking-wider uppercase font-medium">
+                AI Studio
               </p>
             </motion.div>
           )}
         </AnimatePresence>
         <button
           onClick={() => setCollapsed(c => !c)}
-          className="ml-auto shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+          className="ml-auto shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
           title={collapsed ? 'Expand' : 'Collapse'}
         >
-          {collapsed
-            ? <ChevronRight size={14} />
-            : <ChevronLeft size={14} />
-          }
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
       {/* ── Navigation ────────────────────────────────────────── */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 py-4 px-2.5 space-y-0.5 overflow-y-auto overflow-x-hidden">
         {GROUPS.map(group => {
           const isActive = group.key === activeGroup.key
           const Icon = group.icon
           return (
             <div key={group.key}>
               {group.separate && (
-                <div className="my-3 mx-1 border-t border-slate-200/60" />
+                <div className="my-3 mx-1" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }} />
               )}
               <Link
                 href={group.href}
-                className={`flex items-center gap-3 px-3 py-[10px] rounded-xl transition-all duration-150 ${
+                className={`relative flex items-center gap-3 px-3 py-[9px] rounded-xl transition-all duration-150 ${
                   isActive
-                    ? 'bg-violet-50 text-violet-700'
-                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                    ? 'text-violet-700'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
+                style={isActive ? {
+                  background: 'linear-gradient(135deg, rgba(109,40,217,0.09) 0%, rgba(109,40,217,0.04) 100%)',
+                  boxShadow: 'inset 0 0 0 1px rgba(109,40,217,0.14)',
+                } : {}}
               >
-                <Icon size={17} strokeWidth={1.75} className="shrink-0" />
+                <Icon size={17} strokeWidth={isActive ? 2.1 : 1.7} className="shrink-0" />
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span
@@ -129,7 +140,7 @@ export function Sidebar() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.1 }}
-                      className="text-[11px] font-semibold tracking-[0.1em] whitespace-nowrap uppercase"
+                      className={`text-[11px] tracking-[0.12em] whitespace-nowrap uppercase ${isActive ? 'font-bold' : 'font-semibold'}`}
                     >
                       {group.label}
                     </motion.span>
@@ -138,23 +149,27 @@ export function Sidebar() {
                 {isActive && !collapsed && (
                   <motion.div
                     layoutId="sidebar-dot"
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600 shrink-0"
+                    className="ml-auto w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: 'rgba(109,40,217,0.7)' }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
               </Link>
 
-              {/* Sub-tabs — pas d'animation (sidebar re-créée à chaque nav) */}
+              {/* Sub-tabs */}
               {isActive && group.subTabs.length > 1 && !collapsed && (
-                <div className="ml-[14px] mt-1 mb-1 pl-4 border-l border-slate-200 space-y-0.5">
+                <div
+                  className="ml-[14px] mt-1.5 mb-1.5 pl-4 space-y-0.5"
+                  style={{ borderLeft: '2px solid rgba(109,40,217,0.18)' }}
+                >
                   {group.subTabs.map(tab => (
                     <Link
                       key={tab.href}
                       href={tab.href}
-                      className={`flex items-center px-3 py-[7px] rounded-lg text-[11px] transition-colors ${
+                      className={`flex items-center px-3 py-[7px] rounded-lg text-[12px] font-medium transition-all ${
                         pathname === tab.href
-                          ? 'text-slate-900 bg-slate-100'
-                          : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                          ? 'text-gray-900 bg-gray-100/80'
+                          : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                       }`}
                     >
                       {tab.label}
@@ -168,64 +183,33 @@ export function Sidebar() {
       </nav>
 
       {/* ── Bottom ────────────────────────────────────────────── */}
-      <div className="py-3 px-2 border-t border-slate-200/60 space-y-0.5 shrink-0">
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
-        >
-          <Settings size={16} strokeWidth={1.75} className="shrink-0" />
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                key="settings-label"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-[11px] whitespace-nowrap"
-              >
-                Settings
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </Link>
-        <Link
-          href="/kpi"
-          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
-        >
-          <BarChart2 size={16} strokeWidth={1.75} className="shrink-0" />
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                key="kpi-label"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-[11px] whitespace-nowrap"
-              >
-                KPI
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </Link>
-        <Link
-          href="/tutorials"
-          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
-        >
-          <BookOpen size={16} strokeWidth={1.75} className="shrink-0" />
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                key="tutorials-label"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-[11px] whitespace-nowrap"
-              >
-                Tutorials
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </Link>
+      <div className="py-3 px-2.5 space-y-0.5 shrink-0" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+        {[
+          { href: '/settings', icon: Settings, label: 'Settings', key: 'settings' },
+          { href: '/kpi',      icon: BarChart2, label: 'KPI',      key: 'kpi'      },
+          { href: '/tutorials', icon: BookOpen,  label: 'Tutorials', key: 'tutorials' },
+        ].map(({ href, icon: Icon, label, key }) => (
+          <Link
+            key={key}
+            href={href}
+            className="flex items-center gap-3 px-3 py-[8px] rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition"
+          >
+            <Icon size={16} strokeWidth={1.75} className="shrink-0" />
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.span
+                  key={`${key}-label`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-[12px] font-medium whitespace-nowrap"
+                >
+                  {label}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        ))}
       </div>
     </motion.aside>
   )

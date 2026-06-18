@@ -262,14 +262,14 @@ export default function TutorialsPage() {
 
                   {/* Recap bullets */}
                   <div className="space-y-3 pt-1">
-                    <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400 font-semibold">Key takeaways</p>
+                    <p className="text-[11px] uppercase tracking-[0.1em] text-slate-600 font-semibold">Key takeaways</p>
                     <ul className="space-y-2.5">
                       {tut.bullets.map((b, idx) => (
                         <li key={idx} className="flex gap-3 items-start">
                           <span className="text-base leading-tight shrink-0 mt-0.5">{b.emoji}</span>
                           <div>
                             <span className="text-sm font-medium text-slate-800">{b.title}</span>
-                            <span className="text-slate-400"> — </span>
+                            <span className="text-slate-600"> — </span>
                             <span className="text-sm text-slate-600">{b.desc}</span>
                           </div>
                         </li>

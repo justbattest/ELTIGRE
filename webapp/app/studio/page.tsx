@@ -271,7 +271,7 @@ function CategorySection({
     <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
+        <span className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">
           {emoji} {label}
         </span>
         <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ function CategorySection({
           {count > 0 && (
             <button
               onClick={() => onClearAll(catKey)}
-              className="text-[10px] text-slate-400 hover:text-slate-600 transition"
+              className="text-[10px] text-slate-600 hover:text-slate-600 transition"
             >
               ✕ clear
             </button>
@@ -341,7 +341,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 animate-pulse">
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <div className="w-6 h-6 border-2 border-violet-500/50 border-t-violet-400 rounded-full animate-spin" />
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-600">
               {card.status === 'pending' ? 'pending...' : 'generating...'}
             </span>
           </div>
@@ -389,7 +389,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
       {card.status === 'failed' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
           <span className="text-2xl">❌</span>
-          <span className="text-[10px] text-slate-400">Generation failed</span>
+          <span className="text-[10px] text-slate-600">Generation failed</span>
         </div>
       )}
 
@@ -728,7 +728,7 @@ export default function StudioPage() {
 
           {/* Character */}
           <div className="space-y-3">
-            <h3 className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">🎭 Character</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">🎭 Character</h3>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
@@ -748,7 +748,7 @@ export default function StudioPage() {
 
             {soulChars.length > 0 && (
               <div>
-                <p className="text-[10px] text-slate-400 mb-1.5">Soul Character</p>
+                <p className="text-[10px] text-slate-600 mb-1.5">Soul Character</p>
                 <div className="flex flex-wrap gap-1.5">
                   {soulChars.map((c) => (
                     <button
@@ -769,7 +769,7 @@ export default function StudioPage() {
 
             {refElements.length > 0 && (
               <div>
-                <p className="text-[10px] text-slate-400 mb-1.5">Reference Element</p>
+                <p className="text-[10px] text-slate-600 mb-1.5">Reference Element</p>
                 <div className="flex flex-wrap gap-1.5">
                   {refElements.map((e) => (
                     <button
@@ -794,11 +794,11 @@ export default function StudioPage() {
 
           {/* Format */}
           <div className="space-y-2">
-            <h3 className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">⚙️ Format</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">⚙️ Format</h3>
             <div className="grid grid-cols-3 gap-1.5">
               {/* Model */}
               <div className="col-span-3">
-                <label className="text-[10px] text-slate-400 block mb-1">Model</label>
+                <label className="text-[10px] text-slate-600 block mb-1">Model</label>
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
@@ -812,7 +812,7 @@ export default function StudioPage() {
               </div>
               {/* Aspect */}
               <div>
-                <label className="text-[10px] text-slate-400 block mb-1">Aspect Ratio</label>
+                <label className="text-[10px] text-slate-600 block mb-1">Aspect Ratio</label>
                 <select
                   value={aspectRatio}
                   onChange={(e) => setAspectRatio(e.target.value)}
@@ -826,7 +826,7 @@ export default function StudioPage() {
               </div>
               {/* Quality */}
               <div className="col-span-2">
-                <label className="text-[10px] text-slate-400 block mb-1">Quality</label>
+                <label className="text-[10px] text-slate-600 block mb-1">Quality</label>
                 <select
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
@@ -852,7 +852,7 @@ export default function StudioPage() {
 
           {/* Count selector */}
           <div className="space-y-2">
-            <label className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
+            <label className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">
               Number of generations
             </label>
             <div className="flex items-center gap-2">
@@ -872,7 +872,7 @@ export default function StudioPage() {
                 onChange={(e) => setCount(Number(e.target.value))}
                 className="flex-1 accent-violet-500 h-1.5"
               />
-              <span className="text-xs text-slate-400 w-6 text-right">{count}</span>
+              <span className="text-xs text-slate-600 w-6 text-right">{count}</span>
             </div>
           </div>
 
@@ -946,7 +946,7 @@ export default function StudioPage() {
           {runs.length > 0 && (
             <button
               onClick={clearAllRuns}
-              className="w-full text-xs text-slate-400 hover:text-slate-600 transition py-1"
+              className="w-full text-xs text-slate-600 hover:text-slate-600 transition py-1"
             >
               ✕ Clear all results
             </button>
@@ -971,7 +971,7 @@ export default function StudioPage() {
               </span>
               <button
                 onClick={() => setSelections(emptySelections())}
-                className="ml-auto text-slate-400 hover:text-slate-700 transition"
+                className="ml-auto text-slate-600 hover:text-slate-700 transition"
               >
                 clear all
               </button>
@@ -982,7 +982,7 @@ export default function StudioPage() {
           {studioMode === 'selection' && (
             <div className="grid grid-cols-1 gap-5">
               {(Object.keys(CHIPS) as (keyof Selections)[]).map((cat) => (
-                <div key={cat} className="bg-white border border-slate-200 shadow-sm rounded-xl p-4">
+                <div key={cat} className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-4">
                   <CategorySection
                     catKey={cat}
                     selections={selections}
@@ -1039,7 +1039,7 @@ export default function StudioPage() {
 
               {/* Preview of what will be used */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-600">
                   Generates {nicheCount} image{nicheCount > 1 ? 's' : ''} with random chips {NICHE_LABELS[selectedNiche]} —
                   locations, outfits, activities and framing adapted to the niche.
                 </p>
@@ -1074,19 +1074,19 @@ export default function StudioPage() {
 
                 <div className="flex items-center gap-1 shrink-0">
                   <span className="text-sm font-semibold text-slate-900">{run.stats.completed}</span>
-                  <span className="text-xs text-slate-400">✓</span>
+                  <span className="text-xs text-slate-600">✓</span>
                 </div>
                 {run.stats.failed > 0 && (
                   <>
                     <div className="w-px h-4 bg-slate-200 shrink-0" />
                     <div className="flex items-center gap-1 shrink-0">
                       <span className="text-sm font-semibold text-red-600">{run.stats.failed}</span>
-                      <span className="text-xs text-slate-400">✗</span>
+                      <span className="text-xs text-slate-600">✗</span>
                     </div>
                   </>
                 )}
                 <div className="w-px h-4 bg-slate-200 shrink-0" />
-                <span className="text-xs text-slate-400 shrink-0">
+                <span className="text-xs text-slate-600 shrink-0">
                   ⏱ {Math.floor(run.stats.elapsed / 60)}:{String(run.stats.elapsed % 60).padStart(2, '0')}
                 </span>
 
@@ -1097,7 +1097,7 @@ export default function StudioPage() {
                     style={{ width: `${run.stats.total > 0 ? (run.stats.completed / run.stats.total) * 100 : 0}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-400 shrink-0">
+                <span className="text-xs text-slate-600 shrink-0">
                   {run.stats.total > 0 ? Math.round((run.stats.completed / run.stats.total) * 100) : 0}%
                 </span>
 
@@ -1111,7 +1111,7 @@ export default function StudioPage() {
 
                 <button
                   onClick={() => removeRun(run.runId)}
-                  className="text-slate-400 hover:text-slate-700 transition text-xs shrink-0"
+                  className="text-slate-600 hover:text-slate-700 transition text-xs shrink-0"
                   title="Remove this batch"
                 >
                   ✕
