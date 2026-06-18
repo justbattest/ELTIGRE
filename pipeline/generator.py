@@ -108,7 +108,15 @@ async def run_higgsfield_for_user(user_token: str, cmd_args: list, timeout: int 
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
 
             if proc.returncode == 0:
-                return stdout.decode().strip()
+                result_text = stdout.decode().strip()
+                if not result_text:
+                    # stdout vide avec returncode 0 — logguer stderr pour diagnostic
+                    err_out = stderr.decode().strip()
+                    print(json.dumps({
+                        "type": "warn",
+                        "msg": f"CLI returncode=0 but empty stdout. stderr: {err_out[:500]}"
+                    }), flush=True)
+                return result_text
 
             err_str = stderr.decode().strip()
 

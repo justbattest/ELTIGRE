@@ -60,18 +60,14 @@ from pipeline.metadata_optimizer import _find_ffmpeg
 # de Nina. Le problème résiduel était l'import du fond/pose de l'image 2. Ce prompt
 # l'interdit explicitement avec maximal redundancy.
 SWAP_PROMPT = (
-    "IMAGE 1 IS THE COMPLETE SCENE — copy everything from it without exception: "
-    "the exact background, the environment, all other people present, "
-    "the exact body pose with every limb position, the action performed, "
-    "the clothing and outfit on the person, the lighting, shadows, colors, "
-    "the camera angle and framing. Nothing changes except the face. "
-    "IMAGE 2 IS THE FACE DONOR ONLY — extract ONLY the face, hair, and skin tone "
-    "from image 2 and transplant them onto the person's body in image 1. "
-    "STRICTLY FORBIDDEN from image 2: any background, any object, any environment, "
-    "any clothing, any body pose, any setting. Image 2 contributes zero scene elements. "
-    "Final result = image 1 reproduced pixel-perfectly with only the face and hair "
-    "replaced by those from image 2. "
-    "Photorealistic, seamless face integration, real photo quality."
+    "Use image 1 as the complete scene reference: keep its background, environment, "
+    "all other people, the exact body pose and limb positions, the clothing and outfit, "
+    "the lighting, shadows, camera angle, and framing — all unchanged. "
+    "Use image 2 as the face reference only: take the face, hair, and skin tone "
+    "from image 2 and place it on the person in image 1. "
+    "Do not use any background, outfit, or setting from image 2. "
+    "Result: image 1 scene with the face from image 2. "
+    "Photorealistic, seamless, high quality."
 )
 
 # Prompt alternatif conservé pour référence (Nina en image 1) — non utilisé en prod
