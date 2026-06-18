@@ -471,22 +471,23 @@ export default function MotionControlPage() {
 
   // Helpers pour lire l'état des events MC Prep
   const mcSwapEvent = mcPrepEvents.find(e => e.type === 'step' && e.step === 'swap' && e.status === 'done')
+  const mcSwapSkipped = mcPrepEvents.some(e => e.type === 'step' && e.step === 'swap' && e.status === 'skipped')
   const mcSwapStarted = mcPrepEvents.some(e => e.type === 'step' && e.step === 'swap' && e.status === 'started')
   const mcVariationsDone = mcPrepEvents.filter(e => e.type === 'variation')
   const mcUploadStarted = mcPrepEvents.some(e => e.type === 'step' && e.step === 'upload' && e.status === 'started')
   const mcUploadDone = mcPrepEvents.some(e => e.type === 'step' && e.step === 'upload' && e.status === 'done')
   const mcIsDone = mcPrepEvents.some(e => e.type === 'done')
 
-  const mcSwapStatus = mcSwapEvent ? 'done' : mcSwapStarted ? 'running' : 'idle'
+  const mcSwapStatus = mcSwapEvent ? 'done' : mcSwapSkipped ? 'skipped' : mcSwapStarted ? 'running' : 'idle'
   const mcVariationsStatus = mcVariationsDone.length >= mcNumVariations ? 'done'
     : mcVariationsDone.length > 0 ? 'running'
-    : mcSwapEvent ? 'running' : 'idle'
+    : (mcSwapEvent || mcSwapSkipped) ? 'running' : 'idle'
   const mcUploadStatus = mcUploadDone ? 'done' : mcUploadStarted ? 'running' : 'idle'
 
-  const stepColor = (s: 'idle' | 'running' | 'done' | 'error') =>
-    s === 'done' ? 'text-emerald-400' : s === 'running' ? 'text-violet-300' : s === 'error' ? 'text-red-400' : 'text-zinc-600'
-  const stepIcon = (s: 'idle' | 'running' | 'done' | 'error') =>
-    s === 'done' ? '✅' : s === 'running' ? '⏳' : s === 'error' ? '❌' : '○'
+  const stepColor = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
+    s === 'done' ? 'text-emerald-400' : s === 'running' ? 'text-violet-300' : s === 'error' ? 'text-red-400' : s === 'skipped' ? 'text-amber-400' : 'text-zinc-600'
+  const stepIcon = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
+    s === 'done' ? '✅' : s === 'running' ? '⏳' : s === 'error' ? '❌' : s === 'skipped' ? '⚠️' : '○'
 
   // ── Onglet "Mes concepts" ────────────────────────────────────────────────────
   const [concepts, setConcepts] = useState<SavedConcept[]>([])
@@ -901,12 +902,20 @@ export default function MotionControlPage() {
                     <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Progress</p>
 
                     {/* Swap */}
-                    <div className={`flex items-center gap-2 text-sm ${stepColor(mcSwapStatus)}`}>
-                      <span className="w-5 text-center">{stepIcon(mcSwapStatus)}</span>
-                      <span>Model swap (Nano Banana Pro)</span>
-                      {mcSwapEvent?.url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={mcSwapEvent.url} alt="Swap result" className="w-8 h-8 rounded-md object-cover ml-auto" />
+                    <div className="space-y-1">
+                      <div className={`flex items-center gap-2 text-sm ${stepColor(mcSwapStatus)}`}>
+                        <span className="w-5 text-center">{stepIcon(mcSwapStatus)}</span>
+                        <span>Model swap (Nano Banana Pro)</span>
+                        {mcSwapEvent?.url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={mcSwapEvent.url} alt="Swap result" className="w-8 h-8 rounded-md object-cover ml-auto" />
+                        )}
+                      </div>
+                      {mcSwapSkipped && (
+                        <p className="text-xs text-amber-500/80 pl-7">
+                          Nano Banana Pro not available in CLI — swap skipped. Variations generated from original frame.
+                          Do the swap manually on <a href="https://fnf.higgsfield.ai" target="_blank" rel="noopener noreferrer" className="underline">fnf.higgsfield.ai</a>.
+                        </p>
                       )}
                     </div>
 

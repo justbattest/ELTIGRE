@@ -246,13 +246,24 @@ async def cmd_generate(
     out.mkdir(parents=True, exist_ok=True)
 
     # ── Étape 1 : Person swap (Nano Banana Pro dual-image) ────────────────────
+    # nano_banana_pro = modèle web UI qui accepte 2 images (--image + --start-image)
+    # nano_banana_2   = ancienne version CLI, n'accepte QUE --image (pas de dual-image)
+    # Si aucun modèle compatible n'est dispo → skip gracieux, on utilise la frame originale
     _emit({"type": "step", "step": "swap", "status": "started"})
 
-    swap_model = "nano_banana_pro"  # on essaie d'abord le modèle Pro
     swapped_url: str | None = None
     swap_error: str | None = None
+    swap_skipped = False
 
-    for attempt_model in (swap_model, "nano_banana_2"):
+    _SKIP_PATTERNS = (
+        "invalid", "not found", "unknown",
+        "accepts only",    # "Model accepts only --image (no roles, no video/audio)"
+        "no roles",        # idem
+        "not supported",
+        "unsupported",
+    )
+
+    for attempt_model in ("nano_banana_pro", "nano_banana_2"):
         cmd_swap = [
             "higgsfield", "generate", "create", attempt_model,
             "--image", frame_path,
@@ -272,28 +283,42 @@ async def cmd_generate(
             swap_error = "Résultat vide"
         except Exception as exc:
             err_str = str(exc)
-            # Si c'est juste un modèle invalide on tente le suivant, sinon on arrête
-            if "invalid" in err_str.lower() or "not found" in err_str.lower() or "unknown" in err_str.lower():
-                _emit({"type": "info", "msg": f"Modèle {attempt_model} non disponible, fallback…"})
+            err_lower = err_str.lower()
+            # Erreur "modèle non dispo" ou "ne supporte pas --start-image" → essayer le suivant
+            if any(p in err_lower for p in _SKIP_PATTERNS):
+                _emit({"type": "info", "msg": f"Modèle {attempt_model} incompatible ({err_str[:120]}), fallback…"})
                 swap_error = err_str
                 continue
-            # Erreur non récupérable (ex: token expiré déjà retry dans run_higgsfield_for_user)
+            # Erreur non récupérable (token expiré déjà retenté dans run_higgsfield_for_user)
             _emit({"type": "error", "msg": f"Swap failed: {err_str[:400]}"})
             sys.exit(1)
 
     if not swapped_url:
-        _emit({"type": "error", "msg": f"Swap échoué sur tous les modèles: {swap_error}"})
-        sys.exit(1)
-
-    _emit({"type": "step", "step": "swap", "status": "done", "url": swapped_url})
+        # Aucun modèle disponible pour le swap dual-image → skip, on utilisera la frame originale
+        swap_skipped = True
+        _emit({
+            "type": "step", "step": "swap", "status": "skipped",
+            "msg": (
+                "Nano Banana Pro non disponible dans ce CLI — "
+                "le swap sera ignoré. Les variations seront générées "
+                "depuis la frame originale. "
+                "Fais le swap manuellement sur fnf.higgsfield.ai."
+            ),
+        })
+    else:
+        _emit({"type": "step", "step": "swap", "status": "done", "url": swapped_url})
 
     # Télécharger l'image swappée localement (pour les variations Seedream)
-    swapped_local = str(out / "swap_model.jpg")
-    try:
-        await _download_url_to_file(swapped_url, swapped_local)
-    except Exception as exc:
-        _emit({"type": "warn", "msg": f"Download swap image failed: {exc!r} — using URL directly"})
-        swapped_local = swapped_url  # fallback : Higgsfield accepte les URLs
+    if swapped_url:
+        swapped_local = str(out / "swap_model.jpg")
+        try:
+            await _download_url_to_file(swapped_url, swapped_local)
+        except Exception as exc:
+            _emit({"type": "warn", "msg": f"Download swap image failed: {exc!r} — using URL directly"})
+            swapped_local = swapped_url  # fallback : Higgsfield accepte les URLs
+    else:
+        # Pas de swap : on utilise la frame originale comme base des variations
+        swapped_local = frame_path
 
     # ── Étape 2 : N × Seedream outfit variations (parallèle) ─────────────────
     _emit({"type": "step", "step": "variations", "status": "started"})
@@ -305,14 +330,16 @@ async def cmd_generate(
     outfit_results = await asyncio.gather(*outfit_tasks, return_exceptions=True)
 
     variation_urls: list[str] = []
+    fallback_url = swapped_url or frame_path  # frame locale si pas de swap
     for result in outfit_results:
         if isinstance(result, Exception):
             _emit({"type": "warn", "msg": f"Variation exception: {result!r}"})
-            variation_urls.append(swapped_url)  # fallback sur le swap
+            if swapped_url:
+                variation_urls.append(swapped_url)
         elif not isinstance(result, dict) or not result.get("url"):
             err = result.get("error", "UNKNOWN") if isinstance(result, dict) else "EXCEPTION"
-            _emit({"type": "warn", "msg": f"Variation KO ({err}) — fallback"})
-            variation_urls.append(swapped_url)
+            _emit({"type": "warn", "msg": f"Variation KO ({err}) — ignorée"})
+            # Ne pas ajouter de fallback silencieux — la liste sera juste plus courte
         else:
             url = result["url"]
             variation_urls.append(url)
@@ -346,7 +373,7 @@ async def _upload_to_drive(
     character_name: str,
     frame_path: str,
     model_photo_path: str,
-    swapped_url: str,
+    swapped_url: str | None,
     swapped_local: str,
     variation_urls: list[str],
     video_path: str | None,
@@ -401,16 +428,17 @@ async def _upload_to_drive(
             await drive.upload_bytes(model_bytes, "model_reference.jpg", run_folder_id, "image/jpeg")
             uploaded_files.append("model_reference.jpg")
 
-        # 4. Image swappée (déjà téléchargée en local si possible)
-        if Path(swapped_local).exists():
-            swapped_bytes = Path(swapped_local).read_bytes()
-        else:
-            # Télécharger depuis CDN
-            async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.get(swapped_url)
-                swapped_bytes = resp.content
-        await drive.upload_bytes(swapped_bytes, "swap_model.jpg", run_folder_id, "image/jpeg")
-        uploaded_files.append("swap_model.jpg")
+        # 4. Image swappée (si le swap a réussi)
+        if swapped_url:
+            if Path(swapped_local).exists() and swapped_local != frame_path:
+                swapped_bytes = Path(swapped_local).read_bytes()
+            else:
+                # Télécharger depuis CDN
+                async with httpx.AsyncClient(timeout=120) as client:
+                    resp = await client.get(swapped_url)
+                    swapped_bytes = resp.content
+            await drive.upload_bytes(swapped_bytes, "swap_model.jpg", run_folder_id, "image/jpeg")
+            uploaded_files.append("swap_model.jpg")
 
         # 5. Variations d'outfit (télécharger depuis CDN et uploader)
         async with httpx.AsyncClient(timeout=120) as client:
