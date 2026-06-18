@@ -905,7 +905,7 @@ export default function MotionControlPage() {
                     <div className="space-y-1">
                       <div className={`flex items-center gap-2 text-sm ${stepColor(mcSwapStatus)}`}>
                         <span className="w-5 text-center">{stepIcon(mcSwapStatus)}</span>
-                        <span>Model swap (Seedream 4.5)</span>
+                        <span>Model swap (Nano Banana 2)</span>
                         {mcSwapEvent?.url && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={mcSwapEvent.url} alt="Swap result" className="w-8 h-8 rounded-md object-cover ml-auto" />
@@ -1017,7 +1017,7 @@ export default function MotionControlPage() {
                 )}
 
                 <p className="text-xs text-center text-zinc-600">
-                  Seedream 4.5 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
+                  Nano Banana 2 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
                 </p>
               </div>
             )}
