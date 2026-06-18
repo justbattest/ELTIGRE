@@ -86,20 +86,57 @@ SWAP_PROMPT_ALT = (
     "Photorealistic, real photo quality, seamless."
 )
 
-# Variations d'outfit : Seedream 4.5 img2img (pas d'element_id — on travaille sur l'image déjà swappée)
-OUTFIT_PROMPT = (
-    "Outfit change only. Keep absolutely identical and unchanged: "
-    "the person's face, facial features, skin tone, hair color, hairstyle, body shape, "
-    "exact pose, hand positions, arm positions, leg position, "
-    "background scene, environment, all objects, "
-    "lighting direction, shadows, camera angle, framing, and photo composition. "
-    "Change ONLY the clothing to a brand new ultra-sexy outfit: "
-    "always include a very deep neckline showing maximum décolleté, "
-    "form-fitting silhouette or very short hemline, show as much skin as possible. "
-    "Style must match the scene's ambiance (sporty, party, casual chic, beach, etc.) "
-    "but always provocative, stylish, and high-fashion. "
-    "Photorealistic editorial fashion photography."
+# Variations d'outfit : un prompt par style pour forcer la diversité entre variations.
+# Chaque variation reçoit un style différent → pas deux fois le même outfit.
+# La partie "keep identical" est commune à tous pour préserver la scène/pose/visage.
+_OUTFIT_BASE = (
+    "Outfit change only. Keep absolutely identical: "
+    "face, skin tone, hair, body shape, exact pose, all limb positions, "
+    "background, environment, lighting, shadows, camera angle, framing. "
+    "Change ONLY the clothing. "
 )
+
+OUTFIT_STYLES = [
+    # 1 — Sporty / athletic
+    _OUTFIT_BASE +
+    "New outfit: very tight athletic crop top (sports bra style) + high-waist leggings or biker shorts. "
+    "Shows midriff, form-fitting, sporty-sexy. High-fashion athletic editorial. Photorealistic.",
+
+    # 2 — Party / night out
+    _OUTFIT_BASE +
+    "New outfit: ultra-short bodycon mini dress, very deep V-neckline, maximum décolleté, "
+    "barely-there hemline. Glossy or metallic fabric. Glamorous night-out. Photorealistic.",
+
+    # 3 — Casual chic / streetwear
+    _OUTFIT_BASE +
+    "New outfit: tight low-rise micro shorts or mini skirt + fitted crop top or tied shirt, "
+    "showing midriff. Trendy streetwear, fashionable, provocative casual. Photorealistic.",
+
+    # 4 — Beach / summer
+    _OUTFIT_BASE +
+    "New outfit: sexy bikini top + micro shorts or sarong, beach-ready, "
+    "maximum skin, vibrant color. Summer glamour editorial. Photorealistic.",
+
+    # 5 — Elegant / cocktail
+    _OUTFIT_BASE +
+    "New outfit: fitted cocktail dress, plunging neckline, thigh-high slit, "
+    "luxurious fabric (silk, velvet, or sequins). High-fashion couture elegance. Photorealistic.",
+
+    # 6 — Lingerie / boudoir
+    _OUTFIT_BASE +
+    "New outfit: elegant lingerie set or lace bodysuit, sheer fabric details, "
+    "maximum skin exposure, luxurious and seductive. Boudoir editorial photography. Photorealistic.",
+
+    # 7 — Power / business sexy
+    _OUTFIT_BASE +
+    "New outfit: very tight pencil skirt + open blazer with nothing underneath (or deep-cut top), "
+    "power-sexy office look, shows skin. High-fashion editorial. Photorealistic.",
+
+    # 8 — Festival / boho
+    _OUTFIT_BASE +
+    "New outfit: festival outfit — crochet or cut-out crop top + micro shorts, "
+    "boho accessories, maximum skin, free-spirited chic. Festival editorial. Photorealistic.",
+]
 
 # Timestamps (secondes) pour l'extraction des frames
 FRAME_TIMESTAMPS = [0.5, 1.5, 3.0, 5.5]
@@ -229,11 +266,15 @@ async def _generate_outfit(
     refresh_token: str = "",
     timeout: int = 600,
 ) -> dict:
-    """Génère une variation d'outfit via Seedream 4.5 img2img."""
+    """Génère une variation d'outfit via Seedream 4.5 img2img.
+    Chaque variation utilise un style distinct (cycle sur OUTFIT_STYLES).
+    """
+    # Style différent par variation pour forcer la diversité
+    outfit_prompt = OUTFIT_STYLES[(index - 1) % len(OUTFIT_STYLES)]
     cmd = [
         "higgsfield", "generate", "create", "seedream_v4_5",
         "--image", swapped_image_path,
-        "--prompt", OUTFIT_PROMPT,
+        "--prompt", outfit_prompt,
         "--aspect_ratio", "9:16",
         "--quality", "high",
         "--wait", "--wait-timeout", "10m",
