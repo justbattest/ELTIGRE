@@ -48,17 +48,22 @@ from pipeline.metadata_optimizer import _find_ffmpeg
 
 # ─── Prompts ──────────────────────────────────────────────────────────────────
 
-# Swap modèle : Nano Banana Pro (dual-image : --image = frame source, --start-image = photo modèle)
+# Swap modèle : nano_banana_2 dual --image
+# Image 1 (frame) = la scène à conserver intégralement (pose, décor, action, vêtements)
+# Image 2 (model_photo) = uniquement le visage / l'identité à transplanter
+# Clé du prompt : "image 1 is the scene" / "image 2 is the face reference ONLY"
+# Ne pas dire "replace the person" → ça laisse l'ambiguïté sur quelle image est la base
 SWAP_PROMPT = (
-    "Replace the person in the main image with the person shown in the reference/start image. "
-    "Preserve exactly and without any alteration: the background, environment, furniture, "
-    "objects, lighting direction, shadows, color palette, camera angle, framing, "
-    "photo composition, and the exact pose and position of the person. "
-    "The replacement person must adopt the identical pose, body orientation, "
-    "and position in the frame as the original person. "
-    "Keep the outfit of the reference person exactly as it appears. "
-    "Change ONLY the identity of the person — everything else stays pixel-perfect. "
-    "Photorealistic, high quality, seamless integration."
+    "Face swap only. "
+    "Image 1 is the scene: keep everything from image 1 100% unchanged — "
+    "the complete background, environment, all other people present, "
+    "the person's exact body, pose, action, position in frame, clothing, accessories, "
+    "lighting, shadows, camera angle, and composition. "
+    "Image 2 is the face reference: take ONLY the face and facial identity from image 2 "
+    "and apply it to the person already present in image 1. "
+    "Do not import any object, background, clothing, or environment from image 2. "
+    "The result must look exactly like image 1 but with the face of the person from image 2. "
+    "Photorealistic, seamless, high quality."
 )
 
 # Variations d'outfit : Seedream 4.5 img2img (pas d'element_id — on travaille sur l'image déjà swappée)
@@ -457,11 +462,8 @@ async def _upload_to_drive(
             await drive.upload_bytes(frame_bytes, "selected_frame.jpg", run_folder_id, "image/jpeg")
             uploaded_files.append("selected_frame.jpg")
 
-        # 3. Photo modèle de référence (utile pour avoir tout dans le dossier)
-        if Path(model_photo_path).exists():
-            model_bytes = Path(model_photo_path).read_bytes()
-            await drive.upload_bytes(model_bytes, "model_reference.jpg", run_folder_id, "image/jpeg")
-            uploaded_files.append("model_reference.jpg")
+        # 3. Photo modèle de référence → PAS uploadée (l'utilisateur la garde en local,
+        #    inutile de la dupliquer dans chaque dossier Drive)
 
         # 4. Image swappée (si le swap a réussi)
         if swapped_url:
