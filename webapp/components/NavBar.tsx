@@ -32,7 +32,7 @@ export function NavBar() {
   const activeGroup = GROUPS.find(g => g.pages.includes(pathname)) ?? GROUPS[0]
 
   return (
-    <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/60">
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-2.5">
@@ -43,16 +43,16 @@ export function NavBar() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/LOGO.png" alt="Modelify" width={18} height={18} style={{ objectFit: 'contain' }} />
           </div>
-          <span className="font-bold text-white tracking-wide">Modelify</span>
+          <span className="font-bold text-slate-900 tracking-wide">Modelify</span>
         </div>
         <div className="flex items-center gap-5 text-sm">
-          <Link href="/kpi" className="text-zinc-400 hover:text-white transition-colors duration-150">KPI</Link>
-          <Link href="/settings" className="text-zinc-400 hover:text-white transition-colors duration-150">Settings</Link>
+          <Link href="/kpi" className="text-slate-500 hover:text-slate-900 transition-colors duration-150">KPI</Link>
+          <Link href="/settings" className="text-slate-500 hover:text-slate-900 transition-colors duration-150">Settings</Link>
         </div>
       </div>
 
       {/* Group tabs */}
-      <div className="flex px-3 border-t border-white/[0.04]">
+      <div className="flex px-3 border-t border-slate-200/60">
         {GROUPS.map(group => {
           const isActive = group.key === activeGroup.key
           return (
@@ -61,7 +61,7 @@ export function NavBar() {
               href={group.href}
               className="relative px-4 py-2.5 text-sm font-medium transition-colors duration-150"
             >
-              <span className={isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}>
+              <span className={isActive ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}>
                 {group.label}
               </span>
               {isActive && (
@@ -85,7 +85,7 @@ export function NavBar() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.15 }}
-            className="flex px-4 bg-white/[0.02] border-t border-white/[0.04] overflow-hidden"
+            className="flex px-4 bg-slate-50/80 border-t border-slate-200/60 overflow-hidden"
           >
             {activeGroup.subTabs.map(tab => {
               const isActive = pathname === tab.href
@@ -95,8 +95,8 @@ export function NavBar() {
                   href={tab.href}
                   className={`px-4 py-2 text-xs font-medium border-b-2 transition-all duration-150 whitespace-nowrap ${
                     isActive
-                      ? 'text-white border-cyan-500'
-                      : 'text-zinc-500 border-transparent hover:text-zinc-300 hover:border-zinc-600'
+                      ? 'text-slate-900 border-violet-500'
+                      : 'text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300'
                   }`}
                 >
                   {tab.label}

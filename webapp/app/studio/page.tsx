@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
+import { TutorialVideo } from '@/components/TutorialVideo'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -220,13 +221,13 @@ function Chip({
         inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
         border transition-all duration-150 select-none
         ${selected
-          ? 'border-violet-500 bg-violet-950 text-white ring-1 ring-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.25)]'
-          : 'border-white/[0.08] bg-zinc-900/60 text-zinc-300 hover:border-white/[0.20] hover:text-white'
+          ? 'border-violet-500 bg-violet-50 text-violet-700 ring-1 ring-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
+          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900'
         }
       `}
     >
       {selected && (
-        <svg className="w-3 h-3 text-violet-400 shrink-0" viewBox="0 0 12 12" fill="currentColor">
+        <svg className="w-3 h-3 text-violet-600 shrink-0" viewBox="0 0 12 12" fill="currentColor">
           <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
         </svg>
       )}
@@ -270,19 +271,19 @@ function CategorySection({
     <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">
+        <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
           {emoji} {label}
         </span>
         <div className="flex items-center gap-2">
           {count > 0 && (
-            <span className="text-[10px] bg-violet-900/60 text-violet-300 px-2 py-0.5 rounded-full border border-violet-800/50">
+            <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-300">
               {count} selected
             </span>
           )}
           {count > 0 && (
             <button
               onClick={() => onClearAll(catKey)}
-              className="text-[10px] text-gray-600 hover:text-gray-400 transition"
+              className="text-[10px] text-slate-400 hover:text-slate-600 transition"
             >
               ✕ clear
             </button>
@@ -309,11 +310,11 @@ function CategorySection({
             onChange={(e) => setCustomVal(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder={`other ${label.toLowerCase()}...`}
-            className="h-[34px] bg-black/40 border border-white/[0.08] rounded-full px-3 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition w-36"
+            className="h-[34px] bg-white border border-slate-200 rounded-full px-3 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition w-36"
           />
           <button
             onClick={handleAdd}
-            className="h-[34px] px-3 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-xs text-zinc-400 hover:text-white transition whitespace-nowrap"
+            className="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full text-xs text-slate-500 hover:text-slate-900 transition whitespace-nowrap"
           >
             + add
           </button>
@@ -334,13 +335,13 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
     card.model === 'nano_banana_2' ? 'bg-orange-600' : 'bg-gray-600'
 
   return (
-    <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900/60 border border-white/[0.07] group">
+    <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 group">
       {/* Skeleton */}
       {(card.status === 'pending' || card.status === 'generating') && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-850 to-gray-800 animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 animate-pulse">
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <div className="w-6 h-6 border-2 border-violet-500/50 border-t-violet-400 rounded-full animate-spin" />
-            <span className="text-[10px] text-gray-500">
+            <span className="text-[10px] text-slate-400">
               {card.status === 'pending' ? 'pending...' : 'generating...'}
             </span>
           </div>
@@ -388,7 +389,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
       {card.status === 'failed' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
           <span className="text-2xl">❌</span>
-          <span className="text-[10px] text-gray-500">Generation failed</span>
+          <span className="text-[10px] text-slate-400">Generation failed</span>
         </div>
       )}
 
@@ -715,7 +716,7 @@ export default function StudioPage() {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-[#09090b]">
+    <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -723,15 +724,15 @@ export default function StudioPage() {
       <div className="flex min-h-[calc(100vh-113px)]">
 
         {/* LEFT — config panel */}
-        <div className="w-72 shrink-0 border-r border-white/[0.07] p-5 space-y-5 sticky top-[113px] self-start max-h-[calc(100vh-113px)] overflow-y-auto">
+        <div className="w-72 shrink-0 border-r border-slate-200 p-5 space-y-5 sticky top-[113px] self-start max-h-[calc(100vh-113px)] overflow-y-auto">
 
           {/* Character */}
           <div className="space-y-3">
-            <h3 className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">🎭 Character</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">🎭 Character</h3>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
-              className="w-full text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50 transition flex items-center justify-center gap-1.5 py-1.5 border border-violet-900/50 rounded-lg hover:border-violet-700 bg-violet-950/20"
+              className="w-full text-xs text-violet-600 hover:text-violet-700 disabled:opacity-50 transition flex items-center justify-center gap-1.5 py-1.5 border border-violet-300 rounded-lg hover:border-violet-400 bg-violet-50"
             >
               {loadingChars ? (
               <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
@@ -740,14 +741,14 @@ export default function StudioPage() {
             </button>
 
             {charsError && (
-              <p className="text-red-400 text-xs bg-red-900/20 border border-red-800 rounded px-2 py-1.5">
+              <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded px-2 py-1.5">
                 {charsError}
               </p>
             )}
 
             {soulChars.length > 0 && (
               <div>
-                <p className="text-[10px] text-gray-600 mb-1.5">Soul Character</p>
+                <p className="text-[10px] text-slate-400 mb-1.5">Soul Character</p>
                 <div className="flex flex-wrap gap-1.5">
                   {soulChars.map((c) => (
                     <button
@@ -756,7 +757,7 @@ export default function StudioPage() {
                       className={`px-2.5 py-1 rounded-lg text-xs transition border ${
                         selectedSoulId === c.id
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                       }`}
                     >
                       {c.name}
@@ -768,7 +769,7 @@ export default function StudioPage() {
 
             {refElements.length > 0 && (
               <div>
-                <p className="text-[10px] text-gray-600 mb-1.5">Reference Element</p>
+                <p className="text-[10px] text-slate-400 mb-1.5">Reference Element</p>
                 <div className="flex flex-wrap gap-1.5">
                   {refElements.map((e) => (
                     <button
@@ -777,7 +778,7 @@ export default function StudioPage() {
                       className={`px-2.5 py-1 rounded-lg text-xs transition border ${
                         selectedElementId === e.id
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-white/[0.20]'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                       }`}
                     >
                       {e.name}
@@ -789,19 +790,19 @@ export default function StudioPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-white/[0.07]" />
+          <div className="border-t border-slate-200" />
 
           {/* Format */}
           <div className="space-y-2">
-            <h3 className="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">⚙️ Format</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">⚙️ Format</h3>
             <div className="grid grid-cols-3 gap-1.5">
               {/* Model */}
               <div className="col-span-3">
-                <label className="text-[10px] text-zinc-600 block mb-1">Model</label>
+                <label className="text-[10px] text-slate-400 block mb-1">Model</label>
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
                 >
                   <option value="auto">Auto (cascade)</option>
                   <option value="soul_cinematic">Soul Cinema</option>
@@ -811,11 +812,11 @@ export default function StudioPage() {
               </div>
               {/* Aspect */}
               <div>
-                <label className="text-[10px] text-zinc-600 block mb-1">Aspect Ratio</label>
+                <label className="text-[10px] text-slate-400 block mb-1">Aspect Ratio</label>
                 <select
                   value={aspectRatio}
                   onChange={(e) => setAspectRatio(e.target.value)}
-                  className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
                 >
                   <option value="2:3">2:3</option>
                   <option value="1:1">1:1</option>
@@ -825,11 +826,11 @@ export default function StudioPage() {
               </div>
               {/* Quality */}
               <div className="col-span-2">
-                <label className="text-[10px] text-zinc-600 block mb-1">Quality</label>
+                <label className="text-[10px] text-slate-400 block mb-1">Quality</label>
                 <select
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
-                  className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
                 >
                   <option value="2k">2K</option>
                   <option value="4k">4K</option>
@@ -840,18 +841,18 @@ export default function StudioPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-white/[0.07]" />
+          <div className="border-t border-slate-200" />
 
           {/* Error */}
           {launchError && (
-            <p className="text-red-400 text-xs bg-red-900/20 border border-red-800 rounded px-2 py-1.5">
+            <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded px-2 py-1.5">
               {launchError}
             </p>
           )}
 
           {/* Count selector */}
           <div className="space-y-2">
-            <label className="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">
+            <label className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
               Number of generations
             </label>
             <div className="flex items-center gap-2">
@@ -861,7 +862,7 @@ export default function StudioPage() {
                 max={50}
                 value={count}
                 onChange={(e) => setCount(Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
-                className="w-14 bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                className="w-14 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm text-center focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
               />
               <input
                 type="range"
@@ -871,7 +872,7 @@ export default function StudioPage() {
                 onChange={(e) => setCount(Number(e.target.value))}
                 className="flex-1 accent-violet-500 h-1.5"
               />
-              <span className="text-xs text-zinc-500 w-6 text-right">{count}</span>
+              <span className="text-xs text-slate-400 w-6 text-right">{count}</span>
             </div>
           </div>
 
@@ -881,8 +882,8 @@ export default function StudioPage() {
               onClick={() => setStudioMode('selection')}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition ${
                 studioMode === 'selection'
-                  ? 'bg-violet-600/20 text-white border-violet-500/40'
-                  : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200'
+                  ? 'bg-violet-50 text-violet-700 border-violet-300'
+                  : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900'
               }`}
             >
               ✨ My selection
@@ -891,8 +892,8 @@ export default function StudioPage() {
               onClick={() => setStudioMode('niche')}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition ${
                 studioMode === 'niche'
-                  ? 'bg-violet-600/20 text-white border-violet-500/40'
-                  : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200'
+                  ? 'bg-violet-50 text-violet-700 border-violet-300'
+                  : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900'
               }`}
             >
               🎯 By niche
@@ -921,7 +922,7 @@ export default function StudioPage() {
                 <button
                   onClick={() => launch('random_full')}
                   disabled={launching}
-                  className="w-full border-2 border-dashed border-white/[0.08] hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 hover:text-white font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full border-2 border-dashed border-slate-300 hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 hover:text-slate-900 font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <span>🎲</span>
                   <span>{count} prompt{count > 1 ? 's' : ''} · fully random</span>
@@ -945,7 +946,7 @@ export default function StudioPage() {
           {runs.length > 0 && (
             <button
               onClick={clearAllRuns}
-              className="w-full text-xs text-gray-600 hover:text-gray-400 transition py-1"
+              className="w-full text-xs text-slate-400 hover:text-slate-600 transition py-1"
             >
               ✕ Clear all results
             </button>
@@ -955,20 +956,22 @@ export default function StudioPage() {
         {/* RIGHT — chip selector */}
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
 
+          <TutorialVideo videoId="kA53iyKKKgM" title="Prompt Studio" />
+
           {/* Stats bar si sélection non nulle */}
           {studioMode === 'selection' && totalSelected > 0 && (
-            <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900/40 border border-white/[0.07] rounded-xl px-4 py-2.5">
+            <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
               <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
               <span>
-                <span className="text-white font-medium">{totalSelected}</span> option{totalSelected > 1 ? 's' : ''} selected
+                <span className="text-slate-900 font-medium">{totalSelected}</span> option{totalSelected > 1 ? 's' : ''} selected
               </span>
-              <span className="text-zinc-600">·</span>
+              <span className="text-slate-300">·</span>
               <span>
                 {Object.values(selections).filter(arr => arr.length > 0).length} active categor{Object.values(selections).filter(arr => arr.length > 0).length > 1 ? 'ies' : 'y'}
               </span>
               <button
                 onClick={() => setSelections(emptySelections())}
-                className="ml-auto text-zinc-600 hover:text-zinc-300 transition"
+                className="ml-auto text-slate-400 hover:text-slate-700 transition"
               >
                 clear all
               </button>
@@ -979,7 +982,7 @@ export default function StudioPage() {
           {studioMode === 'selection' && (
             <div className="grid grid-cols-1 gap-5">
               {(Object.keys(CHIPS) as (keyof Selections)[]).map((cat) => (
-                <div key={cat} className="bg-zinc-900/30 border border-white/[0.06] rounded-xl p-4">
+                <div key={cat} className="bg-white border border-slate-200 shadow-sm rounded-xl p-4">
                   <CategorySection
                     catKey={cat}
                     selections={selections}
@@ -998,7 +1001,7 @@ export default function StudioPage() {
             <div className="space-y-4">
               {/* Niche selector */}
               <div>
-                <p className="text-xs font-medium text-zinc-400 mb-2">Niche</p>
+                <p className="text-xs font-medium text-slate-500 mb-2">Niche</p>
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(NICHE_LABELS) as NicheKey[]).map(key => (
                     <button
@@ -1006,8 +1009,8 @@ export default function StudioPage() {
                       onClick={() => setSelectedNiche(key)}
                       className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${
                         selectedNiche === key
-                          ? 'bg-violet-600/20 text-white border-violet-500/40'
-                          : 'bg-white/[0.03] text-zinc-500 border-white/[0.07] hover:text-zinc-200 hover:border-white/[0.15]'
+                          ? 'bg-violet-50 text-violet-700 border-violet-300'
+                          : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900 hover:border-slate-300'
                       }`}
                     >
                       {NICHE_LABELS[key]}
@@ -1018,8 +1021,8 @@ export default function StudioPage() {
 
               {/* Count */}
               <div>
-                <p className="text-xs text-zinc-400 mb-2">
-                  Number of images: <span className="text-white font-medium">{nicheCount}</span>
+                <p className="text-xs text-slate-500 mb-2">
+                  Number of images: <span className="text-slate-900 font-medium">{nicheCount}</span>
                 </p>
                 <div className="flex items-center gap-3">
                   <input
@@ -1030,13 +1033,13 @@ export default function StudioPage() {
                     onChange={e => setNicheCount(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
                   />
-                  <span className="text-sm font-semibold text-white w-8 text-right">{nicheCount}</span>
+                  <span className="text-sm font-semibold text-slate-900 w-8 text-right">{nicheCount}</span>
                 </div>
               </div>
 
               {/* Preview of what will be used */}
-              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
-                <p className="text-[11px] text-zinc-600">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <p className="text-[11px] text-slate-400">
                   Generates {nicheCount} image{nicheCount > 1 ? 's' : ''} with random chips {NICHE_LABELS[selectedNiche]} —
                   locations, outfits, activities and framing adapted to the niche.
                 </p>
@@ -1048,11 +1051,11 @@ export default function StudioPage() {
 
       {/* Results section — multi-batch */}
       {runs.length > 0 && (
-        <div ref={resultsRef} className="border-t border-white/[0.07] space-y-0">
+        <div ref={resultsRef} className="border-t border-slate-200 space-y-0">
           {runs.map((run) => (
-            <div key={run.runId} className="border-b border-white/[0.06] bg-zinc-950/80">
+            <div key={run.runId} className="border-b border-slate-200 bg-white">
               {/* Stats bar */}
-              <div className="px-6 py-3 flex items-center gap-3 border-b border-white/[0.04]">
+              <div className="px-6 py-3 flex items-center gap-3 border-b border-slate-200">
                 {/* Label + statut */}
                 <div className="flex items-center gap-2 shrink-0">
                   {run.status === 'running' && (
@@ -1064,51 +1067,51 @@ export default function StudioPage() {
                   {run.status === 'failed' && (
                     <span className="w-2 h-2 rounded-full bg-red-400" />
                   )}
-                  <span className="text-xs font-medium text-zinc-300">{run.label}</span>
+                  <span className="text-xs font-medium text-slate-700">{run.label}</span>
                 </div>
 
-                <div className="w-px h-4 bg-white/[0.06] shrink-0" />
+                <div className="w-px h-4 bg-slate-200 shrink-0" />
 
                 <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-sm font-semibold text-white">{run.stats.completed}</span>
-                  <span className="text-xs text-gray-500">✓</span>
+                  <span className="text-sm font-semibold text-slate-900">{run.stats.completed}</span>
+                  <span className="text-xs text-slate-400">✓</span>
                 </div>
                 {run.stats.failed > 0 && (
                   <>
-                    <div className="w-px h-4 bg-white/[0.06] shrink-0" />
+                    <div className="w-px h-4 bg-slate-200 shrink-0" />
                     <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-sm font-semibold text-red-400">{run.stats.failed}</span>
-                      <span className="text-xs text-gray-500">✗</span>
+                      <span className="text-sm font-semibold text-red-600">{run.stats.failed}</span>
+                      <span className="text-xs text-slate-400">✗</span>
                     </div>
                   </>
                 )}
-                <div className="w-px h-4 bg-white/[0.06] shrink-0" />
-                <span className="text-xs text-zinc-500 shrink-0">
+                <div className="w-px h-4 bg-slate-200 shrink-0" />
+                <span className="text-xs text-slate-400 shrink-0">
                   ⏱ {Math.floor(run.stats.elapsed / 60)}:{String(run.stats.elapsed % 60).padStart(2, '0')}
                 </span>
 
                 {/* Progress bar */}
-                <div className="flex-1 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
                     style={{ width: `${run.stats.total > 0 ? (run.stats.completed / run.stats.total) * 100 : 0}%` }}
                   />
                 </div>
-                <span className="text-xs text-zinc-500 shrink-0">
+                <span className="text-xs text-slate-400 shrink-0">
                   {run.stats.total > 0 ? Math.round((run.stats.completed / run.stats.total) * 100) : 0}%
                 </span>
 
                 <Link
                   href={`/run/${run.runId}`}
                   target="_blank"
-                  className="text-xs text-violet-400 hover:text-violet-300 transition shrink-0"
+                  className="text-xs text-violet-600 hover:text-violet-700 transition shrink-0"
                 >
                   ↗
                 </Link>
 
                 <button
                   onClick={() => removeRun(run.runId)}
-                  className="text-zinc-600 hover:text-zinc-300 transition text-xs shrink-0"
+                  className="text-slate-400 hover:text-slate-700 transition text-xs shrink-0"
                   title="Remove this batch"
                 >
                   ✕

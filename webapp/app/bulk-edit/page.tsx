@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 import { compressImage } from '@/lib/compress-image'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
+import { TutorialVideo } from '@/components/TutorialVideo'
 
 type FileEntry = { file: File; preview: string }
 type RefElement = { id: string; name: string; type?: string }
@@ -157,7 +158,7 @@ export default function BulkEditPage() {
   const isRunning = phase !== 'idle'
 
   return (
-    <div className="flex min-h-screen bg-[#09090b] text-white">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -165,21 +166,23 @@ export default function BulkEditPage() {
 
         <div>
           <h1 className="text-xl font-bold">🖼 Bulk Edit — Seedream 4.5</h1>
-          <p className="text-zinc-400 text-sm mt-1">Drop your images, enter a prompt, and run Seedream on every photo at once.</p>
+          <p className="text-slate-500 text-sm mt-1">Drop your images, enter a prompt, and run Seedream on every photo at once.</p>
         </div>
 
+        <TutorialVideo videoId="kA53iyKKKgM" title="Bulk Edit" />
+
         {/* ── Dossier Drive ── */}
-        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
-          <p className="text-xs text-zinc-400 mb-1 font-medium uppercase tracking-wider">Drive Folder</p>
-          <p className="text-xs text-zinc-600 mb-3">Organizes results into the right Drive subfolder. No impact on generation.</p>
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <p className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wider">Drive Folder</p>
+          <p className="text-xs text-slate-400 mb-3">Organizes results into the right Drive subfolder. No impact on generation.</p>
           {loadingChars ? (
-            <p className="text-xs text-gray-500">Loading...</p>
+            <p className="text-xs text-slate-400">Loading...</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCharName('')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                  !selectedCharName ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-violet-500/50'
+                  !selectedCharName ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-violet-500/50'
                 }`}
               >
                 None
@@ -189,7 +192,7 @@ export default function BulkEditPage() {
                   key={e.id}
                   onClick={() => setSelectedCharName(selectedCharName === e.name ? '' : e.name)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                    selectedCharName === e.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
+                    selectedCharName === e.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-violet-500/50'
                   }`}
                 >
                   {e.name}
@@ -200,23 +203,23 @@ export default function BulkEditPage() {
         </div>
 
         {/* ── Prompt ── */}
-        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] space-y-3">
-          <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Prompt (applied to all images)</p>
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Prompt (applied to all images)</p>
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             placeholder="Ex: Ultra-realistic, soft natural light, keep the identity, improve skin texture..."
             rows={3}
-            className="w-full bg-black/40 border border-white/[0.08] rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none"
+            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm resize-none"
           />
           <div className="flex items-center gap-3">
-            <p className="text-xs text-zinc-500">Quality:</p>
+            <p className="text-xs text-slate-400">Quality:</p>
             {(['low', 'medium', 'high'] as const).map(q => (
               <button
                 key={q}
                 onClick={() => setQuality(q)}
                 className={`px-3 py-1 rounded-lg text-xs font-medium border transition ${
-                  quality === q ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white/[0.05] border-white/[0.08] text-zinc-400 hover:border-white/[0.20]'
+                  quality === q ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                 }`}
               >
                 {q}
@@ -231,7 +234,7 @@ export default function BulkEditPage() {
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           className={`rounded-2xl border-2 border-dashed p-12 text-center transition cursor-pointer ${
-            dragging ? 'border-violet-500 bg-violet-900/10' : 'border-white/[0.08] hover:border-white/[0.20] bg-zinc-900/20'
+            dragging ? 'border-violet-500 bg-violet-50' : 'border-slate-300 hover:border-slate-400 bg-slate-50'
           }`}
           onClick={() => document.getElementById('bulk-file-input')?.click()}
         >
@@ -243,22 +246,22 @@ export default function BulkEditPage() {
             className="hidden"
             onChange={onFileInput}
           />
-          <svg className="w-12 h-12 text-zinc-700 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+          <svg className="w-12 h-12 text-slate-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
-          <p className="text-zinc-300 font-medium text-sm">
+          <p className="text-slate-700 font-medium text-sm">
             {entries.length > 0
               ? `${entries.length} image${entries.length > 1 ? 's' : ''} selected — click or drag to add more`
               : 'Drop your images here or click to select'}
           </p>
-          <p className="text-zinc-600 text-xs mt-2">JPG · PNG · WEBP</p>
+          <p className="text-slate-400 text-xs mt-2">JPG · PNG · WEBP</p>
         </div>
 
         {/* ── Grid aperçu ── */}
         {entries.length > 0 && (
           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
             {entries.map((e, i) => (
-              <div key={i} className="relative group aspect-square rounded-lg overflow-hidden bg-black/40">
+              <div key={i} className="relative group aspect-square rounded-lg overflow-hidden bg-slate-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={e.preview} alt="" className="w-full h-full object-cover" />
                 <button
@@ -274,20 +277,20 @@ export default function BulkEditPage() {
 
         {/* ── Compression locale ── */}
         {phase === 'compressing' && (
-          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07] flex items-center gap-3">
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
-            <p className="text-sm text-zinc-300">🗜 Compressing images... (a few seconds)</p>
+            <p className="text-sm text-slate-700">🗜 Compressing images... (a few seconds)</p>
           </div>
         )}
 
         {/* ── Progress upload ── */}
         {phase === 'uploading' && (
-          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07]">
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-zinc-300">⬆️ Uploading to server...</p>
-              <p className="text-sm text-zinc-400">{uploadedCount}/{entries.length}</p>
+              <p className="text-sm text-slate-700">⬆️ Uploading to server...</p>
+              <p className="text-sm text-slate-500">{uploadedCount}/{entries.length}</p>
             </div>
-            <div className="w-full bg-white/[0.05] rounded-full h-1.5">
+            <div className="w-full bg-slate-200 rounded-full h-1.5">
               <div
                 className="bg-blue-500 h-1.5 rounded-full transition-all"
                 style={{ width: `${entries.length ? (uploadedCount / entries.length) * 100 : 0}%` }}
@@ -297,15 +300,15 @@ export default function BulkEditPage() {
         )}
 
         {phase === 'launching' && (
-          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-4 border border-white/[0.07]">
-            <p className="text-sm text-zinc-300">🚀 Launching batch...</p>
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+            <p className="text-sm text-slate-700">🚀 Launching batch...</p>
           </div>
         )}
 
         {/* ── Erreur / succès ── */}
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
         {success && (
-          <p className="text-sm text-emerald-400 flex items-center gap-2">
+          <p className="text-sm text-emerald-700 flex items-center gap-2">
             {success}
             <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
           </p>

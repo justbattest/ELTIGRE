@@ -84,13 +84,13 @@ const WARMUP_LABELS: Record<number, string> = {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-    pending:    { color: 'bg-zinc-700 text-zinc-300',   icon: <Clock className="w-3 h-3" />,        label: 'Scheduled' },
-    processing: { color: 'bg-amber-900/60 text-amber-300', icon: <RefreshCw className="w-3 h-3 animate-spin" />, label: 'In progress' },
-    posted:     { color: 'bg-emerald-900/60 text-emerald-400', icon: <CheckCircle className="w-3 h-3" />,  label: 'Posted ✓' },
-    failed:     { color: 'bg-red-900/60 text-red-400',    icon: <XCircle className="w-3 h-3" />,     label: 'Failed' },
-    cancelled:  { color: 'bg-zinc-800 text-zinc-500',    icon: <X className="w-3 h-3" />,            label: 'Cancelled' },
+    pending:    { color: 'bg-slate-100 text-slate-600 border border-slate-200',   icon: <Clock className="w-3 h-3" />,        label: 'Scheduled' },
+    processing: { color: 'bg-amber-50 text-amber-700 border border-amber-200', icon: <RefreshCw className="w-3 h-3 animate-spin" />, label: 'In progress' },
+    posted:     { color: 'bg-green-50 text-green-700 border border-green-200', icon: <CheckCircle className="w-3 h-3" />,  label: 'Posted ✓' },
+    failed:     { color: 'bg-red-50 text-red-600 border border-red-200',    icon: <XCircle className="w-3 h-3" />,     label: 'Failed' },
+    cancelled:  { color: 'bg-slate-100 text-slate-500 border border-slate-200',    icon: <X className="w-3 h-3" />,            label: 'Cancelled' },
   }
-  const s = map[status] ?? { color: 'bg-zinc-800 text-zinc-400', icon: null, label: status }
+  const s = map[status] ?? { color: 'bg-slate-100 text-slate-500 border border-slate-200', icon: null, label: status }
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${s.color}`}>
       {s.icon}{s.label}
@@ -100,14 +100,14 @@ function StatusBadge({ status }: { status: string }) {
 
 function AccountStatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    warmup:    'bg-violet-900/50 text-violet-300',
-    active:    'bg-emerald-900/50 text-emerald-400',
-    challenge: 'bg-red-900/60 text-red-400',
-    banned:    'bg-red-900/80 text-red-300',
-    suspended: 'bg-orange-900/60 text-orange-400',
+    warmup:    'bg-violet-50 text-violet-700 border border-violet-300',
+    active:    'bg-green-50 text-green-700 border border-green-200',
+    challenge: 'bg-red-50 text-red-600 border border-red-200',
+    banned:    'bg-red-100 text-red-700 border border-red-300',
+    suspended: 'bg-orange-50 text-orange-700 border border-orange-200',
   }
   return (
-    <span className={`text-xs px-2 py-0.5 rounded font-medium ${map[status] ?? 'bg-zinc-800 text-zinc-400'}`}>
+    <span className={`text-xs px-2 py-0.5 rounded font-medium ${map[status] ?? 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
       {status}
     </span>
   )
@@ -120,7 +120,7 @@ function WarmupBar({ phase }: { phase: number }) {
         <div
           key={p}
           className={`h-1.5 w-6 rounded-full transition-colors ${
-            p <= phase ? 'bg-violet-500' : 'bg-zinc-700'
+            p <= phase ? 'bg-violet-500' : 'bg-slate-200'
           }`}
         />
       ))}
@@ -253,16 +253,16 @@ function QuickCarouselModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-white/[0.07] rounded-2xl w-full max-w-lg shadow-2xl">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <div>
-            <h2 className="font-semibold text-white">Schedule Carousels</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Auto Drive scan · Optimal US times · Claude captions</p>
+            <h2 className="font-semibold text-slate-900">Schedule Carousels</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Auto Drive scan · Optimal US times · Claude captions</p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-zinc-500 hover:text-white" /></button>
+          <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-700" /></button>
         </div>
 
         <div className="p-5 space-y-5">
@@ -272,9 +272,9 @@ function QuickCarouselModal({
             <>
               {/* Compte */}
               <div>
-                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Account</label>
+                <label className="text-xs text-slate-500 uppercase tracking-wider block mb-1.5">Account</label>
                 <select value={selectedAccountId} onChange={e => setSelectedAccountId(e.target.value)}
-                  className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500"
                 >
                   {accounts.filter(a => a.status !== 'banned').map(a => (
                     <option key={a.id} value={a.id}>
@@ -283,20 +283,20 @@ function QuickCarouselModal({
                   ))}
                 </select>
                 {selectedAccount?.characterName && (
-                  <p className="text-xs text-zinc-600 mt-1">
-                    Drive scan: <span className="text-violet-400">{selectedAccount.characterName}/carousels/</span>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Drive scan: <span className="text-violet-600">{selectedAccount.characterName}/carousels/</span>
                   </p>
                 )}
               </div>
 
               {/* Par jour */}
               <div>
-                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-2">Per day</label>
+                <label className="text-xs text-slate-500 uppercase tracking-wider block mb-2">Per day</label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map(n => (
                     <button key={n} onClick={() => setPerDay(n)}
                       className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${
-                        perDay === n ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-400 hover:text-white'
+                        perDay === n ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'
                       }`}
                     >
                       {n}
@@ -307,14 +307,14 @@ function QuickCarouselModal({
 
               {/* Nombre de jours */}
               <div>
-                <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-2">
-                  Number of days — <span className="text-violet-400">{total} carousels total</span>
+                <label className="text-xs text-slate-500 uppercase tracking-wider block mb-2">
+                  Number of days — <span className="text-violet-600">{total} carousels total</span>
                 </label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 5, 7].map(n => (
                     <button key={n} onClick={() => setNumDays(n)}
                       className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition ${
-                        numDays === n ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-400 hover:text-white'
+                        numDays === n ? 'bg-slate-600 border-slate-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'
                       }`}
                     >
                       {n}d
@@ -326,9 +326,9 @@ function QuickCarouselModal({
               {/* Premier post */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs text-zinc-400 uppercase tracking-wider">First post (optional)</label>
+                  <label className="text-xs text-slate-500 uppercase tracking-wider">First post (optional)</label>
                   <button onClick={setNowPlus2}
-                    className="text-xs text-violet-400 hover:text-violet-300 transition font-medium"
+                    className="text-xs text-violet-600 hover:text-violet-700 transition font-medium"
                   >
                     Test: now + 2 min
                   </button>
@@ -337,30 +337,30 @@ function QuickCarouselModal({
                   type="datetime-local"
                   value={startDatetime}
                   onChange={e => setStartDatetime(e.target.value)}
-                  className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500"
                 />
-                <p className="text-xs text-zinc-600 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Enter your local time. Empty = optimal US times automatically starting tomorrow.
                 </p>
               </div>
 
               {/* Info horaires */}
-              <div className="bg-zinc-800/40 border border-white/[0.05] rounded-xl px-4 py-3 text-xs text-zinc-500 space-y-0.5">
-                <p className="text-zinc-400 font-medium mb-1">Automatic US times (EST):</p>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-500 space-y-0.5">
+                <p className="text-slate-700 font-medium mb-1">Automatic US times (EST):</p>
                 <p>☀️ Morning: 6–9 AM EST · 🌆 Noon: 11:30 AM–1:30 PM EST · 🌙 Evening: 7–9:30 PM EST</p>
                 <p>Random offset ±7–25 min · never exactly H:00 or H:30</p>
               </div>
 
-              {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
+              {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{error}</p>}
             </>
           )}
 
           {/* Step: scanning */}
           {step === 'scanning' && (
             <div className="flex flex-col items-center py-8 gap-3">
-              <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
-              <p className="text-sm text-zinc-400">Scanning Drive...</p>
-              <p className="text-xs text-zinc-600">{selectedAccount?.characterName}/carousels/</p>
+              <RefreshCw className="w-8 h-8 text-violet-500 animate-spin" />
+              <p className="text-sm text-slate-500">Scanning Drive...</p>
+              <p className="text-xs text-slate-400">{selectedAccount?.characterName}/carousels/</p>
             </div>
           )}
 
@@ -368,11 +368,11 @@ function QuickCarouselModal({
           {step === 'preview' && selected.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-white font-medium">
-                  <span className="text-violet-400">{selected.length}</span> carousels selected
-                  <span className="text-zinc-500 text-xs ml-2">out of {carousels.length} available</span>
+                <p className="text-sm text-slate-900 font-medium">
+                  <span className="text-violet-600">{selected.length}</span> carousels selected
+                  <span className="text-slate-500 text-xs ml-2">out of {carousels.length} available</span>
                   {alreadyPostedCount > 0 && (
-                    <span className="text-zinc-600 text-xs ml-2">· {alreadyPostedCount} already posted excluded</span>
+                    <span className="text-slate-400 text-xs ml-2">· {alreadyPostedCount} already posted excluded</span>
                   )}
                 </p>
                 <button
@@ -380,7 +380,7 @@ function QuickCarouselModal({
                     const shuffled = [...carousels].sort(() => Math.random() - 0.5)
                     setSelected(shuffled.slice(0, Math.min(total, shuffled.length)))
                   }}
-                  className="text-xs text-zinc-400 hover:text-white flex items-center gap-1"
+                  className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1"
                 >
                   <RefreshCw className="w-3 h-3" /> Reshuffle
                 </button>
@@ -389,55 +389,55 @@ function QuickCarouselModal({
               {/* Aperçu des carousels sélectionnés */}
               <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
                 {selected.map((c, i) => (
-                  <div key={c.id} className="aspect-square bg-zinc-800 rounded-lg overflow-hidden relative">
+                  <div key={c.id} className="aspect-square bg-slate-100 rounded-lg overflow-hidden relative">
                     <img
                       src={c.previewUrl}
                       alt={c.name}
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[9px] text-white px-1 py-0.5 text-center">
+                    <div className="absolute bottom-0 left-0 right-0 bg-slate-900/60 text-[9px] text-white px-1 py-0.5 text-center">
                       #{i + 1} · {c.fileUrls.length} imgs
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="bg-zinc-800/40 rounded-xl px-4 py-3 text-xs text-zinc-500">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-500">
                 Captions auto-generated in English by Claude (open-ended question).
                 First post tomorrow at optimal US times.
               </div>
 
-              {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
+              {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{error}</p>}
             </div>
           )}
 
           {/* Step: scheduling */}
           {step === 'scheduling' && (
             <div className="flex flex-col items-center py-8 gap-3">
-              <Sparkles className="w-8 h-8 text-violet-400 animate-pulse" />
-              <p className="text-sm text-zinc-400">{progress}</p>
+              <Sparkles className="w-8 h-8 text-violet-500 animate-pulse" />
+              <p className="text-sm text-slate-500">{progress}</p>
             </div>
           )}
 
           {/* Step: done */}
           {step === 'done' && result && (
             <div className="flex flex-col items-center py-8 gap-3 text-center">
-              <CheckCircle className="w-10 h-10 text-emerald-400" />
-              <p className="text-lg font-bold text-white">{result.scheduled} carousels scheduled ✓</p>
-              <p className="text-sm text-zinc-400">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+              <p className="text-lg font-bold text-slate-900">{result.scheduled} carousels scheduled ✓</p>
+              <p className="text-sm text-slate-500">
                 First post: {result.firstPostAt
                   ? new Date(result.firstPostAt).toLocaleString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
                   : 'tomorrow'}
               </p>
-              <p className="text-xs text-zinc-600">English captions generated · Optimal US times · Check Queue posts</p>
+              <p className="text-xs text-slate-400">English captions generated · Optimal US times · Check Queue posts</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-2 p-5 border-t border-white/[0.07]">
-          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white transition">
+        <div className="flex gap-2 p-5 border-t border-slate-200">
+          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-slate-100 text-slate-500 hover:text-slate-900 transition">
             {step === 'done' ? 'Close' : 'Cancel'}
           </button>
           {step === 'config' && (
@@ -548,12 +548,12 @@ function ScheduleModal({
   const thumbUrl = generation.driveGeneratedUrl || generation.generatedImageUrl
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-white/[0.07] rounded-2xl w-full max-w-lg shadow-2xl">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
-          <h2 className="font-semibold text-white">Schedule a post</h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+          <h2 className="font-semibold text-slate-900">Schedule a post</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -561,9 +561,9 @@ function ScheduleModal({
         <div className="p-5 space-y-4">
           {/* Aperçu média */}
           {thumbUrl && (
-            <div className="relative w-full aspect-[9/16] max-h-48 rounded-xl overflow-hidden bg-zinc-800">
+            <div className="relative w-full aspect-[9/16] max-h-48 rounded-xl overflow-hidden bg-slate-100">
               {thumbUrl.includes('.mp4') || thumbUrl.includes('video') ? (
-                <div className="absolute inset-0 flex items-center justify-center text-zinc-500 text-sm">
+                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
                   Video — {generation.modelUsed || 'unknown'}
                 </div>
               ) : (
@@ -574,7 +574,7 @@ function ScheduleModal({
                   href={generation.driveGeneratedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 p-1.5 rounded-lg transition"
+                  className="absolute top-2 right-2 bg-slate-900/60 hover:bg-slate-900/80 p-1.5 rounded-lg transition"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-white" />
                 </a>
@@ -584,13 +584,13 @@ function ScheduleModal({
 
           {/* Compte cible */}
           <div>
-            <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider block mb-1.5">
+            <label className="text-xs text-slate-500 font-medium uppercase tracking-wider block mb-1.5">
               Target account
             </label>
             <select
               value={selectedAccountId}
               onChange={e => setSelectedAccountId(e.target.value)}
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500"
             >
               {accounts.filter(a => a.status !== 'banned').map(a => (
                 <option key={a.id} value={a.id}>
@@ -609,7 +609,7 @@ function ScheduleModal({
                 className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${
                   mediaType === t
                     ? 'bg-violet-600 border-violet-500 text-white'
-                    : 'bg-zinc-800/60 border-white/[0.07] text-zinc-400 hover:text-white'
+                    : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'
                 }`}
               >
                 {t === 'reel' ? 'Reel' : 'Photo'}
@@ -620,11 +620,11 @@ function ScheduleModal({
           {/* Caption */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Caption</label>
+              <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Caption</label>
               <button
                 onClick={generateCaption}
                 disabled={generating}
-                className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50 transition"
+                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 disabled:opacity-50 transition"
               >
                 {generating ? (
                   <RefreshCw className="w-3 h-3 animate-spin" />
@@ -639,35 +639,35 @@ function ScheduleModal({
               onChange={e => setCaption(e.target.value)}
               placeholder="Instagram caption (optional — generate with Claude or write manually)..."
               rows={3}
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 resize-none focus:outline-none focus:border-violet-500/50"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 resize-none focus:outline-none focus:border-violet-500"
             />
           </div>
 
           {/* Date/heure */}
           <div>
-            <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider block mb-1.5">
+            <label className="text-xs text-slate-500 font-medium uppercase tracking-wider block mb-1.5">
               Schedule for (leave empty = as soon as possible)
             </label>
             <input
               type="datetime-local"
               value={scheduledFor}
               onChange={e => setScheduledFor(e.target.value)}
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500"
             />
-            <p className="text-xs text-zinc-600 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Note: exact times (:00 and :30) are automatically offset by ±7–23 min
             </p>
           </div>
 
           {error && (
-            <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{error}</p>
           )}
         </div>
 
-        <div className="flex gap-2 p-5 border-t border-white/[0.07]">
+        <div className="flex gap-2 p-5 border-t border-slate-200">
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-xl text-sm font-medium bg-zinc-800 text-zinc-400 hover:text-white transition"
+            className="flex-1 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-500 hover:text-slate-900 transition"
           >
             Cancel
           </button>
@@ -737,54 +737,54 @@ function AddAccountModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-white/[0.07] rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
-          <h2 className="font-semibold text-white">Add an Instagram account</h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-zinc-500 hover:text-white" /></button>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-xl">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+          <h2 className="font-semibold text-slate-900">Add an Instagram account</h2>
+          <button onClick={onClose}><X className="w-5 h-5 text-slate-400 hover:text-slate-700" /></button>
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Instagram username</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wider block mb-1.5">Instagram username</label>
             <input
               value={username}
               onChange={e => setUsername(e.target.value)}
               placeholder="@username (without the @)"
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500"
             />
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Password (encrypted in DB)</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wider block mb-1.5">Password (encrypted in DB)</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Instagram password"
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500"
             />
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">
+            <label className="text-xs text-slate-500 uppercase tracking-wider block mb-1.5">
               Google Authenticator 2FA key
             </label>
             <input
               value={totpSecret}
               onChange={e => setTotpSecret(e.target.value)}
               placeholder="Ex: JBSW Y3DP EHPK 3PXP (espaces ok)"
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 font-mono"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 font-mono"
             />
-            <p className="text-xs text-zinc-600 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Instagram → Security → Two-factor auth → App → "Enter key manually"
             </p>
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Character (model)</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wider block mb-1.5">Character (model)</label>
             {characters.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setCharacterName('')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                    characterName === '' ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-500 hover:text-white'
+                    characterName === '' ? 'bg-slate-600 border-slate-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   None
@@ -794,7 +794,7 @@ function AddAccountModal({
                     key={c.id}
                     onClick={() => setCharacterName(c.name)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                      characterName === c.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-800/60 border-white/[0.07] text-zinc-500 hover:text-white'
+                      characterName === c.name ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'
                     }`}
                   >
                     {c.name}
@@ -806,17 +806,17 @@ function AddAccountModal({
                 value={characterName}
                 onChange={e => setCharacterName(e.target.value)}
                 placeholder="Ex: EMMA, NINA..."
-                className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500"
               />
             )}
-            <p className="text-xs text-zinc-600 mt-1">Link this account to a single character — avoids content crossovers</p>
+            <p className="text-xs text-slate-400 mt-1">Link this account to a single character — avoids content crossovers</p>
           </div>
           <div>
-            <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1.5">Hotspot phone</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wider block mb-1.5">Hotspot phone</label>
             <select
               value={networkName}
               onChange={e => setNetworkName(e.target.value)}
-              className="w-full bg-zinc-800 border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50"
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500"
             >
               <option value="iPhone 7">iPhone 7</option>
               <option value="iPhone 10">iPhone 10</option>
@@ -837,7 +837,7 @@ function AddAccountModal({
                   className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${
                     warmupPhase === p
                       ? 'bg-violet-600 border-violet-500 text-white'
-                      : 'bg-zinc-800/60 border-white/[0.07] text-zinc-500 hover:text-white'
+                      : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   Phase {p}<br />
@@ -846,10 +846,10 @@ function AddAccountModal({
               ))}
             </div>
           </div>
-          {error && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-xl">{error}</p>}
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{error}</p>}
         </div>
-        <div className="flex gap-2 p-5 border-t border-white/[0.07]">
-          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white transition">
+        <div className="flex gap-2 p-5 border-t border-slate-200">
+          <button onClick={onClose} className="flex-1 py-2 rounded-xl text-sm bg-slate-100 text-slate-500 hover:text-slate-900 transition">
             Cancel
           </button>
           <button
@@ -988,7 +988,7 @@ export default function PosterPage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen bg-[#09090b] text-zinc-100">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
         <PageWrapper>
@@ -997,8 +997,8 @@ export default function PosterPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-bold text-white">Instagram Poster</h1>
-                <p className="text-sm text-zinc-500 mt-0.5">
+                <h1 className="text-xl font-bold text-slate-900">Instagram Poster</h1>
+                <p className="text-sm text-slate-500 mt-0.5">
                   {accounts.length} account{accounts.length !== 1 ? 's' : ''} · Carrier IPs via iPhone hotspot
                 </p>
               </div>
@@ -1016,7 +1016,7 @@ export default function PosterPage() {
                   <button
                     onClick={loadGenerations}
                     disabled={loadingGens}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white border border-white/[0.07] transition disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm bg-white text-slate-500 hover:text-slate-900 border border-slate-200 transition disabled:opacity-50"
                   >
                     <RefreshCw className={`w-4 h-4 ${loadingGens ? 'animate-spin' : ''}`} />
                   </button>
@@ -1025,7 +1025,7 @@ export default function PosterPage() {
                   <button
                     onClick={loadPosts}
                     disabled={loadingPosts}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm bg-zinc-800 text-zinc-400 hover:text-white border border-white/[0.07] transition disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm bg-white text-slate-500 hover:text-slate-900 border border-slate-200 transition disabled:opacity-50"
                   >
                     <RefreshCw className={`w-4 h-4 ${loadingPosts ? 'animate-spin' : ''}`} />
                   </button>
@@ -1034,19 +1034,19 @@ export default function PosterPage() {
             </div>
 
             {/* Warning Mac script */}
-            <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-3 flex items-start gap-3">
-              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <div className="text-sm text-amber-300/80">
-                <strong className="text-amber-300">Mac poster required:</strong> the local script{' '}
-                <code className="text-amber-200 bg-amber-900/40 px-1 rounded">instagram_poster/main.py</code>{' '}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
+              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+              <div className="text-sm text-amber-700">
+                <strong className="text-amber-700">Mac poster required:</strong> the local script{' '}
+                <code className="text-amber-700 bg-amber-100 px-1 rounded">instagram_poster/main.py</code>{' '}
                 must be running on your Mac to execute posts. Run{' '}
-                <code className="text-amber-200 bg-amber-900/40 px-1 rounded">./instagram_poster/install.sh</code>{' '}
+                <code className="text-amber-700 bg-amber-100 px-1 rounded">./instagram_poster/install.sh</code>{' '}
                 to install it as an automatic service.
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-zinc-900/60 border border-white/[0.07] rounded-xl p-1 w-fit">
+            <div className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit shadow-sm">
               {([
                 { id: 'queue',    label: 'Queue posts', icon: Calendar },
                 { id: 'gallery', label: 'Content',      icon: Send },
@@ -1058,7 +1058,7 @@ export default function PosterPage() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
                     tab === t.id
                       ? 'bg-violet-600 text-white'
-                      : 'text-zinc-400 hover:text-white'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   <t.icon className="w-4 h-4" />
@@ -1079,7 +1079,7 @@ export default function PosterPage() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         postFilter === s
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'
+                          : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'
                       }`}
                     >
                       {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -1088,12 +1088,12 @@ export default function PosterPage() {
                 </div>
 
                 {loadingPosts ? (
-                  <p className="text-sm text-zinc-500">Loading...</p>
+                  <p className="text-sm text-slate-400">Loading...</p>
                 ) : posts.length === 0 ? (
-                  <div className="bg-zinc-900/60 border border-white/[0.07] rounded-2xl p-8 text-center">
-                    <Calendar className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
-                    <p className="text-zinc-500 text-sm">No scheduled posts</p>
-                    <p className="text-zinc-600 text-xs mt-1">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-sm">
+                    <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500 text-sm">No scheduled posts</p>
+                    <p className="text-slate-400 text-xs mt-1">
                       Go to the "Content" tab to schedule from your generations
                     </p>
                   </div>
@@ -1102,14 +1102,14 @@ export default function PosterPage() {
                     {posts.map(post => (
                       <div
                         key={post.id}
-                        className="bg-zinc-900/60 border border-white/[0.07] rounded-xl p-4 flex items-start gap-4"
+                        className="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-4 shadow-sm"
                       >
                         {/* Thumbnail */}
-                        <div className="w-12 h-12 rounded-lg bg-zinc-800 shrink-0 overflow-hidden">
+                        <div className="w-12 h-12 rounded-lg bg-slate-100 shrink-0 overflow-hidden">
                           {post.driveFileUrl && !post.driveFileUrl.includes('.mp4') ? (
                             <img src={post.driveFileUrl} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                            <div className="w-full h-full flex items-center justify-center text-slate-400">
                               <Video className="w-5 h-5" />
                             </div>
                           )}
@@ -1119,14 +1119,14 @@ export default function PosterPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <StatusBadge status={post.status} />
-                            <span className="text-xs text-zinc-400">@{post.account.username}</span>
-                            <span className="text-xs text-zinc-600">{post.account.networkName}</span>
+                            <span className="text-xs text-slate-500">@{post.account.username}</span>
+                            <span className="text-xs text-slate-400">{post.account.networkName}</span>
                           </div>
                           {post.caption && (
-                            <p className="text-xs text-zinc-400 truncate mb-1">{post.caption}</p>
+                            <p className="text-xs text-slate-500 truncate mb-1">{post.caption}</p>
                           )}
                           {post.scheduledFor && (
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-slate-400">
                               <Clock className="w-3 h-3 inline mr-1" />
                               {new Date(post.scheduledFor).toLocaleString('en-US', {
                                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
@@ -1134,7 +1134,7 @@ export default function PosterPage() {
                             </p>
                           )}
                           {post.status === 'posted' && post.postedAt && (
-                            <p className="text-xs text-emerald-400">
+                            <p className="text-xs text-green-700">
                               <CheckCircle className="w-3 h-3 inline mr-1" />
                               Posted on {new Date(post.postedAt).toLocaleString('en-US', {
                                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
@@ -1143,7 +1143,7 @@ export default function PosterPage() {
                             </p>
                           )}
                           {post.status === 'failed' && post.errorMessage && (
-                            <p className="text-xs text-red-400 truncate">
+                            <p className="text-xs text-red-600 truncate">
                               <XCircle className="w-3 h-3 inline mr-1" />
                               {post.errorMessage}
                             </p>
@@ -1156,7 +1156,7 @@ export default function PosterPage() {
                             <button
                               onClick={() => retryPost(post.id)}
                               title="Retry"
-                              className="p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-emerald-400 transition"
+                              className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-green-600 transition"
                             >
                               <RefreshCw className="w-4 h-4" />
                             </button>
@@ -1165,7 +1165,7 @@ export default function PosterPage() {
                             <button
                               onClick={() => cancelPost(post.id)}
                               title="Cancel"
-                              className="p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-red-400 transition"
+                              className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:text-red-500 transition"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -1188,13 +1188,13 @@ export default function PosterPage() {
                   <div className="flex gap-1 flex-wrap">
                     <button
                       onClick={() => setFilterChar('all')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterChar === 'all' ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterChar === 'all' ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'}`}
                     >
                       All
                     </button>
                     {allCharacters.map(c => (
                       <button key={c} onClick={() => setFilterChar(c === filterChar ? 'all' : c)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterChar === c ? 'bg-violet-600 border-violet-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterChar === c ? 'bg-violet-600 border-violet-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'}`}
                       >
                         {c}
                       </button>
@@ -1202,12 +1202,12 @@ export default function PosterPage() {
                   </div>
 
                   {/* Séparateur */}
-                  <div className="h-5 w-px bg-white/[0.07]" />
+                  <div className="h-5 w-px bg-slate-200" />
 
                   {/* Filtre type */}
                   {(['all', 'video', 'image'] as const).map(t => (
                     <button key={t} onClick={() => setFilterType(t)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterType === t ? 'bg-zinc-600 border-zinc-500 text-white' : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${filterType === t ? 'bg-slate-600 border-slate-500 text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'}`}
                     >
                       {t === 'all' ? 'All' : t === 'video' ? 'Videos' : 'Photos'}
                     </button>
@@ -1216,12 +1216,12 @@ export default function PosterPage() {
                   {/* Bouton carousel + refresh */}
                   <div className="ml-auto flex gap-2">
                     <button onClick={loadGenerations} disabled={loadingGens}
-                      className="p-2 rounded-xl bg-zinc-800 border border-white/[0.07] text-zinc-400 hover:text-white transition disabled:opacity-50"
+                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-slate-900 transition disabled:opacity-50"
                     >
                       <RefreshCw className={`w-4 h-4 ${loadingGens ? 'animate-spin' : ''}`} />
                     </button>
                     <button onClick={() => setShowQuickCarouselModal(true)} disabled={accounts.length === 0}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-zinc-800 border border-white/[0.07] text-zinc-300 hover:border-violet-500/50 hover:text-violet-300 disabled:opacity-40 transition whitespace-nowrap"
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-white border border-slate-200 text-slate-700 hover:border-violet-300 hover:text-violet-700 disabled:opacity-40 transition whitespace-nowrap"
                     >
                       <LayoutGrid className="w-4 h-4" />
                       Carousel
@@ -1230,12 +1230,12 @@ export default function PosterPage() {
                 </div>
 
                 {/* ── Info ── */}
-                <p className="text-xs text-zinc-600">
+                <p className="text-xs text-slate-400">
                   {generations.length} item{generations.length > 1 ? 's' : ''} available — already posted hidden automatically
                 </p>
 
                 {accounts.length === 0 && (
-                  <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl px-4 py-3 text-sm text-amber-300">
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
                     No account configured — go to the Accounts tab first.
                   </div>
                 )}
@@ -1244,14 +1244,14 @@ export default function PosterPage() {
                 {loadingGens ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {[...Array(8)].map((_, i) => (
-                      <div key={i} className="aspect-[9/16] bg-zinc-800/50 rounded-xl animate-pulse" />
+                      <div key={i} className="aspect-[9/16] bg-slate-200 rounded-xl animate-pulse" />
                     ))}
                   </div>
                 ) : generations.length === 0 ? (
-                  <div className="bg-zinc-900/60 border border-white/[0.07] rounded-2xl p-10 text-center">
-                    <Video className="w-8 h-8 text-zinc-700 mx-auto mb-3" />
-                    <p className="text-zinc-500 text-sm">No content available</p>
-                    <p className="text-zinc-700 text-xs mt-1">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
+                    <Video className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500 text-sm">No content available</p>
+                    <p className="text-slate-400 text-xs mt-1">
                       {filterChar !== 'all' || filterType !== 'all' ? 'Try changing the filters' : 'Generate content from the other tabs'}
                     </p>
                   </div>
@@ -1263,9 +1263,9 @@ export default function PosterPage() {
                       const hasDrive = !!gen.driveGeneratedUrl
                       const hasUrl = !!postUrl
                       return (
-                        <div key={gen.id} className="bg-zinc-900/60 border border-white/[0.07] rounded-xl overflow-hidden group relative">
+                        <div key={gen.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden group relative shadow-sm">
                           {/* Thumbnail */}
-                          <div className="aspect-[9/16] bg-zinc-800 relative">
+                          <div className="aspect-[9/16] bg-slate-100 relative">
                             {thumb ? (
                               gen.isVideo ? (
                                 // CDN Higgsfield = mp4 direct → lecture au hover
@@ -1278,47 +1278,47 @@ export default function PosterPage() {
                                     onMouseLeave={e => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0 }}
                                   />
                                 ) : (
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-zinc-900">
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-slate-50">
                                     <Video className="w-7 h-7 text-violet-500" />
-                                    <span className="text-[10px] text-zinc-500 px-2 text-center">{gen.modelUsed || 'video'}</span>
+                                    <span className="text-[10px] text-slate-400 px-2 text-center">{gen.modelUsed || 'video'}</span>
                                   </div>
                                 )
                               ) : (
                                 <img src={thumb} alt="" className="w-full h-full object-cover" />
                               )
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-zinc-700 text-xs">No preview</div>
+                              <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-xs">No preview</div>
                             )}
 
                             {/* Badges top */}
                             <div className="absolute top-1.5 left-1.5 right-1.5 flex items-start justify-between gap-1">
                               <div className="flex flex-col gap-1">
                                 {gen.characterName && (
-                                  <span className="bg-violet-900/90 text-violet-200 text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                  <span className="bg-violet-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
                                     {gen.characterName}
                                   </span>
                                 )}
                                 {gen.isPending && (
-                                  <span className="bg-amber-900/90 text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                  <span className="bg-amber-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
                                     Scheduled
                                   </span>
                                 )}
                               </div>
                               {hasDrive && (
                                 <a href={gen.driveGeneratedUrl!} target="_blank" rel="noopener noreferrer"
-                                  className="opacity-0 group-hover:opacity-100 bg-black/60 hover:bg-black/80 p-1 rounded transition"
+                                  className="opacity-0 group-hover:opacity-100 bg-slate-900/60 hover:bg-slate-900/80 p-1 rounded transition"
                                 >
                                   <ExternalLink className="w-3 h-3 text-white" />
                                 </a>
                               )}
                               {!hasDrive && hasUrl && (
-                                <span className="bg-zinc-700/90 text-zinc-400 text-[9px] px-1 py-0.5 rounded">CDN</span>
+                                <span className="bg-slate-200 text-slate-500 text-[9px] px-1 py-0.5 rounded">CDN</span>
                               )}
                             </div>
 
                             {/* Badge type vidéo/image */}
                             <div className="absolute bottom-1.5 left-1.5">
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${gen.isVideo ? 'bg-blue-900/90 text-blue-300' : 'bg-emerald-900/90 text-emerald-300'}`}>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${gen.isVideo ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
                                 {gen.isVideo ? 'VIDEO' : 'PHOTO'}
                               </span>
                             </div>
@@ -1327,10 +1327,10 @@ export default function PosterPage() {
                           {/* Footer */}
                           <div className="p-2 space-y-1.5">
                             {gen.sceneDescription && (
-                              <p className="text-[10px] text-zinc-500 line-clamp-2 leading-tight">{gen.sceneDescription}</p>
+                              <p className="text-[10px] text-slate-500 line-clamp-2 leading-tight">{gen.sceneDescription}</p>
                             )}
                             {gen.generatedAt && (
-                              <p className="text-[9px] text-zinc-700">
+                              <p className="text-[9px] text-slate-400">
                                 {new Date(gen.generatedAt).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                               </p>
                             )}
@@ -1355,8 +1355,8 @@ export default function PosterPage() {
             {tab === 'accounts' && (
               <div className="space-y-4">
                 {/* Guide warmup */}
-                <div className="bg-zinc-900/60 border border-white/[0.07] rounded-xl p-4">
-                  <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">Warm-up guide</p>
+                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Warm-up guide</p>
                   <div className="grid grid-cols-4 gap-3 text-center">
                     {[
                       { phase: 1, label: 'Week 1', desc: '1 post/day', sub: 'Manual posts recommended' },
@@ -1364,10 +1364,10 @@ export default function PosterPage() {
                       { phase: 3, label: 'Week 3', desc: '2 posts/day', sub: 'Warmup phase' },
                       { phase: 4, label: 'Active', desc: '3 posts/day', sub: 'Normal phase' },
                     ].map(g => (
-                      <div key={g.phase} className="bg-zinc-800/50 rounded-lg p-2">
-                        <div className="text-xs font-medium text-violet-400 mb-0.5">{g.label}</div>
-                        <div className="text-sm font-bold text-white">{g.desc}</div>
-                        <div className="text-[10px] text-zinc-500 mt-0.5">{g.sub}</div>
+                      <div key={g.phase} className="bg-slate-50 border border-slate-200 rounded-lg p-2">
+                        <div className="text-xs font-medium text-violet-600 mb-0.5">{g.label}</div>
+                        <div className="text-sm font-bold text-slate-900">{g.desc}</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">{g.sub}</div>
                       </div>
                     ))}
                   </div>

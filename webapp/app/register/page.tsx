@@ -52,7 +52,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -62,54 +62,54 @@ export default function RegisterPage() {
               <img src="/brand/LOGO.png" alt="Modelify" width={44} height={44} style={{ objectFit: 'contain' }} />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">Modelify</h1>
-          <p className="text-gray-400 text-sm mt-1">Create an account</p>
+          <h1 className="text-2xl font-bold text-slate-900">Modelify</h1>
+          <p className="text-slate-500 text-sm mt-1">Create an account</p>
         </div>
 
         {/* Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4"
+          className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm"
         >
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
+            <label className="block text-sm text-slate-500 mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
               autoFocus
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
+              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition"
               placeholder="vous@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
+            <label className="block text-sm text-slate-500 mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
+              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition"
               placeholder="8 characters minimum"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Confirm password</label>
+            <label className="block text-sm text-slate-500 mb-1">Confirm password</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
+              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">
+            <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
@@ -117,15 +117,15 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-violet-800 disabled:cursor-not-allowed text-white font-medium rounded-lg py-2.5 transition"
+            className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-violet-400 disabled:cursor-not-allowed text-white font-medium rounded-lg py-2.5 transition"
           >
             {loading ? 'Creating...' : 'Create account'}
           </button>
         </form>
 
-        <p className="text-center text-gray-500 text-sm mt-4">
+        <p className="text-center text-slate-500 text-sm mt-4">
           Already have an account?{' '}
-          <Link href="/login" className="text-violet-400 hover:text-violet-300 transition">
+          <Link href="/login" className="text-violet-600 hover:text-violet-700 transition">
             Sign in
           </Link>
         </p>

@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -13,18 +13,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: radial-gradient(ellipse 80% 50% at 10% 0%, rgba(124,58,237,0.09) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6,182,212,0.05) 0%, transparent 60%),
-              #09090b;
-  color: #fafafa;
+  background: radial-gradient(ellipse 80% 50% at 10% 0%, rgba(124,58,237,0.04) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6,182,212,0.025) 0%, transparent 60%),
+              #f8fafc;
+  color: #0f172a;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   min-height: 100vh;
 }

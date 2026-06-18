@@ -10,7 +10,7 @@ const TUTORIALS = [
     icon: Settings,
     title: 'Settings',
     subtitle: 'Connect every integration — Higgsfield, Drive, Anthropic, HikerAPI',
-    color: 'text-violet-400',
+    color: 'text-violet-600',
     warning: '⚠️ HikerAPI connection is useless for now — the Instagram scraper is currently under maintenance and will be back soon. No need to configure it.',
     bullets: [
       {
@@ -84,7 +84,7 @@ const TUTORIALS = [
     icon: VideoIcon,
     title: 'Videos',
     subtitle: 'Niche-based generation, Prompt Lab, and Motion Control',
-    color: 'text-emerald-400',
+    color: 'text-emerald-600',
     bullets: [
       {
         emoji: '🎬',
@@ -113,7 +113,7 @@ const TUTORIALS = [
     icon: LayoutGrid,
     title: 'Carousels',
     subtitle: 'Mix multiple images or generate variations from a single image',
-    color: 'text-amber-400',
+    color: 'text-amber-600',
     bullets: [
       {
         emoji: '🖼️',
@@ -209,7 +209,7 @@ const TUTORIALS = [
 
 export default function TutorialsPage() {
   return (
-    <div className="flex min-h-screen bg-[#09090b]">
+    <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
         <PageWrapper>
@@ -217,8 +217,8 @@ export default function TutorialsPage() {
 
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white tracking-tight">Tutorials</h1>
-              <p className="text-zinc-500 text-sm mt-1">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Tutorials</h1>
+              <p className="text-slate-500 text-sm mt-1">
                 Watch the full walkthrough for each module, then check the recap below each video.
               </p>
             </div>
@@ -229,22 +229,22 @@ export default function TutorialsPage() {
               return (
                 <div
                   key={tut.id}
-                  className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-6 space-y-5"
+                  className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-sm"
                 >
                   {/* Section header */}
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
                       <Icon size={17} strokeWidth={1.75} className={tut.color} />
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold text-white leading-tight">{tut.title}</h2>
-                      <p className="text-xs text-zinc-500 leading-tight mt-0.5">{tut.subtitle}</p>
+                      <h2 className="text-base font-semibold text-slate-900 leading-tight">{tut.title}</h2>
+                      <p className="text-xs text-slate-500 leading-tight mt-0.5">{tut.subtitle}</p>
                     </div>
                   </div>
 
                   {/* Warning (if any) */}
                   {'warning' in tut && tut.warning && (
-                    <div className="bg-red-950/40 border border-red-800/50 rounded-lg px-4 py-3 text-red-300 text-sm leading-relaxed">
+                    <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm leading-relaxed">
                       {tut.warning}
                     </div>
                   )}
@@ -262,15 +262,15 @@ export default function TutorialsPage() {
 
                   {/* Recap bullets */}
                   <div className="space-y-3 pt-1">
-                    <p className="text-[11px] uppercase tracking-[0.1em] text-zinc-600 font-semibold">Key takeaways</p>
+                    <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400 font-semibold">Key takeaways</p>
                     <ul className="space-y-2.5">
                       {tut.bullets.map((b, idx) => (
                         <li key={idx} className="flex gap-3 items-start">
                           <span className="text-base leading-tight shrink-0 mt-0.5">{b.emoji}</span>
                           <div>
-                            <span className="text-sm font-medium text-zinc-200">{b.title}</span>
-                            <span className="text-zinc-500"> — </span>
-                            <span className="text-sm text-zinc-400">{b.desc}</span>
+                            <span className="text-sm font-medium text-slate-800">{b.title}</span>
+                            <span className="text-slate-400"> — </span>
+                            <span className="text-sm text-slate-600">{b.desc}</span>
                           </div>
                         </li>
                       ))}

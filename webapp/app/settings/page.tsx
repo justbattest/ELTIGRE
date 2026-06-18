@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { TutorialVideo } from '@/components/TutorialVideo'
 
 type RefElement = { id: string; name: string; type?: string }
 
@@ -241,19 +242,19 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
       {/* Nav */}
-      <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
+      <nav className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-gray-400 hover:text-white transition text-sm">← New Run</Link>
-          <span className="text-gray-600">|</span>
-          <Link href="/kpi" className="text-gray-400 hover:text-white transition text-sm">📊 KPI</Link>
+          <Link href="/" className="text-slate-500 hover:text-slate-900 transition text-sm">← New Run</Link>
+          <span className="text-slate-300">|</span>
+          <Link href="/kpi" className="text-slate-500 hover:text-slate-900 transition text-sm">📊 KPI</Link>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-gray-500 text-sm">{session?.user?.email}</span>
+          <span className="text-slate-400 text-sm">{session?.user?.email}</span>
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
-            className="text-gray-500 hover:text-gray-300 text-sm transition"
+            className="text-slate-400 hover:text-slate-700 text-sm transition"
           >
             Sign out
           </button>
@@ -261,25 +262,26 @@ export default function SettingsPage() {
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="text-xl font-bold mb-6 flex items-center gap-2">
+        <h1 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900">
           ⚙️ Settings
         </h1>
+        <TutorialVideo videoId="1dv8371-Hhg" title="Settings" />
 
         <div className="space-y-6">
           {/* HikerAPI — maintenance */}
           <div className="relative">
-            <div className="absolute inset-0 bg-gray-950/75 rounded-xl z-10 flex items-center justify-center gap-2 backdrop-blur-[1px] cursor-not-allowed">
+            <div className="absolute inset-0 bg-white/85 backdrop-blur-sm rounded-xl z-10 flex items-center justify-center gap-2 cursor-not-allowed">
               <span className="text-amber-400">🚧</span>
               <span className="text-amber-300 text-sm font-medium">Under maintenance</span>
             </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-1 text-gray-200">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <h2 className="font-medium mb-1 text-slate-800">
               🔍 HikerAPI — Scraping Instagram
-              <span className="ml-2 text-xs bg-green-900/40 text-green-400 border border-green-800 px-2 py-0.5 rounded-full font-normal">Recommended</span>
+              <span className="ml-2 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-normal">Recommended</span>
             </h2>
-            <p className="text-gray-500 text-xs mb-3">
+            <p className="text-slate-400 text-xs mb-3">
               Primary scraping method — residential proxies included, works on Railway without any extra setup. $0.0006/request (≈ $0.20/month).{' '}
-              <a href="https://hikerapi.com/p/hsazcgym" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 underline">
+              <a href="https://hikerapi.com/p/hsazcgym" target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline">
                 hikerapi.com
               </a>
               {' '}→ Tokens → copy the Access Key.
@@ -289,32 +291,32 @@ export default function SettingsPage() {
               value={hikerApiKey}
               onChange={(e) => setHikerApiKey(e.target.value)}
               placeholder="ih6q3k93xb2yiflq23dz3vuhg0sr65en"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
             />
             {hikerApiKey && !hikerApiKey.includes('...') && (
-              <p className="text-green-500 text-xs mt-1.5">✓ HikerAPI configured — scraping via managed proxies</p>
+              <p className="text-green-600 text-xs mt-1.5">✓ HikerAPI configured — scraping via managed proxies</p>
             )}
           </div>
           </div>{/* end maintenance wrapper */}
 
           {/* Anthropic */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-3 text-gray-200">Anthropic API Key</h2>
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <h2 className="font-medium mb-3 text-slate-800">Anthropic API Key</h2>
             <input
               type="password"
               value={anthropicKey}
               onChange={(e) => setAnthropicKey(e.target.value)}
               placeholder="sk-ant-api03-xxxxxxxxxxxxxxxxx"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
             />
-            <p className="text-gray-500 text-xs mt-1.5">
+            <p className="text-slate-400 text-xs mt-1.5">
               console.anthropic.com → API Keys
             </p>
           </div>
 
           {/* Higgsfield — Device Code Flow */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-3 text-gray-200">Higgsfield</h2>
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <h2 className="font-medium mb-3 text-slate-800">Higgsfield</h2>
 
             {higgsConnected && higgsAuthState !== 'waiting' ? (
               <div className="flex items-center justify-between">
@@ -324,14 +326,14 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={startHiggsAuth}
-                  className="text-xs text-gray-500 hover:text-gray-300 transition"
+                  className="text-xs text-slate-400 hover:text-slate-600 transition"
                 >
                   Reconnect
                 </button>
               </div>
             ) : higgsAuthState === 'waiting' ? (
               <div className="space-y-3">
-                <p className="text-sm text-amber-400">⏳ Waiting for approval...</p>
+                <p className="text-sm text-amber-600">⏳ Waiting for approval...</p>
                 <a
                   href={higgsDeviceUrl}
                   target="_blank"
@@ -340,24 +342,24 @@ export default function SettingsPage() {
                 >
                   🔗 Authorize on Higgsfield
                 </a>
-                <p className="text-gray-500 text-xs break-all">{higgsDeviceUrl}</p>
+                <p className="text-slate-400 text-xs break-all">{higgsDeviceUrl}</p>
               </div>
             ) : higgsAuthState === 'approved' ? (
               <div className="text-green-400 text-sm">✅ Higgsfield connected!</div>
             ) : (
               <div className="space-y-2">
-                <p className="text-gray-400 text-sm">
+                <p className="text-slate-500 text-sm">
                   Connect your Higgsfield account in one click — no token copying needed.
                 </p>
                 <button
                   onClick={startHiggsAuth}
                   disabled={higgsAuthState === 'starting'}
-                  className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 border border-gray-700 text-white text-sm rounded-lg px-4 py-2 transition"
+                  className="bg-white hover:bg-slate-50 disabled:opacity-50 border border-slate-300 text-slate-900 text-sm rounded-lg px-4 py-2 transition shadow-sm"
                 >
                   {higgsAuthState === 'starting' ? '⏳ Starting...' : '🔗 Connect Higgsfield'}
                 </button>
                 {higgsAuthState === 'error' && (
-                  <p className="text-red-400 text-xs">Connection error. Try again.</p>
+                  <p className="text-red-600 text-xs">Connection error. Try again.</p>
                 )}
               </div>
             )}
@@ -365,9 +367,9 @@ export default function SettingsPage() {
           </div>
 
           {/* Reference Elements */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <div className="flex items-start justify-between mb-1">
-              <h2 className="font-medium text-gray-200">Reference Elements</h2>
+              <h2 className="font-medium text-slate-800">Reference Elements</h2>
               <button
                 onClick={scanElements}
                 disabled={scanning || !higgsConnected}
@@ -377,12 +379,12 @@ export default function SettingsPage() {
                 {scanning ? '⏳ Scanning...' : '🔍 Scan from Higgsfield'}
               </button>
             </div>
-            <p className="text-gray-500 text-xs mb-1">
-              🖼 <strong className="text-gray-400">Images (Nano Banana)</strong> — auto-detected via the Scan button.<br/>
-              🎬 <strong className="text-gray-400">Videos (Seedance)</strong> — add manually: open <strong className="text-gray-400">app.higgsfield.ai → Elements → Characters</strong>, open DevTools (F12) → Network, click your character → copy the UUID from the request URL <code className="text-violet-400">/reference-elements/UUID-HERE</code>.
+            <p className="text-slate-400 text-xs mb-1">
+              🖼 <strong className="text-slate-600">Images (Nano Banana)</strong> — auto-detected via the Scan button.<br/>
+              🎬 <strong className="text-slate-600">Videos (Seedance)</strong> — add manually: open <strong className="text-slate-600">app.higgsfield.ai → Elements → Characters</strong>, open DevTools (F12) → Network, click your character → copy the UUID from the request URL <code className="text-violet-600">/reference-elements/UUID-HERE</code>.
             </p>
             {scanError && (
-              <p className="text-xs text-amber-400 mb-2">{scanError}</p>
+              <p className="text-xs text-amber-600 mb-2">{scanError}</p>
             )}
 
             {/* Liste existante */}
@@ -391,17 +393,17 @@ export default function SettingsPage() {
                 {referenceElements.map((el) => (
                   <div
                     key={el.id}
-                    className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2"
+                    className="flex items-center justify-between bg-slate-100 border border-slate-200 rounded-lg px-3 py-2"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-white text-sm font-medium">{el.name}</span>
-                      {el.type === 'soul_2' && <span className="text-emerald-400 text-xs">🎬 Video</span>}
-                      {el.type === 'soul_cinematic' && <span className="text-gray-500 text-xs">🖼 Image</span>}
-                      <span className="text-gray-600 text-xs font-mono">{el.id.substring(0, 8)}…</span>
+                      <span className="text-slate-900 text-sm font-medium">{el.name}</span>
+                      {el.type === 'soul_2' && <span className="text-emerald-600 text-xs">🎬 Video</span>}
+                      {el.type === 'soul_cinematic' && <span className="text-slate-400 text-xs">🖼 Image</span>}
+                      <span className="text-slate-400 text-xs font-mono">{el.id.substring(0, 8)}…</span>
                     </div>
                     <button
                       onClick={() => removeElement(el.id)}
-                      className="text-gray-600 hover:text-red-400 text-sm transition"
+                      className="text-slate-400 hover:text-red-500 text-sm transition"
                     >
                       ✕
                     </button>
@@ -417,26 +419,26 @@ export default function SettingsPage() {
                 value={newElementName}
                 onChange={(e) => setNewElementName(e.target.value)}
                 placeholder="Name (e.g. NINA HYBRID)"
-                className="flex-1 min-w-[120px] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
+                className="flex-1 min-w-[120px] bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm"
               />
               <input
                 type="text"
                 value={newElementId}
                 onChange={(e) => setNewElementId(e.target.value)}
                 placeholder="UUID (ex: 0dbe364b-...)"
-                className="flex-1 min-w-[180px] bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm font-mono"
+                className="flex-1 min-w-[180px] bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm font-mono"
               />
               <select
                 value={newElementType}
                 onChange={(e) => setNewElementType(e.target.value as 'soul_2' | 'soul_cinematic')}
-                className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                className="bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
               >
                 <option value="soul_2">🎬 Video (Seedance)</option>
                 <option value="soul_cinematic">🖼 Image (Nano Banana)</option>
               </select>
               <button
                 onClick={addElement}
-                className="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-3 py-1.5 text-sm transition"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5 text-sm transition"
               >
                 +
               </button>
@@ -444,15 +446,15 @@ export default function SettingsPage() {
           </div>
 
           {/* Avancé */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="font-medium mb-3 text-gray-200">Default settings</h2>
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <h2 className="font-medium mb-3 text-slate-800">Default settings</h2>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Model</label>
+                <label className="block text-xs text-slate-400 mb-1">Model</label>
                 <select
                   value={defaultModel}
                   onChange={(e) => setDefaultModel(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
                 >
                   <option value="auto">Auto (fallback)</option>
                   <option value="soul_cinematic">Soul Cinema</option>
@@ -461,11 +463,11 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Ratio</label>
+                <label className="block text-xs text-slate-400 mb-1">Ratio</label>
                 <select
                   value={defaultAspectRatio}
                   onChange={(e) => setDefaultAspectRatio(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
                 >
                   <option value="2:3">2:3</option>
                   <option value="1:1">1:1</option>
@@ -474,11 +476,11 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Quality</label>
+                <label className="block text-xs text-slate-400 mb-1">Quality</label>
                 <select
                   value={defaultQuality}
                   onChange={(e) => setDefaultQuality(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
                 >
                   <option value="2k">2K</option>
                   <option value="4k">4K</option>
@@ -489,68 +491,68 @@ export default function SettingsPage() {
           </div>
 
           {/* Google Drive */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-medium text-gray-200">
+              <h2 className="font-medium text-slate-800">
                 🗂️ Google Drive
-                <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${driveConnected ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
+                <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${driveConnected ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
                   {driveConnected ? '● Connected' : '○ Not connected'}
                 </span>
               </h2>
             </div>
-            <p className="text-gray-500 text-xs mb-4">
+            <p className="text-slate-400 text-xs mb-4">
               Source images (Instagram) + generated images (Higgsfield) automatically uploaded to your Drive after each generation.
             </p>
 
             {/* Folder ID — toujours visible */}
             <div className="mb-4">
-              <label className="block text-xs text-gray-500 mb-1">
+              <label className="block text-xs text-slate-400 mb-1">
                 Target Drive folder{' '}
-                <span className="text-gray-600">(ID from the URL: drive.google.com/drive/folders/<strong>ID</strong>)</span>
+                <span className="text-slate-400">(ID from the URL: drive.google.com/drive/folders/<strong>ID</strong>)</span>
               </label>
               <input
                 type="text"
                 value={driveFolderId}
                 onChange={(e) => setDriveFolderId(e.target.value)}
                 placeholder="1ABC...XYZ"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 transition text-sm"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm"
               />
             </div>
 
             {/* Auth flow */}
             {driveConnected ? (
-              <div className="flex items-center justify-between bg-green-900/20 border border-green-800 rounded-lg px-4 py-3">
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-green-400">✅</span>
-                  <span className="text-green-300 text-sm">Google account connected</span>
+                  <span className="text-green-600">✅</span>
+                  <span className="text-green-700 text-sm">Google account connected</span>
                 </div>
                 <button
                   onClick={disconnectDrive}
-                  className="text-xs text-gray-500 hover:text-red-400 transition"
+                  className="text-xs text-slate-400 hover:text-red-500 transition"
                 >
                   Disconnect
                 </button>
               </div>
             ) : driveAuthState === 'waiting' ? (
-              <div className="bg-blue-900/20 border border-blue-800 rounded-lg px-4 py-3 flex items-center gap-3">
-                <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full flex-shrink-0" />
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-3">
+                <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full flex-shrink-0" />
                 <div>
-                  <p className="text-blue-300 text-sm font-medium">Google window open…</p>
-                  <p className="text-gray-500 text-xs mt-0.5">Sign in and accept the permissions in the popup.</p>
+                  <p className="text-blue-700 text-sm font-medium">Google window open…</p>
+                  <p className="text-slate-400 text-xs mt-0.5">Sign in and accept the permissions in the popup.</p>
                 </div>
               </div>
             ) : driveAuthState === 'approved' ? (
-              <div className="bg-green-900/20 border border-green-800 rounded-lg px-4 py-3">
-                <span className="text-green-400 text-sm">✅ Drive connected successfully!</span>
+              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                <span className="text-green-700 text-sm">✅ Drive connected successfully!</span>
               </div>
             ) : driveAuthState === 'error' ? (
               <div className="space-y-2">
-                <p className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">
+                <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                   ❌ {driveError || 'Connection error'}
                 </p>
                 <button
                   onClick={startDriveAuth}
-                  className="text-sm text-violet-400 hover:text-violet-300 transition"
+                  className="text-sm text-violet-600 hover:text-violet-700 transition"
                 >
                   ↺ Try again
                 </button>
@@ -559,7 +561,7 @@ export default function SettingsPage() {
               <button
                 onClick={startDriveAuth}
                 disabled={driveAuthState === 'starting'}
-                className="w-full bg-gray-800 hover:bg-gray-700 disabled:opacity-50 border border-gray-700 text-white text-sm rounded-lg px-4 py-2.5 transition flex items-center justify-center gap-2"
+                className="w-full bg-white hover:bg-slate-50 disabled:opacity-50 border border-slate-300 text-slate-900 text-sm rounded-lg px-4 py-2.5 transition flex items-center justify-center gap-2 shadow-sm"
               >
                 <span>🗂️</span>
                 {driveAuthState === 'starting' ? '⏳ Connecting...' : 'Connect Google Drive'}
@@ -579,7 +581,7 @@ export default function SettingsPage() {
             <button
               onClick={testConnections}
               disabled={testing}
-              className="flex-1 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 border border-gray-700 text-white font-medium rounded-lg py-2.5 transition"
+              className="flex-1 bg-white hover:bg-slate-50 disabled:opacity-50 border border-slate-300 text-slate-900 font-medium rounded-lg py-2.5 transition shadow-sm"
             >
               {testing ? '⏳ Testing...' : '🔍 Test connections'}
             </button>
@@ -587,7 +589,7 @@ export default function SettingsPage() {
 
           {/* Résultats tests */}
           {testResults && (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-2">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 shadow-sm">
               {([
                 { key: 'anthropic', label: 'Anthropic' },
                 { key: 'higgsfield', label: 'Higgsfield' },
@@ -598,9 +600,9 @@ export default function SettingsPage() {
                 return (
                   <div key={key} className="flex items-center gap-2 text-sm">
                     <span>{r.ok ? '✅' : '❌'}</span>
-                    <span className="text-gray-400">{label}</span>
-                    <span className="text-gray-500">—</span>
-                    <span className={r.ok ? 'text-green-400' : 'text-red-400'}>{r.message}</span>
+                    <span className="text-slate-500">{label}</span>
+                    <span className="text-slate-400">—</span>
+                    <span className={r.ok ? 'text-green-700' : 'text-red-600'}>{r.message}</span>
                   </div>
                 )
               })}

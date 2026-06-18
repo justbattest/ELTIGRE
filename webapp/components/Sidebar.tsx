@@ -62,14 +62,14 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: collapsed ? 64 : 240 }}
       transition={{ duration: 0.25, ease: 'easeInOut' }}
-      className="flex-shrink-0 flex flex-col h-screen sticky top-0 bg-black/50 backdrop-blur-xl border-r border-white/[0.05] z-40 overflow-hidden"
+      className="flex-shrink-0 flex flex-col h-screen sticky top-0 bg-white/95 backdrop-blur-xl border-r border-slate-200/60 z-40 overflow-hidden"
     >
       {/* ── Logo ──────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-4 py-[18px] border-b border-white/[0.05] shrink-0">
+      <div className="flex items-center gap-3 px-4 py-[18px] border-b border-slate-200/60 shrink-0">
         {/* Modelify icon — white app-icon card */}
         <div
           className="w-7 h-7 rounded-[8px] bg-white flex items-center justify-center shrink-0 overflow-hidden"
-          style={{ boxShadow: '0 0 14px rgba(91,33,245,0.45)' }}
+          style={{ boxShadow: '0 0 14px rgba(91,33,245,0.25)' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/LOGO.png" alt="Modelify" width={22} height={22} style={{ objectFit: 'contain' }} />
@@ -84,7 +84,7 @@ export function Sidebar() {
               transition={{ duration: 0.15 }}
               className="min-w-0"
             >
-              <p className="text-[14px] font-bold text-white whitespace-nowrap tracking-wide leading-tight">
+              <p className="text-[14px] font-bold text-slate-900 whitespace-nowrap tracking-wide leading-tight">
                 Modelify
               </p>
             </motion.div>
@@ -92,7 +92,7 @@ export function Sidebar() {
         </AnimatePresence>
         <button
           onClick={() => setCollapsed(c => !c)}
-          className="ml-auto shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.05] transition"
+          className="ml-auto shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           title={collapsed ? 'Expand' : 'Collapse'}
         >
           {collapsed
@@ -110,14 +110,14 @@ export function Sidebar() {
           return (
             <div key={group.key}>
               {group.separate && (
-                <div className="my-3 mx-1 border-t border-white/[0.05]" />
+                <div className="my-3 mx-1 border-t border-slate-200/60" />
               )}
               <Link
                 href={group.href}
                 className={`flex items-center gap-3 px-3 py-[10px] rounded-xl transition-all duration-150 ${
                   isActive
-                    ? 'bg-violet-600/15 text-white'
-                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
+                    ? 'bg-violet-50 text-violet-700'
+                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 <Icon size={17} strokeWidth={1.75} className="shrink-0" />
@@ -138,7 +138,7 @@ export function Sidebar() {
                 {isActive && !collapsed && (
                   <motion.div
                     layoutId="sidebar-dot"
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0"
+                    className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600 shrink-0"
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -146,15 +146,15 @@ export function Sidebar() {
 
               {/* Sub-tabs — pas d'animation (sidebar re-créée à chaque nav) */}
               {isActive && group.subTabs.length > 1 && !collapsed && (
-                <div className="ml-[14px] mt-1 mb-1 pl-4 border-l border-white/[0.06] space-y-0.5">
+                <div className="ml-[14px] mt-1 mb-1 pl-4 border-l border-slate-200 space-y-0.5">
                   {group.subTabs.map(tab => (
                     <Link
                       key={tab.href}
                       href={tab.href}
                       className={`flex items-center px-3 py-[7px] rounded-lg text-[11px] transition-colors ${
                         pathname === tab.href
-                          ? 'text-white bg-white/[0.07]'
-                          : 'text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.03]'
+                          ? 'text-slate-900 bg-slate-100'
+                          : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       {tab.label}
@@ -168,10 +168,10 @@ export function Sidebar() {
       </nav>
 
       {/* ── Bottom ────────────────────────────────────────────── */}
-      <div className="py-3 px-2 border-t border-white/[0.05] space-y-0.5 shrink-0">
+      <div className="py-3 px-2 border-t border-slate-200/60 space-y-0.5 shrink-0">
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition"
+          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
         >
           <Settings size={16} strokeWidth={1.75} className="shrink-0" />
           <AnimatePresence>
@@ -190,7 +190,7 @@ export function Sidebar() {
         </Link>
         <Link
           href="/kpi"
-          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition"
+          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
         >
           <BarChart2 size={16} strokeWidth={1.75} className="shrink-0" />
           <AnimatePresence>
@@ -209,7 +209,7 @@ export function Sidebar() {
         </Link>
         <Link
           href="/tutorials"
-          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition"
+          className="flex items-center gap-3 px-3 py-[9px] rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
         >
           <BookOpen size={16} strokeWidth={1.75} className="shrink-0" />
           <AnimatePresence>

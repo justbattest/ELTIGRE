@@ -32,13 +32,13 @@ function ProgressBar({ value, total }: { value: number; total: number }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 bg-gray-800 rounded-full h-2">
+      <div className="flex-1 bg-slate-200 rounded-full h-2">
         <div
           className="bg-violet-500 h-2 rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-xs text-gray-400 w-10 text-right">{pct}%</span>
+      <span className="text-xs text-slate-400 w-10 text-right">{pct}%</span>
     </div>
   )
 }
@@ -103,7 +103,7 @@ export default function MonitoringPage() {
     running: 'text-amber-400',
     completed: 'text-green-400',
     failed: 'text-red-400',
-    paused: 'text-gray-400',
+    paused: 'text-slate-400',
   }
 
   const statusLabel = {
@@ -114,20 +114,20 @@ export default function MonitoringPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
       {/* Nav */}
-      <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <Link href="/" className="text-gray-400 hover:text-white transition text-sm">
+      <nav className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
+        <Link href="/" className="text-slate-500 hover:text-slate-900 transition text-sm">
           ← New Run
         </Link>
-        <Link href="/kpi" className="text-gray-400 hover:text-white transition text-sm">
+        <Link href="/kpi" className="text-slate-500 hover:text-slate-900 transition text-sm">
           📊 KPI →
         </Link>
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-8">
         {!run ? (
-          <div className="text-center py-20 text-gray-500">⏳ Connecting to run...</div>
+          <div className="text-center py-20 text-slate-400">⏳ Connecting to run...</div>
         ) : (
           <div className="space-y-6">
             {/* Header */}
@@ -136,7 +136,7 @@ export default function MonitoringPage() {
                 <h1 className="text-xl font-bold">Run #{id.substring(0, 8)}</h1>
                 <span
                   className={`text-sm ${
-                    statusColor[run.status as keyof typeof statusColor] || 'text-gray-400'
+                    statusColor[run.status as keyof typeof statusColor] || 'text-slate-400'
                   }`}
                 >
                   {statusLabel[run.status as keyof typeof statusLabel] || run.status}
@@ -146,7 +146,7 @@ export default function MonitoringPage() {
                 <button
                   onClick={stopRun}
                   disabled={stopping}
-                  className="bg-red-900/40 hover:bg-red-900/70 border border-red-800 text-red-400 text-sm rounded-lg px-4 py-2 transition"
+                  className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 transition"
                 >
                   {stopping ? '⏳' : '✋'} Stop
                 </button>
@@ -162,7 +162,7 @@ export default function MonitoringPage() {
             </div>
 
             {/* Phases */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-5">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-5 shadow-sm">
               {/* Scraping */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -173,14 +173,14 @@ export default function MonitoringPage() {
                           ? 'text-amber-400'
                           : run.totalPosts > 0
                           ? 'text-green-400'
-                          : 'text-gray-500'
+                          : 'text-slate-400'
                       }
                     >
                       ①
                     </span>
                     Scraping
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-400">
                     {run.totalPosts > 0 ? `${run.totalPosts} posts` : '—'}
                   </span>
                 </div>
@@ -197,14 +197,14 @@ export default function MonitoringPage() {
                           ? 'text-amber-400'
                           : run.completedPosts > 0
                           ? 'text-green-400'
-                          : 'text-gray-500'
+                          : 'text-slate-400'
                       }
                     >
                       ②
                     </span>
                     Claude Analysis
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-400">
                     {run.totalPosts > 0
                       ? `${run.generations?.length || 0}/${run.totalPosts} prompts`
                       : '—'}
@@ -226,14 +226,14 @@ export default function MonitoringPage() {
                           ? 'text-amber-400'
                           : run.status === 'completed'
                           ? 'text-green-400'
-                          : 'text-gray-500'
+                          : 'text-slate-400'
                       }
                     >
                       ③
                     </span>
                     Higgsfield Generation
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-400">
                     {run.totalPosts > 0
                       ? `${run.completedPosts}/${run.totalPosts}`
                       : '—'}
@@ -244,23 +244,23 @@ export default function MonitoringPage() {
 
               {/* Détails génération */}
               {run.totalPosts > 0 && (
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
-                  <div className="text-xs text-gray-500">
-                    Active jobs: <span className="text-white">{run.activeJobs}</span>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+                  <div className="text-xs text-slate-400">
+                    Active jobs: <span className="text-slate-900">{run.activeJobs}</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-slate-400">
                     Fallbacks: <span className="text-amber-400">{run.fallbackCount}</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-slate-400">
                     Soul Cinema: <span className="text-green-400">{run.soulCount} ✓</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-slate-400">
                     Seedream: <span className="text-blue-400">{run.seedreamCount}</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-slate-400">
                     Failed: <span className="text-red-400">{run.failedPosts}</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-slate-400">
                     Nano Banana: <span className="text-orange-400">{run.nanoBananaCount}</span>
                   </div>
                 </div>
@@ -270,7 +270,7 @@ export default function MonitoringPage() {
             {/* Résultats — images + prompts */}
             {run.generations?.filter((g) => g.generatedImageUrl).length > 0 && (
               <div>
-                <h2 className="text-sm font-medium text-gray-400 mb-3">
+                <h2 className="text-sm font-medium text-slate-500 mb-3">
                   Results ({run.generations.filter((g) => g.generatedImageUrl).length} images)
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -281,7 +281,7 @@ export default function MonitoringPage() {
                       const isExpanded = expandedPrompt === g.id
                       const wasCopied = copied === g.id
                       return (
-                        <div key={g.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                        <div key={g.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                           {/* Image */}
                           <div className="relative aspect-[2/3]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -301,14 +301,14 @@ export default function MonitoringPage() {
 
                           {/* Prompt */}
                           {g.promptUsed ? (
-                            <div className="p-3 space-y-2 border-t border-gray-800">
-                              <p className={`text-xs text-gray-300 leading-relaxed ${isExpanded ? '' : 'line-clamp-4'}`}>
+                            <div className="p-3 space-y-2 border-t border-slate-200">
+                              <p className={`text-xs text-slate-700 leading-relaxed ${isExpanded ? '' : 'line-clamp-4'}`}>
                                 {g.promptUsed}
                               </p>
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => setExpandedPrompt(isExpanded ? null : g.id)}
-                                  className="text-xs text-gray-500 hover:text-gray-300 transition"
+                                  className="text-xs text-slate-400 hover:text-slate-600 transition"
                                 >
                                   {isExpanded ? '▲' : '▼ tout voir'}
                                 </button>
@@ -320,8 +320,8 @@ export default function MonitoringPage() {
                                   }}
                                   className={`ml-auto text-xs px-2 py-0.5 rounded transition font-medium ${
                                     wasCopied
-                                      ? 'bg-green-900/50 text-green-400'
-                                      : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+                                      ? 'bg-green-50 text-green-700 border border-green-200'
+                                      : 'bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
                                   }`}
                                 >
                                   {wasCopied ? '✓ Copied' : '📋 Copy'}
@@ -329,8 +329,8 @@ export default function MonitoringPage() {
                               </div>
                             </div>
                           ) : (
-                            <div className="p-3 border-t border-gray-800">
-                              <p className="text-xs text-gray-600 italic">Prompt not available</p>
+                            <div className="p-3 border-t border-slate-200">
+                              <p className="text-xs text-slate-400 italic">Prompt not available</p>
                             </div>
                           )}
                         </div>

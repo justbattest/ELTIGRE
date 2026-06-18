@@ -22,7 +22,7 @@ export function IntroShader() {
           exit={{ opacity: 0, scale: 1.03 }}
           transition={{ duration: 0.45, ease: 'easeInOut' }}
           className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
-          style={{ background: '#030305' }}
+          style={{ background: '#f8fafc' }}
         >
           {/* ── Aurora blobs ──────────────────────────────────────── */}
           <motion.div
@@ -33,7 +33,7 @@ export function IntroShader() {
               top: '-10%', left: '15%',
               width: 680, height: 680,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(91,33,245,0.28) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(91,33,245,0.06) 0%, transparent 70%)',
               filter: 'blur(50px)',
             }}
           />
@@ -45,7 +45,7 @@ export function IntroShader() {
               bottom: '-10%', right: '10%',
               width: 580, height: 580,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)',
               filter: 'blur(70px)',
             }}
           />
@@ -57,7 +57,7 @@ export function IntroShader() {
               top: '30%', right: '20%',
               width: 350, height: 350,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(167,139,250,0.18) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(167,139,250,0.04) 0%, transparent 70%)',
               filter: 'blur(60px)',
             }}
           />
@@ -67,7 +67,7 @@ export function IntroShader() {
             className="absolute inset-0 pointer-events-none"
             style={{
               backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.65) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.65) 1px, transparent 1px)',
+                'linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)',
               backgroundSize: '44px 44px',
               opacity: 0.018,
             }}
@@ -78,7 +78,7 @@ export function IntroShader() {
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                'radial-gradient(ellipse 62% 62% at 50% 50%, transparent 32%, #030305 100%)',
+                'radial-gradient(ellipse 62% 62% at 50% 50%, transparent 32%, #f8fafc 100%)',
             }}
           />
 
@@ -152,7 +152,7 @@ export function IntroShader() {
                     delay: 0.42 + i * 0.05,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="text-[30px] font-bold text-white leading-none"
+                  className="text-[30px] font-bold text-slate-900 leading-none"
                   style={{ letterSpacing: '0.11em' }}
                 >
                   {letter}
@@ -166,7 +166,7 @@ export function IntroShader() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.98, duration: 0.5 }}
               className="mt-3 text-[10px] uppercase tracking-[0.32em]"
-              style={{ color: 'rgba(139,92,246,0.55)' }}
+              style={{ color: 'rgba(109,40,217,0.7)' }}
             >
               AI Content Platform
             </motion.p>
@@ -174,7 +174,7 @@ export function IntroShader() {
             {/* Progress bar */}
             <div
               className="mt-10 rounded-full overflow-hidden"
-              style={{ width: 144, height: 1.5, background: 'rgba(255,255,255,0.06)' }}
+              style={{ width: 144, height: 1.5, background: 'rgba(0,0,0,0.08)' }}
             >
               <motion.div
                 initial={{ scaleX: 0 }}

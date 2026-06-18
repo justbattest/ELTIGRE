@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
+import { TutorialVideo } from '@/components/TutorialVideo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -104,16 +105,16 @@ const SKATEPARK_OUTFITS = [
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function SubNicheLabel({ subNiche }: { subNiche: string }) {
-  if (subNiche === 'sport') return <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-900/50 text-emerald-400 font-medium">🏃 Coach</span>
-  if (subNiche === 'golf') return <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400 font-medium">⛳ Golf</span>
-  if (subNiche === 'nurse') return <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-400 font-medium">🏥 Nurse</span>
-  if (subNiche === 'restaurant') return <span className="text-xs px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-400 font-medium">🍽️ Restaurant</span>
-  if (subNiche === 'meteo') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">📺 Weather</span>
-  if (subNiche === 'reporter') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-900/50 text-sky-400 font-medium">🌪️ Reporter</span>
-  if (subNiche === 'serveuse') return <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-400 font-medium">🍾 Waitress</span>
-  if (subNiche === 'mcdo') return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-900/50 text-yellow-400 font-medium">🍔 McDo</span>
-  if (subNiche === 'skatepark') return <span className="text-xs px-1.5 py-0.5 rounded bg-rose-900/50 text-rose-400 font-medium">🛴 Skatepark</span>
-  return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-900/50 text-violet-400 font-medium">🎓 Conf.</span>
+  if (subNiche === 'sport') return <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">🏃 Coach</span>
+  if (subNiche === 'golf') return <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-200 font-medium">⛳ Golf</span>
+  if (subNiche === 'nurse') return <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium">🏥 Nurse</span>
+  if (subNiche === 'restaurant') return <span className="text-xs px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200 font-medium">🍽️ Restaurant</span>
+  if (subNiche === 'meteo') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 font-medium">📺 Weather</span>
+  if (subNiche === 'reporter') return <span className="text-xs px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 font-medium">🌪️ Reporter</span>
+  if (subNiche === 'serveuse') return <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">🍾 Waitress</span>
+  if (subNiche === 'mcdo') return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700 border border-yellow-200 font-medium">🍔 McDo</span>
+  if (subNiche === 'skatepark') return <span className="text-xs px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">🛴 Skatepark</span>
+  return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 font-medium">🎓 Conf.</span>
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -373,11 +374,13 @@ export default function VideoPage() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen bg-[#09090b] text-zinc-100">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
       <div className="max-w-4xl mx-auto px-8 py-8 space-y-5">
+
+        <TutorialVideo videoId="nO8e2riPWVY" title="Videos" />
 
         {/* ── Sélecteur de niche — 3 onglets séparés ── */}
         <div className="flex gap-2 flex-wrap">
@@ -397,7 +400,7 @@ export default function VideoPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${
                 niche === n.id
                   ? 'bg-violet-600 border-violet-500 text-white'
-                  : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
+                  : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300'
               }`}
             >
               <span>{n.emoji}</span><span>{n.label}</span>
@@ -406,13 +409,13 @@ export default function VideoPage() {
         </div>
 
         {/* ── Personnage ── */}
-        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07]">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Character</p>
+            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Character</p>
             <button
               onClick={scanFromHiggsfield}
               disabled={scanning || loadingChars}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-white/[0.05] border border-white/[0.08] text-zinc-300 hover:border-violet-500 hover:text-violet-300 disabled:opacity-50 transition"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:border-violet-500 hover:text-violet-700 disabled:opacity-50 transition"
             >
               {scanning ? (
                 <>
@@ -423,11 +426,11 @@ export default function VideoPage() {
             </button>
           </div>
           {loadingChars || scanning ? (
-            <p className="text-xs text-zinc-500">{scanning ? 'Scanning...' : 'Loading...'}</p>
+            <p className="text-xs text-slate-400">{scanning ? 'Scanning...' : 'Loading...'}</p>
           ) : charsError ? (
-            <p className="text-xs text-red-400">{charsError}</p>
+            <p className="text-xs text-red-600">{charsError}</p>
           ) : refElements.length === 0 ? (
-            <p className="text-xs text-zinc-500">No Reference Element found. Click "Scan from Higgsfield" to load your characters.</p>
+            <p className="text-xs text-slate-400">No Reference Element found. Click "Scan from Higgsfield" to load your characters.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {refElements.map(e => (
@@ -437,12 +440,12 @@ export default function VideoPage() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                     selectedElementId === e.id
                       ? 'bg-violet-600 border-violet-500 text-white'
-                      : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-violet-500/50'
                   }`}
                 >
                   {e.name}
                   {e.type === 'soul_2' && <span className="ml-1 text-emerald-400 text-xs">🎬</span>}
-                  {e.type === 'soul_cinematic' && <span className="ml-1 text-gray-500 text-xs">🖼</span>}
+                  {e.type === 'soul_cinematic' && <span className="ml-1 text-slate-400 text-xs">🖼</span>}
                 </button>
               ))}
             </div>
@@ -450,16 +453,16 @@ export default function VideoPage() {
         </div>
 
         {/* ── Durée ── */}
-        <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] flex items-center gap-6">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center gap-6">
           <div className="flex-1">
-            <label className="block text-xs text-zinc-400 mb-1.5">
-              Video duration: <span className="text-white font-medium">{duration}s</span>
+            <label className="block text-xs text-slate-500 mb-1.5">
+              Video duration: <span className="text-slate-900 font-medium">{duration}s</span>
             </label>
             <input type="range" min={3} max={15} value={duration}
               onChange={e => setDuration(Number(e.target.value))}
               className="w-full accent-violet-500" />
           </div>
-          <div className="text-xs text-zinc-500 text-right leading-relaxed">
+          <div className="text-xs text-slate-400 text-right leading-relaxed">
             <div>9:16 · 720p</div>
             <div>Seedance 2.0</div>
           </div>
@@ -471,7 +474,7 @@ export default function VideoPage() {
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
               uiMode === 'direct'
                 ? 'bg-violet-600 border-violet-500 text-white'
-                : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
+                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}>
             🎯 Direct — exact prompt
           </button>
@@ -479,7 +482,7 @@ export default function VideoPage() {
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
               uiMode === 'variation'
                 ? 'bg-violet-600 border-violet-500 text-white'
-                : 'bg-zinc-900/60 border-white/[0.07] text-zinc-400 hover:text-white hover:border-white/[0.20]'
+                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}>
             🔀 Variations — outfit + line
           </button>
@@ -487,8 +490,8 @@ export default function VideoPage() {
             onClick={() => setUiMode('random')}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
               uiMode === 'random'
-                ? 'bg-violet-600/20 text-white border border-violet-500/40'
-                : 'text-zinc-500 hover:text-zinc-200 bg-white/[0.03] border border-white/[0.07]'
+                ? 'bg-violet-50 text-violet-700 border border-violet-300'
+                : 'text-slate-500 hover:text-slate-900 bg-white border border-slate-200'
             }`}
           >
             🎲 Random
@@ -499,46 +502,46 @@ export default function VideoPage() {
             MODE DIRECTS
         ════════════════════════════════════════════════════════════ */}
         {uiMode === 'direct' && (
-          <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
             {/* Header + filtres */}
-            <div className="p-5 border-b border-white/[0.07] flex items-center justify-between gap-4">
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-white">Validated prompts</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Each prompt is generated as an exact copy — zero modification.</p>
+                <p className="text-sm font-semibold text-slate-900">Validated prompts</p>
+                <p className="text-xs text-slate-400 mt-0.5">Each prompt is generated as an exact copy — zero modification.</p>
               </div>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-slate-400">
                 {niche === 'conference' ? '🎓 Conference' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Weather' : niche === 'serveuse' ? '🍾 Waitress' : niche === 'mcdo' ? '🍔 McDo' : niche === 'skatepark' ? '🛴 Skatepark' : '👴 Old'}
               </span>
             </div>
 
             {/* Sélect tout */}
-            <div className="px-5 py-3 border-b border-white/[0.07] flex items-center justify-between">
-              <button onClick={toggleSelectAll} className="text-xs text-violet-400 hover:text-violet-300 transition">
+            <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+              <button onClick={toggleSelectAll} className="text-xs text-violet-600 hover:text-violet-700 transition">
                 {selectedIds.size === filteredPrompts.length && filteredPrompts.length > 0
                   ? '☑ Deselect all' : '☐ Select all'}
               </button>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-slate-400">
                 {selectedIds.size} / {filteredPrompts.length} selected
               </span>
             </div>
 
             {/* Liste */}
-            <div className="divide-y divide-white/[0.06]">
+            <div className="divide-y divide-slate-100">
               {loadingPrompts ? (
-                <div className="p-6 text-center text-xs text-zinc-500">Loading prompts...</div>
+                <div className="p-6 text-center text-xs text-slate-400">Loading prompts...</div>
               ) : filteredPrompts.length === 0 ? (
-                <div className="p-6 text-center text-xs text-zinc-500">No prompts for this niche.</div>
+                <div className="p-6 text-center text-xs text-slate-400">No prompts for this niche.</div>
               ) : (
                 filteredPrompts.map(p => (
                   <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                    selectedIds.has(p.id) ? 'bg-violet-600/[0.07] border-l-2 border-violet-500' : 'hover:bg-white/[0.03] border-l-2 border-transparent'
+                    selectedIds.has(p.id) ? 'bg-violet-50 border-l-2 border-violet-500' : 'hover:bg-slate-50 border-l-2 border-transparent'
                   }`}>
                     <div
                       className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition ${
                         selectedIds.has(p.id)
                           ? 'bg-violet-600 border-violet-500'
-                          : 'bg-white/[0.03] border-white/[0.15]'
+                          : 'bg-white border-slate-300'
                       }`}
                       onClick={() => setSelectedIds(prev => {
                         const next = new Set(prev)
@@ -554,20 +557,20 @@ export default function VideoPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-zinc-100 truncate">
-                          {p.isBest && <span className="text-yellow-400 mr-1">★</span>}
+                        <span className="text-sm text-slate-800 truncate">
+                          {p.isBest && <span className="text-yellow-500 mr-1">★</span>}
                           {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
                         </span>
                         <SubNicheLabel subNiche={p.subNiche} />
                       </div>
                       {p.userDescription ? (
-                        <p className="text-xs text-zinc-500 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
+                        <p className="text-xs text-slate-400 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
                       ) : p.speakerLine && (
-                        <p className="text-xs text-zinc-500 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
+                        <p className="text-xs text-slate-400 mt-0.5 truncate italic">&ldquo;{p.speakerLine}&rdquo;</p>
                       )}
                       {p.authorName && (
                         <div className="flex items-center justify-between mt-0.5">
-                          <p className="text-xs text-violet-400/60">by {p.authorName}</p>
+                          <p className="text-xs text-violet-600/60">by {p.authorName}</p>
                           <button
                             onClick={async (e) => {
                               e.preventDefault()
@@ -576,7 +579,7 @@ export default function VideoPage() {
                               setPrompts(prev => prev.filter(x => x.id !== p.id))
                               setSelectedIds(prev => { const s = new Set(prev); s.delete(p.id); return s })
                             }}
-                            className="text-gray-700 hover:text-red-400 transition text-xs"
+                            className="text-slate-300 hover:text-red-500 transition text-xs"
                             title="Delete this community prompt"
                           >🗑</button>
                         </div>
@@ -588,25 +591,25 @@ export default function VideoPage() {
             </div>
 
             {/* Batch count + CTA */}
-            <div className="p-5 border-t border-white/[0.07] space-y-4">
+            <div className="p-5 border-t border-slate-200 space-y-4">
               <div>
-                <p className="text-xs text-zinc-400 mb-2">
-                  Generate <span className="text-white font-medium">×{batchCount}</span> times each selected prompt
+                <p className="text-xs text-slate-500 mb-2">
+                  Generate <span className="text-slate-900 font-medium">×{batchCount}</span> times each selected prompt
                 </p>
-                <div className="flex bg-white/[0.03] border border-white/[0.07] rounded-xl p-1 gap-1">
+                <div className="flex bg-slate-100 border border-slate-200 rounded-xl p-1 gap-1">
                   {[1, 2, 3, 5].map(n => (
                     <button key={n} onClick={() => setBatchCount(n)}
                       className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
                         batchCount === n
                           ? 'bg-violet-600 text-white shadow-sm'
-                          : 'text-zinc-500 hover:text-zinc-200'
+                          : 'text-slate-500 hover:text-slate-900'
                       }`}>×{n}</button>
                   ))}
                 </div>
               </div>
-              {launchError && <p className="text-sm text-red-400">{launchError}</p>}
+              {launchError && <p className="text-sm text-red-600">{launchError}</p>}
               {launchSuccess && (
-                <p className="text-sm text-emerald-400 flex items-center gap-2">
+                <p className="text-sm text-emerald-700 flex items-center gap-2">
                   {launchSuccess}
                   <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
                 </p>
@@ -636,26 +639,26 @@ export default function VideoPage() {
           <div className="space-y-4">
 
             {/* Info */}
-            <div className="bg-amber-950/30 border border-amber-800/50 rounded-xl px-4 py-3">
-              <p className="text-xs text-amber-300 font-medium mb-0.5">Ultra-light variations — prompt structure unchanged</p>
-              <p className="text-xs text-amber-400/70">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+              <p className="text-xs text-amber-700 font-medium mb-0.5">Ultra-light variations — prompt structure unchanged</p>
+              <p className="text-xs text-amber-700/70">
                 Only the outfit and line change. Lines calibrated to the exact context of the concept. 🔴 Red underwear: always fixed.
               </p>
             </div>
 
             {/* ── ÉTAPE 1 : Sélectionner le concept de base ── */}
-            <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.07]">
-                <p className="text-sm font-semibold text-white">① Choose the base concept</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Lines and outfit pool adapt automatically to the selected concept.</p>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200">
+                <p className="text-sm font-semibold text-slate-900">① Choose the base concept</p>
+                <p className="text-xs text-slate-400 mt-0.5">Lines and outfit pool adapt automatically to the selected concept.</p>
               </div>
-              <div className="divide-y divide-white/[0.06] max-h-72 overflow-y-auto">
+              <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
                 {loadingPrompts ? (
-                  <div className="p-4 text-center text-xs text-zinc-500">Loading...</div>
+                  <div className="p-4 text-center text-xs text-slate-400">Loading...</div>
                 ) : (
                   prompts.map(p => (
                     <label key={p.id} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                      varBaseId === p.id ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
+                      varBaseId === p.id ? 'bg-violet-50' : 'hover:bg-slate-50'
                     }`}>
                       <input type="radio" name="varBase" value={p.id}
                         checked={varBaseId === p.id}
@@ -663,22 +666,22 @@ export default function VideoPage() {
                         className="accent-violet-500 w-4 h-4 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-zinc-100">
-                            {p.isBest && <span className="text-yellow-400 mr-1">★</span>}
+                          <span className="text-sm text-slate-800">
+                            {p.isBest && <span className="text-yellow-500 mr-1">★</span>}
                             {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
                           </span>
                           <SubNicheLabel subNiche={p.subNiche} />
                           {!p.phraseVariations && (
-                            <span className="text-xs text-zinc-600 italic">outfit only</span>
+                            <span className="text-xs text-slate-400 italic">outfit only</span>
                           )}
                         </div>
                         {p.userDescription ? (
-                          <p className="text-xs text-zinc-600 truncate italic mt-0.5">&ldquo;{p.userDescription}&rdquo;</p>
+                          <p className="text-xs text-slate-400 truncate italic mt-0.5">&ldquo;{p.userDescription}&rdquo;</p>
                         ) : p.speakerLine && varBaseId !== p.id && (
-                          <p className="text-xs text-zinc-600 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
+                          <p className="text-xs text-slate-400 truncate italic mt-0.5">&ldquo;{p.speakerLine}&rdquo;</p>
                         )}
                         {p.authorName && (
-                          <p className="text-xs text-violet-400/60 mt-0.5">by {p.authorName}</p>
+                          <p className="text-xs text-violet-600/60 mt-0.5">by {p.authorName}</p>
                         )}
                       </div>
                     </label>
@@ -689,35 +692,35 @@ export default function VideoPage() {
 
             {/* ── ÉTAPE 2 : Répliques dédiées (seulement si prompt sélectionné avec phrases) ── */}
             {varBaseId && currentPhrasePool && (
-              <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
-                <div className="px-5 py-4 border-b border-white/[0.07]">
-                  <p className="text-sm font-semibold text-white">② Line</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200">
+                  <p className="text-sm font-semibold text-slate-900">② Line</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
                     {currentPhrasePool.length} lines calibrated to this specific concept.
                     In random mode, they cycle without repetition.
                   </p>
                 </div>
-                <div className="divide-y divide-white/[0.06] max-h-80 overflow-y-auto">
+                <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
                   {/* Aléatoire */}
                   <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                    varPhrase === '' ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
+                    varPhrase === '' ? 'bg-violet-50' : 'hover:bg-slate-50'
                   }`}>
                     <input type="radio" name="phrase" value=""
                       checked={varPhrase === ''}
                       onChange={() => setVarPhrase('')}
                       className="accent-violet-500 w-4 h-4 shrink-0" />
-                    <span className="text-sm text-zinc-200">🎲 Random — cycle without repetition</span>
+                    <span className="text-sm text-slate-800">🎲 Random — cycle without repetition</span>
                   </label>
                   {/* Dedicated lines */}
                   {currentPhrasePool.map((ph, i) => (
                     <label key={i} className={`flex items-start gap-3 px-5 py-3 cursor-pointer transition ${
-                      varPhrase === ph ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
+                      varPhrase === ph ? 'bg-violet-50' : 'hover:bg-slate-50'
                     }`}>
                       <input type="radio" name="phrase" value={ph}
                         checked={varPhrase === ph}
                         onChange={() => setVarPhrase(ph)}
                         className="accent-violet-500 w-4 h-4 shrink-0 mt-0.5" />
-                      <span className="text-sm italic text-zinc-300">&ldquo;{ph}&rdquo;</span>
+                      <span className="text-sm italic text-slate-700">&ldquo;{ph}&rdquo;</span>
                     </label>
                   ))}
                 </div>
@@ -726,35 +729,35 @@ export default function VideoPage() {
 
             {/* ── ÉTAPE 3 : Outfit ── */}
             {varBaseId && (
-              <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] overflow-hidden">
-                <div className="px-5 py-4 border-b border-white/[0.07] flex items-center justify-between">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-slate-900">
                       {currentPhrasePool ? '③' : '②'} Outfit
                     </p>
-                    <p className="text-xs text-zinc-500 mt-0.5">Pool adapted to the concept's niche.</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Pool adapted to the concept's niche.</p>
                   </div>
-                  <span className="text-xs text-zinc-600">🔴 Red underwear — fixed</span>
+                  <span className="text-xs text-slate-400">🔴 Red underwear — fixed</span>
                 </div>
-                <div className="divide-y divide-white/[0.06]">
+                <div className="divide-y divide-slate-100">
                   <label className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                    varOutfit === '' ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
+                    varOutfit === '' ? 'bg-violet-50' : 'hover:bg-slate-50'
                   }`}>
                     <input type="radio" name="outfit" value=""
                       checked={varOutfit === ''}
                       onChange={() => setVarOutfit('')}
                       className="accent-violet-500 w-4 h-4 shrink-0" />
-                    <span className="text-sm text-zinc-200">🎲 Random — cycle without repetition</span>
+                    <span className="text-sm text-slate-800">🎲 Random — cycle without repetition</span>
                   </label>
                   {outfitPool.map(o => (
                     <label key={o.value} className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition ${
-                      varOutfit === o.value ? 'bg-violet-600/15' : 'hover:bg-white/[0.03]'
+                      varOutfit === o.value ? 'bg-violet-50' : 'hover:bg-slate-50'
                     }`}>
                       <input type="radio" name="outfit" value={o.value}
                         checked={varOutfit === o.value}
                         onChange={() => setVarOutfit(o.value)}
                         className="accent-violet-500 w-4 h-4 shrink-0" />
-                      <span className="text-sm text-zinc-300">{o.label}</span>
+                      <span className="text-sm text-slate-700">{o.label}</span>
                     </label>
                   ))}
                 </div>
@@ -762,12 +765,12 @@ export default function VideoPage() {
             )}
 
             {/* ── Batch count + CTA ── */}
-            <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl p-5 border border-white/[0.07] space-y-4">
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
               <div>
-                <p className="text-xs text-zinc-400 mb-2">
-                  Generate <span className="text-white font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} of this concept
+                <p className="text-xs text-slate-500 mb-2">
+                  Generate <span className="text-slate-900 font-medium">×{varBatchCount}</span> variation{varBatchCount > 1 ? 's' : ''} of this concept
                   {varBatchCount > 1 && currentPhrasePool && (
-                    <span className="text-zinc-600"> — different lines and outfits each time</span>
+                    <span className="text-slate-400"> — different lines and outfits each time</span>
                   )}
                 </p>
                 <div className="flex gap-2">
@@ -776,18 +779,18 @@ export default function VideoPage() {
                       className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition ${
                         varBatchCount === n
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white/[0.05] border-white/[0.08] text-zinc-300 hover:border-violet-500/50'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-violet-500/50'
                       }`}>×{n}</button>
                   ))}
                 </div>
               </div>
 
               {!varBaseId && (
-                <p className="text-xs text-zinc-600 italic">← Select a base concept to continue</p>
+                <p className="text-xs text-slate-400 italic">← Select a base concept to continue</p>
               )}
-              {launchError && <p className="text-sm text-red-400">{launchError}</p>}
+              {launchError && <p className="text-sm text-red-600">{launchError}</p>}
               {launchSuccess && (
-                <p className="text-sm text-emerald-400 flex items-center gap-2">
+                <p className="text-sm text-emerald-700 flex items-center gap-2">
                   {launchSuccess}
                   <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
                 </p>
@@ -812,19 +815,19 @@ export default function VideoPage() {
 
         {/* ── Mode Aléatoire ─────────────────────────────────────── */}
         {uiMode === 'random' && (
-          <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/[0.07] rounded-2xl overflow-hidden">
-            <div className="p-5 border-b border-white/[0.06]">
-              <p className="text-sm font-semibold text-white">Random generation</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
+          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+            <div className="p-5 border-b border-slate-200">
+              <p className="text-sm font-semibold text-slate-900">Random generation</p>
+              <p className="text-xs text-slate-400 mt-0.5">
                 Picks {randomCount} random prompt{randomCount > 1 ? 's' : ''} from the selected niche and generates 1 video per prompt.
               </p>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <p className="text-xs text-zinc-400 mb-2">
-                  Number of videos: <span className="text-white font-medium">{randomCount}</span>
+                <p className="text-xs text-slate-500 mb-2">
+                  Number of videos: <span className="text-slate-900 font-medium">{randomCount}</span>
                   {filteredPrompts.length > 0 && (
-                    <span className="text-zinc-600 ml-1">({filteredPrompts.length} prompts available)</span>
+                    <span className="text-slate-400 ml-1">({filteredPrompts.length} prompts available)</span>
                   )}
                 </p>
                 <div className="flex items-center gap-3">
@@ -836,12 +839,12 @@ export default function VideoPage() {
                     onChange={e => setRandomCount(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
                   />
-                  <span className="text-sm font-semibold text-white w-8 text-right">{randomCount}</span>
+                  <span className="text-sm font-semibold text-slate-900 w-8 text-right">{randomCount}</span>
                 </div>
               </div>
-              {launchError && <p className="text-sm text-red-400">{launchError}</p>}
+              {launchError && <p className="text-sm text-red-600">{launchError}</p>}
               {launchSuccess && (
-                <p className="text-sm text-emerald-400 flex items-center gap-2">
+                <p className="text-sm text-emerald-700 flex items-center gap-2">
                   {launchSuccess}
                   <a href="/en-cours" className="underline opacity-70 hover:opacity-100">→ In progress</a>
                 </p>

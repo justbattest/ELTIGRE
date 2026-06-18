@@ -155,7 +155,7 @@ export default function NewRunPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#09090b]">
+    <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -163,11 +163,11 @@ export default function NewRunPage() {
 
         {/* ── Maintenance banner ── */}
         {SCRAPER_MAINTENANCE && (
-          <div className="bg-amber-950/40 border border-amber-800/50 rounded-xl px-4 py-3 flex items-start gap-3">
-            <span className="text-amber-400 mt-0.5 shrink-0 text-base">🚧</span>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
+            <span className="text-amber-600 mt-0.5 shrink-0 text-base">🚧</span>
             <div>
-              <p className="text-amber-300 text-sm font-medium">Scraper under maintenance</p>
-              <p className="text-amber-500/70 text-xs mt-0.5">Instagram scraping is temporarily unavailable. Use Prompt Studio or Bulk Edit in the meantime.</p>
+              <p className="text-amber-700 text-sm font-medium">Scraper under maintenance</p>
+              <p className="text-amber-600 text-xs mt-0.5">Instagram scraping is temporarily unavailable. Use Prompt Studio or Bulk Edit in the meantime.</p>
             </div>
           </div>
         )}
@@ -176,21 +176,21 @@ export default function NewRunPage() {
         <div className={SCRAPER_MAINTENANCE ? 'opacity-50 pointer-events-none select-none' : ''}>
 
         {/* Profils Instagram */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 space-y-3">
+        <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-white">Instagram Profiles</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">Paste your Instagram links — separated by line breaks</p>
+              <h2 className="text-base font-semibold text-slate-900">Instagram Profiles</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Paste your Instagram links — separated by line breaks</p>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-zinc-500">Max posts:</label>
+              <label className="text-xs text-slate-500">Max posts:</label>
               <input
                 type="number"
                 value={maxPosts}
                 onChange={(e) => setMaxPosts(Number(e.target.value))}
                 min={5}
                 max={500}
-                className="w-16 bg-black/40 border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                className="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
               />
             </div>
           </div>
@@ -201,13 +201,13 @@ export default function NewRunPage() {
             onChange={(e) => handlePasteInput(e.target.value)}
             placeholder={"Paste all your Instagram links at once:\nhttps://www.instagram.com/username1/\nhttps://www.instagram.com/username2/\n...\n\n(separated by line breaks, commas, or spaces)"}
             rows={5}
-            className="w-full bg-black/40 border border-white/[0.08] rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none font-mono"
+            className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none font-mono"
           />
 
           {/* Profils parsés — chips supprimables */}
           {profiles.filter(p => p.trim()).length > 0 && (
             <div>
-              <p className="text-xs text-zinc-500 mb-2">
+              <p className="text-xs text-slate-500 mb-2">
                 {profiles.filter(p => p.trim()).length} profile{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} detected:
               </p>
               <div className="flex flex-wrap gap-2">
@@ -218,12 +218,12 @@ export default function NewRunPage() {
                   return (
                     <span
                       key={i}
-                      className="flex items-center gap-1 bg-white/[0.05] border border-white/[0.08] rounded-full px-3 py-1 text-xs text-zinc-100"
+                      className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-full px-3 py-1 text-xs text-slate-700"
                     >
                       @{username}
                       <button
                         onClick={() => removeProfile(i)}
-                        className="text-zinc-500 hover:text-red-400 transition ml-1 leading-none text-sm"
+                        className="text-slate-400 hover:text-red-500 transition ml-1 leading-none text-sm"
                       >
                         ×
                       </button>
@@ -236,13 +236,13 @@ export default function NewRunPage() {
         </div>
 
         {/* Personnages */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
+        <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-medium text-zinc-100">Character</h2>
+            <h2 className="font-medium text-slate-900">Character</h2>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
-              className="text-xs text-violet-400 hover:text-violet-300 disabled:opacity-50 transition flex items-center gap-1.5"
+              className="text-xs text-violet-600 hover:text-violet-700 disabled:opacity-50 transition flex items-center gap-1.5"
             >
               {loadingChars ? (
                 <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
@@ -252,13 +252,13 @@ export default function NewRunPage() {
           </div>
 
           {charsError && (
-            <p className="text-red-400 text-sm mb-3 bg-red-900/20 border border-red-800 rounded px-3 py-2">
+            <p className="text-red-600 text-sm mb-3 bg-red-50 border border-red-200 rounded px-3 py-2">
               {charsError}
             </p>
           )}
 
           {soulChars.length === 0 && refElements.length === 0 ? (
-            <p className="text-zinc-500 text-sm">
+            <p className="text-slate-500 text-sm">
               Click &quot;Load from Higgsfield&quot; to see your characters.
             </p>
           ) : (
@@ -266,7 +266,7 @@ export default function NewRunPage() {
               {/* Soul Characters */}
               {soulChars.length > 0 && (
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">
+                  <p className="text-xs text-slate-500 mb-2">
                     Soul Character :
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -276,12 +276,12 @@ export default function NewRunPage() {
                         onClick={() => { setSelectedSoulId(c.id); setSelectedSoulName(c.name) }}
                         className={`px-4 py-3 rounded-xl border text-left transition ${
                           selectedSoulId === c.id
-                            ? 'bg-violet-600/20 border-violet-500/60 text-white'
-                            : 'bg-white/[0.03] border-white/[0.07] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                            ? 'bg-violet-50 border-violet-300 text-slate-900'
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800'
                         }`}
                       >
                         <p className="text-sm font-medium">{c.name}</p>
-                        <p className="text-[11px] text-zinc-500 mt-0.5">{c.type === 'soul_cinematic' ? 'Cinema' : 'Soul v2'}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{c.type === 'soul_cinematic' ? 'Cinema' : 'Soul v2'}</p>
                       </button>
                     ))}
                   </div>
@@ -291,7 +291,7 @@ export default function NewRunPage() {
               {/* Reference Elements — uniquement si mode non soul_cinematic */}
               {refElements.length > 0 && model !== 'soul_cinematic' && (
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">
+                  <p className="text-xs text-slate-500 mb-2">
                     Reference Element :
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -301,12 +301,12 @@ export default function NewRunPage() {
                         onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
                         className={`px-4 py-3 rounded-xl border text-left transition ${
                           selectedElementId === e.id
-                            ? 'bg-violet-600/20 border-violet-500/60 text-white'
-                            : 'bg-white/[0.03] border-white/[0.07] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                            ? 'bg-violet-50 border-violet-300 text-slate-900'
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800'
                         }`}
                       >
                         <p className="text-sm font-medium">{e.name}</p>
-                        <p className="text-[11px] text-zinc-500 mt-0.5">Seedream / Nano Banana</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Seedream / Nano Banana</p>
                       </button>
                     ))}
                   </div>
@@ -317,12 +317,12 @@ export default function NewRunPage() {
         </div>
 
         {/* Modèle & Format */}
-        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5">
-          <h2 className="font-medium mb-3 text-zinc-100">Model & Format</h2>
+        <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5">
+          <h2 className="font-medium mb-3 text-slate-900">Model & Format</h2>
 
           {/* Model */}
           <div className="mb-4">
-            <label className="block text-xs text-zinc-500 mb-2">Model</label>
+            <label className="block text-xs text-slate-500 mb-2">Model</label>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: 'auto', label: 'Auto (cascade)', badge: 'Recommended' },
@@ -335,12 +335,12 @@ export default function NewRunPage() {
                   onClick={() => setModel(opt.value)}
                   className={`px-3 py-2.5 rounded-xl border text-left transition ${
                     model === opt.value
-                      ? 'bg-violet-600/20 border-violet-500/60 text-white'
-                      : 'bg-white/[0.03] border-white/[0.07] text-zinc-400 hover:border-white/[0.15]'
+                      ? 'bg-violet-50 border-violet-300 text-slate-900'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}
                 >
                   <p className="text-xs font-medium">{opt.label}</p>
-                  {opt.badge && <span className="text-[10px] text-violet-400">{opt.badge}</span>}
+                  {opt.badge && <span className="text-[10px] text-violet-600">{opt.badge}</span>}
                 </button>
               ))}
             </div>
@@ -349,11 +349,11 @@ export default function NewRunPage() {
           {/* Format & Qualité */}
           <div className="flex gap-3">
             <div>
-              <label className="block text-xs text-zinc-500 mb-1.5">Aspect Ratio</label>
+              <label className="block text-xs text-slate-500 mb-1.5">Aspect Ratio</label>
               <select
                 value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value)}
-                className="bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
               >
                 <option value="2:3">2:3</option>
                 <option value="1:1">1:1</option>
@@ -362,11 +362,11 @@ export default function NewRunPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-1.5">Quality</label>
+              <label className="block text-xs text-slate-500 mb-1.5">Quality</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
-                className="bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
               >
                 <option value="2k">2K</option>
                 <option value="4k">4K</option>
@@ -378,7 +378,7 @@ export default function NewRunPage() {
 
         {/* Erreur lancement */}
         {launchError && (
-          <p className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg px-4 py-3">
+          <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
             {launchError}
           </p>
         )}

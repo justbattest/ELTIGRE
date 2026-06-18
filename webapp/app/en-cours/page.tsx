@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
+import { TutorialVideo } from '@/components/TutorialVideo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,25 +96,25 @@ function BankButton({ gen }: { gen: Generation }) {
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Note (optional)"
-            className="flex-1 text-[10px] bg-black/40 border border-white/[0.08] rounded px-1.5 py-0.5 text-white placeholder-zinc-600 focus:outline-none"
+            className="flex-1 text-[10px] bg-white border border-slate-300 rounded px-1.5 py-0.5 text-slate-900 placeholder-slate-400 focus:outline-none"
             onKeyDown={e => e.key === 'Enter' && save()}
           />
           <button
             onClick={save}
             disabled={saving}
-            className="text-[10px] bg-violet-600 text-white px-2 py-0.5 rounded hover:bg-violet-500 disabled:opacity-50"
+            className="text-[10px] bg-violet-600 text-white px-2 py-0.5 rounded hover:bg-violet-500 disabled:opacity-50 transition"
           >
             {saving ? '…' : '✓'}
           </button>
           <button
             onClick={() => setShowNotes(false)}
-            className="text-[10px] text-gray-500 px-1"
+            className="text-[10px] text-slate-400 px-1"
           >✕</button>
         </div>
       ) : (
         <button
           onClick={() => setShowNotes(true)}
-          className="text-[10px] text-violet-400 hover:text-violet-300 transition"
+          className="text-[10px] text-violet-600 hover:text-violet-700 transition"
           title="Save this prompt to the bank to improve future generations"
         >
           ✨ Keep this prompt
@@ -140,8 +141,8 @@ function VideoCard({ gen }: { gen: Generation }) {
   })()
 
   return (
-    <div className="bg-zinc-900/80 rounded-2xl overflow-hidden border border-white/[0.07] shadow-xl group">
-      <div className="relative bg-zinc-950 aspect-[9/16]">
+    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xl group">
+      <div className="relative bg-slate-100 aspect-[9/16]">
         {isComplete && gen.generatedImageUrl ? (
           <>
             <video
@@ -164,37 +165,37 @@ function VideoCard({ gen }: { gen: Generation }) {
         ) : isFailed ? (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 px-3">
             <span className="text-3xl">❌</span>
-            <span className="text-xs text-zinc-500">Failed</span>
+            <span className="text-xs text-slate-400">Failed</span>
             {gen.fallbackReason && (
-              <span className="text-[10px] text-red-400 text-center leading-tight">{gen.fallbackReason}</span>
+              <span className="text-[10px] text-red-600 text-center leading-tight">{gen.fallbackReason}</span>
             )}
           </div>
         ) : (
           <div className="w-full h-full relative flex flex-col items-center justify-center gap-3">
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-zinc-900 via-violet-950/20 to-zinc-900" />
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-100 via-violet-50 to-slate-100" />
             <div className="relative w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="relative text-xs text-zinc-500">
+            <span className="relative text-xs text-slate-400">
               {gen.generationStatus === 'processing' ? 'Generating…' : 'Waiting…'}
             </span>
           </div>
         )}
-        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-[10px] text-zinc-300 px-1.5 py-0.5 rounded-md border border-white/10">
+        <div className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm text-[10px] text-slate-700 px-1.5 py-0.5 rounded-md border border-slate-200">
           #{rankDisplay}
         </div>
       </div>
       <div className="p-3 space-y-1.5">
-        <p className="text-xs font-medium text-zinc-100 truncate">{scene}</p>
-        <p className="text-[10px] text-zinc-500">{gen.modelUsed || 'seedance_2_0'}</p>
+        <p className="text-xs font-medium text-slate-900 truncate">{scene}</p>
+        <p className="text-[10px] text-slate-400">{gen.modelUsed || 'seedance_2_0'}</p>
         {isComplete && promptFormatted && (
           <div>
             <button
               onClick={() => setShowPrompt(p => !p)}
-              className="text-[10px] text-zinc-600 hover:text-zinc-400 transition"
+              className="text-[10px] text-slate-400 hover:text-slate-600 transition"
             >
               {showPrompt ? '▲ Hide' : '👁 Prompt'}
             </button>
             {showPrompt && (
-              <pre className="mt-1.5 text-[9px] text-zinc-400 bg-black/40 border border-white/[0.06] rounded-lg p-2 overflow-auto max-h-40 whitespace-pre-wrap leading-relaxed">
+              <pre className="mt-1.5 text-[9px] text-slate-700 bg-slate-100 border border-slate-200 rounded-lg p-2 overflow-auto max-h-40 whitespace-pre-wrap leading-relaxed">
                 {promptFormatted}
               </pre>
             )}
@@ -214,8 +215,8 @@ function ImageCard({ gen }: { gen: Generation }) {
   const rankDisplay = gen.sourceRank !== null ? gen.sourceRank + 1 : gen.id
 
   return (
-    <div className="bg-zinc-900/80 rounded-2xl overflow-hidden border border-white/[0.07] shadow-xl group">
-      <div className="relative bg-zinc-950 aspect-square">
+    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xl group">
+      <div className="relative bg-slate-100 aspect-square">
         {isComplete && gen.generatedImageUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -237,16 +238,16 @@ function ImageCard({ gen }: { gen: Generation }) {
           </div>
         ) : (
           <div className="w-full h-full relative flex items-center justify-center">
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-zinc-900 via-violet-950/20 to-zinc-900" />
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-100 via-violet-50 to-slate-100" />
             <div className="relative w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-[10px] text-zinc-300 px-1.5 py-0.5 rounded-md border border-white/10">
+        <div className="absolute top-2 left-2 bg-white/80 backdrop-blur-sm text-[10px] text-slate-700 px-1.5 py-0.5 rounded-md border border-slate-200">
           #{rankDisplay}
         </div>
       </div>
       <div className="p-2">
-        <p className="text-[10px] text-zinc-500">{gen.modelUsed || '—'} · #{rankDisplay}</p>
+        <p className="text-[10px] text-slate-400">{gen.modelUsed || '—'} · #{rankDisplay}</p>
       </div>
     </div>
   )
@@ -312,25 +313,25 @@ function RunCard({ run }: { run: RunMeta }) {
   const createdAt = new Date(run.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden ${(isRunning || isQueued) ? 'p-[1px] bg-gradient-to-br from-violet-500/30 via-transparent to-cyan-500/20' : 'border border-white/[0.07]'}`}>
-      <div className={`rounded-[inherit] ${(isRunning || isQueued) ? 'bg-zinc-950' : 'bg-zinc-900/60'} p-5 space-y-4`}>
+    <div className={`relative rounded-2xl overflow-hidden ${(isRunning || isQueued) ? 'p-[1px] bg-gradient-to-br from-violet-500/30 via-transparent to-cyan-500/20' : 'border border-slate-200'}`}>
+      <div className={`rounded-[inherit] ${(isRunning || isQueued) ? 'bg-white' : 'bg-white'} p-5 space-y-4`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span>{typeIcon}</span>
-          <span className="font-semibold text-white text-sm">{typeLabel}</span>
-          <span className="text-xs text-zinc-500">· {createdAt}</span>
+          <span className="font-semibold text-slate-900 text-sm">{typeLabel}</span>
+          <span className="text-xs text-slate-400">· {createdAt}</span>
         </div>
         <div className="flex items-center gap-2">
           {isQueued && (
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-medium text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
+              <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
                 Pending
               </span>
               <button
                 onClick={handleStop}
                 disabled={stopping}
-                className="text-xs px-2 py-0.5 rounded-md bg-amber-900/40 hover:bg-amber-800/60 text-amber-400 border border-amber-800/50 transition disabled:opacity-50"
+                className="text-xs px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition disabled:opacity-50"
               >
                 {stopping ? (
                   <svg className="w-3 h-3 animate-spin inline" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
@@ -340,14 +341,14 @@ function RunCard({ run }: { run: RunMeta }) {
           )}
           {isRunning && (
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium text-violet-300 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-violet-700 bg-violet-50 border border-violet-300 px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
                 In progress
               </span>
               <button
                 onClick={handleStop}
                 disabled={stopping}
-                className="text-xs px-2 py-0.5 rounded-md bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-800/50 transition disabled:opacity-50"
+                className="text-xs px-2 py-0.5 rounded-md bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition disabled:opacity-50"
               >
                 {stopping ? (
                   <svg className="w-3 h-3 animate-spin inline" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
@@ -356,12 +357,12 @@ function RunCard({ run }: { run: RunMeta }) {
             </div>
           )}
           {status === 'completed' && (
-            <span className="text-[11px] font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+            <span className="text-[11px] font-medium text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
               Done
             </span>
           )}
           {status === 'failed' && (
-            <span className="text-[11px] font-medium text-red-300 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-full">
+            <span className="text-[11px] font-medium text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
               Failed
             </span>
           )}
@@ -370,13 +371,13 @@ function RunCard({ run }: { run: RunMeta }) {
 
       {/* Barre de progression */}
       <div className="space-y-1">
-        <div className="flex justify-between text-xs text-zinc-400">
+        <div className="flex justify-between text-xs text-slate-500">
           <span>
             {completed} / {total} · {failed > 0 ? `${failed} failure${failed > 1 ? 's' : ''}` : ''}
           </span>
           <span>{Math.round((completed / Math.max(total, 1)) * 100)}%</span>
         </div>
-        <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-700 ${
               status === 'failed' ? 'bg-red-500' : 'bg-gradient-to-r from-violet-500 to-cyan-400'
@@ -399,14 +400,14 @@ function RunCard({ run }: { run: RunMeta }) {
 
       {/* Placeholders si aucune génération en DB */}
       {gens.length === 0 && isQueued && (
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <div className="w-4 h-4 border-2 border-amber-800 border-t-amber-400 rounded-full animate-spin" />
+        <div className="flex items-center gap-3 text-sm text-slate-400">
+          <div className="w-4 h-4 border-2 border-amber-300 border-t-amber-500 rounded-full animate-spin" />
           Waiting for an available slot…
         </div>
       )}
       {gens.length === 0 && isRunning && (
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-3 text-sm text-slate-400">
+          <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
           Preparing generations…
         </div>
       )}
@@ -485,16 +486,16 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
     : run.characterName
 
   return (
-    <div className="bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-white/[0.07] p-5 space-y-3">
+    <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <span>{icon}</span>
-          <span className="font-semibold text-white text-sm">{label}</span>
+          <span className="font-semibold text-slate-900 text-sm">{label}</span>
           {subLabel && (
-            <span className="text-xs text-gray-500 truncate">· {subLabel}</span>
+            <span className="text-xs text-slate-400 truncate">· {subLabel}</span>
           )}
           {timeStr && (
-            <span className="text-xs text-gray-500 shrink-0">· {timeStr}</span>
+            <span className="text-xs text-slate-400 shrink-0">· {timeStr}</span>
           )}
         </div>
         <div className="shrink-0 ml-2">
@@ -512,11 +513,11 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
       </div>
 
       <div className="space-y-1">
-        <div className="flex justify-between text-xs text-zinc-400">
+        <div className="flex justify-between text-xs text-slate-500">
           <span>{completed} / {total || '?'} files</span>
           <span>{pct}%</span>
         </div>
-        <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${hasError ? 'bg-red-500' : barColor}`}
             style={{ width: `${pct}%` }}
@@ -596,26 +597,27 @@ export default function EnCoursPage() {
   const doneBatch   = batchRuns.filter(r =>  r.done)
 
   return (
-    <div className="flex min-h-screen bg-[#09090b] text-zinc-100">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
       <div className="max-w-5xl mx-auto px-8 py-8 space-y-8">
+        <TutorialVideo videoId="ihQJvJnV3cY" title="Results" />
         {loading && (
-          <div className="flex items-center gap-3 text-gray-500">
-            <div className="w-5 h-5 border-2 border-gray-600 border-t-violet-500 rounded-full animate-spin" />
+          <div className="flex items-center gap-3 text-slate-400">
+            <div className="w-5 h-5 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin" />
             Loading...
           </div>
         )}
 
         {!loading && runs.length === 0 && batchRuns.length === 0 && (
           <div className="text-center py-20 space-y-4">
-            <p className="text-gray-500 text-lg">No recent generations.</p>
+            <p className="text-slate-400 text-lg">No recent generations.</p>
             <div className="flex justify-center gap-4">
               <Link href="/video" className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition">
                 🎬 Generate videos
               </Link>
-              <Link href="/studio" className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] text-zinc-300 rounded-lg text-sm font-medium transition">
+              <Link href="/studio" className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
                 ✨ Prompt Studio
               </Link>
             </div>
@@ -625,7 +627,7 @@ export default function EnCoursPage() {
         {/* Batch actifs (metadata + carousel en mémoire) */}
         {activeBatch.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Active processes</h2>
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active processes</h2>
             {activeBatch.map(r => <BatchRunCard key={r.runId} run={r} />)}
           </div>
         )}
@@ -633,7 +635,7 @@ export default function EnCoursPage() {
         {/* Runs actifs DB (vidéos / studio / scraping) */}
         {activeRuns.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Active</h2>
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active</h2>
             {activeRuns.map(r => <RunCard key={r.id} run={r} />)}
           </div>
         )}
@@ -641,7 +643,7 @@ export default function EnCoursPage() {
         {/* Batch terminés récents */}
         {doneBatch.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Recent processes</h2>
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Recent processes</h2>
             {doneBatch.map(r => <BatchRunCard key={r.runId} run={r} />)}
           </div>
         )}
@@ -649,7 +651,7 @@ export default function EnCoursPage() {
         {/* Runs récents terminés DB */}
         {recentRuns.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Recent (2h)</h2>
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Recent (2h)</h2>
             {recentRuns.map(r => <RunCard key={r.id} run={r} />)}
           </div>
         )}

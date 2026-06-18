@@ -49,9 +49,9 @@ type KPIData = {
 }
 
 const MODEL_BADGE: Record<string, { label: string; color: string }> = {
-  soul_cinematic: { label: 'Soul Cinema', color: 'bg-violet-900 text-violet-300' },
-  seedream_v4_5: { label: 'Seedream', color: 'bg-blue-900 text-blue-300' },
-  nano_banana_2: { label: 'Nano Banana', color: 'bg-orange-900 text-orange-300' },
+  soul_cinematic: { label: 'Soul Cinema', color: 'bg-violet-100 text-violet-700' },
+  seedream_v4_5: { label: 'Seedream', color: 'bg-blue-100 text-blue-700' },
+  nano_banana_2: { label: 'Nano Banana', color: 'bg-orange-100 text-orange-700' },
 }
 
 function BankButton({ genId }: { genId: number }) {
@@ -85,7 +85,7 @@ function BankButton({ genId }: { genId: number }) {
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Optional note"
-            className="flex-1 text-xs bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white placeholder-gray-600 focus:outline-none"
+            className="flex-1 text-xs bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 placeholder-slate-400 focus:outline-none"
             onKeyDown={e => e.key === 'Enter' && save()}
           />
           <button
@@ -95,12 +95,12 @@ function BankButton({ genId }: { genId: number }) {
           >
             {saving ? '…' : '✓'}
           </button>
-          <button onClick={() => setShowNotes(false)} className="text-xs text-gray-500 px-1">✕</button>
+          <button onClick={() => setShowNotes(false)} className="text-xs text-slate-400 px-1">✕</button>
         </div>
       ) : (
         <button
           onClick={() => setShowNotes(true)}
-          className="text-xs text-violet-400 hover:text-violet-300 transition"
+          className="text-xs text-violet-600 hover:text-violet-700 transition"
         >
           ✨ Keep this prompt
         </button>
@@ -120,7 +120,7 @@ function SourceImage({ gen }: { gen: Generation }) {
   if (err || !localSrc) {
     return (
       <a href={gen.sourcePostUrl} target="_blank" rel="noopener noreferrer">
-        <div className="w-24 h-32 bg-gray-800 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-500 hover:bg-gray-700 transition cursor-pointer">
+        <div className="w-24 h-32 bg-slate-100 rounded-lg flex flex-col items-center justify-center gap-1 text-slate-400 hover:bg-slate-200 transition cursor-pointer">
           <span className="text-xl">📸</span>
           <span className="text-xs">Source ↗</span>
         </div>
@@ -201,13 +201,13 @@ export default function KPIPage() {
     new Date(s).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
       {/* Nav */}
-      <nav className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
-        <Link href="/" className="text-gray-400 hover:text-white transition text-sm">
+      <nav className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
+        <Link href="/" className="text-slate-500 hover:text-slate-900 transition text-sm">
           ← New Run
         </Link>
-        <Link href="/settings" className="text-gray-400 hover:text-white transition text-sm">
+        <Link href="/settings" className="text-slate-500 hover:text-slate-900 transition text-sm">
           ⚙️ Settings
         </Link>
       </nav>
@@ -217,7 +217,7 @@ export default function KPIPage() {
           <h1 className="text-xl font-bold">📊 Results</h1>
           <button
             onClick={exportCSV}
-            className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white text-sm rounded-lg px-4 py-2 transition"
+            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg px-4 py-2 transition shadow-sm"
           >
             📥 Export CSV
           </button>
@@ -228,7 +228,7 @@ export default function KPIPage() {
           <select
             value={selectedRunId}
             onChange={(e) => handleRunChange(e.target.value)}
-            className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+            className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
           >
             {data?.runs.map((r) => (
               <option key={r.id} value={r.id}>
@@ -240,7 +240,7 @@ export default function KPIPage() {
           <select
             value={filterModel}
             onChange={(e) => { setFilterModel(e.target.value); load(selectedRunId, sortBy, e.target.value) }}
-            className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+            className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
           >
             <option value="all">All models</option>
             <option value="soul_cinematic">Soul Cinema</option>
@@ -251,7 +251,7 @@ export default function KPIPage() {
           <select
             value={sortBy}
             onChange={(e) => { setSortBy(e.target.value); load(selectedRunId, e.target.value, filterModel) }}
-            className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+            className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
           >
             <option value="likes">Sort: likes ↓</option>
             <option value="comments">Sort: comments ↓</option>
@@ -273,10 +273,10 @@ export default function KPIPage() {
                 sub: `${data.summary.total} posts`
               },
             ].map((stat) => (
-              <div key={stat.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <p className="text-gray-500 text-xs">{stat.label}</p>
-                <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
-                <p className="text-gray-600 text-xs mt-0.5">{stat.sub}</p>
+              <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <p className="text-slate-400 text-xs">{stat.label}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
+                <p className="text-slate-400 text-xs mt-0.5">{stat.sub}</p>
               </div>
             ))}
           </div>
@@ -284,9 +284,9 @@ export default function KPIPage() {
 
         {/* Résultats */}
         {loading ? (
-          <div className="text-center py-20 text-gray-500">⏳ Loading...</div>
+          <div className="text-center py-20 text-slate-400">⏳ Loading...</div>
         ) : !data?.generations?.length ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="text-center py-20 text-slate-400">
             No completed generations for this run.
           </div>
         ) : (
@@ -296,23 +296,23 @@ export default function KPIPage() {
               return (
                 <div
                   key={g.id}
-                  className="bg-gray-900 border border-gray-800 rounded-xl p-4"
+                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
                 >
                   <div className="flex gap-4">
                     {/* ── Comparaison images : Source → Généré ── */}
                     <div className="flex items-start gap-2 flex-shrink-0">
                       {/* Image source (Instagram original) */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-gray-600">Original</span>
+                        <span className="text-xs text-slate-400">Original</span>
                         <SourceImage gen={g} />
                       </div>
 
                       {/* Flèche */}
-                      <div className="flex items-center h-32 text-gray-600 text-lg">→</div>
+                      <div className="flex items-center h-32 text-slate-400 text-lg">→</div>
 
                       {/* Image générée (Higgsfield) */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-gray-600">Generated</span>
+                        <span className="text-xs text-slate-400">Generated</span>
                         {g.generatedImageUrl ? (
                           <a href={g.generatedImageUrl} target="_blank" rel="noopener noreferrer">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -323,7 +323,7 @@ export default function KPIPage() {
                             />
                           </a>
                         ) : (
-                          <div className="w-24 h-32 bg-gray-800 rounded-lg flex items-center justify-center text-gray-600 text-xs">
+                          <div className="w-24 h-32 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 text-xs">
                             —
                           </div>
                         )}
@@ -335,16 +335,16 @@ export default function KPIPage() {
                       {/* Header : badge modèle + stats engagement */}
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${badge.color}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full border border-transparent ${badge.color}`}>
                             {badge.label}
                           </span>
                           {g.fallbackUsed && (
-                            <span className="text-xs bg-amber-900/40 text-amber-400 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
                               fallback
                             </span>
                           )}
                           {g.sourceRank && (
-                            <span className="text-xs text-gray-500">#{g.sourceRank}</span>
+                            <span className="text-xs text-slate-400">#{g.sourceRank}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-xs flex-shrink-0">
@@ -352,7 +352,7 @@ export default function KPIPage() {
                           <span className="text-red-400 font-medium">
                             ❤️ {(g.sourceLikes || 0).toLocaleString('en-US')}
                           </span>
-                          <span className="text-gray-500">
+                          <span className="text-slate-400">
                             💬 {(g.sourceComments || 0).toLocaleString('en-US')}
                           </span>
                           {g.sourcePostUrl && (
@@ -360,7 +360,7 @@ export default function KPIPage() {
                               href={g.sourcePostUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-violet-400 hover:text-violet-300"
+                              className="text-violet-600 hover:text-violet-700"
                             >
                               Post ↗
                             </a>
@@ -369,19 +369,19 @@ export default function KPIPage() {
                       </div>
 
                       {g.sceneDescription && (
-                        <p className="text-gray-300 text-sm mb-2">{g.sceneDescription}</p>
+                        <p className="text-slate-700 text-sm mb-2">{g.sceneDescription}</p>
                       )}
 
                       {g.promptUsed && (
                         <div>
                           <button
                             onClick={() => setExpandedPrompt(expandedPrompt === g.id ? null : g.id)}
-                            className="text-xs text-gray-500 hover:text-gray-300 transition mb-1"
+                            className="text-xs text-slate-400 hover:text-slate-600 transition mb-1"
                           >
                             {expandedPrompt === g.id ? '▲ Hide prompt' : '▼ View prompt'}
                           </button>
                           {expandedPrompt === g.id && (
-                            <p className="text-xs text-gray-400 bg-gray-800 rounded-lg p-3 font-mono leading-relaxed">
+                            <p className="text-xs text-slate-700 bg-slate-100 border border-slate-200 rounded-lg p-3 font-mono leading-relaxed">
                               {g.promptUsed}
                             </p>
                           )}

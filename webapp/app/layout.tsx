@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="min-h-full text-gray-100">
+      <body className="min-h-full text-slate-900">
         <Providers>
           <IntroShader />
           {children}
