@@ -132,7 +132,13 @@ class _YtdlpStderrLogger:
 
 
 async def _download_video(video_url: str, output_dir: str) -> str:
-    """Télécharge la vidéo via yt-dlp. Retourne le chemin local."""
+    """Télécharge la vidéo via yt-dlp. Retourne le chemin local.
+
+    Si la variable d'env INSTAGRAM_COOKIES est définie, elle est écrite dans un
+    fichier temporaire au format Netscape cookies.txt et passée à yt-dlp —
+    permet de contourner le rate-limit / login-required d'Instagram sur Railway.
+    """
+    import tempfile
     import yt_dlp  # import local — pas de crash si absent au démarrage
 
     output_template = str(Path(output_dir) / "mc_video.%(ext)s")
@@ -146,8 +152,26 @@ async def _download_video(video_url: str, output_dir: str) -> str:
         "noplaylist": True,
         "merge_output_format": "mp4",
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([video_url])
+
+    # Cookies Instagram (Netscape format) via env var → contourne le rate-limit Railway
+    cookies_tmp: str | None = None
+    instagram_cookies = os.environ.get("INSTAGRAM_COOKIES", "").strip()
+    if instagram_cookies:
+        tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
+        tmp.write(instagram_cookies)
+        tmp.close()
+        cookies_tmp = tmp.name
+        ydl_opts["cookiefile"] = cookies_tmp
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_url])
+    finally:
+        if cookies_tmp:
+            try:
+                Path(cookies_tmp).unlink(missing_ok=True)
+            except Exception:
+                pass
 
     for ext in ("mp4", "mov", "webm", "mkv"):
         p = Path(output_dir) / f"mc_video.{ext}"
