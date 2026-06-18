@@ -45,14 +45,22 @@ export async function GET(
         try { controller.enqueue(`data: ${data}\n\n`) } catch { /* client disconnected */ }
       }
 
+      let lastWrite = Date.now()
+
       function flush() {
         try {
           while (sentIndex < runState.events.length) {
             send(runState.events[sentIndex++])
+            lastWrite = Date.now()
           }
           if (runState.done) {
             controller.close()
             return
+          }
+          // Keepalive SSE comment toutes les 15s pour éviter le timeout Railway
+          if (Date.now() - lastWrite > 15_000) {
+            try { controller.enqueue(': keepalive\n\n') } catch { /* client disconnected */ }
+            lastWrite = Date.now()
           }
           setTimeout(flush, 200)
         } catch { /* stream closed */ }

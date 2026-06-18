@@ -86,6 +86,13 @@ def _emit(event: dict) -> None:
     print(json.dumps(event), flush=True)
 
 
+async def _heartbeat_loop(interval: int = 20) -> None:
+    """Émet un heartbeat périodique pour garder la connexion SSE active (évite le timeout idle)."""
+    while True:
+        await asyncio.sleep(interval)
+        _emit({"type": "heartbeat"})
+
+
 class _YtdlpStderrLogger:
     """Redirige toutes les sorties yt-dlp vers stderr pour ne pas polluer stdout."""
     def debug(self, msg: str) -> None:
@@ -245,6 +252,9 @@ async def cmd_generate(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
+    # Heartbeat toutes les 20s pour éviter le timeout SSE (Railway coupe les connexions idle)
+    heartbeat_task = asyncio.create_task(_heartbeat_loop(20))
+
     # ── Étape 1 : Person swap (nano_banana_2 dual --image) ───────────────────
     # L'API web accepte 2 images sans rôle. Côté CLI :
     #   ✗ --start-image = assigne un "rôle start" → rejeté ("no roles")
@@ -382,6 +392,13 @@ async def cmd_generate(
         video_path=video_path,
         out=out,
     )
+
+    # Arrêter le heartbeat proprement
+    heartbeat_task.cancel()
+    try:
+        await heartbeat_task
+    except asyncio.CancelledError:
+        pass
 
     _emit({"type": "done", "drive_url": drive_url})
 
