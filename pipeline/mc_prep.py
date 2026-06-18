@@ -291,11 +291,12 @@ async def cmd_generate(
     swapped_url: str | None = None
 
     cmd_swap = [
-        "higgsfield", "generate", "create", "nano_banana_2",
+        "higgsfield", "generate", "create", "seedream_v4_5",
         "--image", frame_path,         # image 1 = frame (scène / pose / décor)
         "--image", model_photo_path,   # image 2 = modèle référence (visage uniquement)
         "--prompt", SWAP_PROMPT,
-        "--resolution", "2k",
+        "--quality", "high",
+        "--aspect_ratio", "9:16",
         "--wait", "--wait-timeout", "12m",
     ]
 
