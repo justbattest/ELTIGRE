@@ -285,98 +285,37 @@ async def cmd_generate(
     heartbeat_task = asyncio.create_task(_heartbeat_loop(20))
 
     # ── Étape 1 : Person swap (nano_banana_2 dual --image) ───────────────────
-    # L'API web accepte 2 images sans rôle. Côté CLI :
-    #   ✗ --start-image = assigne un "rôle start" → rejeté ("no roles")
-    #   ✓ deux --image  = deux images sans rôle   → accepté
-    # Tentatives dans l'ordre :
-    #   1. nano_banana_pro  avec --image + --start-image (au cas où Pro supporte les rôles)
-    #   2. nano_banana_2    avec --image + --image       (dual sans rôle)
-    #   3. skip gracieux si tout échoue
+    # Modèle unique : nano_banana_2 avec deux --image (pas de nano_banana_pro, pas de fallback).
+    # Approche identity-first : photo modèle en 1er (sujet principal),
+    # frame en 2ème (référence scène/pose). Le modèle traite l'image 1 comme base,
+    # ce qui force la préservation de l'identité réelle du modèle.
     _emit({"type": "step", "step": "swap", "status": "started"})
 
     swapped_url: str | None = None
-    swap_error: str | None = None
-    swap_skipped = False
 
-    _SKIP_PATTERNS = (
-        "invalid", "not found", "unknown",
-        "accepts only",    # "Model accepts only --image (no roles, no video/audio)"
-        "no roles",        # idem
-        "not supported",
-        "unsupported",
-    )
-
-    # Liste de (model, cmd_args) à essayer dans l'ordre
-    _swap_attempts = [
-        # Tentative 1 : nano_banana_pro avec rôles (si ce modèle existe dans ce CLI)
-        ("nano_banana_pro", [
-            "higgsfield", "generate", "create", "nano_banana_pro",
-            "--image", frame_path,
-            "--start-image", model_photo_path,
-            "--prompt", SWAP_PROMPT,
-            "--resolution", "2k",
-            "--wait", "--wait-timeout", "12m",
-        ]),
-        # Tentative 2 : nano_banana_2 "identity-first" — Nina en 1er, frame en 2ème
-        # Approche : Nina est le sujet principal, la frame est la référence de scène/pose.
-        # Le modèle traite souvent la 1ère image comme base → placer Nina en 1er
-        # force la préservation de son identité réelle.
-        ("nano_banana_2 (identity-first, nina-first)", [
-            "higgsfield", "generate", "create", "nano_banana_2",
-            "--image", model_photo_path,
-            "--image", frame_path,
-            "--prompt", SWAP_PROMPT_ALT,
-            "--resolution", "2k",
-            "--wait", "--wait-timeout", "12m",
-        ]),
-        # Tentative 3 : nano_banana_2 "face transplant" — frame en 1er, Nina en 2ème
-        # Fallback si la tentative 2 échoue : approche chirurgicale du visage uniquement.
-        ("nano_banana_2 (face-transplant, frame-first)", [
-            "higgsfield", "generate", "create", "nano_banana_2",
-            "--image", frame_path,
-            "--image", model_photo_path,
-            "--prompt", SWAP_PROMPT,
-            "--resolution", "2k",
-            "--wait", "--wait-timeout", "12m",
-        ]),
+    cmd_swap = [
+        "higgsfield", "generate", "create", "nano_banana_2",
+        "--image", model_photo_path,   # image 1 = modèle référence (identité principale)
+        "--image", frame_path,         # image 2 = frame (scène / pose / décor)
+        "--prompt", SWAP_PROMPT_ALT,
+        "--resolution", "2k",
+        "--wait", "--wait-timeout", "12m",
     ]
 
-    for attempt_label, cmd_swap in _swap_attempts:
-        try:
-            result = await run_higgsfield_for_user(
-                user_token, cmd_swap, timeout=720, refresh_token=refresh_token
-            )
-            if result:
-                swapped_url = result.strip()
-                _emit({"type": "info", "msg": f"Swap OK avec {attempt_label}"})
-                break
-            swap_error = "Résultat vide"
-        except Exception as exc:
-            err_str = str(exc)
-            err_lower = err_str.lower()
-            # Modèle invalide ou ne supporte pas ce mode → essayer le suivant
-            if any(p in err_lower for p in _SKIP_PATTERNS):
-                _emit({"type": "info", "msg": f"{attempt_label} incompatible ({err_str[:120]}), fallback…"})
-                swap_error = err_str
-                continue
-            # Erreur non récupérable (token expiré déjà retenté dans run_higgsfield_for_user)
-            _emit({"type": "error", "msg": f"Swap failed: {err_str[:400]}"})
+    try:
+        result = await run_higgsfield_for_user(
+            user_token, cmd_swap, timeout=720, refresh_token=refresh_token
+        )
+        if result:
+            swapped_url = result.strip()
+        else:
+            _emit({"type": "error", "msg": "Swap nano_banana_2 : résultat vide"})
             sys.exit(1)
+    except Exception as exc:
+        _emit({"type": "error", "msg": f"Swap failed: {str(exc)[:400]}"})
+        sys.exit(1)
 
-    if not swapped_url:
-        # Aucun modèle disponible pour le swap dual-image → skip, on utilisera la frame originale
-        swap_skipped = True
-        _emit({
-            "type": "step", "step": "swap", "status": "skipped",
-            "msg": (
-                "Nano Banana Pro non disponible dans ce CLI — "
-                "le swap sera ignoré. Les variations seront générées "
-                "depuis la frame originale. "
-                "Fais le swap manuellement sur fnf.higgsfield.ai."
-            ),
-        })
-    else:
-        _emit({"type": "step", "step": "swap", "status": "done", "url": swapped_url})
+    _emit({"type": "step", "step": "swap", "status": "done", "url": swapped_url})
 
     # Télécharger l'image swappée localement (pour les variations Seedream)
     if swapped_url:

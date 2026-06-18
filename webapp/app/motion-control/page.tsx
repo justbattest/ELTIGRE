@@ -750,7 +750,7 @@ export default function MotionControlPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-white">① Model reference photo</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">Used by Nano Banana Pro to swap the person in the frame</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Used by Nano Banana 2 to swap the person in the frame</p>
                     </div>
                     {mcModelPhotoPreview && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -905,7 +905,7 @@ export default function MotionControlPage() {
                     <div className="space-y-1">
                       <div className={`flex items-center gap-2 text-sm ${stepColor(mcSwapStatus)}`}>
                         <span className="w-5 text-center">{stepIcon(mcSwapStatus)}</span>
-                        <span>Model swap (Nano Banana Pro)</span>
+                        <span>Model swap (Nano Banana 2)</span>
                         {mcSwapEvent?.url && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={mcSwapEvent.url} alt="Swap result" className="w-8 h-8 rounded-md object-cover ml-auto" />
@@ -913,8 +913,7 @@ export default function MotionControlPage() {
                       </div>
                       {mcSwapSkipped && (
                         <p className="text-xs text-amber-500/80 pl-7">
-                          Nano Banana Pro not available in CLI — swap skipped. Variations generated from original frame.
-                          Do the swap manually on <a href="https://fnf.higgsfield.ai" target="_blank" rel="noopener noreferrer" className="underline">fnf.higgsfield.ai</a>.
+                          Swap skipped. Variations generated from original frame.
                         </p>
                       )}
                     </div>
@@ -1018,7 +1017,7 @@ export default function MotionControlPage() {
                 )}
 
                 <p className="text-xs text-center text-zinc-600">
-                  Nano Banana Pro (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
+                  Nano Banana 2 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
                 </p>
               </div>
             )}
