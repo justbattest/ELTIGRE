@@ -750,7 +750,7 @@ export default function MotionControlPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-white">① Model reference photo</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">Used by Nano Banana 2 to swap the person in the frame</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Used by Seedream 4.5 to swap the person in the frame</p>
                     </div>
                     {mcModelPhotoPreview && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -905,7 +905,7 @@ export default function MotionControlPage() {
                     <div className="space-y-1">
                       <div className={`flex items-center gap-2 text-sm ${stepColor(mcSwapStatus)}`}>
                         <span className="w-5 text-center">{stepIcon(mcSwapStatus)}</span>
-                        <span>Model swap (Nano Banana 2)</span>
+                        <span>Model swap (Seedream 4.5)</span>
                         {mcSwapEvent?.url && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={mcSwapEvent.url} alt="Swap result" className="w-8 h-8 rounded-md object-cover ml-auto" />
@@ -1017,7 +1017,7 @@ export default function MotionControlPage() {
                 )}
 
                 <p className="text-xs text-center text-zinc-600">
-                  Nano Banana 2 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
+                  Seedream 4.5 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
                 </p>
               </div>
             )}

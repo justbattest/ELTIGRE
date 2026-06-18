@@ -284,21 +284,23 @@ async def cmd_generate(
     # Heartbeat toutes les 20s pour éviter le timeout SSE (Railway coupe les connexions idle)
     heartbeat_task = asyncio.create_task(_heartbeat_loop(20))
 
-    # ── Étape 1 : Person swap (nano_banana_2 dual --image) ───────────────────
-    # Modèle unique : nano_banana_2 avec deux --image (pas de nano_banana_pro, pas de fallback).
-    # Approche identity-first : photo modèle en 1er (sujet principal),
-    # frame en 2ème (référence scène/pose). Le modèle traite l'image 1 comme base,
-    # ce qui force la préservation de l'identité réelle du modèle.
+    # ── Étape 1 : Person swap (Seedream 4.5 dual --image) ────────────────────
+    # Seedream 4.5 img2img avec deux images :
+    # Image 1 = photo modèle (identité principale — Nina)
+    # Image 2 = frame (scène / pose / décor / tenue à conserver)
+    # Seedream a une meilleure préservation d'identité que nano_banana_2
+    # car c'est un modèle diffusion haute fidélité.
     _emit({"type": "step", "step": "swap", "status": "started"})
 
     swapped_url: str | None = None
 
     cmd_swap = [
-        "higgsfield", "generate", "create", "nano_banana_2",
+        "higgsfield", "generate", "create", "seedream_v4_5",
         "--image", model_photo_path,   # image 1 = modèle référence (identité principale)
         "--image", frame_path,         # image 2 = frame (scène / pose / décor)
         "--prompt", SWAP_PROMPT_ALT,
-        "--resolution", "2k",
+        "--quality", "high",
+        "--aspect_ratio", "9:16",
         "--wait", "--wait-timeout", "12m",
     ]
 
