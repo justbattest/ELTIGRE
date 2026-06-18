@@ -48,23 +48,46 @@ from pipeline.metadata_optimizer import _find_ffmpeg
 
 # ─── Prompts ──────────────────────────────────────────────────────────────────
 
-# Swap modèle : nano_banana_2 dual --image
-# Image 1 (frame) = la scène à conserver intégralement (pose, décor, action, vêtements)
-# Image 2 (model_photo) = uniquement le visage / l'identité à transplanter
-# Clé du prompt : "image 1 is the scene" / "image 2 is the face reference ONLY"
-# Ne pas dire "replace the person" → ça laisse l'ambiguïté sur quelle image est la base
+# Swap modèle — stratégie "face transplant"
+# Approche plus chirurgicale que "person swap" : on demande uniquement le remplacement
+# du visage et des cheveux, pas de la personne entière. Ça évite que le modèle régénère
+# une nouvelle personne IA.
+# Image 1 (frame_path)       = scène de base (pose, décor, tenue, lumière)
+# Image 2 (model_photo_path) = visage/cheveux de référence UNIQUEMENT
 SWAP_PROMPT = (
-    "Person swap. "
-    "Image 1 defines the scene: keep the background, environment, all other people, "
-    "the exact pose and body position, the action being performed, the clothing and outfit, "
-    "the lighting, shadows, camera angle, and composition — all unchanged from image 1. "
-    "Image 2 defines the person's identity: replace the person in image 1 with the person "
-    "from image 2 (their face, skin tone, hair, and physical appearance). "
-    "The person from image 2 must be performing the exact same action, in the exact same pose, "
-    "wearing the exact same outfit, and standing in the exact same position as the person in image 1. "
-    "Do not import any background, object, or environment from image 2. "
-    "The result is image 1's scene with image 2's person identity. "
-    "Photorealistic, seamless, high quality."
+    "Face transplant. "
+    "The first image is the SCENE BASE: preserve everything from it — "
+    "the background, environment, all other people, "
+    "the exact pose and body position, the action being performed, "
+    "the clothing and outfit worn by the person in this first image, "
+    "the lighting, shadows, camera angle, and full composition. "
+    "The second image is the FACE REFERENCE ONLY: extract the face, hair color, "
+    "hairstyle, and skin tone from this second image and apply them to the person "
+    "in the first image. The transplanted face must fit naturally onto the existing "
+    "body, pose, and clothing of the first image. "
+    "Do NOT use the second image for anything else — no outfit, no body shape, "
+    "no background, no environment. "
+    "Result = first image scene with only the face and hair replaced by those "
+    "from the second image. Real photo quality, photorealistic, seamless."
+)
+
+# Prompt alternatif — approche "Nina en sujet principal"
+# Utilisé dans la tentative 3 où on inverse l'ordre des images :
+# Image 1 = photo Nina (identité principale)
+# Image 2 = frame (référence scène/pose)
+SWAP_PROMPT_ALT = (
+    "Identity-first scene placement. "
+    "The first image shows the PERSON whose exact appearance must be fully preserved: "
+    "keep her real face, facial features, hair, skin tone, and physical appearance exactly. "
+    "Place this person into the SCENE from the second image: "
+    "reproduce the same background, environment, all other people present, "
+    "the same camera angle, framing, and lighting from the second image. "
+    "The person must perform the exact same action and be in the exact same body pose "
+    "as the person originally in the second image. "
+    "Dress her in the same outfit as the person in the second image. "
+    "The first image person's face and identity must be recognizable and realistic — "
+    "not AI-generated, not a different person. "
+    "Photorealistic, real photo quality, seamless."
 )
 
 # Variations d'outfit : Seedream 4.5 img2img (pas d'element_id — on travaille sur l'image déjà swappée)
@@ -294,8 +317,21 @@ async def cmd_generate(
             "--resolution", "2k",
             "--wait", "--wait-timeout", "12m",
         ]),
-        # Tentative 2 : nano_banana_2 avec deux --image (sans rôle → l'API accepte)
-        ("nano_banana_2 (dual --image)", [
+        # Tentative 2 : nano_banana_2 "identity-first" — Nina en 1er, frame en 2ème
+        # Approche : Nina est le sujet principal, la frame est la référence de scène/pose.
+        # Le modèle traite souvent la 1ère image comme base → placer Nina en 1er
+        # force la préservation de son identité réelle.
+        ("nano_banana_2 (identity-first, nina-first)", [
+            "higgsfield", "generate", "create", "nano_banana_2",
+            "--image", model_photo_path,
+            "--image", frame_path,
+            "--prompt", SWAP_PROMPT_ALT,
+            "--resolution", "2k",
+            "--wait", "--wait-timeout", "12m",
+        ]),
+        # Tentative 3 : nano_banana_2 "face transplant" — frame en 1er, Nina en 2ème
+        # Fallback si la tentative 2 échoue : approche chirurgicale du visage uniquement.
+        ("nano_banana_2 (face-transplant, frame-first)", [
             "higgsfield", "generate", "create", "nano_banana_2",
             "--image", frame_path,
             "--image", model_photo_path,
