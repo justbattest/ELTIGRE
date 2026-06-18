@@ -48,33 +48,33 @@ from pipeline.metadata_optimizer import _find_ffmpeg
 
 # ─── Prompts ──────────────────────────────────────────────────────────────────
 
-# Swap modèle — stratégie "face transplant"
-# Approche plus chirurgicale que "person swap" : on demande uniquement le remplacement
-# du visage et des cheveux, pas de la personne entière. Ça évite que le modèle régénère
-# une nouvelle personne IA.
-# Image 1 (frame_path)       = scène de base (pose, décor, tenue, lumière)
-# Image 2 (model_photo_path) = visage/cheveux de référence UNIQUEMENT
+# Swap modèle — nano_banana_2, frame en image 1, Nina en image 2
+#
+# RÈGLE ABSOLUE des images :
+#   Image 1 (frame)       = source de la SCÈNE ENTIÈRE
+#                           → pose du corps, fond, décor, personnes, tenue, lumière, cadrage
+#   Image 2 (model_photo) = source du VISAGE UNIQUEMENT
+#                           → rien d'autre : pas le fond, pas la tenue, pas la pose
+#
+# Les premiers tests ont confirmé que nano_banana_2 frame-first préserve bien l'identité
+# de Nina. Le problème résiduel était l'import du fond/pose de l'image 2. Ce prompt
+# l'interdit explicitement avec maximal redundancy.
 SWAP_PROMPT = (
-    "Face transplant. "
-    "The first image is the SCENE BASE: preserve everything from it — "
-    "the background, environment, all other people, "
-    "the exact pose and body position, the action being performed, "
-    "the clothing and outfit worn by the person in this first image, "
-    "the lighting, shadows, camera angle, and full composition. "
-    "The second image is the FACE REFERENCE ONLY: extract the face, hair color, "
-    "hairstyle, and skin tone from this second image and apply them to the person "
-    "in the first image. The transplanted face must fit naturally onto the existing "
-    "body, pose, and clothing of the first image. "
-    "Do NOT use the second image for anything else — no outfit, no body shape, "
-    "no background, no environment. "
-    "Result = first image scene with only the face and hair replaced by those "
-    "from the second image. Real photo quality, photorealistic, seamless."
+    "IMAGE 1 IS THE COMPLETE SCENE — copy everything from it without exception: "
+    "the exact background, the environment, all other people present, "
+    "the exact body pose with every limb position, the action performed, "
+    "the clothing and outfit on the person, the lighting, shadows, colors, "
+    "the camera angle and framing. Nothing changes except the face. "
+    "IMAGE 2 IS THE FACE DONOR ONLY — extract ONLY the face, hair, and skin tone "
+    "from image 2 and transplant them onto the person's body in image 1. "
+    "STRICTLY FORBIDDEN from image 2: any background, any object, any environment, "
+    "any clothing, any body pose, any setting. Image 2 contributes zero scene elements. "
+    "Final result = image 1 reproduced pixel-perfectly with only the face and hair "
+    "replaced by those from image 2. "
+    "Photorealistic, seamless face integration, real photo quality."
 )
 
-# Prompt alternatif — approche "Nina en sujet principal"
-# Utilisé dans la tentative 3 où on inverse l'ordre des images :
-# Image 1 = photo Nina (identité principale)
-# Image 2 = frame (référence scène/pose)
+# Prompt alternatif conservé pour référence (Nina en image 1) — non utilisé en prod
 SWAP_PROMPT_ALT = (
     "Identity-first scene placement. "
     "The first image shows the PERSON whose exact appearance must be fully preserved: "
@@ -284,23 +284,22 @@ async def cmd_generate(
     # Heartbeat toutes les 20s pour éviter le timeout SSE (Railway coupe les connexions idle)
     heartbeat_task = asyncio.create_task(_heartbeat_loop(20))
 
-    # ── Étape 1 : Person swap (Seedream 4.5 dual --image) ────────────────────
-    # Seedream 4.5 img2img avec deux images :
-    # Image 1 = photo modèle (identité principale — Nina)
-    # Image 2 = frame (scène / pose / décor / tenue à conserver)
-    # Seedream a une meilleure préservation d'identité que nano_banana_2
-    # car c'est un modèle diffusion haute fidélité.
+    # ── Étape 1 : Person swap (nano_banana_2, frame-first) ───────────────────
+    # Frame en IMAGE 1 = scène complète (pose, décor, tenue, lumière)
+    # Nina en IMAGE 2  = visage/cheveux uniquement
+    # Cette configuration a montré dans les premiers tests que nano_banana_2
+    # préserve bien l'identité de Nina. Le nouveau SWAP_PROMPT interdit
+    # explicitement tout import de fond/pose depuis l'image 2.
     _emit({"type": "step", "step": "swap", "status": "started"})
 
     swapped_url: str | None = None
 
     cmd_swap = [
-        "higgsfield", "generate", "create", "seedream_v4_5",
-        "--image", model_photo_path,   # image 1 = modèle référence (identité principale)
-        "--image", frame_path,         # image 2 = frame (scène / pose / décor)
-        "--prompt", SWAP_PROMPT_ALT,
-        "--quality", "high",
-        "--aspect_ratio", "9:16",
+        "higgsfield", "generate", "create", "nano_banana_2",
+        "--image", frame_path,         # image 1 = frame (scène / pose / décor)
+        "--image", model_photo_path,   # image 2 = modèle référence (visage uniquement)
+        "--prompt", SWAP_PROMPT,
+        "--resolution", "2k",
         "--wait", "--wait-timeout", "12m",
     ]
 
