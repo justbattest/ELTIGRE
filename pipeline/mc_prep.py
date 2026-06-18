@@ -245,10 +245,14 @@ async def cmd_generate(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    # ── Étape 1 : Person swap (Nano Banana Pro dual-image) ────────────────────
-    # nano_banana_pro = modèle web UI qui accepte 2 images (--image + --start-image)
-    # nano_banana_2   = ancienne version CLI, n'accepte QUE --image (pas de dual-image)
-    # Si aucun modèle compatible n'est dispo → skip gracieux, on utilise la frame originale
+    # ── Étape 1 : Person swap (nano_banana_2 dual --image) ───────────────────
+    # L'API web accepte 2 images sans rôle. Côté CLI :
+    #   ✗ --start-image = assigne un "rôle start" → rejeté ("no roles")
+    #   ✓ deux --image  = deux images sans rôle   → accepté
+    # Tentatives dans l'ordre :
+    #   1. nano_banana_pro  avec --image + --start-image (au cas où Pro supporte les rôles)
+    #   2. nano_banana_2    avec --image + --image       (dual sans rôle)
+    #   3. skip gracieux si tout échoue
     _emit({"type": "step", "step": "swap", "status": "started"})
 
     swapped_url: str | None = None
@@ -263,30 +267,44 @@ async def cmd_generate(
         "unsupported",
     )
 
-    for attempt_model in ("nano_banana_pro", "nano_banana_2"):
-        cmd_swap = [
-            "higgsfield", "generate", "create", attempt_model,
+    # Liste de (model, cmd_args) à essayer dans l'ordre
+    _swap_attempts = [
+        # Tentative 1 : nano_banana_pro avec rôles (si ce modèle existe dans ce CLI)
+        ("nano_banana_pro", [
+            "higgsfield", "generate", "create", "nano_banana_pro",
             "--image", frame_path,
             "--start-image", model_photo_path,
             "--prompt", SWAP_PROMPT,
             "--resolution", "2k",
             "--wait", "--wait-timeout", "12m",
-        ]
+        ]),
+        # Tentative 2 : nano_banana_2 avec deux --image (sans rôle → l'API accepte)
+        ("nano_banana_2 (dual --image)", [
+            "higgsfield", "generate", "create", "nano_banana_2",
+            "--image", frame_path,
+            "--image", model_photo_path,
+            "--prompt", SWAP_PROMPT,
+            "--resolution", "2k",
+            "--wait", "--wait-timeout", "12m",
+        ]),
+    ]
+
+    for attempt_label, cmd_swap in _swap_attempts:
         try:
             result = await run_higgsfield_for_user(
                 user_token, cmd_swap, timeout=720, refresh_token=refresh_token
             )
             if result:
                 swapped_url = result.strip()
-                _emit({"type": "info", "msg": f"Swap OK avec modèle {attempt_model}"})
+                _emit({"type": "info", "msg": f"Swap OK avec {attempt_label}"})
                 break
             swap_error = "Résultat vide"
         except Exception as exc:
             err_str = str(exc)
             err_lower = err_str.lower()
-            # Erreur "modèle non dispo" ou "ne supporte pas --start-image" → essayer le suivant
+            # Modèle invalide ou ne supporte pas ce mode → essayer le suivant
             if any(p in err_lower for p in _SKIP_PATTERNS):
-                _emit({"type": "info", "msg": f"Modèle {attempt_model} incompatible ({err_str[:120]}), fallback…"})
+                _emit({"type": "info", "msg": f"{attempt_label} incompatible ({err_str[:120]}), fallback…"})
                 swap_error = err_str
                 continue
             # Erreur non récupérable (token expiré déjà retenté dans run_higgsfield_for_user)
