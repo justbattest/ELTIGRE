@@ -443,7 +443,10 @@ async def _upload_to_drive(
         # Créer la structure de dossiers
         char_folder_id = await drive._ensure_character_folder()
         mc_folder_id = await drive._ensure_folder("Motion Control", char_folder_id)
-        folder_name = f"MC_Prep_{date.today().strftime('%Y-%m-%d')}_{run_id[:6]}"
+        # Utiliser le suffixe aléatoire final du run_id pour un nom de dossier unique
+        # run_id = "mcprep_gen_1781794361936_t05eh" → suffix = "t05eh"
+        folder_suffix = run_id.split('_')[-1] if '_' in run_id else run_id[-6:]
+        folder_name = f"MC_Prep_{date.today().strftime('%Y-%m-%d')}_{folder_suffix}"
         run_folder_id = await drive._ensure_folder(folder_name, mc_folder_id)
 
         uploaded_files: list[str] = []
