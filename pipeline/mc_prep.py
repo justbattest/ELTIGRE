@@ -339,17 +339,36 @@ async def cmd_generate(
 
     _emit({"type": "step", "step": "swap", "status": "done", "url": swapped_url})
 
-    # Télécharger l'image swappée localement (pour les variations Seedream)
+    # Télécharger l'image swappée localement (pour InsightFace + variations Seedream)
     if swapped_url:
         swapped_local = str(out / "swap_model.jpg")
         try:
             await _download_url_to_file(swapped_url, swapped_local)
         except Exception as exc:
             _emit({"type": "warn", "msg": f"Download swap image failed: {exc!r} — using URL directly"})
-            swapped_local = swapped_url  # fallback : Higgsfield accepte les URLs
+            swapped_local = swapped_url
     else:
-        # Pas de swap : on utilise la frame originale comme base des variations
         swapped_local = frame_path
+
+    # ── Étape 1b : Face transplant InsightFace (pixel-perfect) ───────────────
+    # Seedream a produit la bonne scène/pose/tenue. InsightFace colle maintenant
+    # le vrai visage de Nina pixel-à-pixel par dessus. Fallback silencieux si
+    # InsightFace n'est pas dispo ou ne détecte pas de visage.
+    if swapped_url and Path(swapped_local).exists():
+        _emit({"type": "info", "msg": "Face transplant InsightFace en cours…"})
+        face_final_path = str(out / "swap_face_final.jpg")
+        try:
+            from pipeline.face_swap import swap_face
+            ok = await asyncio.get_event_loop().run_in_executor(
+                None, swap_face, model_photo_path, swapped_local, face_final_path
+            )
+            if ok and Path(face_final_path).exists():
+                swapped_local = face_final_path
+                _emit({"type": "info", "msg": "Face transplant ✓ — visage copié pixel-à-pixel"})
+            else:
+                _emit({"type": "warn", "msg": "Face transplant : aucun visage détecté — résultat Seedream conservé"})
+        except Exception as exc:
+            _emit({"type": "warn", "msg": f"InsightFace non disponible — résultat Seedream conservé ({str(exc)[:150]})"})
 
     # ── Étape 2 : N × Seedream outfit variations (parallèle) ─────────────────
     _emit({"type": "step", "step": "variations", "status": "started"})

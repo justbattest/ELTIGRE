@@ -21,3 +21,8 @@ scipy>=1.13.0
 
 # Motion Concept Builder — téléchargement vidéo Instagram
 yt-dlp>=2024.1.0
+
+# MC Prep — face transplant pixel-perfect (InsightFace)
+# Modèles téléchargés automatiquement au premier appel (~870 MB, mise en cache)
+insightface>=0.7.3
+onnxruntime>=1.16.0
