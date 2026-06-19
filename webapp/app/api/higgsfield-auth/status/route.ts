@@ -11,9 +11,10 @@ import { tmpdir } from 'os'
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.email) return NextResponse.json({ valid: false })
+    if (!session?.user?.id) return NextResponse.json({ valid: false })
 
-    const creds = await prisma.userCredentials.findUnique({ where: { userId: session.user.email } })
+    // ── Always use session.user.id (CUID), never session.user.email ─────────
+    const creds = await prisma.userCredentials.findUnique({ where: { userId: session.user.id } })
     if (!creds?.higgsFieldToken) return NextResponse.json({ valid: false })
 
     const accessToken = decryptIfPresent(creds.higgsFieldToken)
@@ -22,11 +23,11 @@ export async function GET() {
     const refreshToken = decryptIfPresent(creds.higgsFieldRefreshToken ?? '') || ''
 
     // Check validity with CLI
-    const result = await checkHiggsToken(accessToken, session.user.email)
+    const result = await checkHiggsToken(accessToken, session.user.id)
 
     if (result.valid) return NextResponse.json({ valid: true, email: result.email })
 
-    // If expired AND we have a refresh token → try to refresh
+    // If expired AND we have a refresh token → try to refresh silently
     if (result.expired && refreshToken) {
       try {
         const refreshResult = await refreshHiggsToken(refreshToken)
@@ -37,7 +38,7 @@ export async function GET() {
             : creds.higgsFieldRefreshToken
 
           await prisma.userCredentials.update({
-            where: { userId: session.user.email },
+            where: { userId: session.user.id },
             data: {
               higgsFieldToken: newEncryptedToken,
               higgsFieldRefreshToken: newEncryptedRefresh,
@@ -45,7 +46,7 @@ export async function GET() {
           })
 
           // Verify new token works
-          const retryResult = await checkHiggsToken(refreshResult.access_token, session.user.email)
+          const retryResult = await checkHiggsToken(refreshResult.access_token, session.user.id)
           if (retryResult.valid) {
             return NextResponse.json({ valid: true, email: retryResult.email, refreshed: true })
           }
@@ -61,6 +62,11 @@ export async function GET() {
   }
 }
 
+/**
+ * Check Higgsfield token validity via CLI.
+ * Strategy: only return expired=true if the CLI *explicitly* says the session is expired.
+ * Any CLI error (timeout, binary not found, etc.) → assume valid (avoids false "disconnected").
+ */
 async function checkHiggsToken(
   accessToken: string,
   userId: string
@@ -79,7 +85,7 @@ async function checkHiggsToken(
       const higgsfield = process.env.HIGGSFIELD_CLI_PATH || 'higgsfield'
       const proc = spawn(higgsfield, ['account', 'status'], {
         env: { ...process.env, HOME: tmpHome },
-        timeout: 8000,
+        timeout: 10000,
       })
 
       let stdout = ''
@@ -89,27 +95,30 @@ async function checkHiggsToken(
 
       proc.on('close', () => {
         const combined = (stdout + stderr).toLowerCase()
-        if (
+
+        // Only mark as expired if the CLI explicitly says so
+        const isExpired =
           combined.includes('session expired') ||
+          combined.includes('hf auth login') ||
           combined.includes('not logged') ||
           combined.includes('please login') ||
           combined.includes('unauthenticated')
-        ) {
+
+        if (isExpired) {
           resolve({ valid: false, expired: true })
-        } else if (stdout.includes('@') || stdout.includes('email') || proc.exitCode === 0) {
+        } else {
+          // CLI ran without explicit session error → valid
+          // (covers exitCode=0, any output, or ambiguous output)
           const emailMatch = stdout.match(/[\w.-]+@[\w.-]+\.\w+/)
           resolve({ valid: true, expired: false, email: emailMatch?.[0] })
-        } else {
-          resolve({ valid: false, expired: false })
         }
       })
 
-      proc.on('error', () => resolve({ valid: false, expired: false }))
+      // CLI binary not found or other OS error → assume valid (token exists in DB)
+      proc.on('error', () => resolve({ valid: true, expired: false }))
     })
   } finally {
-    try {
-      rmSync(tmpHome, { recursive: true, force: true })
-    } catch {}
+    try { rmSync(tmpHome, { recursive: true, force: true }) } catch {}
   }
 }
 
