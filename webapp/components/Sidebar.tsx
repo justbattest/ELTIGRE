@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -19,7 +19,18 @@ import {
   BookOpen,
 } from 'lucide-react'
 
-const GROUPS = [
+type GroupItem = {
+  key: string
+  icon: React.ElementType
+  label: string
+  href: string
+  pages: string[]
+  subTabs: { label: string; href: string }[]
+  separate: boolean
+  unavailable?: boolean
+}
+
+const GROUPS: GroupItem[] = [
   {
     key: 'image',
     icon: ImageIcon,
@@ -49,7 +60,7 @@ const GROUPS = [
   { key: 'carousel', icon: LayoutGrid, label: 'CAROUSEL',  href: '/carousel',  pages: ['/carousel'],  subTabs: [], separate: false },
   { key: 'metadata', icon: Wand2,      label: 'METADATA',  href: '/metadata',  pages: ['/metadata'],  subTabs: [], separate: false },
   { key: 'spoofer',  icon: Shuffle,    label: 'SPOOFER',   href: '/spoofer',   pages: ['/spoofer'],   subTabs: [], separate: false },
-  { key: 'poster',   icon: Send,       label: 'POSTER',    href: '/poster',    pages: ['/poster'],    subTabs: [], separate: true  },
+  { key: 'poster',   icon: Send,       label: 'POSTING',   href: '/poster',    pages: ['/poster'],    subTabs: [], separate: true, unavailable: true },
   { key: 'en-cours', icon: Timer,      label: 'IN PROGRESS', href: '/en-cours', pages: ['/en-cours'],  subTabs: [], separate: false },
 ]
 
@@ -57,6 +68,23 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
   const activeGroup = GROUPS.find(g => g.pages.includes(pathname)) ?? GROUPS[0]
+
+  const [higgsStatus, setHiggsStatus] = useState<'checking' | 'valid' | 'invalid'>('checking')
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await fetch('/api/higgsfield-auth/status')
+        const data = await res.json()
+        setHiggsStatus(data.valid ? 'valid' : 'invalid')
+      } catch {
+        setHiggsStatus('invalid')
+      }
+    }
+    check()
+    const interval = setInterval(check, 5 * 60 * 1000) // every 5 min
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <motion.aside
@@ -121,42 +149,67 @@ export function Sidebar() {
               {group.separate && (
                 <div className="my-3 mx-1" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }} />
               )}
-              <Link
-                href={group.href}
-                className={`relative flex items-center gap-3 px-3 py-[9px] rounded-xl transition-all duration-150 ${
-                  isActive
-                    ? 'text-violet-700'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-                style={isActive ? {
-                  background: 'linear-gradient(135deg, rgba(109,40,217,0.09) 0%, rgba(109,40,217,0.04) 100%)',
-                  boxShadow: 'inset 0 0 0 1px rgba(109,40,217,0.14)',
-                } : {}}
-              >
-                <Icon size={17} strokeWidth={isActive ? 2.1 : 1.7} className="shrink-0" />
-                <AnimatePresence>
+              {group.unavailable ? (
+                <div
+                  className="relative flex items-center gap-3 px-3 py-[9px] rounded-xl opacity-40 cursor-not-allowed select-none text-gray-500"
+                >
+                  <Icon size={17} strokeWidth={1.7} className="shrink-0" />
+                  <AnimatePresence>
+                    {!collapsed && (
+                      <motion.span
+                        key={`label-${group.key}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.1 }}
+                        className="text-[11px] tracking-[0.12em] whitespace-nowrap uppercase font-semibold"
+                      >
+                        {group.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                   {!collapsed && (
-                    <motion.span
-                      key={`label-${group.key}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.1 }}
-                      className={`text-[11px] tracking-[0.12em] whitespace-nowrap uppercase ${isActive ? 'font-bold' : 'font-semibold'}`}
-                    >
-                      {group.label}
-                    </motion.span>
+                    <span className="ml-auto text-[9px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-medium">Soon</span>
                   )}
-                </AnimatePresence>
-                {isActive && !collapsed && (
-                  <motion.div
-                    layoutId="sidebar-dot"
-                    className="ml-auto w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ background: 'rgba(109,40,217,0.7)' }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </Link>
+                </div>
+              ) : (
+                <Link
+                  href={group.href}
+                  className={`relative flex items-center gap-3 px-3 py-[9px] rounded-xl transition-all duration-150 ${
+                    isActive
+                      ? 'text-violet-700'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                  style={isActive ? {
+                    background: 'linear-gradient(135deg, rgba(109,40,217,0.09) 0%, rgba(109,40,217,0.04) 100%)',
+                    boxShadow: 'inset 0 0 0 1px rgba(109,40,217,0.14)',
+                  } : {}}
+                >
+                  <Icon size={17} strokeWidth={isActive ? 2.1 : 1.7} className="shrink-0" />
+                  <AnimatePresence>
+                    {!collapsed && (
+                      <motion.span
+                        key={`label-${group.key}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.1 }}
+                        className={`text-[11px] tracking-[0.12em] whitespace-nowrap uppercase ${isActive ? 'font-bold' : 'font-semibold'}`}
+                      >
+                        {group.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  {isActive && !collapsed && (
+                    <motion.div
+                      layoutId="sidebar-dot"
+                      className="ml-auto w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ background: 'rgba(109,40,217,0.7)' }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              )}
 
               {/* Sub-tabs */}
               {isActive && group.subTabs.length > 1 && !collapsed && (
@@ -186,6 +239,33 @@ export function Sidebar() {
 
       {/* ── Bottom ────────────────────────────────────────────── */}
       <div className="py-3 px-2.5 space-y-0.5 shrink-0" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+        {/* Higgsfield status */}
+        {!collapsed && (
+          <div className="px-3 py-2 mb-1 flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              higgsStatus === 'valid' ? 'bg-green-500' :
+              higgsStatus === 'invalid' ? 'bg-red-500' :
+              'bg-gray-400 animate-pulse'
+            }`} />
+            <span className="text-[11px] text-gray-600 font-medium flex-1 truncate">
+              {higgsStatus === 'valid' ? 'Higgsfield ✓' : higgsStatus === 'invalid' ? 'HF Disconnected' : 'Checking…'}
+            </span>
+            {higgsStatus === 'invalid' && (
+              <Link href="/settings" className="text-[10px] px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition whitespace-nowrap font-medium">
+                Reconnect
+              </Link>
+            )}
+          </div>
+        )}
+        {collapsed && (
+          <div className="px-3 py-2 mb-1 flex justify-center">
+            <span className={`w-2 h-2 rounded-full ${
+              higgsStatus === 'valid' ? 'bg-green-500' :
+              higgsStatus === 'invalid' ? 'bg-red-500' :
+              'bg-gray-400 animate-pulse'
+            }`} title={higgsStatus === 'valid' ? 'Higgsfield Connected' : higgsStatus === 'invalid' ? 'Higgsfield Disconnected' : 'Checking...'} />
+          </div>
+        )}
         {[
           { href: '/settings', icon: Settings, label: 'Settings', key: 'settings' },
           { href: '/kpi',      icon: BarChart2, label: 'KPI',      key: 'kpi'      },

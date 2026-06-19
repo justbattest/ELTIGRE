@@ -1,15 +1,39 @@
 'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { TutorialVideo } from '@/components/TutorialVideo'
 
 export default function ImagePage() {
   useSession()
+
+  const [higgsOk, setHiggsOk] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    fetch('/api/higgsfield-auth/status')
+      .then(r => r.json())
+      .then(d => setHiggsOk(d.valid))
+      .catch(() => setHiggsOk(false))
+  }, [])
+
   return (
     <div className="min-h-screen text-gray-900">
       <div className="border-b border-white/70 px-6 py-3 flex items-center justify-between sticky top-0 bg-white/85 backdrop-blur-xl z-20 shadow-[0_1px_12px_rgba(109,40,217,0.08)]">
         <span className="text-violet-600 font-bold text-lg">🐯 LOS TIGRES FACTORY</span>
-        <div className="flex gap-3 text-sm">
+        <div className="flex items-center gap-3 text-sm">
+          {higgsOk !== null && (
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${higgsOk ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-xs text-gray-600 font-medium">
+                {higgsOk ? 'HF Connected' : 'HF Disconnected'}
+              </span>
+              {!higgsOk && (
+                <Link href="/settings" className="text-xs px-2 py-0.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition font-medium">
+                  Reconnect
+                </Link>
+              )}
+            </div>
+          )}
           <Link href="/kpi" className="text-gray-700 hover:text-gray-900 transition">📊 KPI</Link>
           <Link href="/settings" className="text-gray-700 hover:text-gray-900 transition">⚙️ Settings</Link>
         </div>

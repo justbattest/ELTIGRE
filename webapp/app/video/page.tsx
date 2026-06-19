@@ -21,6 +21,7 @@ type ValidatedPrompt = {
   phraseVariations: string[] | null  // phrases dédiées à ce concept précis
   authorName: string | null          // auteur (prompts communautaires)
   userDescription: string | null     // description courte du concept
+  suggestedDuration: number          // durée suggérée (6-12s)
 }
 
 // ─── Outfit pools (doit rester en sync avec video_prompts.py) ─────────────────
@@ -260,6 +261,8 @@ export default function VideoPage() {
       setVarBaseId(id)
       setVarOutfit('')
       setVarPhrase('')
+      const p = prompts.find(x => x.id === id)
+      if (p) setDuration(p.suggestedDuration)
     }
   }
 
@@ -345,6 +348,7 @@ export default function VideoPage() {
     }
     const picked = shuffled.slice(0, Math.min(randomCount, shuffled.length))
     const ids = picked.map(p => p.id)
+    setDuration(Math.max(...picked.map(p => p.suggestedDuration)))
 
     try {
       const res = await fetch('/api/video/start', {
@@ -545,7 +549,12 @@ export default function VideoPage() {
                       }`}
                       onClick={() => setSelectedIds(prev => {
                         const next = new Set(prev)
-                        next.has(p.id) ? next.delete(p.id) : next.add(p.id)
+                        if (next.has(p.id)) {
+                          next.delete(p.id)
+                        } else {
+                          next.add(p.id)
+                          setDuration(p.suggestedDuration)
+                        }
                         return next
                       })}
                     >
@@ -562,6 +571,13 @@ export default function VideoPage() {
                           {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
                         </span>
                         <SubNicheLabel subNiche={p.subNiche} />
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                          p.suggestedDuration === 12
+                            ? 'bg-violet-100 text-violet-700 border border-violet-200'
+                            : 'bg-gray-100 text-gray-500 border border-gray-200'
+                        }`}>
+                          ⏱ {p.suggestedDuration}s
+                        </span>
                       </div>
                       {p.userDescription ? (
                         <p className="text-xs text-gray-700 mt-0.5 truncate italic">&ldquo;{p.userDescription}&rdquo;</p>
@@ -671,6 +687,13 @@ export default function VideoPage() {
                             {p.title.replace(/^P\d+(-V\d+)?\s*—\s*/, '')}
                           </span>
                           <SubNicheLabel subNiche={p.subNiche} />
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            p.suggestedDuration === 12
+                              ? 'bg-violet-100 text-violet-700 border border-violet-200'
+                              : 'bg-gray-100 text-gray-500 border border-gray-200'
+                          }`}>
+                            ⏱ {p.suggestedDuration}s
+                          </span>
                           {!p.phraseVariations && (
                             <span className="text-xs text-gray-700 italic">outfit only</span>
                           )}

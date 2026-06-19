@@ -4,47 +4,48 @@ import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 import { Settings, ImageIcon, VideoIcon, LayoutGrid, Wand2, BarChart2 } from 'lucide-react'
 
+const SETTINGS_TUTORIAL = {
+  id: '1dv8371-Hhg',
+  icon: Settings,
+  title: 'Settings',
+  subtitle: 'Connect every integration — Higgsfield, Drive, Anthropic, HikerAPI',
+  color: 'text-violet-600',
+  warning: '⚠️ HikerAPI connection is useless for now — the Instagram scraper is currently under maintenance and will be back soon. No need to configure it.',
+  bullets: [
+    {
+      emoji: '🔄',
+      title: 'Reconnect Higgsfield every ~30 min',
+      desc: 'The CLI session token expires quickly. If image or video generation fails with an auth error, go to Settings → Reconnect Higgsfield.',
+    },
+    {
+      emoji: '🔑',
+      title: 'Higgsfield Session Cookies (Motion Control)',
+      desc: 'Separate from the CLI token. Go to higgsfield.ai → F12 → Network tab → filter by "clerk.higgsfield.ai" → click any GET request → Headers → Request Headers → Cookie → copy the ENTIRE Cookie header value. Paste it in Settings → Motion Control. Valid ~7 days, auto-refreshes JWT on each run.',
+    },
+    {
+      emoji: '📁',
+      title: 'Google Drive reconnect once a week',
+      desc: 'The refresh token lasts ~7 days. If uploads fail → Settings → Reconnect Drive.',
+    },
+    {
+      emoji: '🎭',
+      title: 'Character vs Element',
+      desc: 'Character (Soul) = the AI persona used for IMAGE generation (Seedream, Flux, etc.). Element (Reference Element) = used for VIDEO generation (Nano Banana, Motion Control). Both are configured in Higgsfield and synced via the Scanner button in Settings.',
+    },
+    {
+      emoji: '🤖',
+      title: 'Anthropic API key',
+      desc: 'Required for Claude prompt analysis and auto model selection. Without it, "Auto" mode is disabled and you must pick a model manually.',
+    },
+    {
+      emoji: '🕷️',
+      title: 'HikerAPI',
+      desc: 'Required for Instagram scraping. Paste your HikerAPI token in Settings to enable profile scraping.',
+    },
+  ],
+}
+
 const TUTORIALS = [
-  {
-    id: '1dv8371-Hhg',
-    icon: Settings,
-    title: 'Settings',
-    subtitle: 'Connect every integration — Higgsfield, Drive, Anthropic, HikerAPI',
-    color: 'text-violet-600',
-    warning: '⚠️ HikerAPI connection is useless for now — the Instagram scraper is currently under maintenance and will be back soon. No need to configure it.',
-    bullets: [
-      {
-        emoji: '🔄',
-        title: 'Reconnect Higgsfield every ~30 min',
-        desc: 'The CLI session token expires quickly. If image or video generation fails with an auth error, go to Settings → Reconnect Higgsfield.',
-      },
-      {
-        emoji: '🔑',
-        title: 'Higgsfield Session Cookies (Motion Control)',
-        desc: 'Separate from the CLI token. Go to higgsfield.ai → F12 → Network tab → filter by "clerk.higgsfield.ai" → click any GET request → Headers → Request Headers → Cookie → copy the ENTIRE Cookie header value. Paste it in Settings → Motion Control. Valid ~7 days, auto-refreshes JWT on each run.',
-      },
-      {
-        emoji: '📁',
-        title: 'Google Drive reconnect once a week',
-        desc: 'The refresh token lasts ~7 days. If uploads fail → Settings → Reconnect Drive.',
-      },
-      {
-        emoji: '🎭',
-        title: 'Character vs Element',
-        desc: 'Character (Soul) = the AI persona used for IMAGE generation (Seedream, Flux, etc.). Element (Reference Element) = used for VIDEO generation (Nano Banana, Motion Control). Both are configured in Higgsfield and synced via the Scanner button in Settings.',
-      },
-      {
-        emoji: '🤖',
-        title: 'Anthropic API key',
-        desc: 'Required for Claude prompt analysis and auto model selection. Without it, "Auto" mode is disabled and you must pick a model manually.',
-      },
-      {
-        emoji: '🕷️',
-        title: 'HikerAPI',
-        desc: 'Required for Instagram scraping. Paste your HikerAPI token in Settings to enable profile scraping.',
-      },
-    ],
-  },
   {
     id: 'kA53iyKKKgM',
     icon: ImageIcon,
@@ -223,7 +224,111 @@ export default function TutorialsPage() {
               </p>
             </div>
 
-            {/* Tutorial sections */}
+            {/* ── Getting Started (Settings) — full-width banner ── */}
+            <div className="mb-10 bg-white/70 backdrop-blur-xl rounded-2xl border border-violet-200/60 shadow-[0_4px_24px_rgba(109,40,217,0.10)] overflow-hidden">
+              {/* Header */}
+              <div className="px-8 py-5 border-b border-violet-100/60" style={{ background: 'linear-gradient(135deg, rgba(109,40,217,0.06) 0%, rgba(167,139,250,0.04) 100%)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-violet-100">
+                    <Settings size={18} className="text-violet-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-gray-900 text-lg">Getting Started — Setup Guide</h2>
+                    <p className="text-gray-600 text-sm">Complete this setup once before using any feature</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warning */}
+              {SETTINGS_TUTORIAL.warning && (
+                <div className="px-8 pt-5">
+                  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm leading-relaxed">
+                    {SETTINGS_TUTORIAL.warning}
+                  </div>
+                </div>
+              )}
+
+              {/* Video embed — full width */}
+              <div className="px-8 pt-6 pb-4">
+                <div className="relative w-full rounded-xl overflow-hidden shadow-md" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    className="absolute inset-0 w-full h-full"
+                    src={`https://www.youtube-nocookie.com/embed/${SETTINGS_TUTORIAL.id}`}
+                    title="Settings Setup Guide"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+
+              {/* Written step-by-step guide */}
+              <div className="px-8 pb-8">
+                <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                  <span className="text-violet-600">📖</span> Step-by-step written guide
+                </h3>
+
+                <div className="space-y-6">
+                  {/* STEP 1 */}
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center">1</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Create your Character & Connect Higgsfield</h4>
+                      <ul className="space-y-1.5 text-sm text-gray-700">
+                        <li>• On <span className="font-medium text-violet-700">higgsfield.ai</span>, create a <span className="font-medium">Soul Cinema</span> Character — this is your base model for image generation</li>
+                        <li>• ⚠️ <span className="font-medium">Log into your Higgsfield account in the same browser first</span>, before clicking Connect in Settings</li>
+                        <li>• Then go to <span className="font-medium">Settings → Connect Higgsfield</span> and scan the QR code / approve the device</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* STEP 2 */}
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center">2</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Transform your Character into an Element <span className="text-sm font-normal text-gray-500">(required for videos)</span></h4>
+                      <ul className="space-y-1.5 text-sm text-gray-700">
+                        <li>• <span className="font-medium">Character</span> = generates images &nbsp;|&nbsp; <span className="font-medium">Element</span> = generates videos — these are two separate things</li>
+                        <li>• On higgsfield.ai → <span className="font-medium">Video → Seedance 2.0 → Elements → Check Eligibility</span></li>
+                        <li>• If eligibility ✅ passes: the Element is ready to use</li>
+                        <li>• If eligibility ❌ fails: create an Element by uploading 30 photos of the model (<span className="font-medium">non-sensitive images only</span> — sort your photos to exclude any flagged content)</li>
+                        <li>• <span className="font-medium">Finding your Element ID:</span> Open DevTools (F12) → Network tab → filter by <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">&quot;reference-elements&quot;</code> → reload the Elements page → find the UUID in the API response. Copy that ID into <span className="font-medium">Settings → Reference Elements</span></li>
+                        <li>• Same process for the Character ID (filter by <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">&quot;characters&quot;</code>)</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* STEP 3 */}
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center">3</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Connect your Claude API Key</h4>
+                      <ul className="space-y-1.5 text-sm text-gray-700">
+                        <li>• This is <span className="font-medium">independent from your Claude.ai account</span> — you need a separate API account</li>
+                        <li>• Go to <span className="font-medium text-violet-700">platform.anthropic.com</span> → sign up → Billing → add credits</li>
+                        <li>• Then go to <span className="font-medium">API Keys</span> → create a new key → copy it</li>
+                        <li>• Paste it into <span className="font-medium">Settings → Anthropic API Key</span></li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* STEP 4 */}
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center">4</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Connect Google Drive</h4>
+                      <ul className="space-y-1.5 text-sm text-gray-700">
+                        <li>• In Settings → click <span className="font-medium">Connect Drive</span> → authorize Google access</li>
+                        <li>• Go to <span className="font-medium text-violet-700">drive.google.com</span> → open (or create) the folder where you want results saved → copy the URL from your browser address bar</li>
+                        <li>• Example URL: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs break-all">https://drive.google.com/drive/folders/1ABCdef...XYZ</code></li>
+                        <li>• Paste that URL into <span className="font-medium">Settings → Drive Folder URL</span> → Save</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Remaining 5 tutorial sections ── */}
             {TUTORIALS.map((tut) => {
               const Icon = tut.icon
               return (
@@ -241,13 +346,6 @@ export default function TutorialsPage() {
                       <p className="text-xs text-gray-700 leading-tight mt-0.5">{tut.subtitle}</p>
                     </div>
                   </div>
-
-                  {/* Warning (if any) */}
-                  {'warning' in tut && tut.warning && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm leading-relaxed">
-                      {tut.warning}
-                    </div>
-                  )}
 
                   {/* 16:9 YouTube embed */}
                   <div className="relative w-full rounded-xl overflow-hidden shadow-xl" style={{ paddingBottom: '56.25%' }}>

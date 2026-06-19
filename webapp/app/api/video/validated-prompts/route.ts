@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       phraseVariations: true,  // JSON array — parsé avant envoi
       authorName: true,        // auteur du prompt (communautaire)
       userDescription: true,   // description courte du concept
+      suggestedDuration: true, // durée suggérée pour ce prompt (6-12s)
       // promptJson intentionnellement omis
     },
   })

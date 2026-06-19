@@ -67,6 +67,19 @@ export default function SettingsPage() {
       })
   }, [])
 
+  // Override DB boolean with actual CLI-validated status
+  useEffect(() => {
+    fetch('/api/higgsfield-auth/status')
+      .then(r => r.json())
+      .then(data => {
+        setHiggsConnected(data.valid)
+        if (data.refreshed) {
+          console.log('Higgsfield token auto-refreshed')
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Polling après device code flow
   const pollHiggsfield = useCallback(() => {
     const interval = setInterval(async () => {
