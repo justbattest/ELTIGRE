@@ -209,7 +209,7 @@ const TUTORIALS = [
 
 export default function TutorialsPage() {
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
         <PageWrapper>
@@ -217,8 +217,8 @@ export default function TutorialsPage() {
 
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Tutorials</h1>
-              <p className="text-slate-500 text-sm mt-1">
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tutorials</h1>
+              <p className="text-gray-700 text-sm mt-1">
                 Watch the full walkthrough for each module, then check the recap below each video.
               </p>
             </div>
@@ -229,16 +229,16 @@ export default function TutorialsPage() {
               return (
                 <div
                   key={tut.id}
-                  className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-sm"
+                  className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] p-6 space-y-5"
                 >
                   {/* Section header */}
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-white/80 border border-white/70 shadow-[0_2px_8px_rgba(109,40,217,0.08)] flex items-center justify-center shrink-0">
                       <Icon size={17} strokeWidth={1.75} className={tut.color} />
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold text-slate-900 leading-tight">{tut.title}</h2>
-                      <p className="text-xs text-slate-500 leading-tight mt-0.5">{tut.subtitle}</p>
+                      <h2 className="text-base font-semibold text-black leading-tight">{tut.title}</h2>
+                      <p className="text-xs text-gray-700 leading-tight mt-0.5">{tut.subtitle}</p>
                     </div>
                   </div>
 
@@ -262,15 +262,15 @@ export default function TutorialsPage() {
 
                   {/* Recap bullets */}
                   <div className="space-y-3 pt-1">
-                    <p className="text-[11px] uppercase tracking-[0.1em] text-slate-600 font-semibold">Key takeaways</p>
+                    <p className="text-[11px] uppercase tracking-[0.1em] text-gray-800 font-semibold">Key takeaways</p>
                     <ul className="space-y-2.5">
                       {tut.bullets.map((b, idx) => (
                         <li key={idx} className="flex gap-3 items-start">
                           <span className="text-base leading-tight shrink-0 mt-0.5">{b.emoji}</span>
                           <div>
-                            <span className="text-sm font-medium text-slate-800">{b.title}</span>
-                            <span className="text-slate-600"> — </span>
-                            <span className="text-sm text-slate-600">{b.desc}</span>
+                            <span className="text-sm font-medium text-gray-900">{b.title}</span>
+                            <span className="text-gray-800"> — </span>
+                            <span className="text-sm text-gray-800">{b.desc}</span>
                           </div>
                         </li>
                       ))}

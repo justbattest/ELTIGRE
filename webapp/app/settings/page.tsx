@@ -242,19 +242,19 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* Nav */}
-      <nav className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
+      <nav className="border-b border-white/70 bg-white/85 backdrop-blur-xl shadow-[0_1px_12px_rgba(109,40,217,0.08)] px-6 py-3 flex items-center justify-between z-20 sticky top-0">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-slate-500 hover:text-slate-900 transition text-sm">← New Run</Link>
+          <Link href="/" className="text-gray-700 hover:text-gray-900 transition text-sm">← New Run</Link>
           <span className="text-slate-300">|</span>
-          <Link href="/kpi" className="text-slate-500 hover:text-slate-900 transition text-sm">📊 KPI</Link>
+          <Link href="/kpi" className="text-gray-700 hover:text-gray-900 transition text-sm">📊 KPI</Link>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-slate-600 text-sm">{session?.user?.email}</span>
+          <span className="text-gray-800 text-sm">{session?.user?.email}</span>
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
-            className="text-slate-600 hover:text-slate-700 text-sm transition"
+            className="text-gray-800 hover:text-gray-900 text-sm transition"
           >
             Sign out
           </button>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900">
+        <h1 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900">
           ⚙️ Settings
         </h1>
         <TutorialVideo videoId="1dv8371-Hhg" title="Settings" />
@@ -274,12 +274,12 @@ export default function SettingsPage() {
               <span className="text-amber-400">🚧</span>
               <span className="text-amber-300 text-sm font-medium">Under maintenance</span>
             </div>
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h2 className="font-medium mb-1 text-slate-800">
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+            <h2 className="font-medium mb-1 text-gray-900">
               🔍 HikerAPI — Scraping Instagram
               <span className="ml-2 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-normal">Recommended</span>
             </h2>
-            <p className="text-slate-600 text-xs mb-3">
+            <p className="text-gray-800 text-xs mb-3">
               Primary scraping method — residential proxies included, works on Railway without any extra setup. $0.0006/request (≈ $0.20/month).{' '}
               <a href="https://hikerapi.com/p/hsazcgym" target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-700 underline">
                 hikerapi.com
@@ -291,7 +291,7 @@ export default function SettingsPage() {
               value={hikerApiKey}
               onChange={(e) => setHikerApiKey(e.target.value)}
               placeholder="ih6q3k93xb2yiflq23dz3vuhg0sr65en"
-              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
             />
             {hikerApiKey && !hikerApiKey.includes('...') && (
               <p className="text-green-600 text-xs mt-1.5">✓ HikerAPI configured — scraping via managed proxies</p>
@@ -300,23 +300,23 @@ export default function SettingsPage() {
           </div>{/* end maintenance wrapper */}
 
           {/* Anthropic */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h2 className="font-medium mb-3 text-slate-800">Anthropic API Key</h2>
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+            <h2 className="font-medium mb-3 text-gray-900">Anthropic API Key</h2>
             <input
               type="password"
               value={anthropicKey}
               onChange={(e) => setAnthropicKey(e.target.value)}
               placeholder="sk-ant-api03-xxxxxxxxxxxxxxxxx"
-              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
             />
-            <p className="text-slate-600 text-xs mt-1.5">
+            <p className="text-gray-800 text-xs mt-1.5">
               console.anthropic.com → API Keys
             </p>
           </div>
 
           {/* Higgsfield — Device Code Flow */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h2 className="font-medium mb-3 text-slate-800">Higgsfield</h2>
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+            <h2 className="font-medium mb-3 text-gray-900">Higgsfield</h2>
 
             {higgsConnected && higgsAuthState !== 'waiting' ? (
               <div className="flex items-center justify-between">
@@ -326,7 +326,7 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={startHiggsAuth}
-                  className="text-xs text-slate-600 hover:text-slate-600 transition"
+                  className="text-xs bg-gradient-to-br from-violet-600 to-violet-700 text-white px-3 py-1.5 rounded-lg shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] transition"
                 >
                   Reconnect
                 </button>
@@ -342,19 +342,19 @@ export default function SettingsPage() {
                 >
                   🔗 Authorize on Higgsfield
                 </a>
-                <p className="text-slate-600 text-xs break-all">{higgsDeviceUrl}</p>
+                <p className="text-gray-800 text-xs break-all">{higgsDeviceUrl}</p>
               </div>
             ) : higgsAuthState === 'approved' ? (
               <div className="text-green-400 text-sm">✅ Higgsfield connected!</div>
             ) : (
               <div className="space-y-2">
-                <p className="text-slate-500 text-sm">
+                <p className="text-gray-700 text-sm">
                   Connect your Higgsfield account in one click — no token copying needed.
                 </p>
                 <button
                   onClick={startHiggsAuth}
                   disabled={higgsAuthState === 'starting'}
-                  className="bg-white hover:bg-slate-50 disabled:opacity-50 border border-slate-300 text-slate-900 text-sm rounded-lg px-4 py-2 transition shadow-sm"
+                  className="bg-white hover:bg-white/60 disabled:opacity-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2 transition shadow-sm"
                 >
                   {higgsAuthState === 'starting' ? '⏳ Starting...' : '🔗 Connect Higgsfield'}
                 </button>
@@ -367,9 +367,9 @@ export default function SettingsPage() {
           </div>
 
           {/* Reference Elements */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
             <div className="flex items-start justify-between mb-1">
-              <h2 className="font-medium text-slate-800">Reference Elements</h2>
+              <h2 className="font-medium text-gray-900">Reference Elements</h2>
               <button
                 onClick={scanElements}
                 disabled={scanning || !higgsConnected}
@@ -379,9 +379,9 @@ export default function SettingsPage() {
                 {scanning ? '⏳ Scanning...' : '🔍 Scan from Higgsfield'}
               </button>
             </div>
-            <p className="text-slate-600 text-xs mb-1">
-              🖼 <strong className="text-slate-600">Images (Nano Banana)</strong> — auto-detected via the Scan button.<br/>
-              🎬 <strong className="text-slate-600">Videos (Seedance)</strong> — add manually: open <strong className="text-slate-600">app.higgsfield.ai → Elements → Characters</strong>, open DevTools (F12) → Network, click your character → copy the UUID from the request URL <code className="text-violet-600">/reference-elements/UUID-HERE</code>.
+            <p className="text-gray-800 text-xs mb-1">
+              🖼 <strong className="text-gray-800">Images (Nano Banana)</strong> — auto-detected via the Scan button.<br/>
+              🎬 <strong className="text-gray-800">Videos (Seedance)</strong> — add manually: open <strong className="text-gray-800">app.higgsfield.ai → Elements → Characters</strong>, open DevTools (F12) → Network, click your character → copy the UUID from the request URL <code className="text-violet-600">/reference-elements/UUID-HERE</code>.
             </p>
             {scanError && (
               <p className="text-xs text-amber-600 mb-2">{scanError}</p>
@@ -393,17 +393,17 @@ export default function SettingsPage() {
                 {referenceElements.map((el) => (
                   <div
                     key={el.id}
-                    className="flex items-center justify-between bg-slate-100 border border-slate-200 rounded-lg px-3 py-2"
+                    className="flex items-center justify-between bg-white/80 border border-gray-200 rounded-lg px-3 py-2"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-900 text-sm font-medium">{el.name}</span>
+                      <span className="text-gray-900 text-sm font-medium">{el.name}</span>
                       {el.type === 'soul_2' && <span className="text-emerald-600 text-xs">🎬 Video</span>}
-                      {el.type === 'soul_cinematic' && <span className="text-slate-600 text-xs">🖼 Image</span>}
-                      <span className="text-slate-600 text-xs font-mono">{el.id.substring(0, 8)}…</span>
+                      {el.type === 'soul_cinematic' && <span className="text-gray-800 text-xs">🖼 Image</span>}
+                      <span className="text-gray-800 text-xs font-mono">{el.id.substring(0, 8)}…</span>
                     </div>
                     <button
                       onClick={() => removeElement(el.id)}
-                      className="text-slate-600 hover:text-red-500 text-sm transition"
+                      className="text-gray-800 hover:text-red-500 text-sm transition"
                     >
                       ✕
                     </button>
@@ -419,26 +419,26 @@ export default function SettingsPage() {
                 value={newElementName}
                 onChange={(e) => setNewElementName(e.target.value)}
                 placeholder="Name (e.g. NINA HYBRID)"
-                className="flex-1 min-w-[120px] bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm"
+                className="flex-1 min-w-[120px] bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm"
               />
               <input
                 type="text"
                 value={newElementId}
                 onChange={(e) => setNewElementId(e.target.value)}
                 placeholder="UUID (ex: 0dbe364b-...)"
-                className="flex-1 min-w-[180px] bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm font-mono"
+                className="flex-1 min-w-[180px] bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm font-mono"
               />
               <select
                 value={newElementType}
                 onChange={(e) => setNewElementType(e.target.value as 'soul_2' | 'soul_cinematic')}
-                className="bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
+                className="bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition"
               >
                 <option value="soul_2">🎬 Video (Seedance)</option>
                 <option value="soul_cinematic">🖼 Image (Nano Banana)</option>
               </select>
               <button
                 onClick={addElement}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 rounded-lg px-3 py-1.5 text-sm transition"
+                className="bg-white/80 hover:bg-gray-200 text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 text-sm transition"
               >
                 +
               </button>
@@ -446,15 +446,15 @@ export default function SettingsPage() {
           </div>
 
           {/* Avancé */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <h2 className="font-medium mb-3 text-slate-800">Default settings</h2>
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+            <h2 className="font-medium mb-3 text-gray-900">Default settings</h2>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-slate-600 mb-1">Model</label>
+                <label className="block text-xs text-gray-800 mb-1">Model</label>
                 <select
                   value={defaultModel}
                   onChange={(e) => setDefaultModel(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition"
                 >
                   <option value="auto">Auto (fallback)</option>
                   <option value="soul_cinematic">Soul Cinema</option>
@@ -463,11 +463,11 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1">Ratio</label>
+                <label className="block text-xs text-gray-800 mb-1">Ratio</label>
                 <select
                   value={defaultAspectRatio}
                   onChange={(e) => setDefaultAspectRatio(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition"
                 >
                   <option value="2:3">2:3</option>
                   <option value="1:1">1:1</option>
@@ -476,11 +476,11 @@ export default function SettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-600 mb-1">Quality</label>
+                <label className="block text-xs text-gray-800 mb-1">Quality</label>
                 <select
                   value={defaultQuality}
                   onChange={(e) => setDefaultQuality(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition"
                 >
                   <option value="2k">2K</option>
                   <option value="4k">4K</option>
@@ -491,31 +491,31 @@ export default function SettingsPage() {
           </div>
 
           {/* Google Drive */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-medium text-slate-800">
+              <h2 className="font-medium text-gray-900">
                 🗂️ Google Drive
-                <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${driveConnected ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${driveConnected ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-white/80 text-gray-800 border border-gray-200'}`}>
                   {driveConnected ? '● Connected' : '○ Not connected'}
                 </span>
               </h2>
             </div>
-            <p className="text-slate-600 text-xs mb-4">
+            <p className="text-gray-800 text-xs mb-4">
               Source images (Instagram) + generated images (Higgsfield) automatically uploaded to your Drive after each generation.
             </p>
 
             {/* Folder ID — toujours visible */}
             <div className="mb-4">
-              <label className="block text-xs text-slate-600 mb-1">
+              <label className="block text-xs text-gray-800 mb-1">
                 Target Drive folder{' '}
-                <span className="text-slate-600">(ID from the URL: drive.google.com/drive/folders/<strong>ID</strong>)</span>
+                <span className="text-gray-800">(ID from the URL: drive.google.com/drive/folders/<strong>ID</strong>)</span>
               </label>
               <input
                 type="text"
                 value={driveFolderId}
                 onChange={(e) => setDriveFolderId(e.target.value)}
                 placeholder="1ABC...XYZ"
-                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm"
+                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm"
               />
             </div>
 
@@ -528,7 +528,7 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={disconnectDrive}
-                  className="text-xs text-slate-600 hover:text-red-500 transition"
+                  className="text-xs text-gray-800 hover:text-red-500 transition"
                 >
                   Disconnect
                 </button>
@@ -538,7 +538,7 @@ export default function SettingsPage() {
                 <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full flex-shrink-0" />
                 <div>
                   <p className="text-blue-700 text-sm font-medium">Google window open…</p>
-                  <p className="text-slate-600 text-xs mt-0.5">Sign in and accept the permissions in the popup.</p>
+                  <p className="text-gray-800 text-xs mt-0.5">Sign in and accept the permissions in the popup.</p>
                 </div>
               </div>
             ) : driveAuthState === 'approved' ? (
@@ -561,7 +561,7 @@ export default function SettingsPage() {
               <button
                 onClick={startDriveAuth}
                 disabled={driveAuthState === 'starting'}
-                className="w-full bg-white hover:bg-slate-50 disabled:opacity-50 border border-slate-300 text-slate-900 text-sm rounded-lg px-4 py-2.5 transition flex items-center justify-center gap-2 shadow-sm"
+                className="w-full bg-white hover:bg-white/60 disabled:opacity-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2.5 transition flex items-center justify-center gap-2 shadow-sm"
               >
                 <span>🗂️</span>
                 {driveAuthState === 'starting' ? '⏳ Connecting...' : 'Connect Google Drive'}
@@ -574,14 +574,14 @@ export default function SettingsPage() {
             <button
               onClick={saveSettings}
               disabled={saving}
-              className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-medium rounded-lg py-2.5 transition"
+              className="flex-1 bg-gradient-to-br from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 disabled:opacity-50 text-white font-medium rounded-lg py-2.5 transition shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)]"
             >
               {saving ? 'Saving...' : saved ? '✅ Saved' : '💾 Save'}
             </button>
             <button
               onClick={testConnections}
               disabled={testing}
-              className="flex-1 bg-white hover:bg-slate-50 disabled:opacity-50 border border-slate-300 text-slate-900 font-medium rounded-lg py-2.5 transition shadow-sm"
+              className="flex-1 bg-white hover:bg-white/60 disabled:opacity-50 border border-gray-300 text-gray-900 font-medium rounded-lg py-2.5 transition shadow-sm"
             >
               {testing ? '⏳ Testing...' : '🔍 Test connections'}
             </button>
@@ -589,7 +589,7 @@ export default function SettingsPage() {
 
           {/* Résultats tests */}
           {testResults && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2 shadow-sm">
+            <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4 space-y-2">
               {([
                 { key: 'anthropic', label: 'Anthropic' },
                 { key: 'higgsfield', label: 'Higgsfield' },
@@ -600,8 +600,8 @@ export default function SettingsPage() {
                 return (
                   <div key={key} className="flex items-center gap-2 text-sm">
                     <span>{r.ok ? '✅' : '❌'}</span>
-                    <span className="text-slate-500">{label}</span>
-                    <span className="text-slate-600">—</span>
+                    <span className="text-gray-700">{label}</span>
+                    <span className="text-gray-800">—</span>
                     <span className={r.ok ? 'text-green-700' : 'text-red-600'}>{r.message}</span>
                   </div>
                 )

@@ -155,7 +155,7 @@ export default function NewRunPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -163,11 +163,11 @@ export default function NewRunPage() {
 
         {/* ── Maintenance banner ── */}
         {SCRAPER_MAINTENANCE && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
+          <div className="bg-amber-50/90 backdrop-blur-sm border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
             <span className="text-amber-600 mt-0.5 shrink-0 text-base">🚧</span>
             <div>
-              <p className="text-amber-700 text-sm font-medium">Scraper under maintenance</p>
-              <p className="text-amber-600 text-xs mt-0.5">Instagram scraping is temporarily unavailable. Use Prompt Studio or Bulk Edit in the meantime.</p>
+              <p className="text-amber-800 text-sm font-medium">Scraper under maintenance</p>
+              <p className="text-amber-700 text-xs mt-0.5">Instagram scraping is temporarily unavailable. Use Prompt Studio or Bulk Edit in the meantime.</p>
             </div>
           </div>
         )}
@@ -176,21 +176,21 @@ export default function NewRunPage() {
         <div className={SCRAPER_MAINTENANCE ? 'opacity-50 pointer-events-none select-none' : ''}>
 
         {/* Profils Instagram */}
-        <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5 space-y-3">
+        <div className="bg-white/75 backdrop-blur-xl shadow-sm border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Instagram Profiles</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Paste your Instagram links — separated by line breaks</p>
+              <h2 className="text-base font-semibold text-gray-900">Instagram Profiles</h2>
+              <p className="text-xs text-gray-600 mt-0.5">Paste your Instagram links — separated by line breaks</p>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500">Max posts:</label>
+              <label className="text-xs text-gray-600">Max posts:</label>
               <input
                 type="number"
                 value={maxPosts}
                 onChange={(e) => setMaxPosts(Number(e.target.value))}
                 min={5}
                 max={500}
-                className="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                className="w-16 bg-white/80 border border-gray-200 backdrop-blur-sm rounded-lg px-2 py-1.5 text-gray-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:shadow-[0_0_0_3px_rgba(109,40,217,0.15)]"
               />
             </div>
           </div>
@@ -201,13 +201,13 @@ export default function NewRunPage() {
             onChange={(e) => handlePasteInput(e.target.value)}
             placeholder={"Paste all your Instagram links at once:\nhttps://www.instagram.com/username1/\nhttps://www.instagram.com/username2/\n...\n\n(separated by line breaks, commas, or spaces)"}
             rows={5}
-            className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition text-sm resize-none font-mono"
+            className="w-full bg-white/80 border border-gray-200 backdrop-blur-sm rounded-lg px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:shadow-[0_0_0_3px_rgba(109,40,217,0.15)] transition text-sm resize-none font-mono"
           />
 
           {/* Profils parsés — chips supprimables */}
           {profiles.filter(p => p.trim()).length > 0 && (
             <div>
-              <p className="text-xs text-slate-500 mb-2">
+              <p className="text-xs text-gray-600 mb-2">
                 {profiles.filter(p => p.trim()).length} profile{profiles.filter(p => p.trim()).length > 1 ? 's' : ''} detected:
               </p>
               <div className="flex flex-wrap gap-2">
@@ -218,12 +218,12 @@ export default function NewRunPage() {
                   return (
                     <span
                       key={i}
-                      className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-full px-3 py-1 text-xs text-slate-700"
+                      className="flex items-center gap-1 bg-white/60 border border-gray-200 rounded-full px-3 py-1 text-xs text-gray-800"
                     >
                       @{username}
                       <button
                         onClick={() => removeProfile(i)}
-                        className="text-slate-600 hover:text-red-500 transition ml-1 leading-none text-sm"
+                        className="text-gray-600 hover:text-red-500 transition ml-1 leading-none text-sm"
                       >
                         ×
                       </button>
@@ -236,9 +236,9 @@ export default function NewRunPage() {
         </div>
 
         {/* Personnages */}
-        <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5">
+        <div className="bg-white/75 backdrop-blur-xl shadow-sm border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-medium text-slate-900">Character</h2>
+            <h2 className="font-medium text-gray-900">Character</h2>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
@@ -258,7 +258,7 @@ export default function NewRunPage() {
           )}
 
           {soulChars.length === 0 && refElements.length === 0 ? (
-            <p className="text-slate-500 text-sm">
+            <p className="text-gray-600 text-sm">
               Click &quot;Load from Higgsfield&quot; to see your characters.
             </p>
           ) : (
@@ -266,7 +266,7 @@ export default function NewRunPage() {
               {/* Soul Characters */}
               {soulChars.length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-500 mb-2">
+                  <p className="text-xs text-gray-600 mb-2">
                     Soul Character :
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -276,12 +276,12 @@ export default function NewRunPage() {
                         onClick={() => { setSelectedSoulId(c.id); setSelectedSoulName(c.name) }}
                         className={`px-4 py-3 rounded-xl border text-left transition ${
                           selectedSoulId === c.id
-                            ? 'bg-violet-50 border-violet-300 text-slate-900'
-                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800'
+                            ? 'bg-violet-600 border-violet-500 text-white shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                            : 'bg-white/60 border-gray-200 text-gray-800 hover:border-gray-300 hover:text-gray-900'
                         }`}
                       >
                         <p className="text-sm font-medium">{c.name}</p>
-                        <p className="text-[11px] text-slate-600 mt-0.5">{c.type === 'soul_cinematic' ? 'Cinema' : 'Soul v2'}</p>
+                        <p className={`text-[11px] mt-0.5 ${selectedSoulId === c.id ? 'text-white/80' : 'text-gray-600'}`}>{c.type === 'soul_cinematic' ? 'Cinema' : 'Soul v2'}</p>
                       </button>
                     ))}
                   </div>
@@ -291,7 +291,7 @@ export default function NewRunPage() {
               {/* Reference Elements — uniquement si mode non soul_cinematic */}
               {refElements.length > 0 && model !== 'soul_cinematic' && (
                 <div>
-                  <p className="text-xs text-slate-500 mb-2">
+                  <p className="text-xs text-gray-600 mb-2">
                     Reference Element :
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -301,12 +301,12 @@ export default function NewRunPage() {
                         onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
                         className={`px-4 py-3 rounded-xl border text-left transition ${
                           selectedElementId === e.id
-                            ? 'bg-violet-50 border-violet-300 text-slate-900'
-                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800'
+                            ? 'bg-violet-600 border-violet-500 text-white shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                            : 'bg-white/60 border-gray-200 text-gray-800 hover:border-gray-300 hover:text-gray-900'
                         }`}
                       >
                         <p className="text-sm font-medium">{e.name}</p>
-                        <p className="text-[11px] text-slate-600 mt-0.5">Seedream / Nano Banana</p>
+                        <p className={`text-[11px] mt-0.5 ${selectedElementId === e.id ? 'text-white/80' : 'text-gray-600'}`}>Seedream / Nano Banana</p>
                       </button>
                     ))}
                   </div>
@@ -317,12 +317,12 @@ export default function NewRunPage() {
         </div>
 
         {/* Modèle & Format */}
-        <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5">
-          <h2 className="font-medium mb-3 text-slate-900">Model & Format</h2>
+        <div className="bg-white/75 backdrop-blur-xl shadow-sm border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-xl p-5">
+          <h2 className="font-medium mb-3 text-gray-900">Model & Format</h2>
 
           {/* Model */}
           <div className="mb-4">
-            <label className="block text-xs text-slate-500 mb-2">Model</label>
+            <label className="block text-xs text-gray-600 mb-2">Model</label>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: 'auto', label: 'Auto (cascade)', badge: 'Recommended' },
@@ -335,12 +335,12 @@ export default function NewRunPage() {
                   onClick={() => setModel(opt.value)}
                   className={`px-3 py-2.5 rounded-xl border text-left transition ${
                     model === opt.value
-                      ? 'bg-violet-50 border-violet-300 text-slate-900'
-                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                      ? 'bg-violet-600 border-violet-500 text-white shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                      : 'bg-white/60 border-gray-200 text-gray-800 hover:border-gray-300'
                   }`}
                 >
                   <p className="text-xs font-medium">{opt.label}</p>
-                  {opt.badge && <span className="text-[10px] text-violet-600">{opt.badge}</span>}
+                  {opt.badge && <span className={`text-[10px] ${model === opt.value ? 'text-white/80' : 'text-violet-600'}`}>{opt.badge}</span>}
                 </button>
               ))}
             </div>
@@ -349,11 +349,11 @@ export default function NewRunPage() {
           {/* Format & Qualité */}
           <div className="flex gap-3">
             <div>
-              <label className="block text-xs text-slate-500 mb-1.5">Aspect Ratio</label>
+              <label className="block text-xs text-gray-600 mb-1.5">Aspect Ratio</label>
               <select
                 value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value)}
-                className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                className="bg-white/80 border border-gray-200 backdrop-blur-sm rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:shadow-[0_0_0_3px_rgba(109,40,217,0.15)] transition"
               >
                 <option value="2:3">2:3</option>
                 <option value="1:1">1:1</option>
@@ -362,11 +362,11 @@ export default function NewRunPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1.5">Quality</label>
+              <label className="block text-xs text-gray-600 mb-1.5">Quality</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
-                className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition"
+                className="bg-white/80 border border-gray-200 backdrop-blur-sm rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:shadow-[0_0_0_3px_rgba(109,40,217,0.15)] transition"
               >
                 <option value="2k">2K</option>
                 <option value="4k">4K</option>
@@ -378,7 +378,7 @@ export default function NewRunPage() {
 
         {/* Erreur lancement */}
         {launchError && (
-          <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+          <p className="text-red-700 text-sm bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-lg px-4 py-3">
             {launchError}
           </p>
         )}
@@ -387,7 +387,7 @@ export default function NewRunPage() {
         <button
           onClick={launch}
           disabled={launching}
-          className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-xl hover:shadow-violet-500/20 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-4 text-base transition-all duration-200"
+          className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 shadow-[0_4px_16px_rgba(109,40,217,0.4)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.5)] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-4 text-base transition-all duration-200"
         >
           {launching ? (
             <span className="flex items-center justify-center gap-2">

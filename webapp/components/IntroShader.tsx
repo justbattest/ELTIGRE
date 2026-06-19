@@ -152,7 +152,7 @@ export function IntroShader() {
                     delay: 0.42 + i * 0.05,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="text-[30px] font-bold text-slate-900 leading-none"
+                  className="text-[30px] font-bold text-gray-900 leading-none"
                   style={{ letterSpacing: '0.11em' }}
                 >
                   {letter}

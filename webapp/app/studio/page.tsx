@@ -221,8 +221,8 @@ function Chip({
         inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
         border transition-all duration-150 select-none
         ${selected
-          ? 'border-violet-500 bg-violet-50 text-violet-700 ring-1 ring-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
-          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900'
+          ? 'border-violet-500 bg-violet-600 text-white ring-1 ring-violet-500/30 shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+          : 'border-gray-200 bg-white/60 text-gray-800 hover:border-gray-300 hover:text-gray-900'
         }
       `}
     >
@@ -271,19 +271,19 @@ function CategorySection({
     <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">
+        <span className="text-[10px] font-semibold tracking-widest text-gray-700 uppercase">
           {emoji} {label}
         </span>
         <div className="flex items-center gap-2">
           {count > 0 && (
-            <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full border border-violet-300">
+            <span className="text-[10px] bg-violet-100/80 text-violet-700 px-2 py-0.5 rounded-full border border-violet-300">
               {count} selected
             </span>
           )}
           {count > 0 && (
             <button
               onClick={() => onClearAll(catKey)}
-              className="text-[10px] text-slate-600 hover:text-slate-600 transition"
+              className="text-[10px] text-gray-800 hover:text-gray-800 transition"
             >
               ✕ clear
             </button>
@@ -310,11 +310,11 @@ function CategorySection({
             onChange={(e) => setCustomVal(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder={`other ${label.toLowerCase()}...`}
-            className="h-[34px] bg-white border border-slate-200 rounded-full px-3 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition w-36"
+            className="h-[34px] bg-white/80 border border-gray-300 backdrop-blur-sm rounded-full px-3 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 transition w-36"
           />
           <button
             onClick={handleAdd}
-            className="h-[34px] px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full text-xs text-slate-500 hover:text-slate-900 transition whitespace-nowrap"
+            className="h-[34px] px-3 bg-white/50 hover:bg-white/60 border border-gray-200 rounded-full text-xs text-gray-700 hover:text-gray-900 transition whitespace-nowrap"
           >
             + add
           </button>
@@ -335,13 +335,13 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
     card.model === 'nano_banana_2' ? 'bg-orange-600' : 'bg-gray-600'
 
   return (
-    <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 group">
+    <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-white/50 border border-white/60 group">
       {/* Skeleton */}
       {(card.status === 'pending' || card.status === 'generating') && (
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 animate-pulse">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-violet-50/40 to-white/60 animate-pulse">
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <div className="w-6 h-6 border-2 border-violet-500/50 border-t-violet-400 rounded-full animate-spin" />
-            <span className="text-[10px] text-slate-600">
+            <span className="text-[10px] text-gray-700">
               {card.status === 'pending' ? 'pending...' : 'generating...'}
             </span>
           </div>
@@ -389,7 +389,7 @@ function GenerationCard({ card }: { card: GeneratedCard }) {
       {card.status === 'failed' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
           <span className="text-2xl">❌</span>
-          <span className="text-[10px] text-slate-600">Generation failed</span>
+          <span className="text-[10px] text-gray-700">Generation failed</span>
         </div>
       )}
 
@@ -716,7 +716,7 @@ export default function StudioPage() {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -724,15 +724,15 @@ export default function StudioPage() {
       <div className="flex min-h-[calc(100vh-113px)]">
 
         {/* LEFT — config panel */}
-        <div className="w-72 shrink-0 border-r border-slate-200 p-5 space-y-5 sticky top-[113px] self-start max-h-[calc(100vh-113px)] overflow-y-auto">
+        <div className="w-72 shrink-0 border-r border-white/60 p-5 space-y-5 sticky top-[113px] self-start max-h-[calc(100vh-113px)] overflow-y-auto bg-white/30 backdrop-blur-sm">
 
           {/* Character */}
           <div className="space-y-3">
-            <h3 className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">🎭 Character</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-gray-700 uppercase">🎭 Character</h3>
             <button
               onClick={loadCharacters}
               disabled={loadingChars}
-              className="w-full text-xs text-violet-600 hover:text-violet-700 disabled:opacity-50 transition flex items-center justify-center gap-1.5 py-1.5 border border-violet-300 rounded-lg hover:border-violet-400 bg-violet-50"
+              className="w-full text-xs text-violet-600 hover:text-violet-700 disabled:opacity-50 transition flex items-center justify-center gap-1.5 py-1.5 border border-violet-300 rounded-lg hover:border-violet-400 bg-violet-50/80"
             >
               {loadingChars ? (
               <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
@@ -748,7 +748,7 @@ export default function StudioPage() {
 
             {soulChars.length > 0 && (
               <div>
-                <p className="text-[10px] text-slate-600 mb-1.5">Soul Character</p>
+                <p className="text-[10px] text-gray-700 mb-1.5">Soul Character</p>
                 <div className="flex flex-wrap gap-1.5">
                   {soulChars.map((c) => (
                     <button
@@ -756,8 +756,8 @@ export default function StudioPage() {
                       onClick={() => { setSelectedSoulId(c.id); setSelectedSoulName(c.name) }}
                       className={`px-2.5 py-1 rounded-lg text-xs transition border ${
                         selectedSoulId === c.id
-                          ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                          ? 'bg-violet-600 border-violet-500 text-white shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                          : 'bg-white/60 border-gray-200 text-gray-800 hover:border-gray-300'
                       }`}
                     >
                       {c.name}
@@ -769,7 +769,7 @@ export default function StudioPage() {
 
             {refElements.length > 0 && (
               <div>
-                <p className="text-[10px] text-slate-600 mb-1.5">Reference Element</p>
+                <p className="text-[10px] text-gray-700 mb-1.5">Reference Element</p>
                 <div className="flex flex-wrap gap-1.5">
                   {refElements.map((e) => (
                     <button
@@ -777,8 +777,8 @@ export default function StudioPage() {
                       onClick={() => { setSelectedElementId(e.id); setSelectedElementName(e.name) }}
                       className={`px-2.5 py-1 rounded-lg text-xs transition border ${
                         selectedElementId === e.id
-                          ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                          ? 'bg-violet-600 border-violet-500 text-white shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                          : 'bg-white/60 border-gray-200 text-gray-800 hover:border-gray-300'
                       }`}
                     >
                       {e.name}
@@ -790,19 +790,19 @@ export default function StudioPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-slate-200" />
+          <div className="border-t border-white/60" />
 
           {/* Format */}
           <div className="space-y-2">
-            <h3 className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">⚙️ Format</h3>
+            <h3 className="text-[10px] font-semibold tracking-widest text-gray-700 uppercase">⚙️ Format</h3>
             <div className="grid grid-cols-3 gap-1.5">
               {/* Model */}
               <div className="col-span-3">
-                <label className="text-[10px] text-slate-600 block mb-1">Model</label>
+                <label className="text-[10px] text-gray-700 block mb-1">Model</label>
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
+                  className="w-full bg-white/80 border border-gray-300 backdrop-blur-sm rounded-lg px-2 py-1.5 text-gray-900 text-xs focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 transition"
                 >
                   <option value="auto">Auto (cascade)</option>
                   <option value="soul_cinematic">Soul Cinema</option>
@@ -812,11 +812,11 @@ export default function StudioPage() {
               </div>
               {/* Aspect */}
               <div>
-                <label className="text-[10px] text-slate-600 block mb-1">Aspect Ratio</label>
+                <label className="text-[10px] text-gray-700 block mb-1">Aspect Ratio</label>
                 <select
                   value={aspectRatio}
                   onChange={(e) => setAspectRatio(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
+                  className="w-full bg-white/80 border border-gray-300 backdrop-blur-sm rounded-lg px-2 py-1.5 text-gray-900 text-xs focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 transition"
                 >
                   <option value="2:3">2:3</option>
                   <option value="1:1">1:1</option>
@@ -826,11 +826,11 @@ export default function StudioPage() {
               </div>
               {/* Quality */}
               <div className="col-span-2">
-                <label className="text-[10px] text-slate-600 block mb-1">Quality</label>
+                <label className="text-[10px] text-gray-700 block mb-1">Quality</label>
                 <select
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
+                  className="w-full bg-white/80 border border-gray-300 backdrop-blur-sm rounded-lg px-2 py-1.5 text-gray-900 text-xs focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 transition"
                 >
                   <option value="2k">2K</option>
                   <option value="4k">4K</option>
@@ -841,18 +841,18 @@ export default function StudioPage() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-slate-200" />
+          <div className="border-t border-white/60" />
 
           {/* Error */}
           {launchError && (
-            <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded px-2 py-1.5">
+            <p className="text-red-700 text-xs bg-red-50/90 backdrop-blur-sm border border-red-200 rounded px-2 py-1.5">
               {launchError}
             </p>
           )}
 
           {/* Count selector */}
           <div className="space-y-2">
-            <label className="text-[10px] font-semibold tracking-widest text-slate-600 uppercase">
+            <label className="text-[10px] font-semibold tracking-widest text-gray-700 uppercase">
               Number of generations
             </label>
             <div className="flex items-center gap-2">
@@ -862,7 +862,7 @@ export default function StudioPage() {
                 max={50}
                 value={count}
                 onChange={(e) => setCount(Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
-                className="w-14 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-sm text-center focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
+                className="w-14 bg-white/80 border border-gray-300 backdrop-blur-sm rounded-lg px-2 py-1.5 text-gray-900 text-sm text-center focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 transition"
               />
               <input
                 type="range"
@@ -872,7 +872,7 @@ export default function StudioPage() {
                 onChange={(e) => setCount(Number(e.target.value))}
                 className="flex-1 accent-violet-500 h-1.5"
               />
-              <span className="text-xs text-slate-600 w-6 text-right">{count}</span>
+              <span className="text-xs text-gray-700 w-6 text-right">{count}</span>
             </div>
           </div>
 
@@ -882,8 +882,8 @@ export default function StudioPage() {
               onClick={() => setStudioMode('selection')}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition ${
                 studioMode === 'selection'
-                  ? 'bg-violet-50 text-violet-700 border-violet-300'
-                  : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900'
+                  ? 'bg-violet-600 text-white border-violet-500 shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                  : 'bg-white/60 text-gray-700 border-gray-200 hover:text-gray-900'
               }`}
             >
               ✨ My selection
@@ -892,8 +892,8 @@ export default function StudioPage() {
               onClick={() => setStudioMode('niche')}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition ${
                 studioMode === 'niche'
-                  ? 'bg-violet-50 text-violet-700 border-violet-300'
-                  : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900'
+                  ? 'bg-violet-600 text-white border-violet-500 shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                  : 'bg-white/60 text-gray-700 border-gray-200 hover:text-gray-900'
               }`}
             >
               🎯 By niche
@@ -907,7 +907,7 @@ export default function StudioPage() {
                 <button
                   onClick={() => launch('batch_config')}
                   disabled={launching}
-                  className="w-full relative overflow-hidden bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3 text-sm transition-all duration-200 shadow-lg shadow-violet-900/30"
+                  className="w-full relative overflow-hidden bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3 text-sm transition-all duration-200 shadow-[0_4px_16px_rgba(109,40,217,0.4)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.5)]"
                 >
                   {launching ? (
                     <span className="flex items-center justify-center gap-2">
@@ -922,7 +922,7 @@ export default function StudioPage() {
                 <button
                   onClick={() => launch('random_full')}
                   disabled={launching}
-                  className="w-full border-2 border-dashed border-slate-300 hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-slate-500 hover:text-slate-900 font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full border-2 border-dashed border-gray-300 hover:border-fuchsia-600/70 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 hover:text-gray-900 font-medium rounded-xl py-2.5 text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <span>🎲</span>
                   <span>{count} prompt{count > 1 ? 's' : ''} · fully random</span>
@@ -932,7 +932,7 @@ export default function StudioPage() {
               <button
                 onClick={launchNiche}
                 disabled={launching || !selectedSoulId}
-                className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-4 transition-all duration-200"
+                className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-4 transition-all duration-200"
               >
                 {launching
                   ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Launching...</span>
@@ -946,7 +946,7 @@ export default function StudioPage() {
           {runs.length > 0 && (
             <button
               onClick={clearAllRuns}
-              className="w-full text-xs text-slate-600 hover:text-slate-600 transition py-1"
+              className="w-full text-xs text-gray-600 hover:text-gray-800 transition py-1"
             >
               ✕ Clear all results
             </button>
@@ -960,18 +960,18 @@ export default function StudioPage() {
 
           {/* Stats bar si sélection non nulle */}
           {studioMode === 'selection' && totalSelected > 0 && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
+            <div className="flex items-center gap-2 text-xs text-gray-700 bg-white/50 border border-white/60 backdrop-blur-sm rounded-xl px-4 py-2.5">
               <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
               <span>
-                <span className="text-slate-900 font-medium">{totalSelected}</span> option{totalSelected > 1 ? 's' : ''} selected
+                <span className="text-gray-900 font-medium">{totalSelected}</span> option{totalSelected > 1 ? 's' : ''} selected
               </span>
-              <span className="text-slate-300">·</span>
+              <span className="text-gray-300">·</span>
               <span>
                 {Object.values(selections).filter(arr => arr.length > 0).length} active categor{Object.values(selections).filter(arr => arr.length > 0).length > 1 ? 'ies' : 'y'}
               </span>
               <button
                 onClick={() => setSelections(emptySelections())}
-                className="ml-auto text-slate-600 hover:text-slate-700 transition"
+                className="ml-auto text-gray-600 hover:text-gray-800 transition"
               >
                 clear all
               </button>
@@ -982,7 +982,7 @@ export default function StudioPage() {
           {studioMode === 'selection' && (
             <div className="grid grid-cols-1 gap-5">
               {(Object.keys(CHIPS) as (keyof Selections)[]).map((cat) => (
-                <div key={cat} className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-4">
+                <div key={cat} className="bg-white/75 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-xl p-4">
                   <CategorySection
                     catKey={cat}
                     selections={selections}
@@ -1001,7 +1001,7 @@ export default function StudioPage() {
             <div className="space-y-4">
               {/* Niche selector */}
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-2">Niche</p>
+                <p className="text-xs font-medium text-gray-700 mb-2">Niche</p>
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(NICHE_LABELS) as NicheKey[]).map(key => (
                     <button
@@ -1009,8 +1009,8 @@ export default function StudioPage() {
                       onClick={() => setSelectedNiche(key)}
                       className={`px-3 py-2 rounded-xl text-sm font-medium border transition ${
                         selectedNiche === key
-                          ? 'bg-violet-50 text-violet-700 border-violet-300'
-                          : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900 hover:border-slate-300'
+                          ? 'bg-violet-600 text-white border-violet-500 shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                          : 'bg-white/60 text-gray-700 border-gray-200 hover:text-gray-900 hover:border-gray-300'
                       }`}
                     >
                       {NICHE_LABELS[key]}
@@ -1021,8 +1021,8 @@ export default function StudioPage() {
 
               {/* Count */}
               <div>
-                <p className="text-xs text-slate-500 mb-2">
-                  Number of images: <span className="text-slate-900 font-medium">{nicheCount}</span>
+                <p className="text-xs text-gray-700 mb-2">
+                  Number of images: <span className="text-gray-900 font-medium">{nicheCount}</span>
                 </p>
                 <div className="flex items-center gap-3">
                   <input
@@ -1033,13 +1033,13 @@ export default function StudioPage() {
                     onChange={e => setNicheCount(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
                   />
-                  <span className="text-sm font-semibold text-slate-900 w-8 text-right">{nicheCount}</span>
+                  <span className="text-sm font-semibold text-gray-900 w-8 text-right">{nicheCount}</span>
                 </div>
               </div>
 
               {/* Preview of what will be used */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                <p className="text-[11px] text-slate-600">
+              <div className="bg-white/50 border border-white/60 backdrop-blur-sm rounded-xl p-3">
+                <p className="text-[11px] text-gray-700">
                   Generates {nicheCount} image{nicheCount > 1 ? 's' : ''} with random chips {NICHE_LABELS[selectedNiche]} —
                   locations, outfits, activities and framing adapted to the niche.
                 </p>
@@ -1051,11 +1051,11 @@ export default function StudioPage() {
 
       {/* Results section — multi-batch */}
       {runs.length > 0 && (
-        <div ref={resultsRef} className="border-t border-slate-200 space-y-0">
+        <div ref={resultsRef} className="border-t border-white/60 space-y-0">
           {runs.map((run) => (
-            <div key={run.runId} className="border-b border-slate-200 bg-white">
+            <div key={run.runId} className="border-b border-white/60 bg-white/60 backdrop-blur-sm">
               {/* Stats bar */}
-              <div className="px-6 py-3 flex items-center gap-3 border-b border-slate-200">
+              <div className="px-6 py-3 flex items-center gap-3 border-b border-white/60">
                 {/* Label + statut */}
                 <div className="flex items-center gap-2 shrink-0">
                   {run.status === 'running' && (
@@ -1067,37 +1067,37 @@ export default function StudioPage() {
                   {run.status === 'failed' && (
                     <span className="w-2 h-2 rounded-full bg-red-400" />
                   )}
-                  <span className="text-xs font-medium text-slate-700">{run.label}</span>
+                  <span className="text-xs font-medium text-gray-800">{run.label}</span>
                 </div>
 
-                <div className="w-px h-4 bg-slate-200 shrink-0" />
+                <div className="w-px h-4 bg-gray-200 shrink-0" />
 
                 <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-sm font-semibold text-slate-900">{run.stats.completed}</span>
-                  <span className="text-xs text-slate-600">✓</span>
+                  <span className="text-sm font-semibold text-gray-900">{run.stats.completed}</span>
+                  <span className="text-xs text-gray-700">✓</span>
                 </div>
                 {run.stats.failed > 0 && (
                   <>
-                    <div className="w-px h-4 bg-slate-200 shrink-0" />
+                    <div className="w-px h-4 bg-gray-200 shrink-0" />
                     <div className="flex items-center gap-1 shrink-0">
                       <span className="text-sm font-semibold text-red-600">{run.stats.failed}</span>
-                      <span className="text-xs text-slate-600">✗</span>
+                      <span className="text-xs text-gray-700">✗</span>
                     </div>
                   </>
                 )}
-                <div className="w-px h-4 bg-slate-200 shrink-0" />
-                <span className="text-xs text-slate-600 shrink-0">
+                <div className="w-px h-4 bg-gray-200 shrink-0" />
+                <span className="text-xs text-gray-700 shrink-0">
                   ⏱ {Math.floor(run.stats.elapsed / 60)}:{String(run.stats.elapsed % 60).padStart(2, '0')}
                 </span>
 
                 {/* Progress bar */}
-                <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+                <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
                     style={{ width: `${run.stats.total > 0 ? (run.stats.completed / run.stats.total) * 100 : 0}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-600 shrink-0">
+                <span className="text-xs text-gray-700 shrink-0">
                   {run.stats.total > 0 ? Math.round((run.stats.completed / run.stats.total) * 100) : 0}%
                 </span>
 
@@ -1111,7 +1111,7 @@ export default function StudioPage() {
 
                 <button
                   onClick={() => removeRun(run.runId)}
-                  className="text-slate-600 hover:text-slate-700 transition text-xs shrink-0"
+                  className="text-gray-600 hover:text-gray-800 transition text-xs shrink-0"
                   title="Remove this batch"
                 >
                   ✕

@@ -367,7 +367,7 @@ export default function CarouselPage() {
   const pct = totalCarousels > 0 ? Math.round((completedCarousels / totalCarousels) * 100) : 0
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -376,13 +376,13 @@ export default function CarouselPage() {
         <TutorialVideo videoId="iFVdktshEVQ" title="Carousels" />
 
         {/* ── Onglets ─────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 bg-slate-100 border border-slate-200 rounded-xl p-1">
+        <div className="flex gap-1 bg-white/40 backdrop-blur-sm border border-white/60 rounded-xl p-1">
           <button
             onClick={() => setActiveTab('mix')}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
               activeTab === 'mix'
-                ? 'bg-white shadow-sm text-slate-900 border border-slate-200'
-                : 'text-slate-500 hover:text-slate-900'
+                ? 'bg-violet-600 shadow-[0_4px_12px_rgba(109,40,217,0.35)] text-white border border-violet-500'
+                : 'text-gray-700 hover:text-gray-900'
             }`}
           >
             🔀 Random mix
@@ -391,8 +391,8 @@ export default function CarouselPage() {
             onClick={() => setActiveTab('variations')}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
               activeTab === 'variations'
-                ? 'bg-white shadow-sm text-slate-900 border border-slate-200'
-                : 'text-slate-500 hover:text-slate-900'
+                ? 'bg-violet-600 shadow-[0_4px_12px_rgba(109,40,217,0.35)] text-white border border-violet-500'
+                : 'text-gray-700 hover:text-gray-900'
             }`}
           >
             🎨 Variations (img2img)
@@ -414,9 +414,9 @@ export default function CarouselPage() {
             </div>
 
             {/* Soul Character (obligatoire pour img2img) */}
-            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl p-4">
+            <div className="bg-white/75 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-slate-500">Soul Character <span className="text-red-500">*</span></p>
+                <p className="text-xs font-medium text-gray-700">Soul Character <span className="text-red-500">*</span></p>
                 <button onClick={loadCharacters} disabled={loadingChars} className="text-xs text-violet-600 hover:text-violet-700 transition disabled:opacity-50">
                   {loadingChars ? 'Loading...' : 'Refresh'}
                 </button>
@@ -428,8 +428,8 @@ export default function CarouselPage() {
                       onClick={() => { setSelectedSoulId(s.id); setSelectedCharacterName(s.name) }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedSoulId === s.id
-                          ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white border-slate-200 text-slate-500 hover:border-violet-500/50 hover:text-slate-900'
+                          ? 'bg-violet-600 border-violet-500 text-white shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                          : 'bg-white/60 border-gray-200 text-gray-700 hover:border-violet-500/50 hover:text-gray-900'
                       }`}
                     >
                       {s.name}
@@ -437,10 +437,10 @@ export default function CarouselPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-600">No Soul Character found — connect Higgsfield in Settings.</p>
+                <p className="text-xs text-gray-700">No Soul Character found — connect Higgsfield in Settings.</p>
               )}
               {selectedSoulId && (
-                <p className="text-[10px] text-slate-600 mt-2 font-mono">{selectedSoulId}</p>
+                <p className="text-[10px] text-gray-600 mt-2 font-mono">{selectedSoulId}</p>
               )}
             </div>
 
@@ -449,12 +449,12 @@ export default function CarouselPage() {
               onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                dragging ? 'border-violet-400 bg-violet-50' : 'border-slate-300 hover:border-slate-400 bg-slate-50'
+                dragging ? 'border-violet-400 bg-violet-50/80' : 'border-gray-300 hover:border-gray-400 bg-white/40'
               }`}
             >
               <div className="text-4xl mb-3">📸</div>
-              <p className="text-slate-700 font-medium">Drag your reference photos here</p>
-              <p className="text-slate-500 text-sm mt-1">1 photo = 1 full carousel (original + 3 variations)</p>
+              <p className="text-gray-800 font-medium">Drag your reference photos here</p>
+              <p className="text-gray-600 text-sm mt-1">1 photo = 1 full carousel (original + 3 variations)</p>
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
                 onChange={e => e.target.files && addFiles(e.target.files)} />
             </div>
@@ -463,10 +463,10 @@ export default function CarouselPage() {
             {files.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-gray-700">
                     {files.length} photo{files.length > 1 ? 's' : ''} → {files.length} carousel{files.length > 1 ? 's' : ''} of 4 images
                   </span>
-                  <button onClick={resetVariations} className="text-xs text-slate-600 hover:text-red-500 transition">Clear all</button>
+                  <button onClick={resetVariations} className="text-xs text-gray-600 hover:text-red-500 transition">Clear all</button>
                 </div>
                 <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
                   {previews.map((url, i) => (
@@ -489,7 +489,7 @@ export default function CarouselPage() {
             <button
               onClick={launchVariations}
               disabled={files.length === 0 || !selectedSoulId || uploading}
-              className="w-full bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+              className="w-full bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
             >
               {uploading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -506,41 +506,41 @@ export default function CarouselPage() {
         {/* Variations — Progression */}
         {activeTab === 'variations' && varRunId && (
           <div className="space-y-5">
-            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-5 space-y-4">
+            <div className="bg-white/75 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-medium text-slate-800">
+                <h2 className="font-medium text-gray-900">
                   {varDone && !varError ? '✅ Variations generated!' : varDone && varError ? '❌ Error' : '🎨 Generating variations...'}
                 </h2>
-                <span className="text-xs text-slate-600">{varCompleted}/{varTotal || '?'} carousels</span>
+                <span className="text-xs text-gray-700">{varCompleted}/{varTotal || '?'} carousels</span>
               </div>
               <div>
-                <div className="bg-slate-200 rounded-full h-2">
+                <div className="bg-gray-200 rounded-full h-2">
                   <div className="bg-gradient-to-r from-violet-500 to-cyan-400 h-2 rounded-full transition-all duration-300"
                     style={{ width: varTotal > 0 ? `${Math.round(varCompleted / varTotal * 100)}%` : '0%' }} />
                 </div>
               </div>
-              {varError && <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg p-3">{varError}</div>}
+              {varError && <div className="bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-700 text-sm rounded-lg p-3">{varError}</div>}
               {varDone && (
                 <button onClick={resetVariations}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg py-2.5 transition">
+                  className="w-full bg-white/60 hover:bg-white/80 text-gray-800 text-sm rounded-lg py-2.5 transition border border-gray-200">
                   + New session
                 </button>
               )}
             </div>
             {varLinks.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-slate-500 mb-3">Carousels created ({varLinks.length})</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Carousels created ({varLinks.length})</h3>
                 <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                   {varLinks.map(({ n, urls }) => (
-                    <div key={n} className="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                    <div key={n} className="bg-white/75 backdrop-blur-sm border border-white/80 rounded-xl p-3 flex items-center justify-between shadow-sm">
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-600 w-24">carousel_{n}</span>
+                        <span className="text-xs text-gray-700 w-24">carousel_{n}</span>
                         <div className="flex gap-1">
                           {urls.map((_, i) => (
-                            <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-slate-400' : 'bg-violet-500'}`} />
+                            <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-gray-400' : 'bg-violet-500'}`} />
                           ))}
                         </div>
-                        <span className="text-[10px] text-slate-600">{urls.length} imgs (1 orig + {urls.length - 1} variants)</span>
+                        <span className="text-[10px] text-gray-700">{urls.length} imgs (1 orig + {urls.length - 1} variants)</span>
                       </div>
                       <a href={urls[0]} target="_blank" rel="noopener noreferrer"
                         className="text-[10px] text-violet-600 hover:text-violet-700 transition">View on Drive →</a>
@@ -561,9 +561,9 @@ export default function CarouselPage() {
         {!runId && (
           <>
             {/* Personnage (dossier Drive) — toujours visible */}
-            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-2xl p-4">
+            <div className="bg-white/75 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-slate-500">Character (Drive folder)</p>
+                <p className="text-xs font-medium text-gray-700">Character (Drive folder)</p>
                 <button
                   onClick={loadCharacters}
                   disabled={loadingChars}
@@ -583,8 +583,8 @@ export default function CarouselPage() {
                     <button key={e.id} onClick={() => setSelectedCharacterName(e.name)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedCharacterName === e.name
-                          ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white border-slate-200 text-slate-500 hover:border-violet-500/50 hover:text-slate-900'
+                          ? 'bg-violet-600 border-violet-500 text-white shadow-[0_4px_12px_rgba(109,40,217,0.35)]'
+                          : 'bg-white/60 border-gray-200 text-gray-700 hover:border-violet-500/50 hover:text-gray-900'
                       }`}>
                       {e.name}
                     </button>
@@ -596,12 +596,12 @@ export default function CarouselPage() {
                     value={selectedCharacterName}
                     onChange={e => setSelectedCharacterName(e.target.value)}
                     placeholder="Drive folder name (e.g. EMMA)"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition"
+                    className="w-full bg-white/80 border border-gray-300 backdrop-blur-sm rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 transition"
                   />
                   <button
                     onClick={loadCharacters}
                     disabled={loadingChars}
-                    className="w-full py-2.5 text-sm rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-violet-500/40 hover:bg-violet-50 transition disabled:opacity-40"
+                    className="w-full py-2.5 text-sm rounded-xl bg-white border border-gray-200 text-gray-700 hover:text-gray-900 hover:border-violet-500/40 hover:bg-violet-50 transition disabled:opacity-40"
                   >
                     {loadingChars ? (
                       <span className="flex items-center justify-center gap-1.5">
@@ -610,7 +610,7 @@ export default function CarouselPage() {
                       </span>
                     ) : 'Load from Higgsfield'}
                   </button>
-                  <p className="text-[10px] text-slate-600 text-center">
+                  <p className="text-[10px] text-gray-700 text-center">
                     Or type a Drive folder name directly above
                   </p>
                 </div>
@@ -625,13 +625,13 @@ export default function CarouselPage() {
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                 dragging
-                  ? 'border-violet-400 bg-violet-50'
-                  : 'border-slate-300 hover:border-slate-400 bg-slate-50'
+                  ? 'border-violet-400 bg-violet-50/80'
+                  : 'border-gray-300 hover:border-gray-400 bg-white/40'
               }`}
             >
               <div className="text-4xl mb-3">🖼️</div>
-              <p className="text-slate-700 font-medium">Drag your images here</p>
-              <p className="text-slate-500 text-sm mt-1">
+              <p className="text-gray-800 font-medium">Drag your images here</p>
+              <p className="text-gray-600 text-sm mt-1">
                 or click to select · JPG, PNG, WebP accepted
               </p>
               <input
@@ -648,7 +648,7 @@ export default function CarouselPage() {
             {files.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-gray-700">
                     {files.length} image{files.length > 1 ? 's' : ''} selected
                     {files.length >= 4 && (
                       <span className="text-violet-600 ml-2">
@@ -664,7 +664,7 @@ export default function CarouselPage() {
                   </span>
                   <button
                     onClick={resetAll}
-                    className="text-xs text-slate-600 hover:text-red-500 transition"
+                    className="text-xs text-gray-600 hover:text-red-500 transition"
                   >
                     Clear all
                   </button>
@@ -687,12 +687,12 @@ export default function CarouselPage() {
             )}
 
             {/* Réglages */}
-            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-5 space-y-4">
-              <h2 className="text-sm font-medium text-slate-800">Settings</h2>
+            <div className="bg-white/75 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-xl p-5 space-y-4">
+              <h2 className="text-sm font-medium text-gray-900">Settings</h2>
 
               {/* Max carousels */}
               <div>
-                <label className="text-[10px] text-slate-600 uppercase tracking-widest">
+                <label className="text-[10px] text-gray-700 uppercase tracking-widest">
                   Max carousels
                 </label>
                 <div className="flex items-center gap-3 mt-2">
@@ -702,7 +702,7 @@ export default function CarouselPage() {
                     max={200}
                     value={maxCarousels}
                     onChange={e => setMaxCarousels(Math.min(200, Math.max(1, Number(e.target.value))))}
-                    className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-900 text-sm text-center focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30"
+                    className="w-16 bg-white/80 border border-gray-300 backdrop-blur-sm rounded-lg px-2 py-1.5 text-gray-900 text-sm text-center focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30"
                   />
                   <input
                     type="range"
@@ -712,22 +712,22 @@ export default function CarouselPage() {
                     onChange={e => setMaxCarousels(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
                   />
-                  <span className="text-xs text-slate-600 w-10 text-right">{maxCarousels} max</span>
+                  <span className="text-xs text-gray-700 w-10 text-right">{maxCarousels} max</span>
                 </div>
-                <p className="text-[10px] text-slate-600 mt-1">
+                <p className="text-[10px] text-gray-700 mt-1">
                   Each carousel = 4 photos · unique combinations · unique EXIF iPhone 17 Pro per instance
                 </p>
               </div>
 
               {/* Infos */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1">
-                <p className="text-[10px] text-slate-500">
+              <div className="bg-white/50 border border-white/60 backdrop-blur-sm rounded-lg p-3 space-y-1">
+                <p className="text-[10px] text-gray-700">
                   ✅ EXIF stripped + fake iPhone 17 Pro (unique datetime + GPS + ISO per image/carousel)
                 </p>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-gray-700">
                   ✅ Micro-crop + micro-noise per instance → no two binary files are identical
                 </p>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-gray-700">
                   ✅ Organized upload to Drive: <code className="text-violet-600">carousel_N/1.jpg … 4.jpg</code>
                 </p>
               </div>
@@ -744,7 +744,7 @@ export default function CarouselPage() {
             <button
               onClick={launch}
               disabled={files.length < 4 || uploading}
-              className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+              className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
             >
               {uploading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -761,12 +761,12 @@ export default function CarouselPage() {
         {/* ── Progression ────────────────────────────────────────────────── */}
         {runId && (
           <div className="space-y-5">
-            <div className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-5 space-y-4">
+            <div className="bg-white/75 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] rounded-xl p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-medium text-slate-800">
+                <h2 className="font-medium text-gray-900">
                   {done && !error ? '✅ Carousels generated!' : done && error ? '❌ Error' : '⏳ Generating...'}
                 </h2>
-                <span className="text-xs text-slate-600">
+                <span className="text-xs text-gray-700">
                   {imageCount} images · C({imageCount},4) = {combinationsPossible.toLocaleString()} possible combos
                 </span>
               </div>
@@ -774,12 +774,12 @@ export default function CarouselPage() {
               {/* Barre de progression */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-gray-700">
                     {completedCarousels} / {totalCarousels || '...'} carousels
                   </span>
-                  <span className="text-xs text-slate-600">{pct}%</span>
+                  <span className="text-xs text-gray-700">{pct}%</span>
                 </div>
-                <div className="bg-slate-200 rounded-full h-2">
+                <div className="bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-gradient-to-r from-violet-500 to-cyan-400 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${pct}%` }}
@@ -788,7 +788,7 @@ export default function CarouselPage() {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg p-3">
+                <div className="bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-700 text-sm rounded-lg p-3">
                   {error}
                 </div>
               )}
@@ -797,7 +797,7 @@ export default function CarouselPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={resetAll}
-                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg py-2.5 transition"
+                    className="flex-1 bg-white/60 hover:bg-white/80 text-gray-800 text-sm rounded-lg py-2.5 transition border border-gray-200"
                   >
                     + New batch
                   </button>
@@ -808,23 +808,23 @@ export default function CarouselPage() {
             {/* Liens Drive */}
             {carouselDriveLinks.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-slate-500 mb-3">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">
                   Carousels ready ({carouselDriveLinks.length})
                 </h3>
                 <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                   {carouselDriveLinks.map(({ n, urls }) => (
                     <div
                       key={n}
-                      className="bg-white border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] rounded-xl p-3 flex items-center justify-between"
+                      className="bg-white/75 backdrop-blur-sm border border-white/80 shadow-[0_2px_8px_rgba(109,40,217,0.06)] rounded-xl p-3 flex items-center justify-between"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-600 w-20">carousel_{n}</span>
+                        <span className="text-xs text-gray-700 w-20">carousel_{n}</span>
                         <div className="flex gap-1">
                           {urls.map((_, i) => (
                             <div key={i} className="w-2 h-2 rounded-full bg-violet-500 opacity-80" />
                           ))}
                         </div>
-                        <span className="text-[10px] text-slate-600">{urls.length} photos</span>
+                        <span className="text-[10px] text-gray-700">{urls.length} photos</span>
                       </div>
                       <a
                         href={urls[0]}

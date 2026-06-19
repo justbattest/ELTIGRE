@@ -9,10 +9,10 @@ interface TutorialVideoProps {
 export function TutorialVideo({ videoId, title }: TutorialVideoProps) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="mb-6 rounded-xl border border-violet-200/60 bg-violet-50/50 overflow-hidden">
+    <div className="mb-6 rounded-xl border border-violet-200/60 bg-white/70 backdrop-blur-lg overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-violet-700 hover:bg-violet-100/50 transition"
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-violet-700 hover:bg-violet-50/60 transition"
       >
         <span className="flex items-center gap-2">
           <span className="text-base">📺</span>

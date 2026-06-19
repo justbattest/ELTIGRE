@@ -102,12 +102,12 @@ function CodeBlock({ children }: { children: string }) {
   }
   return (
     <div className="relative group">
-      <pre className="bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 text-xs text-slate-700 font-mono overflow-x-auto whitespace-pre-wrap">
+      <pre className="bg-white/80 border border-gray-200 rounded-lg px-4 py-3 text-xs text-gray-900 font-mono overflow-x-auto whitespace-pre-wrap">
         {children.trim()}
       </pre>
       <button
         onClick={copy}
-        className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] bg-white border border-slate-200 text-slate-500 opacity-0 group-hover:opacity-100 hover:text-slate-900 transition"
+        className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] bg-white border border-gray-200 text-gray-700 opacity-0 group-hover:opacity-100 hover:text-gray-900 transition"
       >
         {copied ? '✅ Copied' : '📋 Copy'}
       </button>
@@ -122,7 +122,7 @@ function SetupSection({ step, title, children }: { step: string; title: string; 
         {step}
       </div>
       <div className="flex-1 min-w-0 space-y-2">
-        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
         {children}
       </div>
     </div>
@@ -328,7 +328,7 @@ export default function SpooferPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -339,8 +339,8 @@ export default function SpooferPage() {
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">🔀 Spoofer 2.0</h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <h1 className="text-xl font-semibold text-gray-900">🔀 Spoofer 2.0</h1>
+              <p className="text-sm text-gray-700 mt-1">
                 Generates multiple visually near-identical variations of each image/video,
                 but technically distinct — to bypass Instagram duplicate detection.
               </p>
@@ -354,7 +354,7 @@ export default function SpooferPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                 cloudMode
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                  : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:text-gray-900'
               }`}
             >
               ☁️ Cloud Mode
@@ -365,7 +365,7 @@ export default function SpooferPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                 !cloudMode
                   ? 'bg-violet-50 border-violet-300 text-violet-700'
-                  : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:text-gray-900'
               }`}
             >
               🔥 Local Mode (CLIP adversarial)
@@ -377,7 +377,7 @@ export default function SpooferPage() {
                 className={`ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                   showSetup
                     ? 'bg-violet-50 border-violet-300 text-violet-700'
-                    : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                    : 'bg-white border-gray-200 text-gray-700 hover:text-gray-900 hover:border-gray-300'
                 }`}
               >
                 📖 {showSetup ? 'Hide guide' : 'Setup guide'}
@@ -389,103 +389,103 @@ export default function SpooferPage() {
           {cloudMode ? (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex flex-wrap gap-3 text-[11px]">
               <span className="text-emerald-700 font-medium">✅ No installation required</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-500">🖼 Images: Tier 1+2 — geometry, color, grain, metadata</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-500">🎬 Videos: Tier 1+2+4 — speed, audio pitch, GOP/CRF, metadata</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-600">CLIP adversarial (images) → Local Mode only</span>
+              <span className="text-gray-800">·</span>
+              <span className="text-gray-700">🖼 Images: Tier 1+2 — geometry, color, grain, metadata</span>
+              <span className="text-gray-800">·</span>
+              <span className="text-gray-700">🎬 Videos: Tier 1+2+4 — speed, audio pitch, GOP/CRF, metadata</span>
+              <span className="text-gray-800">·</span>
+              <span className="text-gray-800">CLIP adversarial (images) → Local Mode only</span>
             </div>
           ) : (
             <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 flex flex-wrap gap-3 text-[11px]">
               <span className="text-violet-700 font-medium">🔥 Full mode — PyTorch + CLIP required</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-500">🖼 Images: Tier 1+2+3 — + CLIP adversarial protection (breaks AI embeddings)</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-500">🎬 Videos: Tier 1+2+4 — same as Cloud Mode</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-slate-600">Install dependencies using the guide below</span>
+              <span className="text-gray-800">·</span>
+              <span className="text-gray-700">🖼 Images: Tier 1+2+3 — + CLIP adversarial protection (breaks AI embeddings)</span>
+              <span className="text-gray-800">·</span>
+              <span className="text-gray-700">🎬 Videos: Tier 1+2+4 — same as Cloud Mode</span>
+              <span className="text-gray-800">·</span>
+              <span className="text-gray-800">Install dependencies using the guide below</span>
             </div>
           )}
         </div>
 
         {/* ── Guide d'installation ────────────────────────────────────────────── */}
         {!cloudMode && showSetup && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 text-sm shadow-sm">
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] p-6 space-y-6 text-sm">
             <div>
-              <h2 className="text-base font-semibold text-slate-900 mb-1">🛠 Installation — First-time setup</h2>
-              <p className="text-slate-600 text-xs">
+              <h2 className="text-base font-semibold text-gray-900 mb-1">🛠 Installation — First-time setup</h2>
+              <p className="text-gray-800 text-xs">
                 One-time setup. Estimated time: 10–20 min (depending on your connection).
               </p>
             </div>
 
             {/* Étape 0 — Prérequis */}
             <SetupSection step="0" title="Prerequisites">
-              <ul className="space-y-1 text-slate-600">
-                <li>✅ <strong className="text-slate-800">macOS</strong> (Mac Intel or Apple Silicon) or <strong className="text-slate-800">Windows 10/11</strong></li>
-                <li>✅ <strong className="text-slate-800">~8 GB free disk space</strong> (PyTorch is about 2 GB)</li>
-                <li>✅ <strong className="text-slate-800">Internet connection</strong> to download packages</li>
+              <ul className="space-y-1 text-gray-800">
+                <li>✅ <strong className="text-gray-900">macOS</strong> (Mac Intel or Apple Silicon) or <strong className="text-gray-900">Windows 10/11</strong></li>
+                <li>✅ <strong className="text-gray-900">~8 GB free disk space</strong> (PyTorch is about 2 GB)</li>
+                <li>✅ <strong className="text-gray-900">Internet connection</strong> to download packages</li>
                 <li>✅ Access to a terminal / command prompt</li>
               </ul>
             </SetupSection>
 
             {/* Étape 1 — Python */}
             <SetupSection step="1" title="Install Python 3.11">
-              <p className="text-slate-600 mb-2">The Spoofer engine runs on Python. Minimum version: 3.10.</p>
-              <p className="text-slate-500 text-xs mb-2">Mac with Homebrew (recommended):</p>
+              <p className="text-gray-800 mb-2">The Spoofer engine runs on Python. Minimum version: 3.10.</p>
+              <p className="text-gray-700 text-xs mb-2">Mac with Homebrew (recommended):</p>
               <CodeBlock>{`# If you don't have Homebrew:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install Python 3.11
 brew install python@3.11`}</CodeBlock>
-              <p className="text-slate-500 text-xs mt-3 mb-2">Windows:</p>
-              <p className="text-slate-600 text-xs">Go to <span className="text-violet-600">python.org/downloads</span> → download the Python 3.11 installer → make sure to check <span className="font-semibold text-slate-800">"Add Python to PATH"</span> before installing.</p>
-              <p className="text-slate-500 text-xs mt-3 mb-2">Verify:</p>
+              <p className="text-gray-700 text-xs mt-3 mb-2">Windows:</p>
+              <p className="text-gray-800 text-xs">Go to <span className="text-violet-600">python.org/downloads</span> → download the Python 3.11 installer → make sure to check <span className="font-semibold text-gray-900">"Add Python to PATH"</span> before installing.</p>
+              <p className="text-gray-700 text-xs mt-3 mb-2">Verify:</p>
               <CodeBlock>{`python3 --version
 # Should display: Python 3.11.x`}</CodeBlock>
             </SetupSection>
 
             {/* Étape 2 — Node.js */}
             <SetupSection step="2" title="Install Node.js 18+">
-              <p className="text-slate-600 mb-2">Required for the web interface (Next.js).</p>
-              <p className="text-slate-500 text-xs mb-2">Mac:</p>
+              <p className="text-gray-800 mb-2">Required for the web interface (Next.js).</p>
+              <p className="text-gray-700 text-xs mb-2">Mac:</p>
               <CodeBlock>{`brew install node`}</CodeBlock>
-              <p className="text-slate-500 text-xs mt-3 mb-2">Windows:</p>
-              <p className="text-slate-600 text-xs">Go to <span className="text-violet-600">nodejs.org</span> → download the LTS version → install normally.</p>
+              <p className="text-gray-700 text-xs mt-3 mb-2">Windows:</p>
+              <p className="text-gray-800 text-xs">Go to <span className="text-violet-600">nodejs.org</span> → download the LTS version → install normally.</p>
             </SetupSection>
 
             {/* Étape 3 — ffmpeg */}
             <SetupSection step="3" title="Install ffmpeg (required for videos)">
-              <p className="text-slate-600 mb-2">Spoofer uses ffmpeg to process videos. Without it, only images will work.</p>
-              <p className="text-slate-500 text-xs mb-2">Mac:</p>
+              <p className="text-gray-800 mb-2">Spoofer uses ffmpeg to process videos. Without it, only images will work.</p>
+              <p className="text-gray-700 text-xs mb-2">Mac:</p>
               <CodeBlock>{`brew install ffmpeg`}</CodeBlock>
-              <p className="text-slate-500 text-xs mt-3 mb-2">Windows:</p>
+              <p className="text-gray-700 text-xs mt-3 mb-2">Windows:</p>
               <CodeBlock>{`# Via winget (Windows 11):
 winget install ffmpeg
 
 # Or via Chocolatey:
 choco install ffmpeg`}</CodeBlock>
-              <p className="text-slate-500 text-xs mt-3 mb-2">Verify:</p>
+              <p className="text-gray-700 text-xs mt-3 mb-2">Verify:</p>
               <CodeBlock>{`ffmpeg -version
 # Should display the version (e.g. ffmpeg version 6.x)`}</CodeBlock>
             </SetupSection>
 
             {/* Étape 4 — Code */}
             <SetupSection step="4" title="Get the code">
-              <p className="text-slate-600 mb-2">Navigate to the folder where you want to install the app.</p>
+              <p className="text-gray-800 mb-2">Navigate to the folder where you want to install the app.</p>
               <CodeBlock>{`git clone https://github.com/justbattest/ELTIGRE.git
 cd ELTIGRE`}</CodeBlock>
-              <p className="text-slate-600 text-xs mt-2">No git? Download the ZIP from GitHub → extract it → open a terminal in that folder.</p>
+              <p className="text-gray-800 text-xs mt-2">No git? Download the ZIP from GitHub → extract it → open a terminal in that folder.</p>
             </SetupSection>
 
             {/* Étape 5 — Virtualenv Python */}
             <SetupSection step="5" title="Set up the Python virtual environment (venv)">
-              <p className="text-slate-600 mb-2">The venv isolates project dependencies (leaves the rest of your system untouched).</p>
-              <p className="text-slate-500 text-xs mb-2">Mac / Linux:</p>
+              <p className="text-gray-800 mb-2">The venv isolates project dependencies (leaves the rest of your system untouched).</p>
+              <p className="text-gray-700 text-xs mb-2">Mac / Linux:</p>
               <CodeBlock>{`python3.11 -m venv venv
 source venv/bin/activate
 # You'll see (venv) at the start of your prompt`}</CodeBlock>
-              <p className="text-slate-500 text-xs mt-3 mb-2">Windows (PowerShell):</p>
+              <p className="text-gray-700 text-xs mt-3 mb-2">Windows (PowerShell):</p>
               <CodeBlock>{`python -m venv venv
 venv\\Scripts\\Activate.ps1
 # If you get a "scripts disabled" error: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`}</CodeBlock>
@@ -493,9 +493,9 @@ venv\\Scripts\\Activate.ps1
 
             {/* Étape 6 — pip install */}
             <SetupSection step="6" title="Install Python dependencies">
-              <p className="text-slate-600 mb-2">⚠️ PyTorch is about 2 GB — this may take 5–15 minutes depending on your connection. That&apos;s normal.</p>
+              <p className="text-gray-800 mb-2">⚠️ PyTorch is about 2 GB — this may take 5–15 minutes depending on your connection. That&apos;s normal.</p>
               <CodeBlock>{`pip install -r requirements.txt`}</CodeBlock>
-              <p className="text-slate-600 text-xs mt-2 text-amber-600">
+              <p className="text-gray-800 text-xs mt-2 text-amber-600">
                 ⚠️ If you&apos;re on Mac Apple Silicon (M1/M2/M3/M4) and torch crashes:
               </p>
               <CodeBlock>{`pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
@@ -511,45 +511,45 @@ cd ..`}</CodeBlock>
 
             {/* Étape 8 — .env */}
             <SetupSection step="8" title="Set up environment variables">
-              <p className="text-slate-600 mb-2">Copy the example file and fill in your API keys:</p>
+              <p className="text-gray-800 mb-2">Copy the example file and fill in your API keys:</p>
               <CodeBlock>{`cp webapp/.env.example webapp/.env.local
 # Open webapp/.env.local in an editor and fill in the values`}</CodeBlock>
-              <p className="text-slate-600 text-xs mt-2">Higgsfield, Kling, and Google Drive keys can also be configured from <strong className="text-slate-800">Settings → API</strong> in the interface.</p>
+              <p className="text-gray-800 text-xs mt-2">Higgsfield, Kling, and Google Drive keys can also be configured from <strong className="text-gray-900">Settings → API</strong> in the interface.</p>
             </SetupSection>
 
             {/* Étape 9 — Lancer */}
             <SetupSection step="9" title="Launch the application">
               <CodeBlock>{`cd webapp
 npm run dev`}</CodeBlock>
-              <p className="text-slate-600 text-xs mt-2">Then open <span className="text-violet-600">https://modelify.ai</span> in your browser.</p>
+              <p className="text-gray-800 text-xs mt-2">Then open <span className="text-violet-600">https://modelify.ai</span> in your browser.</p>
               <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-emerald-700 text-xs">
                 ✅ If you see the login page → everything is installed correctly!
               </div>
             </SetupSection>
 
             {/* Problèmes courants */}
-            <div className="border-t border-slate-200 pt-5 space-y-3">
-              <h3 className="text-sm font-semibold text-slate-800">🔧 Common issues</h3>
-              <div className="space-y-2 text-xs text-slate-600">
+            <div className="border-t border-gray-200 pt-5 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-900">🔧 Common issues</h3>
+              <div className="space-y-2 text-xs text-gray-800">
                 <div className="flex gap-2">
                   <span className="text-red-500 shrink-0">❌</span>
-                  <div><strong className="text-slate-800">&quot;command not found: python3&quot;</strong> → Reinstall Python and check &quot;Add to PATH&quot;</div>
+                  <div><strong className="text-gray-900">&quot;command not found: python3&quot;</strong> → Reinstall Python and check &quot;Add to PATH&quot;</div>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-red-500 shrink-0">❌</span>
-                  <div><strong className="text-slate-800">&quot;ffmpeg not found&quot;</strong> → Run <code className="bg-slate-100 px-1 rounded">brew install ffmpeg</code> and restart your terminal</div>
+                  <div><strong className="text-gray-900">&quot;ffmpeg not found&quot;</strong> → Run <code className="bg-white/80 px-1 rounded">brew install ffmpeg</code> and restart your terminal</div>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-red-500 shrink-0">❌</span>
-                  <div><strong className="text-slate-800">Spoofer slow on first run</strong> → Normal! CLIP models are loading into memory (30–60s). Subsequent runs are instant.</div>
+                  <div><strong className="text-gray-900">Spoofer slow on first run</strong> → Normal! CLIP models are loading into memory (30–60s). Subsequent runs are instant.</div>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-red-500 shrink-0">❌</span>
-                  <div><strong className="text-slate-800">&quot;torch CUDA&quot; error on Mac</strong> → Run <code className="bg-slate-100 px-1 rounded">pip install torch --index-url https://download.pytorch.org/whl/cpu</code></div>
+                  <div><strong className="text-gray-900">&quot;torch CUDA&quot; error on Mac</strong> → Run <code className="bg-white/80 px-1 rounded">pip install torch --index-url https://download.pytorch.org/whl/cpu</code></div>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-red-500 shrink-0">❌</span>
-                  <div><strong className="text-slate-800">Port 3000 already in use</strong> → Stop other apps, or change the port in <code className="bg-slate-100 px-1 rounded">package.json</code></div>
+                  <div><strong className="text-gray-900">Port 3000 already in use</strong> → Stop other apps, or change the port in <code className="bg-white/80 px-1 rounded">package.json</code></div>
                 </div>
               </div>
             </div>
@@ -560,11 +560,11 @@ npm run dev`}</CodeBlock>
         {phase === 'idle' && (
           <>
             {/* Nombre de variations */}
-            <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-4 space-y-3">
+            <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-slate-500">Variations per file</p>
-                  <p className="text-[10px] text-slate-600 mt-0.5">Each source file generates N unique variations — never the same combination twice.</p>
+                  <p className="text-xs text-gray-700">Variations per file</p>
+                  <p className="text-[10px] text-gray-800 mt-0.5">Each source file generates N unique variations — never the same combination twice.</p>
                 </div>
                 <input
                   type="number"
@@ -572,14 +572,14 @@ npm run dev`}</CodeBlock>
                   max={20}
                   value={variations}
                   onChange={e => setVariations(Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
-                  className="w-20 bg-white border border-slate-300 rounded-lg px-3 py-2 text-center text-slate-900 text-sm focus:outline-none focus:border-violet-500"
+                  className="w-20 bg-white border border-gray-300 rounded-lg px-3 py-2 text-center text-gray-900 text-sm focus:outline-none focus:border-violet-500"
                 />
               </div>
 
-              <label className="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 cursor-pointer">
+              <label className="flex items-center justify-between gap-3 pt-3 border-t border-gray-200 cursor-pointer">
                 <div>
-                  <p className="text-xs text-slate-700">🪞 Mirror effect (horizontal flip)</p>
-                  <p className="text-[10px] text-slate-600 mt-0.5">
+                  <p className="text-xs text-gray-900">🪞 Mirror effect (horizontal flip)</p>
+                  <p className="text-[10px] text-gray-800 mt-0.5">
                     Enabled by default. Uncheck if your photos/videos contain on-screen text
                     — the mirror would reverse it and make it unreadable.
                   </p>
@@ -598,12 +598,12 @@ npm run dev`}</CodeBlock>
               onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                dragging ? 'border-violet-400 bg-violet-50' : 'border-slate-300 hover:border-slate-400 bg-slate-50'
+                dragging ? 'border-violet-400 bg-violet-50' : 'border-gray-300 hover:border-slate-400 bg-white/60'
               }`}
             >
               <div className="text-4xl mb-3">🔀</div>
-              <p className="text-slate-700 font-medium">Drop your photos &amp; videos here</p>
-              <p className="text-slate-500 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · multiple files supported</p>
+              <p className="text-gray-900 font-medium">Drop your photos &amp; videos here</p>
+              <p className="text-gray-700 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · multiple files supported</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -618,15 +618,15 @@ npm run dev`}</CodeBlock>
             {entries.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-gray-700">
                     {imgCount > 0 && <span>{imgCount} photo{imgCount > 1 ? 's' : ''}</span>}
                     {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
                     {videoCount > 0 && <span>{videoCount} video{videoCount > 1 ? 's' : ''}</span>}
-                    <span className="text-slate-600 ml-2">
+                    <span className="text-gray-800 ml-2">
                       → {entries.length * variations} output file{entries.length * variations > 1 ? 's' : ''}
                     </span>
                   </span>
-                  <button onClick={resetAll} className="text-xs text-slate-600 hover:text-red-500 transition">
+                  <button onClick={resetAll} className="text-xs text-gray-800 hover:text-red-500 transition">
                     Clear all
                   </button>
                 </div>
@@ -637,7 +637,7 @@ npm run dev`}</CodeBlock>
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={entry.preview} alt="" className="w-full h-full object-cover rounded-md" />
                       ) : (
-                        <div className="w-full h-full bg-white border border-slate-200 rounded-md flex items-center justify-center">
+                        <div className="w-full h-full bg-white border border-gray-200 rounded-md flex items-center justify-center">
                           <span className="text-lg">🎬</span>
                         </div>
                       )}
@@ -654,24 +654,24 @@ npm run dev`}</CodeBlock>
             {/* Pourquoi Spoofer 2.0 */}
             <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 space-y-2">
               <p className="text-xs font-semibold text-violet-700">🏆 Why Spoofer 2.0 is different</p>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
+              <p className="text-[11px] text-gray-800 leading-relaxed">
                 Most spoofing tools apply only a single small change (a crop, a color filter...) — a level
                 of protection that modern detection systems catch in seconds, especially once they recognize
                 multiple files as variants of the same source.
               </p>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Spoofer 2.0 combines <strong className="text-slate-800">multiple independent transformation
+              <p className="text-[11px] text-gray-800 leading-relaxed">
+                Spoofer 2.0 combines <strong className="text-gray-900">multiple independent transformation
                 layers</strong> — overall appearance, fine details, colors and textures, and even the way
                 an AI &ldquo;understands&rdquo; an image or video — so that each variation is recognized as
                 a brand-new, independent file, on every level at once.
               </p>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
+              <p className="text-[11px] text-gray-800 leading-relaxed">
                 Each variation gets its own unique combination of settings: the same recipe is never
                 applied twice, even across 15–20 versions of a single file. The file&apos;s internal metadata
                 (date, device, location...) is also realistically regenerated, as if each file came from
                 a different phone — a detail most basic tools don&apos;t address.
               </p>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
+              <p className="text-[11px] text-gray-700 leading-relaxed">
                 The result: visually identical to the original for you and your audience, but unique in
                 the eyes of detection systems — including the latest ones.
               </p>
@@ -684,7 +684,7 @@ npm run dev`}</CodeBlock>
             <button
               onClick={launch}
               disabled={entries.length === 0}
-              className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+              className="w-full bg-gradient-to-br from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)]"
             >
               {entries.length === 0
                 ? 'Add files to get started'
@@ -696,10 +696,10 @@ npm run dev`}</CodeBlock>
         {/* ── Progression (running + done) ────────────────────────────────── */}
         {(isRunning || isDone) && (
           <div className="space-y-5">
-            <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5 space-y-5">
+            <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5 space-y-5">
 
               {phase === 'compressing' && (
-                <div className="flex items-center gap-3 text-xs text-slate-500">
+                <div className="flex items-center gap-3 text-xs text-gray-700">
                   <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
                   <span>🗜 Compressing images… (local processing, a few seconds)</span>
                 </div>
@@ -708,12 +708,12 @@ npm run dev`}</CodeBlock>
               {phase !== 'compressing' && (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-slate-500">
+                    <span className="text-xs font-medium text-gray-700">
                       {phase === 'uploading' ? '⬆️ Uploading to server…' : '⬆️ Files received'}
                     </span>
-                    <span className="text-xs text-slate-600">{uploadedFiles}/{uploadTotal}</span>
+                    <span className="text-xs text-gray-800">{uploadedFiles}/{uploadTotal}</span>
                   </div>
-                  <div className="bg-slate-200 rounded-full h-1.5">
+                  <div className="bg-gray-200 rounded-full h-1.5">
                     <div
                       className={`h-1.5 rounded-full transition-all duration-300 ${phase === 'uploading' ? 'bg-blue-500' : 'bg-blue-800'}`}
                       style={{ width: `${uploadPct}%` }}
@@ -725,12 +725,12 @@ npm run dev`}</CodeBlock>
               {(phase === 'processing' || isDone) && (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-slate-500">
+                    <span className="text-xs font-medium text-gray-700">
                       {isDone && !error ? '✅ Done!' : phase === 'processing' ? `🔀 Generating variations… (${level})` : '❌ Error'}
                     </span>
-                    <span className="text-xs text-slate-600">{completed}/{total || '…'}</span>
+                    <span className="text-xs text-gray-800">{completed}/{total || '…'}</span>
                   </div>
-                  <div className="bg-slate-200 rounded-full h-1.5">
+                  <div className="bg-gray-200 rounded-full h-1.5">
                     <div
                       className="bg-gradient-to-r from-violet-500 to-cyan-400 h-1.5 rounded-full transition-all duration-300"
                       style={{ width: `${processPct}%` }}
@@ -767,7 +767,7 @@ npm run dev`}</CodeBlock>
                       ⬇️ Download ZIP ({results.length} file{results.length > 1 ? 's' : ''})
                     </button>
                   )}
-                  <button onClick={resetAll} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm rounded-lg py-2.5 transition">
+                  <button onClick={resetAll} className="flex-1 bg-white/80 hover:bg-gray-200 text-gray-900 text-sm rounded-lg py-2.5 transition">
                     + New batch
                   </button>
                 </div>
@@ -777,25 +777,33 @@ npm run dev`}</CodeBlock>
             {/* Résultats variation par variation */}
             {results.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-slate-500 mb-2">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Generated variations ({results.length}{total ? `/${total}` : ''})
                 </h3>
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
                   {results.map((r, i) => (
                     <div
                       key={i}
-                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2"
+                      className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_2px_12px_rgba(109,40,217,0.08)] px-3 py-2 flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-sm shrink-0">🔀</span>
-                        <span className="text-xs text-slate-700 truncate">{r.file} <span className="text-slate-600">→ v{r.variation}</span></span>
+                        <span className="text-xs text-gray-900 truncate">{r.file} <span className="text-gray-800">→ v{r.variation}</span></span>
                       </div>
                       <div className="flex gap-1 shrink-0 flex-wrap justify-end">
-                        {r.tiersApplied.map(t => (
-                          <span key={t} className="text-[9px] text-violet-600 bg-violet-50 border border-violet-300 rounded px-1.5 py-0.5">
-                            {TIER_LABELS[t] || t}
-                          </span>
-                        ))}
+                        {r.tiersApplied.map(t => {
+                          const tierColor =
+                            t === 'tier1' ? 'text-green-700 bg-green-50 border-green-300' :
+                            t === 'tier2' ? 'text-blue-700 bg-blue-50 border-blue-300' :
+                            t === 'tier3' ? 'text-violet-700 bg-violet-50 border-violet-300' :
+                            t === 'tier4' ? 'text-pink-700 bg-pink-50 border-pink-300' :
+                            'text-gray-600 bg-gray-50 border-gray-300'
+                          return (
+                            <span key={t} className={`text-[9px] border rounded px-1.5 py-0.5 ${tierColor}`}>
+                              {TIER_LABELS[t] || t}
+                            </span>
+                          )
+                        })}
                       </div>
                     </div>
                   ))}

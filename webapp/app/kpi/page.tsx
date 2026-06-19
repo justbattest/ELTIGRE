@@ -85,7 +85,7 @@ function BankButton({ genId }: { genId: number }) {
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Optional note"
-            className="flex-1 text-xs bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 placeholder-slate-400 focus:outline-none"
+            className="flex-1 text-xs bg-white border border-gray-300 rounded px-2 py-1 text-gray-900 placeholder-slate-400 focus:outline-none"
             onKeyDown={e => e.key === 'Enter' && save()}
           />
           <button
@@ -95,7 +95,7 @@ function BankButton({ genId }: { genId: number }) {
           >
             {saving ? '…' : '✓'}
           </button>
-          <button onClick={() => setShowNotes(false)} className="text-xs text-slate-600 px-1">✕</button>
+          <button onClick={() => setShowNotes(false)} className="text-xs text-gray-800 px-1">✕</button>
         </div>
       ) : (
         <button
@@ -120,7 +120,7 @@ function SourceImage({ gen }: { gen: Generation }) {
   if (err || !localSrc) {
     return (
       <a href={gen.sourcePostUrl} target="_blank" rel="noopener noreferrer">
-        <div className="w-24 h-32 bg-slate-100 rounded-lg flex flex-col items-center justify-center gap-1 text-slate-600 hover:bg-slate-200 transition cursor-pointer">
+        <div className="w-24 h-32 bg-white/80 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-800 hover:bg-gray-200 transition cursor-pointer">
           <span className="text-xl">📸</span>
           <span className="text-xs">Source ↗</span>
         </div>
@@ -201,13 +201,13 @@ export default function KPIPage() {
     new Date(s).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* Nav */}
-      <nav className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
-        <Link href="/" className="text-slate-500 hover:text-slate-900 transition text-sm">
+      <nav className="border-b border-white/70 bg-white/85 backdrop-blur-xl shadow-[0_1px_12px_rgba(109,40,217,0.08)] px-6 py-3 flex items-center justify-between z-20 sticky top-0">
+        <Link href="/" className="text-gray-700 hover:text-gray-900 transition text-sm">
           ← New Run
         </Link>
-        <Link href="/settings" className="text-slate-500 hover:text-slate-900 transition text-sm">
+        <Link href="/settings" className="text-gray-700 hover:text-gray-900 transition text-sm">
           ⚙️ Settings
         </Link>
       </nav>
@@ -217,7 +217,7 @@ export default function KPIPage() {
           <h1 className="text-xl font-bold">📊 Results</h1>
           <button
             onClick={exportCSV}
-            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg px-4 py-2 transition shadow-sm"
+            className="bg-white hover:bg-white/60 border border-gray-200 text-gray-900 text-sm rounded-lg px-4 py-2 transition shadow-sm"
           >
             📥 Export CSV
           </button>
@@ -228,7 +228,7 @@ export default function KPIPage() {
           <select
             value={selectedRunId}
             onChange={(e) => handleRunChange(e.target.value)}
-            className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
+            className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition"
           >
             {data?.runs.map((r) => (
               <option key={r.id} value={r.id}>
@@ -240,7 +240,7 @@ export default function KPIPage() {
           <select
             value={filterModel}
             onChange={(e) => { setFilterModel(e.target.value); load(selectedRunId, sortBy, e.target.value) }}
-            className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
+            className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition"
           >
             <option value="all">All models</option>
             <option value="soul_cinematic">Soul Cinema</option>
@@ -251,7 +251,7 @@ export default function KPIPage() {
           <select
             value={sortBy}
             onChange={(e) => { setSortBy(e.target.value); load(selectedRunId, e.target.value, filterModel) }}
-            className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-violet-500 transition"
+            className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition"
           >
             <option value="likes">Sort: likes ↓</option>
             <option value="comments">Sort: comments ↓</option>
@@ -273,10 +273,10 @@ export default function KPIPage() {
                 sub: `${data.summary.total} posts`
               },
             ].map((stat) => (
-              <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                <p className="text-slate-600 text-xs">{stat.label}</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
-                <p className="text-slate-600 text-xs mt-0.5">{stat.sub}</p>
+              <div key={stat.label} className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4">
+                <p className="text-gray-800 text-xs">{stat.label}</p>
+                <p className="text-violet-700 font-bold text-2xl mt-1">{stat.value}</p>
+                <p className="text-gray-800 text-xs mt-0.5">{stat.sub}</p>
               </div>
             ))}
           </div>
@@ -284,9 +284,9 @@ export default function KPIPage() {
 
         {/* Résultats */}
         {loading ? (
-          <div className="text-center py-20 text-slate-600">⏳ Loading...</div>
+          <div className="text-center py-20 text-gray-800">⏳ Loading...</div>
         ) : !data?.generations?.length ? (
-          <div className="text-center py-20 text-slate-600">
+          <div className="text-center py-20 text-gray-800">
             No completed generations for this run.
           </div>
         ) : (
@@ -296,23 +296,23 @@ export default function KPIPage() {
               return (
                 <div
                   key={g.id}
-                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
+                  className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4"
                 >
                   <div className="flex gap-4">
                     {/* ── Comparaison images : Source → Généré ── */}
                     <div className="flex items-start gap-2 flex-shrink-0">
                       {/* Image source (Instagram original) */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-slate-600">Original</span>
+                        <span className="text-xs text-gray-800">Original</span>
                         <SourceImage gen={g} />
                       </div>
 
                       {/* Flèche */}
-                      <div className="flex items-center h-32 text-slate-600 text-lg">→</div>
+                      <div className="flex items-center h-32 text-gray-800 text-lg">→</div>
 
                       {/* Image générée (Higgsfield) */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs text-slate-600">Generated</span>
+                        <span className="text-xs text-gray-800">Generated</span>
                         {g.generatedImageUrl ? (
                           <a href={g.generatedImageUrl} target="_blank" rel="noopener noreferrer">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -323,7 +323,7 @@ export default function KPIPage() {
                             />
                           </a>
                         ) : (
-                          <div className="w-24 h-32 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 text-xs">
+                          <div className="w-24 h-32 bg-white/80 rounded-lg flex items-center justify-center text-gray-800 text-xs">
                             —
                           </div>
                         )}
@@ -344,7 +344,7 @@ export default function KPIPage() {
                             </span>
                           )}
                           {g.sourceRank && (
-                            <span className="text-xs text-slate-600">#{g.sourceRank}</span>
+                            <span className="text-xs text-gray-800">#{g.sourceRank}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-xs flex-shrink-0">
@@ -352,7 +352,7 @@ export default function KPIPage() {
                           <span className="text-red-400 font-medium">
                             ❤️ {(g.sourceLikes || 0).toLocaleString('en-US')}
                           </span>
-                          <span className="text-slate-600">
+                          <span className="text-gray-800">
                             💬 {(g.sourceComments || 0).toLocaleString('en-US')}
                           </span>
                           {g.sourcePostUrl && (
@@ -369,19 +369,19 @@ export default function KPIPage() {
                       </div>
 
                       {g.sceneDescription && (
-                        <p className="text-slate-700 text-sm mb-2">{g.sceneDescription}</p>
+                        <p className="text-gray-900 text-sm mb-2">{g.sceneDescription}</p>
                       )}
 
                       {g.promptUsed && (
                         <div>
                           <button
                             onClick={() => setExpandedPrompt(expandedPrompt === g.id ? null : g.id)}
-                            className="text-xs text-slate-600 hover:text-slate-600 transition mb-1"
+                            className="text-xs text-gray-800 hover:text-gray-800 transition mb-1"
                           >
                             {expandedPrompt === g.id ? '▲ Hide prompt' : '▼ View prompt'}
                           </button>
                           {expandedPrompt === g.id && (
-                            <p className="text-xs text-slate-700 bg-slate-100 border border-slate-200 rounded-lg p-3 font-mono leading-relaxed">
+                            <p className="text-xs text-gray-900 bg-white/80 border border-gray-200 rounded-lg p-3 font-mono leading-relaxed">
                               {g.promptUsed}
                             </p>
                           )}

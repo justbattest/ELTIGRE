@@ -64,9 +64,11 @@ export function Sidebar() {
       transition={{ duration: 0.25, ease: 'easeInOut' }}
       className="flex-shrink-0 flex flex-col h-screen sticky top-0 z-40 overflow-hidden"
       style={{
-        background: '#ffffff',
-        borderRight: '1px solid rgba(0,0,0,0.08)',
-        boxShadow: '2px 0 12px rgba(0,0,0,0.04)',
+        background: 'rgba(255,255,255,0.82)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        borderRight: '1px solid rgba(255,255,255,0.7)',
+        boxShadow: '2px 0 24px rgba(109,40,217,0.1)',
       }}
     >
       {/* ── Logo ──────────────────────────────────────────────── */}

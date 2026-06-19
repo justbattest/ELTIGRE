@@ -213,7 +213,7 @@ export default function MotionControlPage() {
   const mcUploadStatus = mcUploadDone ? 'done' : mcUploadStarted ? 'running' : 'idle'
 
   const stepColor = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
-    s === 'done' ? 'text-emerald-500' : s === 'running' ? 'text-violet-600' : s === 'error' ? 'text-red-500' : s === 'skipped' ? 'text-amber-600' : 'text-slate-600'
+    s === 'done' ? 'text-emerald-500' : s === 'running' ? 'text-violet-600' : s === 'error' ? 'text-red-500' : s === 'skipped' ? 'text-amber-600' : 'text-gray-800'
   const stepIcon = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
     s === 'done' ? '✅' : s === 'running' ? '⏳' : s === 'error' ? '❌' : s === 'skipped' ? '⚠️' : '○'
 
@@ -252,7 +252,7 @@ export default function MotionControlPage() {
   const characterName = selectedSoulName || selectedElementName
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen text-gray-900">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
         <PageWrapper>
@@ -260,8 +260,8 @@ export default function MotionControlPage() {
 
             {/* Header */}
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">🎭 Motion Control</h1>
-              <p className="text-slate-500 text-sm mt-1">
+              <h1 className="text-2xl font-bold text-gray-900">🎭 Motion Control</h1>
+              <p className="text-gray-700 text-sm mt-1">
                 Prepare a Drive folder (video + frame + model swap + outfit variations) for manual Kling MC
               </p>
             </div>
@@ -269,8 +269,8 @@ export default function MotionControlPage() {
             {/* Sélecteur de personnage */}
             {soulCharacters.length > 0 ? (
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-600 uppercase tracking-wider">
-                  Character <span className="normal-case font-normal text-slate-600">(Drive folder)</span>
+                <label className="text-xs font-medium text-gray-800 uppercase tracking-wider">
+                  Character <span className="normal-case font-normal text-gray-800">(Drive folder)</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {soulCharacters.map(s => (
@@ -280,7 +280,7 @@ export default function MotionControlPage() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedSoulId === s.id
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                          : 'bg-white border-gray-200 text-gray-900 hover:border-gray-300'
                       }`}
                     >
                       {s.name}
@@ -290,7 +290,7 @@ export default function MotionControlPage() {
               </div>
             ) : refElements.length > 0 ? (
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-600 uppercase tracking-wider">Character</label>
+                <label className="text-xs font-medium text-gray-800 uppercase tracking-wider">Character</label>
                 <div className="flex flex-wrap gap-2">
                   {refElements.map(el => (
                     <button
@@ -299,7 +299,7 @@ export default function MotionControlPage() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedElementId === el.id
                           ? 'bg-violet-600 border-violet-500 text-white'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                          : 'bg-white border-gray-200 text-gray-900 hover:border-gray-300'
                       }`}
                     >
                       {el.name}
@@ -313,16 +313,16 @@ export default function MotionControlPage() {
             <TutorialVideo videoId="nO8e2riPWVY" title="MC Prep / Motion Control" />
 
             {/* Why MC Prep beats manual */}
-            <div className="mb-6 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4">
-              <h2 className="font-semibold text-slate-800 mb-2 flex items-center gap-2">
+            <div className="mb-6 bg-violet-50/80 backdrop-blur-sm rounded-2xl border border-violet-200/60 px-5 py-4">
+              <h2 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                 <span>✨</span> Why MC Prep saves you time &amp; money
               </h2>
-              <ul className="space-y-1.5 text-sm text-slate-500">
-                <li>⚡ <span className="text-slate-700 font-medium">Fully automated</span> — frame extraction, AI face swap (Seedream 4.5 + InsightFace pixel transplant), N outfit variations, Drive upload in one click</li>
-                <li>💰 <span className="text-slate-700 font-medium">Cheaper</span> — no manual credits wasted on wrong prompts compared to doing it yourself on Higgsfield</li>
-                <li>👤 <span className="text-slate-700 font-medium">Better identity</span> — InsightFace pixel-perfect face transplant ensures Nina&apos;s exact face on every result, not an AI-generated lookalike</li>
-                <li>🎭 <span className="text-slate-700 font-medium">8 distinct outfit styles</span> — sporty, party, casual, beach, elegant, lingerie, power, festival — cycled automatically per variation</li>
-                <li>📁 <span className="text-slate-700 font-medium">Saves directly to Drive</span> — ready-to-use folder for Kling MC, no downloads or copy-pasting needed</li>
+              <ul className="space-y-1.5 text-sm text-gray-700">
+                <li>⚡ <span className="text-gray-900 font-medium">Fully automated</span> — frame extraction, AI face swap (Seedream 4.5 + InsightFace pixel transplant), N outfit variations, Drive upload in one click</li>
+                <li>💰 <span className="text-gray-900 font-medium">Cheaper</span> — no manual credits wasted on wrong prompts compared to doing it yourself on Higgsfield</li>
+                <li>👤 <span className="text-gray-900 font-medium">Better identity</span> — InsightFace pixel-perfect face transplant ensures Nina&apos;s exact face on every result, not an AI-generated lookalike</li>
+                <li>🎭 <span className="text-gray-900 font-medium">8 distinct outfit styles</span> — sporty, party, casual, beach, elegant, lingerie, power, festival — cycled automatically per variation</li>
+                <li>📁 <span className="text-gray-900 font-medium">Saves directly to Drive</span> — ready-to-use folder for Kling MC, no downloads or copy-pasting needed</li>
               </ul>
             </div>
 
@@ -330,11 +330,11 @@ export default function MotionControlPage() {
             <div className="space-y-5">
 
               {/* Étape 1 — Photo de référence du modèle */}
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5 space-y-3">
+              <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">① Model reference photo</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Used by Nano Banana 2 to swap the person in the frame</p>
+                    <p className="text-sm font-semibold text-gray-900">① Model reference photo</p>
+                    <p className="text-xs text-gray-700 mt-0.5">Used by Nano Banana 2 to swap the person in the frame</p>
                   </div>
                   {mcModelPhotoPreview && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -359,7 +359,7 @@ export default function MotionControlPage() {
                     <span className="text-xs text-emerald-600">✅ {mcModelPhotoName}</span>
                     <button
                       onClick={() => modelPhotoInputRef.current?.click()}
-                      className="text-xs text-slate-600 hover:text-slate-700 transition underline"
+                      className="text-xs text-gray-800 hover:text-gray-900 transition underline"
                     >
                       Change photo
                     </button>
@@ -367,7 +367,7 @@ export default function MotionControlPage() {
                 ) : (
                   <button
                     onClick={() => modelPhotoInputRef.current?.click()}
-                    className="w-full py-3 rounded-xl text-sm border-2 border-dashed border-slate-200 text-slate-600 hover:border-violet-300 hover:text-slate-700 transition"
+                    className="w-full py-3 rounded-xl text-sm border-2 border-dashed border-gray-200 text-gray-800 hover:border-violet-300 hover:text-gray-900 transition"
                   >
                     📷 Upload model reference photo
                   </button>
@@ -375,8 +375,8 @@ export default function MotionControlPage() {
               </div>
 
               {/* Étape 2 — URL Instagram + extraction frames */}
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5 space-y-3">
-                <p className="text-sm font-semibold text-slate-900">② Instagram Reel URL</p>
+              <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+                <p className="text-sm font-semibold text-gray-900">② Instagram Reel URL</p>
                 <div className="flex gap-2">
                   <input
                     type="url"
@@ -385,12 +385,12 @@ export default function MotionControlPage() {
                     onKeyDown={e => { if (e.key === 'Enter') handleExtractFrames() }}
                     placeholder="https://www.instagram.com/reel/..."
                     disabled={mcExtracting || mcGenerating}
-                    className="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-violet-400 transition disabled:opacity-50"
+                    className="flex-1 bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-800 outline-none focus:border-violet-400 transition disabled:opacity-50"
                   />
                   <button
                     onClick={handleExtractFrames}
                     disabled={!mcVideoUrl.trim() || mcExtracting || mcGenerating}
-                    className="px-4 py-2.5 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 transition flex-shrink-0 flex items-center gap-2"
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/80 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-900 transition flex-shrink-0 flex items-center gap-2"
                   >
                     {mcExtracting ? (
                       <>
@@ -410,7 +410,7 @@ export default function MotionControlPage() {
                 {/* Thumbnails de sélection de frame */}
                 {mcFrames.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs text-slate-500">Select a frame:</p>
+                    <p className="text-xs text-gray-700">Select a frame:</p>
                     <div className="grid grid-cols-4 gap-2">
                       {mcFrames.map(frame => (
                         <button
@@ -420,7 +420,7 @@ export default function MotionControlPage() {
                           className={`relative rounded-xl overflow-hidden aspect-[9/16] border-2 transition ${
                             mcSelectedFrame === frame.index
                               ? 'border-violet-500 ring-2 ring-violet-500/30'
-                              : 'border-slate-200 hover:border-slate-400'
+                              : 'border-gray-200 hover:border-slate-400'
                           } disabled:cursor-not-allowed`}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -446,11 +446,11 @@ export default function MotionControlPage() {
 
               {/* Étape 3 — Options */}
               {mcFrames.length > 0 && (
-                <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5 space-y-3">
-                  <p className="text-sm font-semibold text-slate-900">③ Options</p>
+                <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+                  <p className="text-sm font-semibold text-gray-900">③ Options</p>
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <label className="text-xs text-slate-500 mb-1 block">Outfit variations</label>
+                      <label className="text-xs text-gray-700 mb-1 block">Outfit variations</label>
                       <div className="flex items-center gap-3">
                         <input
                           type="range"
@@ -461,12 +461,12 @@ export default function MotionControlPage() {
                           disabled={mcGenerating}
                           className="flex-1 accent-violet-500"
                         />
-                        <span className="text-sm font-bold text-slate-900 w-4 text-center">{mcNumVariations}</span>
+                        <span className="text-sm font-bold text-gray-900 w-4 text-center">{mcNumVariations}</span>
                       </div>
                     </div>
                     {characterName && (
-                      <div className="text-xs text-slate-500">
-                        Drive folder: <span className="text-slate-700">{characterName}</span>
+                      <div className="text-xs text-gray-700">
+                        Drive folder: <span className="text-gray-900">{characterName}</span>
                       </div>
                     )}
                   </div>
@@ -482,8 +482,8 @@ export default function MotionControlPage() {
 
               {/* Progress */}
               {mcRunId && (
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">Progress</p>
+                <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+                  <p className="text-xs font-medium text-gray-800 uppercase tracking-wider mb-2">Progress</p>
 
                   {/* Swap */}
                   <div className="space-y-1">
@@ -515,12 +515,12 @@ export default function MotionControlPage() {
                           key={v.index}
                           src={v.url}
                           alt={`Outfit ${v.index}`}
-                          className="w-14 h-14 rounded-lg object-cover border border-slate-200"
+                          className="w-14 h-14 rounded-lg object-cover border border-gray-200"
                         />
                       ))}
                       {mcVariationsDone.length < mcNumVariations && mcGenerating && (
-                        <div className="w-14 h-14 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center">
-                          <span className="text-slate-600 text-xs animate-pulse">⏳</span>
+                        <div className="w-14 h-14 rounded-lg bg-white/80 border border-gray-200 flex items-center justify-center">
+                          <span className="text-gray-800 text-xs animate-pulse">⏳</span>
                         </div>
                       )}
                     </div>
@@ -570,7 +570,7 @@ export default function MotionControlPage() {
                     mcExtracting
                   }
                   className="w-full py-4 rounded-xl font-semibold text-base transition
-                    bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white
+                    bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] hover:from-violet-500 hover:to-violet-400 text-white
                     disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {mcGenerating ? (
@@ -594,13 +594,13 @@ export default function MotionControlPage() {
                     setMcPrepError('')
                     setMcVideoUrl('')
                   }}
-                  className="w-full py-3 rounded-xl text-sm text-slate-600 hover:text-slate-700 transition"
+                  className="w-full py-3 rounded-xl text-sm text-gray-800 hover:text-gray-900 transition"
                 >
                   Prepare another reel
                 </button>
               )}
 
-              <p className="text-xs text-center text-slate-600">
+              <p className="text-xs text-center text-gray-800">
                 Seedream 4.5 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
               </p>
             </div>

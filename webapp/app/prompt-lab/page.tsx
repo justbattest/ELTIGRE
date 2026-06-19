@@ -260,7 +260,7 @@ export default function PromptLabPage() {
   const isRunning = generating
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen text-gray-900">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -268,32 +268,32 @@ export default function PromptLabPage() {
 
         <div>
           <h1 className="text-xl font-bold">🧪 Prompt Lab</h1>
-          <p className="text-slate-500 text-sm mt-1">Upload screenshots of a video to reproduce + describe the scene → Claude generates the perfect Seedance prompt.</p>
+          <p className="text-gray-700 text-sm mt-1">Upload screenshots of a video to reproduce + describe the scene → Claude generates the perfect Seedance prompt.</p>
         </div>
 
         <TutorialVideo videoId="nO8e2riPWVY" title="Videos / Prompt Lab" />
 
         {/* ── Upload screenshots ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)] space-y-3">
-          <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Video screenshots <span className="text-slate-600 font-normal normal-case">(1–10 frames, in order)</span></p>
+        <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+          <p className="text-xs text-gray-700 font-medium uppercase tracking-wider">Video screenshots <span className="text-gray-800 font-normal normal-case">(1–10 frames, in order)</span></p>
 
           <div
             onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
             onClick={() => document.getElementById('pl-file-input')?.click()}
-            className={`rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition ${dragging ? 'border-violet-500 bg-violet-50' : 'border-slate-300 hover:border-slate-400'}`}
+            className={`rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition ${dragging ? 'border-violet-500 bg-violet-50' : 'border-gray-300 hover:border-slate-400'}`}
           >
             <input id="pl-file-input" type="file" multiple accept="image/*" className="hidden"
               onChange={e => { if (e.target.files) addFiles(e.target.files) }} />
-            <p className="text-slate-500 text-sm">
+            <p className="text-gray-700 text-sm">
               {images.length > 0 ? `${images.length} frame${images.length > 1 ? 's' : ''} — click or drag to add more` : 'Drop your screenshots here or click'}
             </p>
-            <p className="text-slate-600 text-xs mt-1">JPG · PNG · WEBP · max 10 images</p>
+            <p className="text-gray-800 text-xs mt-1">JPG · PNG · WEBP · max 10 images</p>
           </div>
 
           {images.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {images.map((img, i) => (
-                <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden bg-white/80 flex-shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.preview} alt="" className="w-full h-full object-cover" />
                   <div className="absolute top-0.5 left-1 text-xs text-white bg-black/50 rounded px-1">{i + 1}</div>
@@ -306,14 +306,14 @@ export default function PromptLabPage() {
         </div>
 
         {/* ── Description ── */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <p className="text-xs text-slate-500 mb-3 font-medium uppercase tracking-wider">Scene description</p>
+        <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)]">
+          <p className="text-xs text-gray-700 mb-3 font-medium uppercase tracking-wider">Scene description</p>
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder="Describe what happens: the woman's outfit, actions, exact dialogue, reactions from other people, atmosphere (indoor/outdoor/night/day), desired effects (visible underwear, skirt lifting, distraction)..."
             rows={4}
-            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm resize-none"
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm resize-none"
           />
         </div>
 
@@ -322,7 +322,7 @@ export default function PromptLabPage() {
           <button
             onClick={generate}
             disabled={isRunning || !images.length || !description.trim()}
-            className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] hover:from-violet-500 hover:to-violet-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {isRunning ? (
             <span className="flex items-center justify-center gap-2">
@@ -349,14 +349,14 @@ export default function PromptLabPage() {
 
             {/* Analyse */}
             {analysisText && (
-              <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)]">
                 <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Claude Analysis</p>
+                  <p className="text-xs text-gray-700 font-medium uppercase tracking-wider">Claude Analysis</p>
                   {isRunning && <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />}
                 </div>
                 <div
                   ref={analysisRef}
-                  className="px-5 pb-4 max-h-80 overflow-y-auto text-sm text-slate-700 leading-relaxed whitespace-pre-wrap"
+                  className="px-5 pb-4 max-h-80 overflow-y-auto text-sm text-gray-900 leading-relaxed whitespace-pre-wrap"
                 >
                   {analysisText}
                   {isRunning && !promptJson && <span className="inline-block w-1.5 h-4 bg-violet-400 ml-0.5 animate-pulse" />}
@@ -366,17 +366,17 @@ export default function PromptLabPage() {
 
             {/* Prompt JSON */}
             {promptJson && (
-              <div className="bg-white rounded-2xl border border-violet-300 shadow-sm">
+              <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-violet-300/70 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)]">
                 <div className="px-5 pt-4 pb-2 flex items-center justify-between">
                   <p className="text-xs text-violet-600 font-medium uppercase tracking-wider">🎬 Seedance Prompt Generated</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(promptJson) }}
-                    className="text-xs text-slate-600 hover:text-slate-700 transition"
+                    className="text-xs text-gray-800 hover:text-gray-900 transition"
                   >
                     Copy
                   </button>
                 </div>
-                <pre className="px-5 pb-4 text-xs text-slate-700 overflow-x-auto whitespace-pre-wrap">
+                <pre className="px-5 pb-4 text-xs text-gray-900 overflow-x-auto whitespace-pre-wrap">
                   {(() => { try { return JSON.stringify(JSON.parse(promptJson), null, 2) } catch { return promptJson } })()}
                 </pre>
                 <div className="px-5 pb-4">
@@ -394,11 +394,11 @@ export default function PromptLabPage() {
 
         {/* ── Historique session ── */}
         {history.length > 0 && (
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            <p className="text-xs text-slate-500 mb-3 font-medium uppercase tracking-wider">Session history ({history.length})</p>
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)]">
+            <p className="text-xs text-gray-700 mb-3 font-medium uppercase tracking-wider">Session history ({history.length})</p>
             <div className="space-y-2">
               {history.map(entry => (
-                <div key={entry.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-3 py-2">
+                <div key={entry.id} className="flex items-center gap-3 bg-white/60 rounded-xl px-3 py-2">
                   <div className="flex gap-1">
                     {entry.previews.slice(0, 3).map((p, i) => (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -406,8 +406,8 @@ export default function PromptLabPage() {
                     ))}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-700 truncate">{entry.description}</p>
-                    <p className="text-xs text-slate-600">{entry.timestamp}</p>
+                    <p className="text-xs text-gray-900 truncate">{entry.description}</p>
+                    <p className="text-xs text-gray-800">{entry.timestamp}</p>
                   </div>
                   <button onClick={() => reviewEntry(entry)} className="text-xs text-violet-600 hover:text-violet-700 transition whitespace-nowrap">Review</button>
                   <button onClick={() => openSaveDialog(entry.promptJson)} className="text-xs text-emerald-700 hover:text-emerald-600 transition whitespace-nowrap">Save</button>
@@ -421,39 +421,39 @@ export default function PromptLabPage() {
 
       {/* ── Dialog Save to Video ── */}
       {showSaveDialog && (
-        <div className="fixed inset-0 bg-white/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-lg">
-            <h2 className="font-bold text-lg text-slate-900">💾 Save to Video</h2>
-            <p className="text-xs text-slate-500">This prompt will appear in the Videos tab with your name.</p>
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/85 backdrop-blur-xl border border-white/85 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)]">
+            <h2 className="font-bold text-lg text-gray-900">💾 Save to Video</h2>
+            <p className="text-xs text-gray-700">This prompt will appear in the Videos tab with your name.</p>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Your first name / username</label>
+                <label className="block text-xs text-gray-700 mb-1">Your first name / username</label>
                 <input
                   type="text"
                   value={saveAuthor}
                   onChange={e => setSaveAuthor(e.target.value)}
                   placeholder="Alexandre"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Short concept description</label>
+                <label className="block text-xs text-gray-700 mb-1">Short concept description</label>
                 <input
                   type="text"
                   value={saveDescription}
                   onChange={e => setSaveDescription(e.target.value.slice(0, 80))}
                   placeholder="Woman with back to audience, visible underwear, friend reacts..."
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
                 />
-                <p className="text-xs text-slate-600 mt-0.5">{saveDescription.length}/80</p>
+                <p className="text-xs text-gray-800 mt-0.5">{saveDescription.length}/80</p>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Category</label>
+                <label className="block text-xs text-gray-700 mb-1">Category</label>
                 <select
                   value={saveCategoryKey}
                   onChange={e => setSaveCategoryKey(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
                 >
                   {CATEGORIES.map(c => (
                     <option key={c.key} value={c.key}>{c.label}</option>
@@ -464,13 +464,13 @@ export default function PromptLabPage() {
             </div>
 
             {saveCategoryKey === 'custom' && (
-              <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="space-y-2 p-3 bg-white/60 rounded-xl border border-gray-200">
                 <input type="text" value={customLabel} onChange={e => setCustomLabel(e.target.value)}
                   placeholder="Category name (e.g. Cooking, Car...)"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 text-sm" />
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 text-sm" />
                 <input type="text" value={customNiche} onChange={e => setCustomNiche(e.target.value)}
                   placeholder="Internal key (e.g. cooking, car — no spaces)"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 text-sm font-mono" />
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 text-sm font-mono" />
               </div>
             )}
 
@@ -481,7 +481,7 @@ export default function PromptLabPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowSaveDialog(false)}
-                className="flex-1 py-2 rounded-xl text-sm text-slate-500 bg-slate-100 hover:bg-slate-200 transition"
+                className="flex-1 py-2 rounded-xl text-sm text-gray-700 bg-white/80 hover:bg-gray-200 transition"
               >
                 Cancel
               </button>

@@ -32,13 +32,13 @@ function ProgressBar({ value, total }: { value: number; total: number }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 bg-slate-200 rounded-full h-2">
+      <div className="flex-1 bg-gray-200 rounded-full h-2">
         <div
           className="bg-violet-500 h-2 rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-xs text-slate-600 w-10 text-right">{pct}%</span>
+      <span className="text-xs text-gray-800 w-10 text-right">{pct}%</span>
     </div>
   )
 }
@@ -100,10 +100,10 @@ export default function MonitoringPage() {
   }, [id])
 
   const statusColor = {
-    running: 'text-amber-400',
-    completed: 'text-green-400',
-    failed: 'text-red-400',
-    paused: 'text-slate-600',
+    running: 'text-amber-600',
+    completed: 'text-green-600',
+    failed: 'text-red-600',
+    paused: 'text-gray-700',
   }
 
   const statusLabel = {
@@ -114,20 +114,20 @@ export default function MonitoringPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* Nav */}
-      <nav className="border-b border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
-        <Link href="/" className="text-slate-500 hover:text-slate-900 transition text-sm">
+      <nav className="border-b border-white/70 bg-white/85 backdrop-blur-xl px-6 py-3 flex items-center justify-between shadow-[0_1px_12px_rgba(109,40,217,0.08)]">
+        <Link href="/" className="text-gray-700 hover:text-gray-900 transition text-sm">
           ← New Run
         </Link>
-        <Link href="/kpi" className="text-slate-500 hover:text-slate-900 transition text-sm">
+        <Link href="/kpi" className="text-gray-700 hover:text-gray-900 transition text-sm">
           📊 KPI →
         </Link>
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-8">
         {!run ? (
-          <div className="text-center py-20 text-slate-600">⏳ Connecting to run...</div>
+          <div className="text-center py-20 text-gray-800">⏳ Connecting to run...</div>
         ) : (
           <div className="space-y-6">
             {/* Header */}
@@ -136,7 +136,7 @@ export default function MonitoringPage() {
                 <h1 className="text-xl font-bold">Run #{id.substring(0, 8)}</h1>
                 <span
                   className={`text-sm ${
-                    statusColor[run.status as keyof typeof statusColor] || 'text-slate-600'
+                    statusColor[run.status as keyof typeof statusColor] || 'text-gray-800'
                   }`}
                 >
                   {statusLabel[run.status as keyof typeof statusLabel] || run.status}
@@ -154,7 +154,7 @@ export default function MonitoringPage() {
               {run.status === 'completed' && (
                 <Link
                   href="/kpi"
-                  className="bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg px-4 py-2 transition"
+                  className="bg-gradient-to-br from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 text-white text-sm rounded-xl px-4 py-2 transition shadow-[0_4px_12px_rgba(109,40,217,0.35)] hover:shadow-[0_6px_18px_rgba(109,40,217,0.45)]"
                 >
                   View results →
                 </Link>
@@ -162,7 +162,7 @@ export default function MonitoringPage() {
             </div>
 
             {/* Phases */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-5 shadow-sm">
+            <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 p-5 space-y-5 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)]">
               {/* Scraping */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -170,17 +170,17 @@ export default function MonitoringPage() {
                     <span
                       className={
                         phase === 'scraping' && run.status === 'running'
-                          ? 'text-amber-400'
+                          ? 'text-amber-600'
                           : run.totalPosts > 0
-                          ? 'text-green-400'
-                          : 'text-slate-600'
+                          ? 'text-green-600'
+                          : 'text-gray-800'
                       }
                     >
                       ①
                     </span>
                     Scraping
                   </span>
-                  <span className="text-xs text-slate-600">
+                  <span className="text-xs text-gray-800">
                     {run.totalPosts > 0 ? `${run.totalPosts} posts` : '—'}
                   </span>
                 </div>
@@ -194,17 +194,17 @@ export default function MonitoringPage() {
                     <span
                       className={
                         phase === 'analyzing' && run.status === 'running'
-                          ? 'text-amber-400'
+                          ? 'text-amber-600'
                           : run.completedPosts > 0
-                          ? 'text-green-400'
-                          : 'text-slate-600'
+                          ? 'text-green-600'
+                          : 'text-gray-800'
                       }
                     >
                       ②
                     </span>
                     Claude Analysis
                   </span>
-                  <span className="text-xs text-slate-600">
+                  <span className="text-xs text-gray-800">
                     {run.totalPosts > 0
                       ? `${run.generations?.length || 0}/${run.totalPosts} prompts`
                       : '—'}
@@ -223,17 +223,17 @@ export default function MonitoringPage() {
                     <span
                       className={
                         phase === 'generating' && run.status === 'running'
-                          ? 'text-amber-400'
+                          ? 'text-amber-600'
                           : run.status === 'completed'
-                          ? 'text-green-400'
-                          : 'text-slate-600'
+                          ? 'text-green-600'
+                          : 'text-gray-800'
                       }
                     >
                       ③
                     </span>
                     Higgsfield Generation
                   </span>
-                  <span className="text-xs text-slate-600">
+                  <span className="text-xs text-gray-800">
                     {run.totalPosts > 0
                       ? `${run.completedPosts}/${run.totalPosts}`
                       : '—'}
@@ -244,23 +244,23 @@ export default function MonitoringPage() {
 
               {/* Détails génération */}
               {run.totalPosts > 0 && (
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
-                  <div className="text-xs text-slate-600">
-                    Active jobs: <span className="text-slate-900">{run.activeJobs}</span>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
+                  <div className="text-xs text-gray-800">
+                    Active jobs: <span className="text-gray-900">{run.activeJobs}</span>
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-gray-800">
                     Fallbacks: <span className="text-amber-400">{run.fallbackCount}</span>
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-gray-800">
                     Soul Cinema: <span className="text-green-400">{run.soulCount} ✓</span>
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-gray-800">
                     Seedream: <span className="text-blue-400">{run.seedreamCount}</span>
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-gray-800">
                     Failed: <span className="text-red-400">{run.failedPosts}</span>
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-gray-800">
                     Nano Banana: <span className="text-orange-400">{run.nanoBananaCount}</span>
                   </div>
                 </div>
@@ -270,7 +270,7 @@ export default function MonitoringPage() {
             {/* Résultats — images + prompts */}
             {run.generations?.filter((g) => g.generatedImageUrl).length > 0 && (
               <div>
-                <h2 className="text-sm font-medium text-slate-500 mb-3">
+                <h2 className="text-sm font-medium text-gray-700 mb-3">
                   Results ({run.generations.filter((g) => g.generatedImageUrl).length} images)
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -281,7 +281,7 @@ export default function MonitoringPage() {
                       const isExpanded = expandedPrompt === g.id
                       const wasCopied = copied === g.id
                       return (
-                        <div key={g.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <div key={g.id} className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 overflow-hidden shadow-[0_4px_16px_rgba(109,40,217,0.09)]">
                           {/* Image */}
                           <div className="relative aspect-[2/3]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -301,14 +301,14 @@ export default function MonitoringPage() {
 
                           {/* Prompt */}
                           {g.promptUsed ? (
-                            <div className="p-3 space-y-2 border-t border-slate-200">
-                              <p className={`text-xs text-slate-700 leading-relaxed ${isExpanded ? '' : 'line-clamp-4'}`}>
+                            <div className="p-3 space-y-2 border-t border-gray-200">
+                              <p className={`text-xs text-gray-900 leading-relaxed ${isExpanded ? '' : 'line-clamp-4'}`}>
                                 {g.promptUsed}
                               </p>
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => setExpandedPrompt(isExpanded ? null : g.id)}
-                                  className="text-xs text-slate-600 hover:text-slate-600 transition"
+                                  className="text-xs text-gray-800 hover:text-gray-800 transition"
                                 >
                                   {isExpanded ? '▲' : '▼ tout voir'}
                                 </button>
@@ -321,7 +321,7 @@ export default function MonitoringPage() {
                                   className={`ml-auto text-xs px-2 py-0.5 rounded transition font-medium ${
                                     wasCopied
                                       ? 'bg-green-50 text-green-700 border border-green-200'
-                                      : 'bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
+                                      : 'bg-white/80 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border border-gray-200'
                                   }`}
                                 >
                                   {wasCopied ? '✓ Copied' : '📋 Copy'}
@@ -329,8 +329,8 @@ export default function MonitoringPage() {
                               </div>
                             </div>
                           ) : (
-                            <div className="p-3 border-t border-slate-200">
-                              <p className="text-xs text-slate-600 italic">Prompt not available</p>
+                            <div className="p-3 border-t border-gray-200">
+                              <p className="text-xs text-gray-800 italic">Prompt not available</p>
                             </div>
                           )}
                         </div>

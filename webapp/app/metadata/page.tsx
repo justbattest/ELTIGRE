@@ -276,7 +276,7 @@ export default function MetadataPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-auto min-w-0">
       <PageWrapper>
@@ -289,8 +289,8 @@ export default function MetadataPage() {
           <>
             {/* Sélecteur personnage */}
             {characters.length > 0 && (
-              <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-4">
-                <p className="text-xs text-slate-500 mb-2">Character (Drive folder)</p>
+              <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4">
+                <p className="text-xs text-gray-700 mb-2">Character (Drive folder)</p>
                 <div className="flex flex-wrap gap-2">
                   {characters.map(c => (
                     <button
@@ -299,7 +299,7 @@ export default function MetadataPage() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                         selectedCharacterName === c.name
                           ? 'bg-gradient-to-br from-violet-600 to-violet-500 border-violet-500 text-white'
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-violet-500/50'
+                          : 'bg-white/60 border-gray-200 text-gray-900 hover:border-violet-500/50'
                       }`}
                     >
                       {c.name}
@@ -314,12 +314,12 @@ export default function MetadataPage() {
               onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                dragging ? 'border-violet-400 bg-violet-50' : 'border-slate-300 hover:border-slate-400 bg-slate-50'
+                dragging ? 'border-violet-400 bg-violet-50' : 'border-gray-300 hover:border-slate-400 bg-white/60'
               }`}
             >
               <div className="text-4xl mb-3">🧹</div>
-              <p className="text-slate-700 font-medium">Drag your photos &amp; videos here</p>
-              <p className="text-slate-500 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · unlimited quantity · all land in a single Drive folder</p>
+              <p className="text-gray-900 font-medium">Drag your photos &amp; videos here</p>
+              <p className="text-gray-700 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · unlimited quantity · all land in a single Drive folder</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -334,17 +334,17 @@ export default function MetadataPage() {
             {entries.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-gray-700">
                     {imgCount > 0 && <span>{imgCount} photo{imgCount > 1 ? 's' : ''}</span>}
                     {imgCount > 0 && videoCount > 0 && <span className="mx-1">·</span>}
                     {videoCount > 0 && <span>{videoCount} video{videoCount > 1 ? 's' : ''}</span>}
                     {entries.length > UPLOAD_CHUNK_SIZE && (
-                      <span className="text-slate-600 ml-2">
+                      <span className="text-gray-800 ml-2">
                         · sent in {nChunks} batches of {UPLOAD_CHUNK_SIZE}, in 1 Drive folder
                       </span>
                     )}
                   </span>
-                  <button onClick={resetAll} className="text-xs text-slate-600 hover:text-red-500 transition">
+                  <button onClick={resetAll} className="text-xs text-gray-800 hover:text-red-500 transition">
                     Clear all
                   </button>
                 </div>
@@ -355,7 +355,7 @@ export default function MetadataPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={entry.preview} alt="" className="w-full h-full object-cover rounded-md" />
                       ) : (
-                        <div className="w-full h-full bg-white rounded-md flex items-center justify-center border border-slate-200">
+                        <div className="w-full h-full bg-white rounded-md flex items-center justify-center border border-gray-200">
                           <span className="text-lg">🎬</span>
                         </div>
                       )}
@@ -370,10 +370,10 @@ export default function MetadataPage() {
             )}
 
             {/* Infos */}
-            <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-4 space-y-1.5">
-              <p className="text-[10px] text-slate-500">🖼️ <strong className="text-slate-700">Images</strong> — EXIF iPhone 17 Pro (iOS 26.x, GPS, ISO uniques) · ICC Display P3 · DQT Apple</p>
-              <p className="text-[10px] text-slate-500">🎬 <strong className="text-slate-700">Vidéos</strong> — com.apple.quicktime.* · handler Core Media Video · strip Kling/Lavf</p>
-              <p className="text-[10px] text-slate-500">📂 <strong className="text-slate-700">Drive</strong> — <code className="text-violet-600">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 single folder, all files inside</p>
+            <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4 space-y-1.5">
+              <p className="text-[10px] text-gray-700">🖼️ <strong className="text-gray-900">Images</strong> — EXIF iPhone 17 Pro (iOS 26.x, GPS, ISO uniques) · ICC Display P3 · DQT Apple</p>
+              <p className="text-[10px] text-gray-700">🎬 <strong className="text-gray-900">Vidéos</strong> — com.apple.quicktime.* · handler Core Media Video · strip Kling/Lavf</p>
+              <p className="text-[10px] text-gray-700">📂 <strong className="text-gray-900">Drive</strong> — <code className="text-violet-600">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 single folder, all files inside</p>
             </div>
 
             {error && (
@@ -383,7 +383,7 @@ export default function MetadataPage() {
             <button
               onClick={launch}
               disabled={entries.length === 0}
-              className="w-full bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm"
+              className="w-full bg-gradient-to-br from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl py-3.5 transition text-sm shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)]"
             >
               {entries.length === 0
                 ? 'Add files to get started'
@@ -395,11 +395,11 @@ export default function MetadataPage() {
         {/* ── Progression (running + done) ────────────────────────────────── */}
         {(isRunning || isDone) && (
           <div className="space-y-5">
-            <div className="bg-white shadow-sm border border-slate-200 rounded-xl p-5 space-y-5">
+            <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5 space-y-5">
 
               {/* Phase 0 — compression locale */}
               {phase === 'compressing' && (
-                <div className="flex items-center gap-3 text-xs text-slate-500">
+                <div className="flex items-center gap-3 text-xs text-gray-700">
                   <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin shrink-0" />
                   <span>🗜 Compressing images… (local processing, a few seconds)</span>
                 </div>
@@ -409,12 +409,12 @@ export default function MetadataPage() {
               {phase !== 'compressing' && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium text-slate-500">
+                  <span className="text-xs font-medium text-gray-700">
                     {phase === 'uploading' ? '⬆️ Sending to server…' : '⬆️ Files received'}
                   </span>
-                  <span className="text-xs text-slate-600">{uploadedFiles}/{total}</span>
+                  <span className="text-xs text-gray-800">{uploadedFiles}/{total}</span>
                 </div>
-                <div className="bg-slate-200 rounded-full h-1.5">
+                <div className="bg-gray-200 rounded-full h-1.5">
                   <div
                     className={`h-1.5 rounded-full transition-all duration-300 ${phase === 'uploading' ? 'bg-blue-500' : 'bg-blue-800'}`}
                     style={{ width: `${uploadPct}%` }}
@@ -426,15 +426,15 @@ export default function MetadataPage() {
               {/* Phase 2 — nettoyage + Drive */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium text-slate-500">
+                  <span className="text-xs font-medium text-gray-700">
                     {phase === 'uploading'   ? '⏳ Waiting…'
                     : isDone && !error       ? '✅ Cleanup done!'
                     : phase === 'processing' ? '🧹 Cleanup + Drive upload…'
                     : '❌ Error'}
                   </span>
-                  <span className="text-xs text-slate-600">{completed}/{total}</span>
+                  <span className="text-xs text-gray-800">{completed}/{total}</span>
                 </div>
-                <div className="bg-slate-200 rounded-full h-1.5">
+                <div className="bg-gray-200 rounded-full h-1.5">
                   <div
                     className="bg-gradient-to-r from-violet-500 to-cyan-400 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${processPct}%` }}
@@ -456,7 +456,7 @@ export default function MetadataPage() {
               )}
 
               {isDone && (
-                <button onClick={resetAll} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm rounded-lg py-2.5 transition">
+                <button onClick={resetAll} className="w-full bg-white/80 hover:bg-gray-200 text-gray-900 text-sm rounded-lg py-2.5 transition">
                   + New batch
                 </button>
               )}
@@ -465,7 +465,7 @@ export default function MetadataPage() {
             {/* Résultats fichier par fichier */}
             {results.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-slate-500 mb-2">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Files processed ({results.length}/{total})
                 </h3>
                 <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
@@ -473,12 +473,12 @@ export default function MetadataPage() {
                     <div
                       key={i}
                       className={`bg-white border rounded-xl px-3 py-2 flex items-center justify-between gap-2 ${
-                        r.error ? 'border-red-200' : 'border-slate-200'
+                        r.error ? 'border-red-200' : 'border-gray-200'
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-sm shrink-0">{r.isVideo ? '🎬' : '🖼️'}</span>
-                        <span className="text-xs text-slate-700 truncate">{r.filename}</span>
+                        <span className="text-xs text-gray-900 truncate">{r.filename}</span>
                       </div>
                       {r.error ? (
                         <span className="text-[10px] text-red-600 shrink-0 ml-2">❌ {r.error.slice(0, 40)}</span>
