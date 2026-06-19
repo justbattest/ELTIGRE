@@ -169,7 +169,7 @@ export default function BulkEditPage() {
           <p className="text-gray-700 text-sm mt-1">Drop your images, enter a prompt, and run Seedream on every photo at once.</p>
         </div>
 
-        <TutorialVideo videoId="kA53iyKKKgM" title="Bulk Edit" />
+        <TutorialVideo videoId="VrVR5jUC5U0" title="Bulk Edit" />
 
         {/* ── Dossier Drive ── */}
         <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] p-5">

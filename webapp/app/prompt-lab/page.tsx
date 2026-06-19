@@ -271,7 +271,7 @@ export default function PromptLabPage() {
           <p className="text-gray-700 text-sm mt-1">Upload screenshots of a video to reproduce + describe the scene → Claude generates the perfect Seedance prompt.</p>
         </div>
 
-        <TutorialVideo videoId="nO8e2riPWVY" title="Videos / Prompt Lab" />
+        <TutorialVideo videoId="kqiJKDm7hyo" title="Prompt Lab" />
 
         {/* ── Upload screenshots ── */}
         <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">

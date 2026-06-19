@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
-import { TutorialVideo } from '@/components/TutorialVideo'
 
 // ─── Types communs ────────────────────────────────────────────────────────────
 
@@ -309,8 +308,6 @@ export default function MotionControlPage() {
               </div>
             ) : null}
 
-            {/* Tutorial video */}
-            <TutorialVideo videoId="nO8e2riPWVY" title="MC Prep / Motion Control" />
 
             {/* Why MC Prep beats manual */}
             <div className="mb-6 bg-violet-50/80 backdrop-blur-sm rounded-2xl border border-violet-200/60 px-5 py-4">

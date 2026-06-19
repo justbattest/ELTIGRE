@@ -373,7 +373,7 @@ export default function CarouselPage() {
       <PageWrapper>
       <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
-        <TutorialVideo videoId="iFVdktshEVQ" title="Carousels" />
+        <TutorialVideo videoId="gtxJn_YbXqU" title="Carousel" />
 
         {/* ── Onglets ─────────────────────────────────────────────────────── */}
         <div className="flex gap-1 bg-white/40 backdrop-blur-sm border border-white/60 rounded-xl p-1">

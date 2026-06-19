@@ -51,7 +51,7 @@ export default function ImagePage() {
       </div>
       <div className="max-w-3xl mx-auto px-6 py-12 space-y-6">
         <h1 className="text-2xl font-bold">📸 Image</h1>
-        <TutorialVideo videoId="kA53iyKKKgM" title="Images" />
+        <TutorialVideo videoId="CiWJUfTDwtY" title="Scraping" />
         <p className="text-gray-700">Instagram scraping + Higgsfield image generation.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Scraping — temporairement désactivé (maintenance) */}

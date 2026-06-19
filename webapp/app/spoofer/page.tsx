@@ -334,7 +334,7 @@ export default function SpooferPage() {
       <PageWrapper>
       <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
-        <TutorialVideo videoId="-eiumj9ePO4" title="Metadata & Spoofer" />
+        <TutorialVideo videoId="BcgOt6c55pw" title="Spoofer" />
 
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-4">

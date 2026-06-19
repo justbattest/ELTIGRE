@@ -956,7 +956,7 @@ export default function StudioPage() {
         {/* RIGHT — chip selector */}
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
 
-          <TutorialVideo videoId="kA53iyKKKgM" title="Prompt Studio" />
+          <TutorialVideo videoId="smPXJBLI4e4" title="Prompt Studio" />
 
           {/* Stats bar si sélection non nulle */}
           {studioMode === 'selection' && totalSelected > 0 && (

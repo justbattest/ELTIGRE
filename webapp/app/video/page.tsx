@@ -384,7 +384,7 @@ export default function VideoPage() {
       <PageWrapper>
       <div className="max-w-4xl mx-auto px-8 py-8 space-y-5">
 
-        <TutorialVideo videoId="nO8e2riPWVY" title="Videos" />
+        <TutorialVideo videoId="WuTWTwoGjFQ" title="Videos" />
 
         {/* ── Sélecteur de niche — 3 onglets séparés ── */}
         <div className="flex gap-2 flex-wrap">

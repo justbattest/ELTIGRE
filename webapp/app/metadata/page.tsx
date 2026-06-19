@@ -282,7 +282,7 @@ export default function MetadataPage() {
       <PageWrapper>
       <div className="max-w-3xl mx-auto px-8 py-8 space-y-6">
 
-        <TutorialVideo videoId="-eiumj9ePO4" title="Metadata & Spoofer" />
+        <TutorialVideo videoId="fCi6PqBYzNE" title="Metadata" />
 
         {/* ── Config (idle uniquement) ────────────────────────────────────── */}
         {phase === 'idle' && (
