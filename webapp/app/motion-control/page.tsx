@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 
@@ -9,21 +9,37 @@ import { PageWrapper } from '@/components/PageWrapper'
 type RefElement = { id: string; name: string; type?: string }
 type SoulCharacter = { id: string; name: string; status?: string }
 
-// ─── Types onglet "MC Prep" ───────────────────────────────────────────────────
+// ─── Types onglet "MC Prep" (batch mode) ─────────────────────────────────────
 
-type ExtractFrame = { index: number; timestamp: number; url: string }
-
-type PrepEvent = {
+type BatchEvent = {
   type: string
+  videoIndex?: number
   step?: string
   status?: string
+  source?: string
   url?: string
+  driveUrl?: string
   drive_url?: string
   index?: number
   total?: number
   msg?: string
-  files?: number
-  folder?: string
+  totalVideos?: number
+  completed?: number
+  failed?: number
+  phase?: string
+}
+
+type VideoStatus = {
+  source: string
+  extract: 'idle' | 'running' | 'done' | 'error'
+  swap: 'idle' | 'running' | 'done' | 'error'
+  swapUrl?: string
+  variationsDone: number
+  variationsTotal: number
+  variations: 'idle' | 'running' | 'done' | 'error'
+  upload: 'idle' | 'running' | 'done' | 'error'
+  driveUrl?: string
+  error?: string
 }
 
 /** Convertit un dataURL base64 en File object. */
@@ -47,27 +63,24 @@ export default function MotionControlPage() {
   const [selectedSoulId, setSelectedSoulId] = useState('')
   const [selectedSoulName, setSelectedSoulName] = useState('')
 
-  // ── Onglet MC Prep ───────────────────────────────────────────────────────────
+  // ── Onglet MC Prep (batch mode) ──────────────────────────────────────────────
   const modelPhotoInputRef = useRef<HTMLInputElement>(null)
-  const mcSseRef = useRef<EventSource | null>(null)
+  const batchSseRef = useRef<EventSource | null>(null)
+  const videoDropRef = useRef<HTMLInputElement>(null)
 
   const [mcModelPhotoPreview, setMcModelPhotoPreview] = useState<string | null>(null)
   const [mcModelPhotoName, setMcModelPhotoName] = useState<string>('model_reference.jpg')
   const [mcModelPhotoFile, setMcModelPhotoFile] = useState<File | null>(null)
-
-  const [mcVideoUrl, setMcVideoUrl] = useState('')
-  const [mcExtracting, setMcExtracting] = useState(false)
-  const [mcExtractError, setMcExtractError] = useState('')
-  const [mcExtractId, setMcExtractId] = useState<string | null>(null)
-  const [mcFrames, setMcFrames] = useState<ExtractFrame[]>([])
-  const [mcSelectedFrame, setMcSelectedFrame] = useState<number | null>(null)
   const [mcNumVariations, setMcNumVariations] = useState(4)
 
-  const [mcGenerating, setMcGenerating] = useState(false)
-  const [mcRunId, setMcRunId] = useState<string | null>(null)
-  const [mcPrepEvents, setMcPrepEvents] = useState<PrepEvent[]>([])
-  const [mcDriveUrl, setMcDriveUrl] = useState<string | null>(null)
-  const [mcPrepError, setMcPrepError] = useState('')
+  const [batchUrlText, setBatchUrlText] = useState('')
+  const [batchFiles, setBatchFiles] = useState<{file: File, name: string}[]>([])
+  const [batchGenerating, setBatchGenerating] = useState(false)
+  const [batchRunId, setBatchRunId] = useState<string | null>(null)
+  const [batchEvents, setBatchEvents] = useState<BatchEvent[]>([])
+  const [batchTotalItems, setBatchTotalItems] = useState(0)
+  const [batchDone, setBatchDone] = useState(false)
+  const [batchError, setBatchError] = useState('')
 
   // Charger la photo modèle depuis localStorage
   useEffect(() => {
@@ -99,122 +112,112 @@ export default function MotionControlPage() {
     e.target.value = ''
   }
 
-  const handleExtractFrames = async () => {
-    if (!mcVideoUrl.trim() || mcExtracting) return
-    setMcExtracting(true)
-    setMcExtractError('')
-    setMcExtractId(null)
-    setMcFrames([])
-    setMcSelectedFrame(null)
-    setMcPrepEvents([])
-    setMcDriveUrl(null)
-    setMcRunId(null)
-
-    try {
-      const res = await fetch('/api/mc-prep/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoUrl: mcVideoUrl.trim(), numFrames: 4 }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
-      setMcExtractId(data.extractId)
-      setMcFrames(data.frames || [])
-      if (data.frames?.length) setMcSelectedFrame(0) // sélectionner la 1ère par défaut
-    } catch (err) {
-      setMcExtractError(err instanceof Error ? err.message : 'Extraction error')
-    } finally {
-      setMcExtracting(false)
+  // Derived state: per-video status computed from batch events
+  const videoStatuses = useMemo(() => {
+    const map: Record<number, VideoStatus> = {}
+    for (const evt of batchEvents) {
+      const vi = evt.videoIndex
+      if (vi === undefined) continue
+      if (!map[vi]) map[vi] = { source: '', extract: 'idle', swap: 'idle', swapUrl: undefined, variationsDone: 0, variationsTotal: mcNumVariations, variations: 'idle', upload: 'idle' }
+      const s = map[vi]
+      if (evt.type === 'extract') {
+        if (evt.status === 'started') { s.extract = 'running'; s.source = evt.source || '' }
+        else if (evt.status === 'done') s.extract = 'done'
+        else if (evt.status === 'error') { s.extract = 'error'; s.error = evt.msg }
+      }
+      if (evt.type === 'step' && evt.step === 'swap') {
+        if (evt.status === 'started') s.swap = 'running'
+        else if (evt.status === 'done') { s.swap = 'done'; s.swapUrl = evt.url }
+        else if (evt.status === 'error') s.swap = 'error'
+      }
+      if (evt.type === 'variation') {
+        s.variations = 'running'
+        s.variationsDone = Math.max(s.variationsDone, evt.index || 0)
+      }
+      if (evt.type === 'step' && evt.step === 'upload') {
+        if (evt.status === 'started') s.upload = 'running'
+        else if (evt.status === 'done') s.upload = 'done'
+      }
+      if (evt.type === 'video_complete') {
+        s.variations = 'done'
+        s.upload = 'done'
+        s.driveUrl = evt.driveUrl || evt.drive_url
+      }
     }
-  }
+    return map
+  }, [batchEvents, mcNumVariations])
 
-  const handleGenerate = async () => {
-    if (!mcExtractId || mcSelectedFrame === null || mcGenerating) return
+  const dotColor = (s: string) =>
+    s === 'done' ? 'text-emerald-500' : s === 'running' ? 'text-violet-500 animate-pulse' : s === 'error' ? 'text-red-400' : 'text-gray-300'
+
+  const handleBatchGenerate = async () => {
+    const urls = batchUrlText.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'))
+    const totalItems = urls.length + batchFiles.length
+    if (totalItems === 0) return
     if (!mcModelPhotoPreview && !mcModelPhotoFile) {
-      setMcPrepError('Upload a model reference photo first.')
+      setBatchError('Upload a model reference photo first.')
       return
     }
 
-    setMcGenerating(true)
-    setMcPrepError('')
-    setMcPrepEvents([])
-    setMcDriveUrl(null)
+    setBatchGenerating(true)
+    setBatchError('')
+    setBatchEvents([])
+    setBatchDone(false)
+    setBatchTotalItems(totalItems)
 
     try {
-      // Préparer le fichier photo modèle
-      const photoFile: File = mcModelPhotoFile
-        || dataUrlToFile(mcModelPhotoPreview!, mcModelPhotoName)
+      const photoFile = mcModelPhotoFile || dataUrlToFile(mcModelPhotoPreview!, mcModelPhotoName)
 
       const fd = new FormData()
-      fd.append('extractId', mcExtractId)
-      fd.append('selectedFrameIndex', String(mcSelectedFrame))
+      fd.append('urls', JSON.stringify(urls))
       fd.append('modelPhoto', photoFile, mcModelPhotoName)
       fd.append('numVariations', String(mcNumVariations))
       fd.append('characterName', selectedSoulName || selectedElementName || '')
 
-      const res = await fetch('/api/mc-prep/generate', { method: 'POST', body: fd })
+      for (const item of batchFiles) {
+        fd.append('videoFiles', item.file, item.name)
+      }
+
+      const res = await fetch('/api/mc-prep/batch', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
 
-      const runId: string = data.runId
-      setMcRunId(runId)
+      setBatchRunId(data.runId)
+      setBatchTotalItems(data.totalItems || totalItems)
 
       // SSE
-      mcSseRef.current?.close()
-      const sse = new EventSource(`/api/mc-prep/events/${runId}`)
-      mcSseRef.current = sse
+      batchSseRef.current?.close()
+      const sse = new EventSource(`/api/mc-prep/events/${data.runId}`)
+      batchSseRef.current = sse
 
       sse.onmessage = (e) => {
         try {
-          const event: PrepEvent = JSON.parse(e.data)
-          setMcPrepEvents(prev => [...prev, event])
-
+          const event: BatchEvent = JSON.parse(e.data)
+          setBatchEvents(prev => [...prev, event])
           if (event.type === 'done') {
-            setMcDriveUrl(event.drive_url || null)
-            setMcGenerating(false)
+            setBatchDone(true)
+            setBatchGenerating(false)
             sse.close()
           }
-          if (event.type === 'error') {
-            setMcPrepError(event.msg || 'Unknown error')
-            setMcGenerating(false)
+          if (event.type === 'error' && event.videoIndex === undefined) {
+            setBatchError(event.msg || 'Unknown error')
+            setBatchGenerating(false)
             sse.close()
           }
         } catch { /* ignore parse */ }
       }
-
       sse.onerror = () => {
-        setMcPrepError('SSE connection lost (server restarted?)')
-        setMcGenerating(false)
+        setBatchError('SSE connection lost (server restarted?)')
+        setBatchGenerating(false)
         sse.close()
       }
-
-      setTimeout(() => setMcGenerating(false), 20 * 60 * 1000)
-
+      // Safety timeout: 45 min for large batches
+      setTimeout(() => setBatchGenerating(false), 45 * 60 * 1000)
     } catch (err) {
-      setMcPrepError(err instanceof Error ? err.message : 'Generation error')
-      setMcGenerating(false)
+      setBatchError(err instanceof Error ? err.message : 'Batch error')
+      setBatchGenerating(false)
     }
   }
-
-  // Helpers pour lire l'état des events MC Prep
-  const mcSwapEvent = mcPrepEvents.find(e => e.type === 'step' && e.step === 'swap' && e.status === 'done')
-  const mcSwapSkipped = mcPrepEvents.some(e => e.type === 'step' && e.step === 'swap' && e.status === 'skipped')
-  const mcSwapStarted = mcPrepEvents.some(e => e.type === 'step' && e.step === 'swap' && e.status === 'started')
-  const mcVariationsDone = mcPrepEvents.filter(e => e.type === 'variation')
-  const mcUploadStarted = mcPrepEvents.some(e => e.type === 'step' && e.step === 'upload' && e.status === 'started')
-  const mcUploadDone = mcPrepEvents.some(e => e.type === 'step' && e.step === 'upload' && e.status === 'done')
-  const mcIsDone = mcPrepEvents.some(e => e.type === 'done')
-
-  const mcSwapStatus = mcSwapEvent ? 'done' : mcSwapSkipped ? 'skipped' : mcSwapStarted ? 'running' : 'idle'
-  const mcVariationsStatus = mcVariationsDone.length >= mcNumVariations ? 'done'
-    : mcVariationsDone.length > 0 ? 'running'
-    : (mcSwapEvent || mcSwapSkipped) ? 'running' : 'idle'
-  const mcUploadStatus = mcUploadDone ? 'done' : mcUploadStarted ? 'running' : 'idle'
-
-  const stepColor = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
-    s === 'done' ? 'text-emerald-500' : s === 'running' ? 'text-violet-600' : s === 'error' ? 'text-red-500' : s === 'skipped' ? 'text-amber-600' : 'text-gray-800'
-  const stepIcon = (s: 'idle' | 'running' | 'done' | 'error' | 'skipped') =>
-    s === 'done' ? '✅' : s === 'running' ? '⏳' : s === 'error' ? '❌' : s === 'skipped' ? '⚠️' : '○'
 
   // Fetch soul characters + reference elements on mount
   useEffect(() => {
@@ -242,7 +245,7 @@ export default function MotionControlPage() {
   // Cleanup SSE on unmount
   useEffect(() => {
     return () => {
-      mcSseRef.current?.close()
+      batchSseRef.current?.close()
     }
   }, [])
 
@@ -371,78 +374,77 @@ export default function MotionControlPage() {
                 )}
               </div>
 
-              {/* Étape 2 — URL Instagram + extraction frames */}
+              {/* Étape 2 — Batch video input (URLs + file uploads) */}
               <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
-                <p className="text-sm font-semibold text-gray-900">② Instagram Reel URL</p>
-                <div className="flex gap-2">
+                <p className="text-sm font-semibold text-gray-900">② Add videos</p>
+
+                {/* URL textarea */}
+                <div className="space-y-1.5">
+                  <label className="text-xs text-gray-700">Instagram Reel URLs (one per line)</label>
+                  <textarea
+                    value={batchUrlText}
+                    onChange={e => setBatchUrlText(e.target.value)}
+                    disabled={batchGenerating}
+                    placeholder={"https://www.instagram.com/reel/abc...\nhttps://www.instagram.com/reel/xyz..."}
+                    rows={4}
+                    className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-violet-400 transition disabled:opacity-50 resize-none font-mono"
+                  />
+                </div>
+
+                {/* File drop zone */}
+                <div className="space-y-1.5">
+                  <label className="text-xs text-gray-700">Or upload video files</label>
                   <input
-                    type="url"
-                    value={mcVideoUrl}
-                    onChange={e => setMcVideoUrl(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleExtractFrames() }}
-                    placeholder="https://www.instagram.com/reel/..."
-                    disabled={mcExtracting || mcGenerating}
-                    className="flex-1 bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-800 outline-none focus:border-violet-400 transition disabled:opacity-50"
+                    ref={videoDropRef}
+                    type="file"
+                    accept="video/mp4,video/quicktime,.mp4,.mov"
+                    multiple
+                    className="hidden"
+                    onChange={e => {
+                      const files = Array.from(e.target.files || [])
+                      setBatchFiles(prev => [...prev, ...files.map(f => ({ file: f, name: f.name }))])
+                      e.target.value = ''
+                    }}
                   />
                   <button
-                    onClick={handleExtractFrames}
-                    disabled={!mcVideoUrl.trim() || mcExtracting || mcGenerating}
-                    className="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/80 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-900 transition flex-shrink-0 flex items-center gap-2"
+                    onClick={() => videoDropRef.current?.click()}
+                    disabled={batchGenerating}
+                    className="w-full py-3 rounded-xl text-sm border-2 border-dashed border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-50"
                   >
-                    {mcExtracting ? (
-                      <>
-                        <span className="w-3.5 h-3.5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
-                        Extracting…
-                      </>
-                    ) : '🎞 Extract frames'}
+                    Click to select videos (.mp4, .mov)
                   </button>
                 </div>
 
-                {mcExtractError && (
-                  <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                    ❌ {mcExtractError}
-                  </div>
-                )}
-
-                {/* Thumbnails de sélection de frame */}
-                {mcFrames.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-700">Select a frame:</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {mcFrames.map(frame => (
-                        <button
-                          key={frame.index}
-                          onClick={() => setMcSelectedFrame(frame.index)}
-                          disabled={mcGenerating}
-                          className={`relative rounded-xl overflow-hidden aspect-[9/16] border-2 transition ${
-                            mcSelectedFrame === frame.index
-                              ? 'border-violet-500 ring-2 ring-violet-500/30'
-                              : 'border-gray-200 hover:border-slate-400'
-                          } disabled:cursor-not-allowed`}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={frame.url}
-                            alt={`Frame at ${frame.timestamp}s`}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-center py-0.5">
-                            <span className="text-[10px] text-white/80">{frame.timestamp}s</span>
+                {/* Items list */}
+                {(() => {
+                  const urls = batchUrlText.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'))
+                  const total = urls.length + batchFiles.length
+                  if (total === 0) return null
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-700 font-medium">{total} video{total > 1 ? 's' : ''} ready</p>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {urls.map((url, i) => (
+                          <div key={`url-${i}`} className="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 rounded-lg px-3 py-1.5">
+                            <span className="text-violet-500">🔗</span>
+                            <span className="truncate flex-1">{url}</span>
                           </div>
-                          {mcSelectedFrame === frame.index && (
-                            <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
-                              <span className="text-white text-[10px]">✓</span>
-                            </div>
-                          )}
-                        </button>
-                      ))}
+                        ))}
+                        {batchFiles.map((f, i) => (
+                          <div key={`file-${i}`} className="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 rounded-lg px-3 py-1.5">
+                            <span className="text-violet-500">🎬</span>
+                            <span className="truncate flex-1">{f.name}</span>
+                            <button onClick={() => setBatchFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 transition">✕</button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
               </div>
 
               {/* Étape 3 — Options */}
-              {mcFrames.length > 0 && (
+              {(batchUrlText.split('\n').some(l => l.trim().startsWith('http')) || batchFiles.length > 0) && !batchDone && (
                 <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
                   <p className="text-sm font-semibold text-gray-900">③ Options</p>
                   <div className="flex items-center gap-4">
@@ -455,7 +457,7 @@ export default function MotionControlPage() {
                           max={8}
                           value={mcNumVariations}
                           onChange={e => setMcNumVariations(parseInt(e.target.value))}
-                          disabled={mcGenerating}
+                          disabled={batchGenerating}
                           className="flex-1 accent-violet-500"
                         />
                         <span className="text-sm font-bold text-gray-900 w-4 text-center">{mcNumVariations}</span>
@@ -470,135 +472,102 @@ export default function MotionControlPage() {
                 </div>
               )}
 
-              {/* Erreur generate */}
-              {mcPrepError && !mcGenerating && (
+              {/* Batch error */}
+              {batchError && !batchGenerating && (
                 <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
-                  ❌ {mcPrepError}
+                  {batchError}
                 </div>
               )}
 
-              {/* Progress */}
-              {mcRunId && (
-                <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
-                  <p className="text-xs font-medium text-gray-800 uppercase tracking-wider mb-2">Progress</p>
-
-                  {/* Swap */}
-                  <div className="space-y-1">
-                    <div className={`flex items-center gap-2 text-sm ${stepColor(mcSwapStatus)}`}>
-                      <span className="w-5 text-center">{stepIcon(mcSwapStatus)}</span>
-                      <span>Model swap (Seedream 4.5)</span>
-                      {mcSwapEvent?.url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={mcSwapEvent.url} alt="Swap result" className="w-8 h-8 rounded-md object-cover ml-auto" />
-                      )}
-                    </div>
-                    {mcSwapSkipped && (
-                      <p className="text-xs text-amber-600 pl-7">
-                        Swap skipped. Variations generated from original frame.
-                      </p>
-                    )}
+              {/* Batch progress */}
+              {batchRunId && (
+                <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-4">
+                  {/* Overall progress */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-gray-800 uppercase tracking-wider">Batch Progress</p>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {Object.values(videoStatuses).filter(v => v.driveUrl).length}/{batchTotalItems} complete
+                    </span>
                   </div>
 
-                  {/* Variations */}
-                  <div className={`flex items-center gap-2 text-sm ${stepColor(mcVariationsStatus)}`}>
-                    <span className="w-5 text-center">{stepIcon(mcVariationsStatus)}</span>
-                    <span>Outfit variations ({mcVariationsDone.length}/{mcNumVariations})</span>
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-full h-2 transition-all duration-500"
+                      style={{ width: `${(Object.values(videoStatuses).filter(v => v.driveUrl).length / Math.max(batchTotalItems, 1)) * 100}%` }}
+                    />
                   </div>
-                  {mcVariationsDone.length > 0 && (
-                    <div className="flex gap-2 flex-wrap pl-7">
-                      {mcVariationsDone.map(v => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          key={v.index}
-                          src={v.url}
-                          alt={`Outfit ${v.index}`}
-                          className="w-14 h-14 rounded-lg object-cover border border-gray-200"
-                        />
-                      ))}
-                      {mcVariationsDone.length < mcNumVariations && mcGenerating && (
-                        <div className="w-14 h-14 rounded-lg bg-white/80 border border-gray-200 flex items-center justify-center">
-                          <span className="text-gray-800 text-xs animate-pulse">⏳</span>
+
+                  {/* Per-video rows */}
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {Object.entries(videoStatuses)
+                      .sort(([a], [b]) => Number(a) - Number(b))
+                      .map(([idx, vs]) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs bg-gray-50/80 rounded-xl px-3 py-2">
+                          <span className="text-gray-700 font-medium w-5 text-center">{Number(idx) + 1}</span>
+                          <span className="truncate flex-1 text-gray-600" title={vs.source}>{vs.source ? (vs.source.length > 40 ? '...' + vs.source.slice(-37) : vs.source) : `Video ${Number(idx) + 1}`}</span>
+                          {/* Status dots */}
+                          <span title="Extract" className={dotColor(vs.extract)}>●</span>
+                          <span title="Swap" className={dotColor(vs.swap)}>●</span>
+                          <span title={`Variations ${vs.variationsDone}/${vs.variationsTotal}`} className={dotColor(vs.variations)}>
+                            {vs.variations === 'running' ? `${vs.variationsDone}/${vs.variationsTotal}` : '●'}
+                          </span>
+                          <span title="Upload" className={dotColor(vs.upload)}>●</span>
+                          {vs.driveUrl ? (
+                            <a href={vs.driveUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600">📂</a>
+                          ) : vs.error ? (
+                            <span title={vs.error} className="text-red-400">⚠</span>
+                          ) : null}
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Upload */}
-                  <div className={`flex items-center gap-2 text-sm ${stepColor(mcUploadStatus)}`}>
-                    <span className="w-5 text-center">{stepIcon(mcUploadStatus)}</span>
-                    <span>Uploading to Drive</span>
+                      ))}
                   </div>
-
-                  {/* Done */}
-                  {mcIsDone && mcDriveUrl && (
-                    <a
-                      href={mcDriveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-3 mt-1 rounded-xl font-semibold text-sm bg-emerald-600 hover:bg-emerald-500 text-white transition"
-                    >
-                      📂 Open Drive Folder ↗
-                    </a>
-                  )}
-
-                  {/* Done but no drive URL (Drive not configured) */}
-                  {mcIsDone && !mcDriveUrl && (
-                    <div className="text-sm text-emerald-600 pt-1">
-                      ✅ Generation complete (Drive not configured — connect it in Settings to auto-upload)
-                    </div>
-                  )}
-
-                  {/* Error during generation */}
-                  {mcPrepError && (
-                    <div className="text-sm text-red-600 pt-1">❌ {mcPrepError}</div>
-                  )}
                 </div>
               )}
 
-              {/* Bouton Generate */}
-              {!mcIsDone && (
+              {/* Launch button */}
+              {!batchDone && (
                 <button
-                  onClick={handleGenerate}
+                  onClick={handleBatchGenerate}
                   disabled={
-                    !mcExtractId ||
-                    mcSelectedFrame === null ||
+                    (batchUrlText.split('\n').every(l => !l.trim().startsWith('http')) && batchFiles.length === 0) ||
                     (!mcModelPhotoPreview && !mcModelPhotoFile) ||
-                    mcGenerating ||
-                    mcExtracting
+                    batchGenerating
                   }
                   className="w-full py-4 rounded-xl font-semibold text-base transition
                     bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] hover:from-violet-500 hover:to-violet-400 text-white
                     disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {mcGenerating ? (
+                  {batchGenerating ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Generating prep folder…
+                      Processing batch...
                     </span>
-                  ) : '🚀 Generate Prep Folder'}
+                  ) : (() => {
+                    const count = batchUrlText.split('\n').filter(l => l.trim().startsWith('http')).length + batchFiles.length
+                    return `🚀 Generate ${count || ''} Prep Folder${count > 1 ? 's' : ''}`
+                  })()}
                 </button>
               )}
 
-              {mcIsDone && (
+              {batchDone && (
                 <button
                   onClick={() => {
-                    setMcExtractId(null)
-                    setMcFrames([])
-                    setMcSelectedFrame(null)
-                    setMcRunId(null)
-                    setMcPrepEvents([])
-                    setMcDriveUrl(null)
-                    setMcPrepError('')
-                    setMcVideoUrl('')
+                    setBatchUrlText('')
+                    setBatchFiles([])
+                    setBatchRunId(null)
+                    setBatchEvents([])
+                    setBatchDone(false)
+                    setBatchError('')
+                    setBatchTotalItems(0)
                   }}
-                  className="w-full py-3 rounded-xl text-sm text-gray-800 hover:text-gray-900 transition"
+                  className="w-full py-3 rounded-xl text-sm text-gray-600 hover:text-gray-900 transition"
                 >
-                  Prepare another reel
+                  Prepare another batch
                 </button>
               )}
 
-              <p className="text-xs text-center text-gray-800">
-                Seedream 4.5 (model swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · Drive upload
+              <p className="text-xs text-center text-gray-600">
+                Seedream 4.5 (swap) · Seedream 4.5 ({mcNumVariations} outfit variations) · auto-upload to Drive
               </p>
             </div>
 

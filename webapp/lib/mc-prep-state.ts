@@ -26,3 +26,16 @@ export const mcPrepExtracts: Map<string, MCPrepExtractState> = new Map()
 
 /** Generate sessions (Phase 2 — pipeline AI en cours) */
 export const mcPrepRuns: Map<string, MCPrepRunState> = new Map()
+
+export type MCPrepBatchState = {
+  userId: string
+  events: string[]
+  done: boolean
+  proc?: ChildProcess
+  workDir: string
+  startedAt: number
+  totalItems: number
+}
+
+/** Batch sessions (Phase batch — multiple items pipeline) */
+export const mcPrepBatchRuns: Map<string, MCPrepBatchState> = new Map()

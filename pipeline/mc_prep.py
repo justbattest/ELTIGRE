@@ -4,7 +4,7 @@ MC Prep — Motion Control Folder Preparation Pipeline.
 Prépare un dossier Drive complet (vidéo + frame sélectionnée + modèle swappé + N variations)
 pour que l'utilisateur puisse faire du Kling Motion Control manuellement.
 
-Deux sous-commandes :
+Trois sous-commandes :
 
 1. extract  — Télécharge la vidéo + extrait N frames candidates → JSON stdout
    python -m pipeline.mc_prep extract
@@ -21,6 +21,15 @@ Deux sous-commandes :
        --output-dir DIR
        --character-name NAME
        [--video-path PATH]   # chemin local de la vidéo à inclure dans le dossier Drive
+
+3. batch    — Process multiple videos at once (extract → swap → variations → Drive upload)
+   python -m pipeline.mc_prep batch
+       --run-id ID
+       --items-file PATH          # JSON file: [{"type":"url","value":"..."}, {"type":"file","value":"..."}]
+       --model-photo-path PATH
+       --num-variations N
+       --output-dir DIR
+       --character-name NAME
 
 Events stdout (sous-commande generate) :
   {"type": "step", "step": "swap",    "status": "started"}
@@ -571,6 +580,266 @@ async def _upload_to_drive(
         await drive.aclose()
 
 
+# ─── Helper : HF call with retry ─────────────────────────────────────────────
+
+async def _hf_call_with_retry(
+    user_token: str,
+    cmd_args: list,
+    refresh_token: str = "",
+    timeout: int = 720,
+    max_retries: int = 5,
+    retry_sleep: int = 20,
+    label: str = "",
+) -> str | None:
+    """Run a Higgsfield CLI command with robust retry on concurrent_jobs_limit.
+
+    Returns the result URL string on success, or None after all retries exhausted.
+    Never raises — all exceptions are caught and logged via _emit.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            result = await run_higgsfield_for_user(
+                user_token, cmd_args, timeout=timeout, refresh_token=refresh_token
+            )
+            return result.strip() if result else None
+        except Exception as e:
+            last_exc = e
+            err_str = str(e).lower()
+            if "concurrent_jobs_limit" in err_str or "concurrent_jobs" in err_str:
+                _emit({"type": "warn", "msg": f"HF busy ({label}), retry in {retry_sleep}s..."})
+                await asyncio.sleep(retry_sleep)
+                continue
+            # Non-retryable error
+            break
+
+    _emit({"type": "warn", "msg": f"Failed after {max_retries} retries: {label} — {str(last_exc)}"})
+    return None
+
+
+# ─── Sub-commande : batch ────────────────────────────────────────────────────
+
+async def cmd_batch(
+    run_id: str,
+    items_file: str,
+    model_photo_path: str,
+    num_variations: int,
+    output_dir: str,
+    character_name: str,
+) -> None:
+    """Batch orchestrator: extract → swap → variations → Drive upload for multiple videos."""
+
+    user_token = os.environ.get("HIGGSFIELD_TOKEN", "")
+    if not user_token:
+        _emit({"type": "error", "msg": "HIGGSFIELD_TOKEN manquant"})
+        sys.exit(1)
+    refresh_token = os.environ.get("HIGGSFIELD_REFRESH_TOKEN", "")
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    # Load items from JSON file
+    with open(items_file, "r") as f:
+        items: list[dict] = json.load(f)
+
+    if not items:
+        _emit({"type": "error", "msg": "items_file is empty"})
+        sys.exit(1)
+
+    total = len(items)
+    _emit({"type": "info", "msg": f"Batch started — {total} video(s) to process"})
+
+    # Heartbeat toutes les 20s pour éviter le timeout SSE
+    heartbeat_task = asyncio.create_task(_heartbeat_loop(20))
+
+    # ── Phase 1 : EXTRACT ALL (parallel, Semaphore(4)) ──────────────────────
+    extract_sem = asyncio.Semaphore(4)
+
+    async def _extract_one(i: int, item: dict) -> dict | None:
+        """Extract a single video. Returns metadata dict or None on failure."""
+        source = item.get("value", "")
+        item_type = item.get("type", "url")
+        sub_dir = str(out / f"video_{i}")
+        Path(sub_dir).mkdir(parents=True, exist_ok=True)
+
+        async with extract_sem:
+            _emit({"type": "extract", "videoIndex": i, "status": "started", "source": source})
+            try:
+                video_path: str | None = None
+                if item_type == "url":
+                    video_path = await _download_video(source, sub_dir)
+                    frames = await _extract_frames(video_path, sub_dir, 1)
+                elif item_type == "file":
+                    video_path = source  # already local
+                    frames = await _extract_frames(source, sub_dir, 1)
+                else:
+                    raise ValueError(f"Unknown item type: {item_type}")
+
+                if not frames:
+                    raise RuntimeError("No frames extracted")
+
+                _emit({"type": "extract", "videoIndex": i, "status": "done"})
+                return {
+                    "videoIndex": i,
+                    "video_path": video_path,
+                    "frame_path": frames[0]["path"],
+                    "source": source,
+                }
+            except Exception as exc:
+                _emit({"type": "extract", "videoIndex": i, "status": "error", "msg": str(exc)[:400]})
+                return None
+
+    extract_tasks = [_extract_one(i, item) for i, item in enumerate(items)]
+    extract_results = await asyncio.gather(*extract_tasks)
+
+    # Filter out failed extractions
+    extracted: list[dict] = [r for r in extract_results if r is not None]
+
+    if not extracted:
+        _emit({"type": "error", "msg": "All extractions failed — nothing to process"})
+        heartbeat_task.cancel()
+        try:
+            await heartbeat_task
+        except asyncio.CancelledError:
+            pass
+        _emit({"type": "done", "totalVideos": total, "completed": 0, "failed": total})
+        return
+
+    # ── Phase 2 : SWAP ALL (parallel, Semaphore(4)) ─────────────────────────
+    swap_sem = asyncio.Semaphore(4)
+
+    async def _swap_one(entry: dict) -> dict:
+        """Swap model face onto extracted frame. Updates entry in-place with swap results."""
+        i = entry["videoIndex"]
+        frame_path = entry["frame_path"]
+        sub_dir = str(out / f"video_{i}")
+
+        async with swap_sem:
+            _emit({"type": "step", "step": "swap", "videoIndex": i, "status": "started"})
+            try:
+                cmd_swap = [
+                    "higgsfield", "generate", "create", "seedream_v4_5",
+                    "--image", frame_path,
+                    "--image", model_photo_path,
+                    "--prompt", SWAP_PROMPT,
+                    "--quality", "high",
+                    "--aspect_ratio", "9:16",
+                    "--wait", "--wait-timeout", "12m",
+                ]
+                swapped_url = await _hf_call_with_retry(
+                    user_token, cmd_swap, refresh_token, timeout=720, label=f"swap-{i}"
+                )
+
+                swapped_local: str | None = None
+                if swapped_url:
+                    local_path = str(Path(sub_dir) / "swap_model.jpg")
+                    try:
+                        await _download_url_to_file(swapped_url, local_path)
+                        swapped_local = local_path
+                    except Exception as exc:
+                        _emit({"type": "warn", "msg": f"Download swap image {i} failed: {exc!r}"})
+                        swapped_local = None
+
+                    # InsightFace face transplant (silent fallback)
+                    if swapped_local and Path(swapped_local).exists():
+                        face_final_path = str(Path(sub_dir) / "swap_face_final.jpg")
+                        try:
+                            from pipeline.face_swap import swap_face
+                            ok = await asyncio.get_event_loop().run_in_executor(
+                                None, swap_face, model_photo_path, swapped_local, face_final_path
+                            )
+                            if ok and Path(face_final_path).exists():
+                                swapped_local = face_final_path
+                        except Exception:
+                            pass  # silent fallback — keep Seedream result
+
+                entry["swapped_url"] = swapped_url
+                entry["swapped_local"] = swapped_local or frame_path
+                _emit({"type": "step", "step": "swap", "videoIndex": i, "status": "done"})
+
+            except Exception as exc:
+                _emit({"type": "step", "step": "swap", "videoIndex": i, "status": "error", "msg": str(exc)[:400]})
+                entry["swapped_url"] = None
+                entry["swapped_local"] = frame_path
+
+        return entry
+
+    swap_tasks = [_swap_one(entry) for entry in extracted]
+    swapped_entries = await asyncio.gather(*swap_tasks)
+
+    # ── Phase 3 : VARIATIONS (1 video at a time, sequential) ────────────────
+    ok_count = 0
+
+    for entry in swapped_entries:
+        i = entry["videoIndex"]
+        swapped_local = entry["swapped_local"]
+        swapped_url = entry.get("swapped_url")
+        sub_dir = str(out / f"video_{i}")
+
+        # Generate outfit variations in parallel for this video
+        async def _gen_variation(idx: int, _img: str = swapped_local, _vi: int = i) -> dict:
+            outfit_prompt = OUTFIT_STYLES[(idx - 1) % len(OUTFIT_STYLES)]
+            cmd = [
+                "higgsfield", "generate", "create", "seedream_v4_5",
+                "--image", _img,
+                "--prompt", outfit_prompt,
+                "--aspect_ratio", "9:16",
+                "--quality", "high",
+                "--wait", "--wait-timeout", "10m",
+            ]
+            url = await _hf_call_with_retry(
+                user_token, cmd, refresh_token, timeout=600, label=f"outfit-{_vi}-{idx}"
+            )
+            return {"index": idx, "total": num_variations, "url": url}
+
+        variation_tasks = [_gen_variation(j + 1) for j in range(num_variations)]
+        variation_results = await asyncio.gather(*variation_tasks)
+
+        variation_urls: list[str] = []
+        for result in variation_results:
+            if result.get("url"):
+                variation_urls.append(result["url"])
+                _emit({
+                    "type": "variation",
+                    "videoIndex": i,
+                    "index": result["index"],
+                    "total": result["total"],
+                    "url": result["url"],
+                })
+            else:
+                _emit({"type": "warn", "msg": f"Variation {result['index']} for video {i} failed — skipped"})
+
+        # ── Phase 4 : Drive upload (per-video) ──────────────────────────────
+        try:
+            drive_url = await _upload_to_drive(
+                run_id=f"{run_id}_v{i}",
+                character_name=character_name,
+                frame_path=entry["frame_path"],
+                model_photo_path=model_photo_path,
+                swapped_url=swapped_url,
+                swapped_local=swapped_local,
+                variation_urls=variation_urls,
+                video_path=entry.get("video_path"),
+                out=Path(sub_dir),
+            )
+            _emit({"type": "video_complete", "videoIndex": i, "driveUrl": drive_url})
+            ok_count += 1
+        except Exception as exc:
+            _emit({"type": "warn", "msg": f"Drive upload failed for video {i}: {str(exc)[:300]}"})
+            fail_count += 1
+
+    fail_count = total - ok_count
+
+    # Arrêter le heartbeat proprement
+    heartbeat_task.cancel()
+    try:
+        await heartbeat_task
+    except asyncio.CancelledError:
+        pass
+
+    _emit({"type": "done", "totalVideos": total, "completed": ok_count, "failed": fail_count})
+
+
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -593,6 +862,15 @@ def main() -> None:
     gen_parser.add_argument("--character-name", default="")
     gen_parser.add_argument("--video-path", default=None)
 
+    # Sub-commande batch
+    batch_parser = subparsers.add_parser("batch", help="Batch process multiple videos")
+    batch_parser.add_argument("--run-id", required=True)
+    batch_parser.add_argument("--items-file", required=True)
+    batch_parser.add_argument("--model-photo-path", required=True)
+    batch_parser.add_argument("--num-variations", type=int, default=4)
+    batch_parser.add_argument("--output-dir", required=True)
+    batch_parser.add_argument("--character-name", default="")
+
     args = parser.parse_args()
 
     if args.command == "extract":
@@ -610,6 +888,19 @@ def main() -> None:
             output_dir=args.output_dir,
             character_name=args.character_name,
             video_path=args.video_path,
+        ))
+
+    elif args.command == "batch":
+        if not os.environ.get("HIGGSFIELD_TOKEN"):
+            print(json.dumps({"type": "error", "msg": "HIGGSFIELD_TOKEN manquant"}), flush=True)
+            sys.exit(1)
+        asyncio.run(cmd_batch(
+            run_id=args.run_id,
+            items_file=args.items_file,
+            model_photo_path=args.model_photo_path,
+            num_variations=args.num_variations,
+            output_dir=args.output_dir,
+            character_name=args.character_name,
         ))
 
 

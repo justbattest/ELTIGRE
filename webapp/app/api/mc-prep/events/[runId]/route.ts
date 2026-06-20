@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { mcPrepRuns } from '@/lib/mc-prep-state'
+import { mcPrepRuns, mcPrepBatchRuns } from '@/lib/mc-prep-state'
 
 export async function GET(
   _req: NextRequest,
@@ -17,7 +17,7 @@ export async function GET(
   if (!session) return new Response('Non authentifié', { status: 401 })
 
   const { runId } = await params
-  const state = mcPrepRuns.get(runId)
+  const state = mcPrepRuns.get(runId) || mcPrepBatchRuns.get(runId)
 
   if (!state) {
     return new Response(
