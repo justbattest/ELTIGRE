@@ -329,6 +329,84 @@ async def cmd_extract(video_url: str, output_dir: str, num_frames: int) -> None:
     }), flush=True)
 
 
+# ─── Sub-commande : batch-extract ────────────────────────────────────────────
+
+async def cmd_batch_extract(
+    items_file: str,
+    output_dir: str,
+    num_frames: int = 4,
+) -> None:
+    """Extract frames from multiple videos in parallel. Emits JSON-lines events on stdout."""
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    # Load items from JSON file
+    with open(items_file, "r") as f:
+        items: list[dict] = json.load(f)
+
+    if not items:
+        _emit({"type": "error", "msg": "items_file is empty"})
+        sys.exit(1)
+
+    total = len(items)
+    _emit({"type": "info", "msg": f"Batch extract started — {total} video(s)"})
+
+    # Heartbeat toutes les 20s pour éviter le timeout SSE
+    heartbeat_task = asyncio.create_task(_heartbeat_loop(20))
+
+    extract_sem = asyncio.Semaphore(4)
+    success_count = 0
+
+    async def _extract_one(i: int, item: dict) -> bool:
+        """Extract frames from a single video. Returns True on success."""
+        source = item.get("value", "")
+        item_type = item.get("type", "url")
+        sub_dir = str(out / f"video_{i}")
+        Path(sub_dir).mkdir(parents=True, exist_ok=True)
+
+        async with extract_sem:
+            _emit({"type": "extract", "videoIndex": i, "status": "started", "source": source})
+            try:
+                video_path: str | None = None
+                if item_type == "url":
+                    video_path = await _download_video(source, sub_dir)
+                elif item_type == "file":
+                    video_path = source
+                else:
+                    raise ValueError(f"Unknown item type: {item_type}")
+
+                frames = await _extract_frames(video_path, sub_dir, num_frames)
+
+                if not frames:
+                    raise RuntimeError("No frames extracted")
+
+                _emit({
+                    "type": "extract",
+                    "videoIndex": i,
+                    "status": "done",
+                    "videoPath": video_path,
+                    "frames": frames,
+                })
+                return True
+            except Exception as exc:
+                _emit({"type": "extract", "videoIndex": i, "status": "error", "msg": str(exc)[:400]})
+                return False
+
+    extract_tasks = [_extract_one(i, item) for i, item in enumerate(items)]
+    results = await asyncio.gather(*extract_tasks)
+    success_count = sum(1 for r in results if r)
+
+    # Arrêter le heartbeat proprement
+    heartbeat_task.cancel()
+    try:
+        await heartbeat_task
+    except asyncio.CancelledError:
+        pass
+
+    _emit({"type": "extract_complete", "total": total, "success": success_count})
+
+
 # ─── Sub-commande : generate ─────────────────────────────────────────────────
 
 async def cmd_generate(
@@ -626,6 +704,7 @@ async def cmd_batch(
     num_variations: int,
     output_dir: str,
     character_name: str,
+    skip_extract: bool = False,
 ) -> None:
     """Batch orchestrator: extract → swap → variations → Drive upload for multiple videos."""
 
@@ -652,48 +731,60 @@ async def cmd_batch(
     # Heartbeat toutes les 20s pour éviter le timeout SSE
     heartbeat_task = asyncio.create_task(_heartbeat_loop(20))
 
-    # ── Phase 1 : EXTRACT ALL (parallel, Semaphore(4)) ──────────────────────
-    extract_sem = asyncio.Semaphore(4)
+    if skip_extract:
+        # ── Skip Phase 1 : use pre-selected frames from items ──────────────
+        extracted: list[dict] = []
+        for i, item in enumerate(items):
+            extracted.append({
+                "videoIndex": i,
+                "video_path": item.get("video_path"),
+                "frame_path": item["frame_path"],
+                "source": item.get("value", ""),
+            })
+        _emit({"type": "info", "msg": f"Skip extract — using {len(extracted)} pre-selected frame(s)"})
+    else:
+        # ── Phase 1 : EXTRACT ALL (parallel, Semaphore(4)) ──────────────────
+        extract_sem = asyncio.Semaphore(4)
 
-    async def _extract_one(i: int, item: dict) -> dict | None:
-        """Extract a single video. Returns metadata dict or None on failure."""
-        source = item.get("value", "")
-        item_type = item.get("type", "url")
-        sub_dir = str(out / f"video_{i}")
-        Path(sub_dir).mkdir(parents=True, exist_ok=True)
+        async def _extract_one(i: int, item: dict) -> dict | None:
+            """Extract a single video. Returns metadata dict or None on failure."""
+            source = item.get("value", "")
+            item_type = item.get("type", "url")
+            sub_dir = str(out / f"video_{i}")
+            Path(sub_dir).mkdir(parents=True, exist_ok=True)
 
-        async with extract_sem:
-            _emit({"type": "extract", "videoIndex": i, "status": "started", "source": source})
-            try:
-                video_path: str | None = None
-                if item_type == "url":
-                    video_path = await _download_video(source, sub_dir)
-                    frames = await _extract_frames(video_path, sub_dir, 1)
-                elif item_type == "file":
-                    video_path = source  # already local
-                    frames = await _extract_frames(source, sub_dir, 1)
-                else:
-                    raise ValueError(f"Unknown item type: {item_type}")
+            async with extract_sem:
+                _emit({"type": "extract", "videoIndex": i, "status": "started", "source": source})
+                try:
+                    video_path: str | None = None
+                    if item_type == "url":
+                        video_path = await _download_video(source, sub_dir)
+                        frames = await _extract_frames(video_path, sub_dir, 1)
+                    elif item_type == "file":
+                        video_path = source  # already local
+                        frames = await _extract_frames(source, sub_dir, 1)
+                    else:
+                        raise ValueError(f"Unknown item type: {item_type}")
 
-                if not frames:
-                    raise RuntimeError("No frames extracted")
+                    if not frames:
+                        raise RuntimeError("No frames extracted")
 
-                _emit({"type": "extract", "videoIndex": i, "status": "done"})
-                return {
-                    "videoIndex": i,
-                    "video_path": video_path,
-                    "frame_path": frames[0]["path"],
-                    "source": source,
-                }
-            except Exception as exc:
-                _emit({"type": "extract", "videoIndex": i, "status": "error", "msg": str(exc)[:400]})
-                return None
+                    _emit({"type": "extract", "videoIndex": i, "status": "done"})
+                    return {
+                        "videoIndex": i,
+                        "video_path": video_path,
+                        "frame_path": frames[0]["path"],
+                        "source": source,
+                    }
+                except Exception as exc:
+                    _emit({"type": "extract", "videoIndex": i, "status": "error", "msg": str(exc)[:400]})
+                    return None
 
-    extract_tasks = [_extract_one(i, item) for i, item in enumerate(items)]
-    extract_results = await asyncio.gather(*extract_tasks)
+        extract_tasks = [_extract_one(i, item) for i, item in enumerate(items)]
+        extract_results = await asyncio.gather(*extract_tasks)
 
-    # Filter out failed extractions
-    extracted: list[dict] = [r for r in extract_results if r is not None]
+        # Filter out failed extractions
+        extracted = [r for r in extract_results if r is not None]
 
     if not extracted:
         _emit({"type": "error", "msg": "All extractions failed — nothing to process"})
@@ -870,6 +961,13 @@ def main() -> None:
     batch_parser.add_argument("--num-variations", type=int, default=4)
     batch_parser.add_argument("--output-dir", required=True)
     batch_parser.add_argument("--character-name", default="")
+    batch_parser.add_argument("--skip-extract", action="store_true", default=False)
+
+    # Sub-commande batch-extract
+    bextract_parser = subparsers.add_parser("batch-extract", help="Extract frames from multiple videos")
+    bextract_parser.add_argument("--items-file", required=True)
+    bextract_parser.add_argument("--output-dir", required=True)
+    bextract_parser.add_argument("--num-frames", type=int, default=4)
 
     args = parser.parse_args()
 
@@ -901,6 +999,14 @@ def main() -> None:
             num_variations=args.num_variations,
             output_dir=args.output_dir,
             character_name=args.character_name,
+            skip_extract=args.skip_extract,
+        ))
+
+    elif args.command == "batch-extract":
+        asyncio.run(cmd_batch_extract(
+            items_file=args.items_file,
+            output_dir=args.output_dir,
+            num_frames=args.num_frames,
         ))
 
 

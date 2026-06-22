@@ -5,11 +5,20 @@
  * Reçoit un FormData, spawn le subprocess Python mc_prep batch, retourne { runId, totalItems }.
  * Progress via SSE : GET /api/mc-prep/events/[runId]
  *
- * FormData fields :
+ * Supports two modes:
+ *
+ * Mode 1 — Pre-extracted frames (batchExtractId + selectedFrames present):
+ *   batchExtractId    (string) — ID from batch-extract endpoint
+ *   selectedFrames    (string) — JSON array: [{videoIndex, frameIndex}, ...]
+ *   modelPhoto        (File) — photo de référence du modèle
+ *   numVariations     (string — int, default 4)
+ *   characterName     (string)
+ *
+ * Mode 2 — Direct URLs/files (backward compat):
  *   urls              (string) — JSON array of Instagram URLs
  *   videoFiles        (File[]) — uploaded video files
  *   modelPhoto        (File) — photo de référence du modèle
- *   numVariations     (string — int, default 4) — nombre de variations d'outfit
+ *   numVariations     (string — int, default 4)
  *   characterName     (string) — nom du personnage pour le dossier Drive
  */
 import { NextRequest, NextResponse } from 'next/server'
@@ -17,7 +26,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
-import { mcPrepBatchRuns } from '@/lib/mc-prep-state'
+import { mcPrepBatchRuns, mcPrepBatchExtracts } from '@/lib/mc-prep-state'
 import { spawn } from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
@@ -34,26 +43,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'FormData invalide' }, { status: 400 })
   }
 
-  const urlsRaw = (formData.get('urls') as string) || '[]'
-  const videoFiles = formData.getAll('videoFiles') as File[]
   const modelPhotoFile = formData.get('modelPhoto') as File | null
   const numVariations = Math.min(8, Math.max(1, parseInt((formData.get('numVariations') as string) || '4', 10)))
   const characterName = (formData.get('characterName') as string) || ''
+  const batchExtractId = (formData.get('batchExtractId') as string) || ''
+  const selectedFramesRaw = (formData.get('selectedFrames') as string) || ''
 
   if (!modelPhotoFile) return NextResponse.json({ error: 'modelPhoto requis' }, { status: 400 })
-
-  // Parse URLs
-  let urls: string[] = []
-  try {
-    urls = JSON.parse(urlsRaw)
-    if (!Array.isArray(urls)) urls = []
-  } catch {
-    return NextResponse.json({ error: 'urls doit être un JSON array valide' }, { status: 400 })
-  }
-
-  if (urls.length === 0 && videoFiles.length === 0) {
-    return NextResponse.json({ error: 'Au moins une URL ou un fichier vidéo requis' }, { status: 400 })
-  }
 
   // Récupérer les credentials Higgsfield + Drive
   const creds = await prisma.userCredentials.findUnique({
@@ -68,34 +64,104 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Higgsfield non connecté. Vérifier les Settings.' }, { status: 400 })
   }
 
-  // Créer un workDir temporaire
-  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcprep-batch-'))
+  let workDir: string
+  let itemsFilePath: string
+  let totalItems: number
+  let extraArgs: string[] = []
+
+  // --- NEW mode: pre-extracted frames from batch-extract ---
+  if (batchExtractId && selectedFramesRaw) {
+    const extractState = mcPrepBatchExtracts.get(batchExtractId)
+    if (!extractState) {
+      return NextResponse.json({ error: 'batchExtractId non trouvé ou expiré' }, { status: 404 })
+    }
+    if (extractState.userId !== session.user.id) {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+    }
+
+    let selectedFrames: { videoIndex: number; frameIndex: number }[]
+    try {
+      selectedFrames = JSON.parse(selectedFramesRaw)
+      if (!Array.isArray(selectedFrames) || selectedFrames.length === 0) {
+        return NextResponse.json({ error: 'selectedFrames doit être un JSON array non vide' }, { status: 400 })
+      }
+    } catch {
+      return NextResponse.json({ error: 'selectedFrames JSON invalide' }, { status: 400 })
+    }
+
+    // Re-use the batch-extract workDir as base, create a sub-dir for this run
+    workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcprep-batch-'))
+
+    // Build items with frame_path and video_path from pre-extracted data
+    const allItems: { type: string; value: string; frame_path: string; video_path: string }[] = []
+    for (const sel of selectedFrames) {
+      const video = extractState.videos.find(v => v.videoIndex === sel.videoIndex)
+      if (!video) continue
+      const frame = video.frames.find(f => f.index === sel.frameIndex)
+      if (!frame) continue
+      allItems.push({
+        type: video.source.startsWith('/') || video.source.startsWith('file://') ? 'file' : 'url',
+        value: video.source,
+        frame_path: frame.path,
+        video_path: video.videoPath,
+      })
+    }
+
+    if (allItems.length === 0) {
+      return NextResponse.json({ error: 'Aucun item valide après résolution des frames' }, { status: 400 })
+    }
+
+    itemsFilePath = path.join(workDir, 'items.json')
+    fs.writeFileSync(itemsFilePath, JSON.stringify(allItems, null, 2))
+    totalItems = allItems.length
+    extraArgs = ['--skip-extract']
+
+  // --- EXISTING mode: URLs + video files ---
+  } else {
+    const urlsRaw = (formData.get('urls') as string) || '[]'
+    const videoFiles = formData.getAll('videoFiles') as File[]
+
+    // Parse URLs
+    let urls: string[] = []
+    try {
+      urls = JSON.parse(urlsRaw)
+      if (!Array.isArray(urls)) urls = []
+    } catch {
+      return NextResponse.json({ error: 'urls doit être un JSON array valide' }, { status: 400 })
+    }
+
+    if (urls.length === 0 && videoFiles.length === 0) {
+      return NextResponse.json({ error: 'Au moins une URL ou un fichier vidéo requis' }, { status: 400 })
+    }
+
+    // Créer un workDir temporaire
+    workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcprep-batch-'))
+
+    // Sauvegarder les fichiers vidéo uploadés
+    const uploadsDir = path.join(workDir, 'uploads')
+    fs.mkdirSync(uploadsDir, { recursive: true })
+
+    const fileItems: { type: string; value: string }[] = []
+    for (let i = 0; i < videoFiles.length; i++) {
+      const file = videoFiles[i]
+      const filePath = path.join(uploadsDir, `video_${i}.mp4`)
+      const buffer = await file.arrayBuffer()
+      fs.writeFileSync(filePath, Buffer.from(buffer))
+      fileItems.push({ type: 'file', value: filePath })
+    }
+
+    // Construire items.json : URLs + fichiers
+    const urlItems = urls.map((u) => ({ type: 'url', value: u }))
+    const allItems = [...urlItems, ...fileItems]
+    itemsFilePath = path.join(workDir, 'items.json')
+    fs.writeFileSync(itemsFilePath, JSON.stringify(allItems, null, 2))
+    totalItems = allItems.length
+  }
 
   // Sauvegarder la photo du modèle
   const modelPhotoPath = path.join(workDir, 'model_reference.jpg')
   const modelPhotoBuffer = await modelPhotoFile.arrayBuffer()
   fs.writeFileSync(modelPhotoPath, Buffer.from(modelPhotoBuffer))
-
-  // Sauvegarder les fichiers vidéo uploadés
-  const uploadsDir = path.join(workDir, 'uploads')
-  fs.mkdirSync(uploadsDir, { recursive: true })
-
-  const fileItems: { type: string; value: string }[] = []
-  for (let i = 0; i < videoFiles.length; i++) {
-    const file = videoFiles[i]
-    const filePath = path.join(uploadsDir, `video_${i}.mp4`)
-    const buffer = await file.arrayBuffer()
-    fs.writeFileSync(filePath, Buffer.from(buffer))
-    fileItems.push({ type: 'file', value: filePath })
-  }
-
-  // Construire items.json : URLs + fichiers
-  const urlItems = urls.map((u) => ({ type: 'url', value: u }))
-  const allItems = [...urlItems, ...fileItems]
-  const itemsFilePath = path.join(workDir, 'items.json')
-  fs.writeFileSync(itemsFilePath, JSON.stringify(allItems, null, 2))
-
-  const totalItems = allItems.length
 
   // Générer un runId pour le SSE
   const runId = `mcprep_batch_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
@@ -122,6 +188,7 @@ export async function POST(req: NextRequest) {
     '--num-variations', String(numVariations),
     '--output-dir', workDir,
     '--character-name', characterName,
+    ...extraArgs,
   ]
 
   const proc = spawn(pythonPath, args, {
@@ -135,6 +202,7 @@ export async function POST(req: NextRequest) {
       ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),
       ...(process.env.GOOGLE_CLIENT_SECRET ? { GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET } : {}),
       ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
+      ...(process.env.INSTAGRAM_COOKIES ? { INSTAGRAM_COOKIES: process.env.INSTAGRAM_COOKIES } : {}),
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })

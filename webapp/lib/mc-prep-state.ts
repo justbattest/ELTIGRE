@@ -39,3 +39,19 @@ export type MCPrepBatchState = {
 
 /** Batch sessions (Phase batch — multiple items pipeline) */
 export const mcPrepBatchRuns: Map<string, MCPrepBatchState> = new Map()
+
+export type MCPrepBatchExtractVideo = {
+  videoIndex: number
+  source: string
+  videoPath: string
+  frames: { index: number; timestamp: number; path: string }[]
+}
+
+export type MCPrepBatchExtractState = {
+  userId: string
+  workDir: string
+  videos: MCPrepBatchExtractVideo[]
+  createdAt: number
+}
+
+export const mcPrepBatchExtracts: Map<string, MCPrepBatchExtractState> = new Map()
