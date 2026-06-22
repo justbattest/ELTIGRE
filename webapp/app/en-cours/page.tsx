@@ -43,7 +43,7 @@ type SSEPayload = {
 // Run en mémoire (metadata, carousel ou spoofer)
 type BatchRunInfo = {
   runId: string
-  runType: 'metadata' | 'carousel' | 'spoofer'
+  runType: 'metadata' | 'carousel' | 'spoofer' | 'mc_prep'
   done: boolean
   total: number
   completed: number
@@ -434,6 +434,8 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
       ? `/api/metadata/events/${run.runId}`
       : run.runType === 'carousel'
       ? `/api/carousel/events/${run.runId}`
+      : run.runType === 'mc_prep'
+      ? `/api/mc-prep/events/${run.runId}`
       : `/api/spoofer/events/${run.runId}`
 
     const es = new EventSource(sseUrl)
@@ -452,6 +454,11 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
           if (ev.type === 'carousel')       { setCompleted(ev.n); if (ev.total) setTotal(ev.total) }
           if (ev.type === 'done')           { setTotal(ev.total); setCompleted(ev.total); setIsDone(true); es.close() }
           if (ev.type === 'error')          { setHasError(true); setIsDone(true); es.close() }
+        } else if (run.runType === 'mc_prep') {
+          if (ev.type === 'video_complete') setCompleted(prev => prev + 1)
+          if (ev.totalVideos)               setTotal(ev.totalVideos)
+          if (ev.type === 'done')           { if (ev.completed) setCompleted(ev.completed); if (ev.totalVideos) setTotal(ev.totalVideos); setIsDone(true); es.close() }
+          if (ev.type === 'error' && ev.videoIndex === undefined) { setHasError(true); setIsDone(true); es.close() }
         } else {
           // spoofer
           if (ev.type === 'start')    setTotal(ev.total_variations ?? 0)
@@ -472,11 +479,11 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
     ? new Date(run.startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     : ''
 
-  const icon  = run.runType === 'metadata' ? '🧹' : run.runType === 'carousel' ? '🃏' : '🔀'
-  const label = run.runType === 'metadata' ? 'Metadata Opti' : run.runType === 'carousel' ? 'Carousels' : 'Spoofer'
-  const barColor  = run.runType === 'metadata' ? 'bg-cyan-500'   : run.runType === 'carousel' ? 'bg-violet-500'   : 'bg-fuchsia-500'
-  const dotColor  = run.runType === 'metadata' ? 'bg-cyan-400'   : run.runType === 'carousel' ? 'bg-violet-400'   : 'bg-fuchsia-400'
-  const textColor = run.runType === 'metadata' ? 'text-cyan-400' : run.runType === 'carousel' ? 'text-violet-400' : 'text-fuchsia-400'
+  const icon  = run.runType === 'metadata' ? '🧹' : run.runType === 'carousel' ? '🃏' : run.runType === 'mc_prep' ? '🎭' : '🔀'
+  const label = run.runType === 'metadata' ? 'Metadata Opti' : run.runType === 'carousel' ? 'Carousels' : run.runType === 'mc_prep' ? 'MC Prep Batch' : 'Spoofer'
+  const barColor  = run.runType === 'metadata' ? 'bg-cyan-500'   : run.runType === 'carousel' ? 'bg-violet-500'   : run.runType === 'mc_prep' ? 'bg-violet-600'   : 'bg-fuchsia-500'
+  const dotColor  = run.runType === 'metadata' ? 'bg-cyan-400'   : run.runType === 'carousel' ? 'bg-violet-400'   : run.runType === 'mc_prep' ? 'bg-violet-500'   : 'bg-fuchsia-400'
+  const textColor = run.runType === 'metadata' ? 'text-cyan-400' : run.runType === 'carousel' ? 'text-violet-400' : run.runType === 'mc_prep' ? 'text-violet-500' : 'text-fuchsia-400'
 
   const subLabel = run.runType === 'spoofer'
     ? [
@@ -514,7 +521,7 @@ function BatchRunCard({ run }: { run: BatchRunInfo }) {
 
       <div className="space-y-1">
         <div className="flex justify-between text-xs text-gray-700">
-          <span>{completed} / {total || '?'} files</span>
+          <span>{completed} / {total || '?'} {run.runType === 'mc_prep' ? 'videos' : 'files'}</span>
           <span>{pct}%</span>
         </div>
         <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -548,24 +555,27 @@ export default function EnCoursPage() {
 
   const load = async () => {
     try {
-      const [runsRes, metaRes, carouselRes, spooferRes] = await Promise.all([
+      const [runsRes, metaRes, carouselRes, spooferRes, mcPrepRes] = await Promise.all([
         fetch('/api/runs?status=recent'),
         fetch('/api/metadata/runs'),
         fetch('/api/carousel/runs'),
         fetch('/api/spoofer/runs'),
+        fetch('/api/mc-prep/runs'),
       ])
       const runsData     = await runsRes.json()
       const metaData     = await metaRes.json()
       const carouselData = await carouselRes.json()
       const spooferData  = await spooferRes.json()
+      const mcPrepData   = await mcPrepRes.json()
 
       setRuns(runsData.runs || [])
 
-      // Fusionner metadata + carousel + spoofer, trier par date desc
+      // Fusionner metadata + carousel + spoofer + mc_prep, trier par date desc
       const combined: BatchRunInfo[] = [
         ...(metaData.runs     || []).map((r: BatchRunInfo) => ({ ...r, runType: 'metadata'  as const })),
         ...(carouselData.runs || []).map((r: BatchRunInfo) => ({ ...r, runType: 'carousel' as const })),
         ...(spooferData.runs  || []).map((r: BatchRunInfo) => ({ ...r, runType: 'spoofer'  as const })),
+        ...(mcPrepData.runs   || []).map((r: BatchRunInfo) => ({ ...r, runType: 'mc_prep'  as const })),
       ].sort((a, b) => b.startedAt - a.startedAt)
 
       setBatchRuns(combined)

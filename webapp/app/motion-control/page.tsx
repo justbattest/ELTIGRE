@@ -9,7 +9,14 @@ import { PageWrapper } from '@/components/PageWrapper'
 type RefElement = { id: string; name: string; type?: string }
 type SoulCharacter = { id: string; name: string; status?: string }
 
-// ─── Types onglet "MC Prep" (batch mode) ─────────────────────────────────────
+// ─── Types onglet "MC Prep" (3-phase batch mode) ────────────────────────────
+
+type ExtractedVideo = {
+  videoIndex: number
+  source: string
+  frames: { index: number; timestamp: number; url: string }[]
+  error?: string
+}
 
 type BatchEvent = {
   type: string
@@ -26,12 +33,10 @@ type BatchEvent = {
   totalVideos?: number
   completed?: number
   failed?: number
-  phase?: string
 }
 
 type VideoStatus = {
   source: string
-  extract: 'idle' | 'running' | 'done' | 'error'
   swap: 'idle' | 'running' | 'done' | 'error'
   swapUrl?: string
   variationsDone: number
@@ -63,24 +68,39 @@ export default function MotionControlPage() {
   const [selectedSoulId, setSelectedSoulId] = useState('')
   const [selectedSoulName, setSelectedSoulName] = useState('')
 
-  // ── Onglet MC Prep (batch mode) ──────────────────────────────────────────────
+  // ── Model photo state ───────────────────────────────────────────────────────
   const modelPhotoInputRef = useRef<HTMLInputElement>(null)
-  const batchSseRef = useRef<EventSource | null>(null)
-  const videoDropRef = useRef<HTMLInputElement>(null)
 
   const [mcModelPhotoPreview, setMcModelPhotoPreview] = useState<string | null>(null)
   const [mcModelPhotoName, setMcModelPhotoName] = useState<string>('model_reference.jpg')
   const [mcModelPhotoFile, setMcModelPhotoFile] = useState<File | null>(null)
   const [mcNumVariations, setMcNumVariations] = useState(4)
 
+  // ── Phase A — Input + Extract ───────────────────────────────────────────────
+  const videoDropRef = useRef<HTMLInputElement>(null)
   const [batchUrlText, setBatchUrlText] = useState('')
   const [batchFiles, setBatchFiles] = useState<{file: File, name: string}[]>([])
+  const [extracting, setExtracting] = useState(false)
+  const [extractError, setExtractError] = useState('')
+
+  // ── Phase B — Frame Selection ───────────────────────────────────────────────
+  const [batchExtractId, setBatchExtractId] = useState<string | null>(null)
+  const [extractedVideos, setExtractedVideos] = useState<ExtractedVideo[]>([])
+  const [wizardIndex, setWizardIndex] = useState(0)
+  const [selectedFrames, setSelectedFrames] = useState<Record<number, number>>({})
+
+  // ── Phase C — Generate ──────────────────────────────────────────────────────
+  const batchSseRef = useRef<EventSource | null>(null)
   const [batchGenerating, setBatchGenerating] = useState(false)
   const [batchRunId, setBatchRunId] = useState<string | null>(null)
   const [batchEvents, setBatchEvents] = useState<BatchEvent[]>([])
   const [batchTotalItems, setBatchTotalItems] = useState(0)
   const [batchDone, setBatchDone] = useState(false)
   const [batchError, setBatchError] = useState('')
+
+  // ── Phase determination ─────────────────────────────────────────────────────
+  const phase = batchGenerating || batchRunId ? 'C' : extractedVideos.length > 0 ? 'B' : 'A'
+  const allFramesSelected = extractedVideos.length > 0 && extractedVideos.every(v => v.videoIndex in selectedFrames)
 
   // Charger la photo modèle depuis localStorage
   useEffect(() => {
@@ -112,37 +132,98 @@ export default function MotionControlPage() {
     e.target.value = ''
   }
 
-  // Derived state: per-video status computed from batch events
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
+  /** Phase A → B: Extract frames from all videos */
+  const handleExtractAll = async () => {
+    const urls = batchUrlText.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'))
+    if (urls.length === 0 && batchFiles.length === 0) return
+    setExtracting(true); setExtractError(''); setExtractedVideos([]); setSelectedFrames({}); setWizardIndex(0); setBatchExtractId(null)
+    try {
+      const fd = new FormData()
+      fd.append('urls', JSON.stringify(urls))
+      for (const item of batchFiles) fd.append('videoFiles', item.file, item.name)
+      const res = await fetch('/api/mc-prep/batch-extract', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
+      setBatchExtractId(data.batchExtractId)
+      const videos = (data.videos || []).filter((v: ExtractedVideo) => v.frames && v.frames.length > 0)
+      setExtractedVideos(videos)
+    } catch (err) { setExtractError(err instanceof Error ? err.message : 'Extraction error') }
+    finally { setExtracting(false) }
+  }
+
+  /** Phase B wizard: select a frame for the current video */
+  const handleFrameSelect = (frameIndex: number) => {
+    const currentVideo = extractedVideos[wizardIndex]
+    if (!currentVideo) return
+    setSelectedFrames(prev => ({ ...prev, [currentVideo.videoIndex]: frameIndex }))
+    if (wizardIndex < extractedVideos.length - 1) setWizardIndex(prev => prev + 1)
+  }
+
+  /** Phase B → C: Start batch generation */
+  const handleStartBatch = async () => {
+    if (!batchExtractId || (!mcModelPhotoPreview && !mcModelPhotoFile)) return
+    setBatchGenerating(true); setBatchError(''); setBatchEvents([]); setBatchDone(false)
+    try {
+      const photoFile = mcModelPhotoFile || dataUrlToFile(mcModelPhotoPreview!, mcModelPhotoName)
+      const fd = new FormData()
+      fd.append('batchExtractId', batchExtractId)
+      fd.append('selectedFrames', JSON.stringify(
+        extractedVideos.map(v => ({ videoIndex: v.videoIndex, frameIndex: selectedFrames[v.videoIndex] ?? 0 }))
+      ))
+      fd.append('modelPhoto', photoFile, mcModelPhotoName)
+      fd.append('numVariations', String(mcNumVariations))
+      fd.append('characterName', selectedSoulName || selectedElementName || '')
+      const res = await fetch('/api/mc-prep/batch', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
+      setBatchRunId(data.runId); setBatchTotalItems(data.totalItems || extractedVideos.length)
+      try { localStorage.setItem('mcPrep_activeRunId', data.runId) } catch {}
+      batchSseRef.current?.close()
+      const sse = new EventSource(`/api/mc-prep/events/${data.runId}`)
+      batchSseRef.current = sse
+      sse.onmessage = (e) => {
+        try {
+          const event: BatchEvent = JSON.parse(e.data)
+          setBatchEvents(prev => [...prev, event])
+          if (event.type === 'done') { setBatchDone(true); setBatchGenerating(false); sse.close(); try { localStorage.removeItem('mcPrep_activeRunId') } catch {} }
+          if (event.type === 'error' && event.videoIndex === undefined) { setBatchError(event.msg || 'Unknown error'); setBatchGenerating(false); sse.close() }
+        } catch {}
+      }
+      sse.onerror = () => { setBatchError('SSE connection lost'); setBatchGenerating(false); sse.close() }
+      setTimeout(() => setBatchGenerating(false), 45 * 60 * 1000)
+    } catch (err) { setBatchError(err instanceof Error ? err.message : 'Batch error'); setBatchGenerating(false) }
+  }
+
+  /** Reset all state back to Phase A */
+  const handleReset = () => {
+    setBatchUrlText(''); setBatchFiles([]); setExtracting(false); setExtractError('')
+    setBatchExtractId(null); setExtractedVideos([]); setWizardIndex(0); setSelectedFrames({})
+    setBatchGenerating(false); setBatchRunId(null); setBatchEvents([]); setBatchTotalItems(0); setBatchDone(false); setBatchError('')
+    try { localStorage.removeItem('mcPrep_activeRunId') } catch {}
+  }
+
+  // ── Derived state ───────────────────────────────────────────────────────────
+
   const videoStatuses = useMemo(() => {
     const map: Record<number, VideoStatus> = {}
     for (const evt of batchEvents) {
       const vi = evt.videoIndex
       if (vi === undefined) continue
-      if (!map[vi]) map[vi] = { source: '', extract: 'idle', swap: 'idle', swapUrl: undefined, variationsDone: 0, variationsTotal: mcNumVariations, variations: 'idle', upload: 'idle' }
+      if (!map[vi]) map[vi] = { source: '', swap: 'idle', variationsDone: 0, variationsTotal: mcNumVariations, variations: 'idle', upload: 'idle' }
       const s = map[vi]
-      if (evt.type === 'extract') {
-        if (evt.status === 'started') { s.extract = 'running'; s.source = evt.source || '' }
-        else if (evt.status === 'done') s.extract = 'done'
-        else if (evt.status === 'error') { s.extract = 'error'; s.error = evt.msg }
-      }
       if (evt.type === 'step' && evt.step === 'swap') {
         if (evt.status === 'started') s.swap = 'running'
         else if (evt.status === 'done') { s.swap = 'done'; s.swapUrl = evt.url }
         else if (evt.status === 'error') s.swap = 'error'
       }
-      if (evt.type === 'variation') {
-        s.variations = 'running'
-        s.variationsDone = Math.max(s.variationsDone, evt.index || 0)
-      }
+      if (evt.type === 'variation') { s.variations = 'running'; s.variationsDone = Math.max(s.variationsDone, evt.index || 0) }
       if (evt.type === 'step' && evt.step === 'upload') {
         if (evt.status === 'started') s.upload = 'running'
         else if (evt.status === 'done') s.upload = 'done'
       }
-      if (evt.type === 'video_complete') {
-        s.variations = 'done'
-        s.upload = 'done'
-        s.driveUrl = evt.driveUrl || evt.drive_url
-      }
+      if (evt.type === 'video_complete') { s.variations = 'done'; s.upload = 'done'; s.driveUrl = evt.driveUrl || evt.drive_url }
     }
     return map
   }, [batchEvents, mcNumVariations])
@@ -150,74 +231,31 @@ export default function MotionControlPage() {
   const dotColor = (s: string) =>
     s === 'done' ? 'text-emerald-500' : s === 'running' ? 'text-violet-500 animate-pulse' : s === 'error' ? 'text-red-400' : 'text-gray-300'
 
-  const handleBatchGenerate = async () => {
-    const urls = batchUrlText.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'))
-    const totalItems = urls.length + batchFiles.length
-    if (totalItems === 0) return
-    if (!mcModelPhotoPreview && !mcModelPhotoFile) {
-      setBatchError('Upload a model reference photo first.')
-      return
-    }
+  // ── Reconnect on mount ──────────────────────────────────────────────────────
 
-    setBatchGenerating(true)
-    setBatchError('')
-    setBatchEvents([])
-    setBatchDone(false)
-    setBatchTotalItems(totalItems)
-
+  useEffect(() => {
     try {
-      const photoFile = mcModelPhotoFile || dataUrlToFile(mcModelPhotoPreview!, mcModelPhotoName)
-
-      const fd = new FormData()
-      fd.append('urls', JSON.stringify(urls))
-      fd.append('modelPhoto', photoFile, mcModelPhotoName)
-      fd.append('numVariations', String(mcNumVariations))
-      fd.append('characterName', selectedSoulName || selectedElementName || '')
-
-      for (const item of batchFiles) {
-        fd.append('videoFiles', item.file, item.name)
+      const activeRunId = localStorage.getItem('mcPrep_activeRunId')
+      if (activeRunId) {
+        setBatchRunId(activeRunId)
+        setBatchGenerating(true)
+        const sse = new EventSource(`/api/mc-prep/events/${activeRunId}`)
+        batchSseRef.current = sse
+        sse.onmessage = (e) => {
+          try {
+            const event: BatchEvent = JSON.parse(e.data)
+            setBatchEvents(prev => [...prev, event])
+            if (event.type === 'done') { setBatchDone(true); setBatchGenerating(false); sse.close(); localStorage.removeItem('mcPrep_activeRunId') }
+            if (event.type === 'error' && event.videoIndex === undefined) { setBatchError(event.msg || ''); setBatchGenerating(false); sse.close() }
+          } catch {}
+        }
+        sse.onerror = () => { setBatchGenerating(false); sse.close(); localStorage.removeItem('mcPrep_activeRunId') }
       }
+    } catch {}
+  }, [])
 
-      const res = await fetch('/api/mc-prep/batch', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
-
-      setBatchRunId(data.runId)
-      setBatchTotalItems(data.totalItems || totalItems)
-
-      // SSE
-      batchSseRef.current?.close()
-      const sse = new EventSource(`/api/mc-prep/events/${data.runId}`)
-      batchSseRef.current = sse
-
-      sse.onmessage = (e) => {
-        try {
-          const event: BatchEvent = JSON.parse(e.data)
-          setBatchEvents(prev => [...prev, event])
-          if (event.type === 'done') {
-            setBatchDone(true)
-            setBatchGenerating(false)
-            sse.close()
-          }
-          if (event.type === 'error' && event.videoIndex === undefined) {
-            setBatchError(event.msg || 'Unknown error')
-            setBatchGenerating(false)
-            sse.close()
-          }
-        } catch { /* ignore parse */ }
-      }
-      sse.onerror = () => {
-        setBatchError('SSE connection lost (server restarted?)')
-        setBatchGenerating(false)
-        sse.close()
-      }
-      // Safety timeout: 45 min for large batches
-      setTimeout(() => setBatchGenerating(false), 45 * 60 * 1000)
-    } catch (err) {
-      setBatchError(err instanceof Error ? err.message : 'Batch error')
-      setBatchGenerating(false)
-    }
-  }
+  // Cleanup SSE on unmount
+  useEffect(() => { return () => { batchSseRef.current?.close() } }, [])
 
   // Fetch soul characters + reference elements on mount
   useEffect(() => {
@@ -240,13 +278,6 @@ export default function MotionControlPage() {
       })
       .catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Cleanup SSE on unmount
-  useEffect(() => {
-    return () => {
-      batchSseRef.current?.close()
-    }
   }, [])
 
   // ── Rendu ─────────────────────────────────────────────────────────────────────
@@ -311,7 +342,6 @@ export default function MotionControlPage() {
               </div>
             ) : null}
 
-
             {/* Why MC Prep beats manual */}
             <div className="mb-6 bg-violet-50/80 backdrop-blur-sm rounded-2xl border border-violet-200/60 px-5 py-4">
               <h2 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -329,7 +359,7 @@ export default function MotionControlPage() {
             {/* ── MC Prep content ───────────────────────────────────────────────── */}
             <div className="space-y-5">
 
-              {/* Étape 1 — Photo de référence du modèle */}
+              {/* Étape 1 — Photo de référence du modèle (ALWAYS visible) */}
               <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -374,196 +404,244 @@ export default function MotionControlPage() {
                 )}
               </div>
 
-              {/* Étape 2 — Batch video input (URLs + file uploads) */}
-              <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
-                <p className="text-sm font-semibold text-gray-900">② Add videos</p>
+              {/* ════════ PHASE A: Input + Extract ════════ */}
+              {phase === 'A' && (
+                <>
+                  {/* Step ② — Video input card */}
+                  <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+                    <p className="text-sm font-semibold text-gray-900">② Add videos</p>
 
-                {/* URL textarea */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-gray-700">Instagram Reel URLs (one per line)</label>
-                  <textarea
-                    value={batchUrlText}
-                    onChange={e => setBatchUrlText(e.target.value)}
-                    disabled={batchGenerating}
-                    placeholder={"https://www.instagram.com/reel/abc...\nhttps://www.instagram.com/reel/xyz..."}
-                    rows={4}
-                    className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-violet-400 transition disabled:opacity-50 resize-none font-mono"
-                  />
-                </div>
+                    {/* URL textarea */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-gray-700">Instagram Reel URLs (one per line)</label>
+                      <textarea value={batchUrlText} onChange={e => setBatchUrlText(e.target.value)} disabled={extracting}
+                        placeholder={"https://www.instagram.com/reel/abc...\nhttps://www.instagram.com/reel/xyz..."} rows={4}
+                        className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-violet-400 transition disabled:opacity-50 resize-none font-mono" />
+                    </div>
 
-                {/* File drop zone */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-gray-700">Or upload video files</label>
-                  <input
-                    ref={videoDropRef}
-                    type="file"
-                    accept="video/mp4,video/quicktime,.mp4,.mov"
-                    multiple
-                    className="hidden"
-                    onChange={e => {
-                      const files = Array.from(e.target.files || [])
-                      setBatchFiles(prev => [...prev, ...files.map(f => ({ file: f, name: f.name }))])
-                      e.target.value = ''
-                    }}
-                  />
-                  <button
-                    onClick={() => videoDropRef.current?.click()}
-                    disabled={batchGenerating}
-                    className="w-full py-3 rounded-xl text-sm border-2 border-dashed border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-50"
-                  >
-                    Click to select videos (.mp4, .mov)
+                    {/* File upload */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-gray-700">Or upload video files</label>
+                      <input ref={videoDropRef} type="file" accept="video/mp4,video/quicktime,.mp4,.mov" multiple className="hidden"
+                        onChange={e => { const files = Array.from(e.target.files || []); setBatchFiles(prev => [...prev, ...files.map(f => ({ file: f, name: f.name }))]); e.target.value = '' }} />
+                      <button onClick={() => videoDropRef.current?.click()} disabled={extracting}
+                        className="w-full py-3 rounded-xl text-sm border-2 border-dashed border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-50">
+                        🎬 Click to select videos (.mp4, .mov)
+                      </button>
+                    </div>
+
+                    {/* Items list with count + remove buttons for files */}
+                    {(() => {
+                      const urls = batchUrlText.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'))
+                      const total = urls.length + batchFiles.length
+                      if (total === 0) return null
+                      return (
+                        <div className="space-y-2">
+                          <p className="text-xs text-gray-700 font-medium">{total} video{total > 1 ? 's' : ''} ready</p>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {urls.map((url, i) => (
+                              <div key={`url-${i}`} className="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 rounded-lg px-3 py-1.5">
+                                <span className="text-violet-500">🔗</span>
+                                <span className="truncate flex-1">{url}</span>
+                              </div>
+                            ))}
+                            {batchFiles.map((f, i) => (
+                              <div key={`file-${i}`} className="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 rounded-lg px-3 py-1.5">
+                                <span className="text-violet-500">🎬</span>
+                                <span className="truncate flex-1">{f.name}</span>
+                                <button onClick={() => setBatchFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 transition shrink-0">✕</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {extractError && <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">❌ {extractError}</div>}
+                  </div>
+
+                  {/* Step ③ Options */}
+                  {(batchUrlText.split('\n').some(l => l.trim().startsWith('http')) || batchFiles.length > 0) && (
+                    <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+                      <p className="text-sm font-semibold text-gray-900">③ Options</p>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-700 mb-1 block">Outfit variations</label>
+                          <div className="flex items-center gap-3">
+                            <input type="range" min={1} max={8} value={mcNumVariations} onChange={e => setMcNumVariations(parseInt(e.target.value))} className="flex-1 accent-violet-500" />
+                            <span className="text-sm font-bold text-gray-900 w-4 text-center">{mcNumVariations}</span>
+                          </div>
+                        </div>
+                        {characterName && <div className="text-xs text-gray-700">Drive folder: <span className="text-gray-900">{characterName}</span></div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Extract button */}
+                  <button onClick={handleExtractAll}
+                    disabled={batchUrlText.split('\n').every(l => !l.trim().startsWith('http')) && batchFiles.length === 0 || extracting}
+                    className="w-full py-4 rounded-xl font-semibold text-base transition bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                    {extracting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Extracting frames…
+                      </span>
+                    ) : `🎞 Extract Frames from ${(() => { const u = batchUrlText.split('\n').filter(l => l.trim().startsWith('http')).length; return u + batchFiles.length })() || ''} Video${(batchUrlText.split('\n').filter(l => l.trim().startsWith('http')).length + batchFiles.length) !== 1 ? 's' : ''}`}
                   </button>
-                </div>
+                </>
+              )}
 
-                {/* Items list */}
-                {(() => {
-                  const urls = batchUrlText.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'))
-                  const total = urls.length + batchFiles.length
-                  if (total === 0) return null
-                  return (
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-700 font-medium">{total} video{total > 1 ? 's' : ''} ready</p>
-                      <div className="space-y-1 max-h-32 overflow-y-auto">
-                        {urls.map((url, i) => (
-                          <div key={`url-${i}`} className="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 rounded-lg px-3 py-1.5">
-                            <span className="text-violet-500">🔗</span>
-                            <span className="truncate flex-1">{url}</span>
-                          </div>
-                        ))}
-                        {batchFiles.map((f, i) => (
-                          <div key={`file-${i}`} className="flex items-center gap-2 text-xs text-gray-700 bg-gray-50 rounded-lg px-3 py-1.5">
-                            <span className="text-violet-500">🎬</span>
-                            <span className="truncate flex-1">{f.name}</span>
-                            <button onClick={() => setBatchFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 transition">✕</button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
+              {/* ════════ PHASE B: Frame Selection Wizard ════════ */}
+              {phase === 'B' && (
+                <>
+                  <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-4">
+                    {wizardIndex < extractedVideos.length ? (
+                      <>
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-gray-900">
+                            Select frame for Video {wizardIndex + 1}/{extractedVideos.length}
+                          </p>
+                          <span className="text-xs text-gray-600">
+                            {Object.keys(selectedFrames).length}/{extractedVideos.length} selected
+                          </span>
+                        </div>
 
-              {/* Étape 3 — Options */}
-              {(batchUrlText.split('\n').some(l => l.trim().startsWith('http')) || batchFiles.length > 0) && !batchDone && (
-                <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
-                  <p className="text-sm font-semibold text-gray-900">③ Options</p>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <label className="text-xs text-gray-700 mb-1 block">Outfit variations</label>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="range"
-                          min={1}
-                          max={8}
-                          value={mcNumVariations}
-                          onChange={e => setMcNumVariations(parseInt(e.target.value))}
-                          disabled={batchGenerating}
-                          className="flex-1 accent-violet-500"
-                        />
-                        <span className="text-sm font-bold text-gray-900 w-4 text-center">{mcNumVariations}</span>
-                      </div>
-                    </div>
-                    {characterName && (
-                      <div className="text-xs text-gray-700">
-                        Drive folder: <span className="text-gray-900">{characterName}</span>
-                      </div>
+                        {/* Source */}
+                        <p className="text-xs text-gray-600 truncate" title={extractedVideos[wizardIndex].source}>
+                          {extractedVideos[wizardIndex].source.length > 60 ? '...' + extractedVideos[wizardIndex].source.slice(-57) : extractedVideos[wizardIndex].source}
+                        </p>
+
+                        {/* 4 frame thumbnails */}
+                        <div className="grid grid-cols-4 gap-2">
+                          {extractedVideos[wizardIndex].frames.map(frame => (
+                            <button key={frame.index} onClick={() => handleFrameSelect(frame.index)}
+                              className={`relative rounded-xl overflow-hidden aspect-[9/16] border-2 transition cursor-pointer ${
+                                selectedFrames[extractedVideos[wizardIndex].videoIndex] === frame.index
+                                  ? 'border-violet-500 ring-2 ring-violet-500/30'
+                                  : 'border-gray-200 hover:border-violet-300'
+                              }`}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={frame.url} alt={`Frame at ${frame.timestamp}s`} className="w-full h-full object-cover" />
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-center py-0.5">
+                                <span className="text-[10px] text-white/80">{frame.timestamp}s</span>
+                              </div>
+                              {selectedFrames[extractedVideos[wizardIndex].videoIndex] === frame.index && (
+                                <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
+                                  <span className="text-white text-[10px]">✓</span>
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                          <div className="bg-violet-500 rounded-full h-1.5 transition-all" style={{ width: `${(Object.keys(selectedFrames).length / extractedVideos.length) * 100}%` }} />
+                        </div>
+
+                        {/* Navigation */}
+                        <div className="flex items-center justify-between">
+                          <button onClick={() => setWizardIndex(prev => Math.max(0, prev - 1))} disabled={wizardIndex === 0}
+                            className="text-xs text-gray-600 hover:text-gray-900 disabled:opacity-30 transition">← Previous</button>
+                          <button onClick={() => { handleFrameSelect(0) }}
+                            className="text-xs text-gray-500 hover:text-gray-700 transition">Skip (use first) →</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* All frames selected! */}
+                        <div className="text-center py-4">
+                          <p className="text-emerald-600 font-semibold">✅ All {extractedVideos.length} frames selected!</p>
+                          <p className="text-xs text-gray-600 mt-1">{mcNumVariations} outfit variations per video · {characterName || 'No character'}</p>
+                        </div>
+                      </>
                     )}
                   </div>
-                </div>
+
+                  {/* Selected frames strip (small thumbnails) */}
+                  {Object.keys(selectedFrames).length > 0 && (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {extractedVideos.map((v, i) => {
+                        const fi = selectedFrames[v.videoIndex]
+                        const frame = fi !== undefined ? v.frames.find(f => f.index === fi) : null
+                        return (
+                          <button key={v.videoIndex} onClick={() => setWizardIndex(i)}
+                            className={`relative w-10 h-14 rounded-lg overflow-hidden border transition ${wizardIndex === i ? 'border-violet-500' : fi !== undefined ? 'border-emerald-300' : 'border-gray-200'}`}>
+                            {frame ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={frame.url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-[8px] text-gray-400">{i + 1}</div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Start Processing button */}
+                  {allFramesSelected && (
+                    <button onClick={handleStartBatch}
+                      disabled={!mcModelPhotoPreview && !mcModelPhotoFile}
+                      className="w-full py-4 rounded-xl font-semibold text-base transition bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] text-white disabled:opacity-40 disabled:cursor-not-allowed">
+                      🚀 Start Processing {extractedVideos.length} Video{extractedVideos.length > 1 ? 's' : ''}
+                    </button>
+                  )}
+
+                  {/* Back to input button */}
+                  <button onClick={handleReset} className="w-full py-2 text-xs text-gray-500 hover:text-gray-700 transition">
+                    ← Back to input
+                  </button>
+                </>
               )}
 
-              {/* Batch error */}
-              {batchError && !batchGenerating && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
-                  {batchError}
-                </div>
-              )}
+              {/* ════════ PHASE C: Generate Progress ════════ */}
+              {phase === 'C' && (
+                <>
+                  {batchError && !batchGenerating && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">❌ {batchError}</div>
+                  )}
 
-              {/* Batch progress */}
-              {batchRunId && (
-                <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-4">
-                  {/* Overall progress */}
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-gray-800 uppercase tracking-wider">Batch Progress</p>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {Object.values(videoStatuses).filter(v => v.driveUrl).length}/{batchTotalItems} complete
-                    </span>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-full h-2 transition-all duration-500"
-                      style={{ width: `${(Object.values(videoStatuses).filter(v => v.driveUrl).length / Math.max(batchTotalItems, 1)) * 100}%` }}
-                    />
-                  </div>
-
-                  {/* Per-video rows */}
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {Object.entries(videoStatuses)
-                      .sort(([a], [b]) => Number(a) - Number(b))
-                      .map(([idx, vs]) => (
+                  {/* Progress panel */}
+                  <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium text-gray-800 uppercase tracking-wider">Batch Progress</p>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {Object.values(videoStatuses).filter(v => v.driveUrl).length}/{batchTotalItems} complete
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-violet-500 to-violet-600 rounded-full h-2 transition-all duration-500"
+                        style={{ width: `${(Object.values(videoStatuses).filter(v => v.driveUrl).length / Math.max(batchTotalItems, 1)) * 100}%` }} />
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {Object.entries(videoStatuses).sort(([a], [b]) => Number(a) - Number(b)).map(([idx, vs]) => (
                         <div key={idx} className="flex items-center gap-2 text-xs bg-gray-50/80 rounded-xl px-3 py-2">
-                          <span className="text-gray-700 font-medium w-5 text-center">{Number(idx) + 1}</span>
-                          <span className="truncate flex-1 text-gray-600" title={vs.source}>{vs.source ? (vs.source.length > 40 ? '...' + vs.source.slice(-37) : vs.source) : `Video ${Number(idx) + 1}`}</span>
-                          {/* Status dots */}
-                          <span title="Extract" className={dotColor(vs.extract)}>●</span>
+                          <span className="text-gray-700 font-medium w-5 text-center shrink-0">{Number(idx) + 1}</span>
+                          <span className="truncate flex-1 text-gray-600">{vs.source || `Video ${Number(idx) + 1}`}</span>
                           <span title="Swap" className={dotColor(vs.swap)}>●</span>
-                          <span title={`Variations ${vs.variationsDone}/${vs.variationsTotal}`} className={dotColor(vs.variations)}>
+                          <span title={`Vars ${vs.variationsDone}/${vs.variationsTotal}`} className={dotColor(vs.variations)}>
                             {vs.variations === 'running' ? `${vs.variationsDone}/${vs.variationsTotal}` : '●'}
                           </span>
                           <span title="Upload" className={dotColor(vs.upload)}>●</span>
                           {vs.driveUrl ? (
-                            <a href={vs.driveUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600">📂</a>
+                            <a href={vs.driveUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600 shrink-0">📂</a>
                           ) : vs.error ? (
-                            <span title={vs.error} className="text-red-400">⚠</span>
+                            <span title={vs.error} className="text-red-400 shrink-0">⚠</span>
                           ) : null}
                         </div>
                       ))}
+                    </div>
                   </div>
-                </div>
-              )}
 
-              {/* Launch button */}
-              {!batchDone && (
-                <button
-                  onClick={handleBatchGenerate}
-                  disabled={
-                    (batchUrlText.split('\n').every(l => !l.trim().startsWith('http')) && batchFiles.length === 0) ||
-                    (!mcModelPhotoPreview && !mcModelPhotoFile) ||
-                    batchGenerating
-                  }
-                  className="w-full py-4 rounded-xl font-semibold text-base transition
-                    bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] hover:from-violet-500 hover:to-violet-400 text-white
-                    disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {batchGenerating ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Processing batch...
-                    </span>
-                  ) : (() => {
-                    const count = batchUrlText.split('\n').filter(l => l.trim().startsWith('http')).length + batchFiles.length
-                    return `🚀 Generate ${count || ''} Prep Folder${count > 1 ? 's' : ''}`
-                  })()}
-                </button>
-              )}
-
-              {batchDone && (
-                <button
-                  onClick={() => {
-                    setBatchUrlText('')
-                    setBatchFiles([])
-                    setBatchRunId(null)
-                    setBatchEvents([])
-                    setBatchDone(false)
-                    setBatchError('')
-                    setBatchTotalItems(0)
-                  }}
-                  className="w-full py-3 rounded-xl text-sm text-gray-600 hover:text-gray-900 transition"
-                >
-                  Prepare another batch
-                </button>
+                  {batchDone && (
+                    <button onClick={handleReset}
+                      className="w-full py-3 rounded-xl text-sm text-gray-600 hover:text-gray-900 transition">
+                      Prepare another batch
+                    </button>
+                  )}
+                </>
               )}
 
               <p className="text-xs text-center text-gray-600">
