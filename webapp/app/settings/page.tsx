@@ -40,6 +40,7 @@ export default function SettingsPage() {
 
   const [scrapingProxyUrl, setScrapingProxyUrl] = useState('')
   const [hikerApiKey, setHikerApiKey] = useState('')
+  const [charRules, setCharRules] = useState<Record<string, string>>({})
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -64,6 +65,9 @@ export default function SettingsPage() {
         setDriveFolderId(data.driveFolderId || '')
         setScrapingProxyUrl(data.scrapingProxyUrl || '')
         setHikerApiKey(data.hikerApiKey || '')
+        if (data.characterPromptRules) {
+          try { setCharRules(JSON.parse(data.characterPromptRules)) } catch {}
+        }
       })
   }, [])
 
@@ -132,6 +136,7 @@ export default function SettingsPage() {
           instagramSessionCookie,
           scrapingProxyUrl,
           hikerApiKey,
+          characterPromptRules: JSON.stringify(charRules),
         }),
       })
       setSaved(true)
@@ -579,6 +584,32 @@ export default function SettingsPage() {
                 <span>🗂️</span>
                 {driveAuthState === 'starting' ? '⏳ Connecting...' : 'Connect Google Drive'}
               </button>
+            )}
+          </div>
+
+          {/* Character Prompt Rules */}
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)]">
+            <h2 className="font-medium mb-1 text-gray-900">Character Prompt Rules</h2>
+            <p className="text-gray-800 text-xs mb-4">
+              Define physical traits and outfit rules per character. These are injected into Claude prompts when generating with Prompt Studio.
+            </p>
+            {referenceElements.length === 0 ? (
+              <p className="text-gray-500 text-xs italic">No reference elements configured — add characters in the Reference Elements section above.</p>
+            ) : (
+              <div className="space-y-3">
+                {referenceElements.map((el) => (
+                  <div key={el.id}>
+                    <label className="block text-sm font-medium text-gray-800 mb-1">{el.name}</label>
+                    <textarea
+                      rows={3}
+                      value={charRules[el.name] || ''}
+                      onChange={(e) => setCharRules(prev => ({ ...prev, [el.name]: e.target.value }))}
+                      placeholder="e.g. Always show muscular arms, no long sleeves that hide muscles, large breasts visible..."
+                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm resize-y"
+                    />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

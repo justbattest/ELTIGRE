@@ -40,6 +40,7 @@ model UserCredentials {
   scrapingProxyUrl          String?   @map("scraping_proxy_url")         // Proxy résidentiel pour le scraping (ex: webshare.io)
   hikerApiKey               String?   @map("hiker_api_key")               // HikerAPI token — méthode scraping principale
   higgsFieldClerkToken      String?   @map("higgsfield_clerk_token")      // Clerk JWT session token (pour /chains/motion-control)
+  characterPromptRules      String?   @map("character_prompt_rules") @db.Text
   updatedAt              DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 

@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
   const higgsToken = decryptIfPresent(creds?.higgsFieldToken)
   const googleRefreshToken = creds?.googleRefreshToken || null
   const driveFolderId = creds?.driveFolderId || null
+  const characterPromptRules = creds?.characterPromptRules || null
 
   if (!anthropicKey || !higgsToken) {
     return NextResponse.json({ error: 'Credentials incomplets (Anthropic + Higgsfield requis).' }, { status: 400 })
@@ -92,6 +93,8 @@ export async function POST(req: NextRequest) {
         ...(googleRefreshToken ? { GOOGLE_REFRESH_TOKEN: googleRefreshToken } : {}),
         ...(driveFolderId ? { DRIVE_FOLDER_ID: driveFolderId } : {}),
         ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
+        ...(characterPromptRules ? { CHARACTER_PROMPT_RULES: characterPromptRules } : {}),
+        ...(characterName ? { SELECTED_CHARACTER_NAME: characterName } : {}),
       },
     }
     await prisma.run.update({ where: { id: run.id }, data: { queuedParams } })
@@ -125,6 +128,8 @@ export async function POST(req: NextRequest) {
         ...(process.env.GOOGLE_CLIENT_ID ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID } : {}),
         ...(process.env.GOOGLE_CLIENT_SECRET ? { GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET } : {}),
         ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
+        ...(characterPromptRules ? { CHARACTER_PROMPT_RULES: characterPromptRules } : {}),
+        ...(characterName ? { SELECTED_CHARACTER_NAME: characterName } : {}),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     }

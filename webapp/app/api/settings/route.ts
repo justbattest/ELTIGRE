@@ -61,6 +61,7 @@ export async function GET() {
     instagramSessionCookie: maskKey(rawInstagramCookie),
     scrapingProxyUrl: creds.scrapingProxyUrl || '',
     hikerApiKey: maskKey(creds.hikerApiKey),
+    characterPromptRules: creds.characterPromptRules || '',
   })
 }
 
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
     instagramSessionCookie,
     scrapingProxyUrl,
     hikerApiKey,
+    characterPromptRules,
   } = body
 
   // Récupère les valeurs existantes pour ne pas écraser avec du vide
@@ -135,6 +137,9 @@ export async function POST(req: NextRequest) {
   }
   if (hikerApiKey && !hikerApiKey.includes('...')) {
     data.hikerApiKey = hikerApiKey.trim()
+  }
+  if (characterPromptRules !== undefined) {
+    data.characterPromptRules = characterPromptRules
   }
 
   await prisma.userCredentials.upsert({

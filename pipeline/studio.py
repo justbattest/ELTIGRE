@@ -199,6 +199,56 @@ def generate_prompts_with_claude(
     client = anthropic.Anthropic(api_key=anthropic_key)
     system_text = load_full_skill()
 
+    # ─── Inject character-specific physical rules from env ───────────────
+    character_rules_json = os.environ.get("CHARACTER_PROMPT_RULES", "").strip()
+    selected_char_name = os.environ.get("SELECTED_CHARACTER_NAME", "").strip()
+
+    if character_rules_json and selected_char_name:
+        try:
+            rules_map = json.loads(character_rules_json)
+            # Find matching rules (case-insensitive partial match)
+            char_rules = None
+            for name, rules in rules_map.items():
+                if name.lower() in selected_char_name.lower() or selected_char_name.lower() in name.lower():
+                    char_rules = rules
+                    break
+
+            if char_rules:
+                system_text += f"""
+
+CHARACTER-SPECIFIC PHYSICAL RULES (MANDATORY — override the "never describe physical features" rule for this character):
+{char_rules}
+
+These traits MUST be visible in EVERY prompt you generate:
+- Outfits MUST show/reveal these features (never hide them with long sleeves, coats, oversized clothing)
+- Reference these traits in the outfit description AND the pose/framing description
+- These rules take ABSOLUTE PRIORITY over the general "do not describe physical features" instruction
+"""
+        except json.JSONDecodeError:
+            pass
+
+    # ─── Inject diversity rules ─────────────────────────────────────────
+    system_text += """
+
+DIVERSITY RULES (MANDATORY for every batch):
+- Maximum 1 selfie per 5 prompts. Shot type distribution: candid (30%), mirror (15%), friend-POV (20%), vlog-POV (10%), selfie (15%), editorial (10%)
+- NEVER repeat the same location across prompts in a batch — each MUST have a UNIQUE specific location with city name and neighborhood
+- NEVER reuse the same activity across prompts — each MUST be a different mid-action
+- NEVER generate generic "sitting at café table" or "walking through market" or "standing at beach" — these are AI clichés that always look fake
+- Color grades MUST be physically described with 3 parts (highlights/shadows/midtones), NEVER use mood words like "warm" or "cozy" alone
+- Beach and outdoor scenes: use MUTED natural tones, NEVER oversaturated yellows or oranges. Always specify "desaturated warm highlights, cool blue shadows, neutral midtones, no Instagram filter, no saturation boost"
+- Each prompt MUST have a different time of day from the others in the batch
+- Vary distances: mix close-up, waist-up, full-body, and 3/4 shots across the batch
+
+AI CLICHÉ BLACKLIST — NEVER generate these overused scenes:
+- Generic outdoor market stalls (always looks AI-generated)
+- Generic café terrace without specific named café + detailed 10-object inventory
+- Generic beach sunset with saturated warm colors
+- "Holding coffee cup" as the only action
+- Clean pristine environments (always add realistic mess: crumpled napkin, water ring on table, loose hair tie)
+- Perfect symmetrical poses (always offset: weight on one leg, head tilted, one hand busy)
+"""
+
     all_prompts: list[str] = []
     remaining = count
 
