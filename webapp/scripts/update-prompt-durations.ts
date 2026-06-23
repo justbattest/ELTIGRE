@@ -98,6 +98,25 @@ const DURATIONS: Record<string, number> = {
   'MC14 — McDo · Special sauce · Deadpan':                             7,
   'MC15 — McDo · Keep you warm · Deliberate look':                    7,
   'MC16 — McDo · Freshly made · Ending ambigu':                       8,
+
+  // ── STAND DE TIR (17 prompts) ────────────────────────────────────────────
+  'Coach grip · "Relax your shoulders... See?" · V1':                  8,
+  'Coach grip · Variation regard fuyant · V2':                         8,
+  'Push-in vlog · "Good job... just like that" · V1':                  7,
+  'Push-in vlog · "Good job" · V2 contact continu':                    7,
+  '"Breathe with me" · Recul qui colle · V1 turtleneck':               8,
+  '"Breathe with me" · Recul plus fort · V2 turtleneck':               8,
+  '"Breathe with me" · Caméra qui drift · V3 turtleneck':              8,
+  '"Breathe with me" · Variante décolleté zip-up · V4':                8,
+  'Douille brûlante dans le décolleté · "Aiee!" · V1 cargo':           6,
+  'Douille brûlante · "Aiee!" · V2 — BEST':                           6,
+  'Tir rapide + sauts + spectateurs choqués · V1':                     7,
+  'Tir rapide + sauts + spectateurs · V2 décolleté zip-up':            7,
+  'Tir rapide + 3 sauts + spectateurs · V3 décolleté zip-up':          8,
+  '"Earpro check" · Toucher mâchoire/cou':                             6,
+  '"Steady your heartbeat" · Main sur le torse':                       8,
+  '"Mirror stance" · Dos à dos':                                       7,
+  '"Mind if I borrow your target" · Intruse':                          8,
 }
 
 async function main() {

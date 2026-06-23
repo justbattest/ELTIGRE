@@ -112,7 +112,7 @@ const CHIPS: Record<keyof Selections, string[]> = {
 
 // ─── Données niche ───────────────────────────────────────────────────────────
 
-type NicheKey = 'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse' | 'mcdo' | 'skatepark'
+type NicheKey = 'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse' | 'mcdo' | 'skatepark' | 'standdetir'
 
 const NICHE_LABELS: Record<NicheKey, string> = {
   conference: '🎓 Conference',
@@ -123,6 +123,7 @@ const NICHE_LABELS: Record<NicheKey, string> = {
   serveuse: '🍸 Server',
   mcdo: '🍔 McDonalds',
   skatepark: '🛹 Skatepark',
+  standdetir: '🎯 Shooting Range',
 }
 
 const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>> = {
@@ -209,6 +210,46 @@ const NICHE_CHIPS: Record<NicheKey, Partial<Record<keyof Selections, string[]>>>
     outfit: ['Very short mini skirt + black deep-V crop top', 'Very short denim mini skirt + white crop top', 'Very short black pleated skirt + grey crop top high ponytail', 'Very short pink mini skirt + black crop top', 'Very short white mini skirt + red crop top'],
     shotType: ['Candid full-body', 'Candid waist-up', 'Selfie chest-up'],
     colorGrade: ['Golden hour', 'Cool airy', 'High contrast sport'],
+  },
+  standdetir: {
+    lieu: [
+      'Indoor shooting range concrete walls haze',
+      'Shooting range firing lane brass casings floor',
+      'Range lobby gun display case',
+      'Tactical training facility obstacle course',
+      'Range observation room behind glass',
+      'Outdoor tactical range dusty',
+    ],
+    activite: [
+      'Aiming pistol downrange focused',
+      'Loading magazine at shooting bench',
+      'Adjusting ear protection on someone',
+      'Checking target grouping downrange',
+      'Holstering pistol into thigh holster',
+      'Leaning on range divider between shots',
+      'Picking up brass casings from floor',
+      'Cleaning pistol at workbench',
+      'Demonstrating grip technique',
+    ],
+    outfit: [
+      'Olive zip-up crop top deep V + cargo pants + holster',
+      'Black tank deep neckline + scrunch shorts + boots',
+      'Camo sports bra + tactical cargo pants + gloves',
+      'Olive ribbed crop + shorts + thigh holster',
+      'Black bodysuit zip-up + tactical belt + holster',
+    ],
+    shotType: [
+      'Behind shoulder aiming downrange',
+      'Profile two-shot coaching close',
+      'Front facing post-shot confident',
+      'Close-up hands adjusting grip',
+      'Full body with holster standing',
+      'Candid waist-up between shots',
+    ],
+    colorGrade: [
+      'Cool fluorescent: white-grey highlights, deep grey shadows, muted cool mids',
+      'Warm range: tan-beige highlights, grey-brown shadows, warm neutral mids',
+    ],
   },
 }
 

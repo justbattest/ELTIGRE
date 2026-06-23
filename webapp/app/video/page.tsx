@@ -103,6 +103,17 @@ const SKATEPARK_OUTFITS = [
   { label: 'White skirt + red crop top, dark hair', value: 'very short white mini skirt, tight red deep V-neck crop top deep cleavage, long dark wavy hair' },
 ]
 
+const STANDDETIR_OUTFITS = [
+  { label: 'Olive zip-up crop top + cargo pants', value: 'fitted olive green zip-up crop top deep V neckline showing prominent cleavage, fitted olive cargo pants, tactical belt, clear safety glasses, black over-ear hearing protection' },
+  { label: 'Black tank top + scrunch shorts + boots', value: 'black tank top deep neckline, black ruched scrunch shorts with side cutout, thigh holster double garter straps holstered pistol, black over-the-knee boots, clear safety glasses' },
+  { label: 'Olive ribbed crop + shorts + holster', value: 'fitted olive green ribbed long-sleeve crop top, black ruched scrunch shorts, thigh holster with holstered pistol, clear safety glasses, black over-ear hearing protection' },
+  { label: 'Camo sports bra + tactical cargo', value: 'camo print deep V sports bra showing prominent cleavage, fitted black tactical cargo pants, fingerless tactical gloves, clear safety glasses, black over-ear hearing protection' },
+  { label: 'Black zip bodysuit + thigh holster', value: 'fitted black zip-up bodysuit deep V neckline prominent cleavage, thigh holster with holstered pistol, tactical belt, clear safety glasses' },
+  { label: 'White crop top + olive shorts', value: 'tight white deep V crop top showing cleavage, olive green micro shorts, black thigh holster, clear safety glasses, black over-ear hearing protection' },
+  { label: 'Olive turtleneck + tactical gear', value: 'fitted olive green long-sleeve turtleneck top, fingerless tactical gloves, thigh holster with holstered pistol, clear safety glasses, black over-ear hearing protection' },
+  { label: 'Red sports bra + black cargo', value: 'red deep V sports bra prominent cleavage, fitted black cargo pants low waist, tactical belt, clear safety glasses, black over-ear hearing protection' },
+]
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function SubNicheLabel({ subNiche }: { subNiche: string }) {
@@ -115,6 +126,7 @@ function SubNicheLabel({ subNiche }: { subNiche: string }) {
   if (subNiche === 'serveuse') return <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">🍾 Waitress</span>
   if (subNiche === 'mcdo') return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700 border border-yellow-200 font-medium">🍔 McDo</span>
   if (subNiche === 'skatepark') return <span className="text-xs px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">🛴 Skatepark</span>
+  if (subNiche === 'standdetir') return <span className="text-xs px-1.5 py-0.5 rounded bg-stone-50 text-stone-700 border border-stone-200 font-medium">🎯 Shooting Range</span>
   return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 font-medium">🎓 Conf.</span>
 }
 
@@ -136,7 +148,7 @@ export default function VideoPage() {
   const [loadingPrompts, setLoadingPrompts] = useState(false)
 
   // ── Niche — 4 onglets séparés ──
-  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse' | 'mcdo' | 'skatepark'>('conference')
+  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse' | 'mcdo' | 'skatepark' | 'standdetir'>('conference')
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation' | 'random'>('direct')
@@ -208,13 +220,13 @@ export default function VideoPage() {
     setVarOutfit('')
     setVarPhrase('')
     // conference et sport sont dans le même niche DB 'conference_sport', filtrés côté client
-    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : niche === 'serveuse' ? 'serveuse' : niche === 'mcdo' ? 'mcdo' : niche === 'skatepark' ? 'skatepark' : 'conference_sport'
+    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : niche === 'serveuse' ? 'serveuse' : niche === 'mcdo' ? 'mcdo' : niche === 'skatepark' ? 'skatepark' : niche === 'standdetir' ? 'standdetir' : 'conference_sport'
     fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
       .then(data => {
         const all: ValidatedPrompt[] = data.prompts || []
         // Filtre côté client par subNiche pour conference/sport ; golf, vieux, etc. sont déjà leur propre niche
-        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo' || niche === 'serveuse' || niche === 'mcdo' || niche === 'skatepark')
+        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo' || niche === 'serveuse' || niche === 'mcdo' || niche === 'skatepark' || niche === 'standdetir')
           ? all
           : all.filter(p => p.subNiche === niche)
         setPrompts(filtered)
@@ -249,6 +261,7 @@ export default function VideoPage() {
     if (sub === 'serveuse') return SERVEUSE_OUTFITS
     if (sub === 'mcdo') return MCDO_OUTFITS
     if (sub === 'skatepark') return SKATEPARK_OUTFITS
+    if (sub === 'standdetir') return STANDDETIR_OUTFITS
     return CONF_OUTFITS
   })()
 
@@ -397,6 +410,7 @@ export default function VideoPage() {
             { id: 'serveuse' as const,   emoji: '🍾', label: 'Waitress' },
             { id: 'mcdo' as const,       emoji: '🍔', label: 'McDo' },
             { id: 'skatepark' as const,  emoji: '🛴', label: 'Skatepark' },
+            { id: 'standdetir' as const, emoji: '🎯', label: 'Shooting Range' },
           ]).map(n => (
             <button
               key={n.id}
@@ -515,7 +529,7 @@ export default function VideoPage() {
                 <p className="text-xs text-gray-700 mt-0.5">Each prompt is generated as an exact copy — zero modification.</p>
               </div>
               <span className="text-xs text-gray-700">
-                {niche === 'conference' ? '🎓 Conference' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Weather' : niche === 'serveuse' ? '🍾 Waitress' : niche === 'mcdo' ? '🍔 McDo' : niche === 'skatepark' ? '🛴 Skatepark' : '👴 Old'}
+                {niche === 'conference' ? '🎓 Conference' : niche === 'sport' ? '🏃 Coach' : niche === 'golf' ? '⛳ Golf' : niche === 'meteo' ? '📺 Weather' : niche === 'serveuse' ? '🍾 Waitress' : niche === 'mcdo' ? '🍔 McDo' : niche === 'skatepark' ? '🛴 Skatepark' : niche === 'standdetir' ? '🎯 Shooting Range' : '👴 Old'}
               </span>
             </div>
 
