@@ -10,66 +10,78 @@ import { prisma } from '@/lib/prisma'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const code  = searchParams.get('code')
-  const error = searchParams.get('error')
-  const state = searchParams.get('state') // userId
-
-  const redirectUri = `${process.env.NEXTAUTH_URL}/api/google-auth/callback`
-
-  // ── Erreur renvoyée par Google (ex: accès refusé) ─────────────────────────
-  if (error) {
-    return htmlPage(false, `Google a refusé l'accès : ${error}`)
-  }
-
-  if (!code || !state) {
-    return htmlPage(false, 'Paramètres manquants (code ou state)')
-  }
-
-  const clientId     = process.env.GOOGLE_CLIENT_ID!
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET!
-
-  // ── Échanger le code contre des tokens ───────────────────────────────────
-  const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
-    }),
-  })
-
-  if (!tokenRes.ok) {
-    const errText = await tokenRes.text()
-    console.error('[google-auth/callback] token exchange error:', errText)
-    return htmlPage(false, `Erreur échange token Google : ${errText}`)
-  }
-
-  const tokens = await tokenRes.json()
-  const refreshToken: string | undefined = tokens.refresh_token
-
-  if (!refreshToken) {
-    // Peut arriver si l'user avait déjà autorisé et que prompt=consent n'était pas forcé
-    return htmlPage(false, 'Pas de refresh_token reçu. Réessaye en révoquant l\'accès sur myaccount.google.com/permissions puis reconnecte.')
-  }
-
-  // ── Sauvegarder le refresh_token en DB ───────────────────────────────────
-  const userId = state
+  console.log('[google-auth/callback] HIT — url:', req.url)
   try {
-    await prisma.userCredentials.upsert({
-      where:  { userId },
-      create: { userId, googleRefreshToken: refreshToken },
-      update: { googleRefreshToken: refreshToken },
-    })
-  } catch (dbErr) {
-    console.error('[google-auth/callback] DB error:', dbErr)
-    return htmlPage(false, 'Erreur DB lors de la sauvegarde du token')
-  }
+    const { searchParams } = new URL(req.url)
+    const code  = searchParams.get('code')
+    const error = searchParams.get('error')
+    const state = searchParams.get('state') // userId
 
-  return htmlPage(true)
+    console.log('[google-auth/callback] params — code:', !!code, 'error:', error, 'state:', state)
+
+    const redirectUri = `${process.env.NEXTAUTH_URL}/api/google-auth/callback`
+    console.log('[google-auth/callback] redirectUri:', redirectUri, 'NEXTAUTH_URL:', process.env.NEXTAUTH_URL)
+
+    if (error) {
+      return htmlPage(false, `Google refused access: ${error}`)
+    }
+
+    if (!code || !state) {
+      return htmlPage(false, 'Missing parameters (code or state)')
+    }
+
+    const clientId     = process.env.GOOGLE_CLIENT_ID
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+    if (!clientId || !clientSecret) {
+      console.error('[google-auth/callback] MISSING ENV — clientId:', !!clientId, 'clientSecret:', !!clientSecret)
+      return htmlPage(false, 'Server configuration error: missing Google credentials')
+    }
+
+    const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    })
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text()
+      console.error('[google-auth/callback] token exchange error:', errText)
+      return htmlPage(false, `Google token exchange error: ${errText}`)
+    }
+
+    const tokens = await tokenRes.json()
+    const refreshToken: string | undefined = tokens.refresh_token
+    console.log('[google-auth/callback] tokens received — refresh_token:', !!refreshToken)
+
+    if (!refreshToken) {
+      return htmlPage(false, 'No refresh_token received. Go to myaccount.google.com/permissions, revoke access for this app, then reconnect.')
+    }
+
+    const userId = state
+    try {
+      await prisma.userCredentials.upsert({
+        where:  { userId },
+        create: { userId, googleRefreshToken: refreshToken },
+        update: { googleRefreshToken: refreshToken },
+      })
+      console.log('[google-auth/callback] SUCCESS — saved refresh token for user:', userId)
+    } catch (dbErr) {
+      console.error('[google-auth/callback] DB error:', dbErr)
+      return htmlPage(false, 'Database error saving token')
+    }
+
+    return htmlPage(true)
+  } catch (err) {
+    console.error('[google-auth/callback] UNHANDLED ERROR:', err)
+    return htmlPage(false, `Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
+  }
 }
 
 // ── Helper : page HTML qui ferme la popup ou redirige ────────────────────────
