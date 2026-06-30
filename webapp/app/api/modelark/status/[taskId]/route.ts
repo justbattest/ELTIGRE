@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
 
 const ALLOWED_EMAIL = 'justbattest@gmail.com'
-const MODELARK_BASE = 'https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks'
+const MODELARK_BASE = 'https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks'
 
 export async function GET(
   _req: NextRequest,

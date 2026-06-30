@@ -16,8 +16,8 @@ import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
 
 const ALLOWED_EMAIL = 'justbattest@gmail.com'
-const MODELARK_ENDPOINT = 'https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks'
-const MODELARK_MODEL = 'doubao-seedance-2-0-260128'
+const MODELARK_ENDPOINT = 'https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks'
+const MODELARK_MODEL = 'dreamina-seedance-2-0-260128'
 
 type ModelArkCharacter = {
   id: string
