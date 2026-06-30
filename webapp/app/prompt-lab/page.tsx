@@ -33,11 +33,15 @@ const CATEGORIES = [
 export default function PromptLabPage() {
   useSession()
 
-  // ── Images ──
+  // ── Mode ──
+  const [mode, setMode] = useState<'video' | 'screenshots'>('video')
+  const [videoUrl, setVideoUrl] = useState('')
+
+  // ── Images (mode screenshots) ──
   const [images, setImages] = useState<{ file: File; preview: string; base64: string }[]>([])
   const [dragging, setDragging] = useState(false)
 
-  // ── Description ──
+  // ── Description (mode screenshots) ──
   const [description, setDescription] = useState('')
 
   // ── Génération ──
@@ -104,8 +108,12 @@ export default function PromptLabPage() {
 
   // ── Génération streaming ───────────────────────────────────────────────────
   const generate = async () => {
-    if (!images.length) return setError('Upload at least one screenshot.')
-    if (!description.trim()) return setError('Describe the scene.')
+    if (mode === 'video') {
+      if (!videoUrl.trim()) return setError('Enter a video URL.')
+    } else {
+      if (!images.length) return setError('Upload at least one screenshot.')
+      if (!description.trim()) return setError('Describe the scene.')
+    }
 
     setError('')
     setAnalysisText('')
@@ -121,15 +129,19 @@ export default function PromptLabPage() {
     let jsonBuffer = ''
 
     try {
-      const res = await fetch('/api/prompt-lab/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          images: images.map(i => i.base64),
-          description,
-        }),
-        signal: abort.signal,
-      })
+      const res = await fetch(
+        mode === 'video' ? '/api/prompt-lab/from-video' : '/api/prompt-lab/generate',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            mode === 'video'
+              ? { videoUrl: videoUrl.trim() }
+              : { images: images.map(i => i.base64), description }
+          ),
+          signal: abort.signal,
+        }
+      )
 
       if (!res.ok || !res.body) {
         const d = await res.json().catch(() => ({}))
@@ -273,7 +285,39 @@ export default function PromptLabPage() {
 
         <TutorialVideo videoId="kqiJKDm7hyo" title="Prompt Lab" />
 
-        {/* ── Upload screenshots ── */}
+        {/* ── Mode toggle ── */}
+        <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
+          <button
+            onClick={() => setMode('video')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === 'video' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            🎬 From URL
+          </button>
+          <button
+            onClick={() => setMode('screenshots')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === 'screenshots' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            🖼 Screenshots
+          </button>
+        </div>
+
+        {/* ── Mode vidéo : URL input ── */}
+        {mode === 'video' && (
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+            <p className="text-xs text-gray-700 font-medium uppercase tracking-wider">Video URL</p>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={e => setVideoUrl(e.target.value)}
+              placeholder="https://www.instagram.com/reel/... or YouTube, TikTok, X..."
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
+            />
+            <p className="text-xs text-gray-500">Supports Instagram, YouTube, TikTok, X and more. Frames are extracted automatically.</p>
+          </div>
+        )}
+
+        {/* ── Mode screenshots ── */}
+        {mode === 'screenshots' && (
         <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
           <p className="text-xs text-gray-700 font-medium uppercase tracking-wider">Video screenshots <span className="text-gray-800 font-normal normal-case">(1–10 frames, in order)</span></p>
 
@@ -304,8 +348,10 @@ export default function PromptLabPage() {
             </div>
           )}
         </div>
+        )}
 
-        {/* ── Description ── */}
+        {/* ── Description (screenshots only) ── */}
+        {mode === 'screenshots' && (
         <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)]">
           <p className="text-xs text-gray-700 mb-3 font-medium uppercase tracking-wider">Scene description</p>
           <textarea
@@ -316,20 +362,21 @@ export default function PromptLabPage() {
             className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm resize-none"
           />
         </div>
+        )}
 
         {/* ── Bouton générer ── */}
         <div className="flex gap-3">
           <button
             onClick={generate}
-            disabled={isRunning || !images.length || !description.trim()}
+            disabled={isRunning || (mode === 'video' ? !videoUrl.trim() : (!images.length || !description.trim()))}
             className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] hover:from-violet-500 hover:to-violet-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {isRunning ? (
             <span className="flex items-center justify-center gap-2">
               <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg>
-              Analyzing...
+              {mode === 'video' ? 'Downloading & analyzing...' : 'Analyzing...'}
             </span>
-          ) : 'Analyze & Generate prompt'}
+          ) : mode === 'video' ? '🎬 Generate prompt from video' : 'Analyze & Generate prompt'}
           </button>
           {isRunning && (
             <button onClick={stopGeneration} className="px-5 py-3 rounded-xl font-semibold text-white bg-red-700 hover:bg-red-600 transition">Stop</button>
