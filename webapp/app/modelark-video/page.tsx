@@ -80,27 +80,6 @@ function extractPromptText(promptJson: string): string {
   }
 }
 
-// Compresse une image via canvas → JPEG 80% max 600px (réduit ~10× la taille base64)
-async function compressImage(dataUrl: string): Promise<string> {
-  return new Promise(resolve => {
-    const img = new Image()
-    img.onload = () => {
-      const MAX = 600
-      let { width, height } = img
-      if (width > MAX || height > MAX) {
-        if (width > height) { height = Math.round((height * MAX) / width); width = MAX }
-        else { width = Math.round((width * MAX) / height); height = MAX }
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')!
-      ctx.drawImage(img, 0, 0, width, height)
-      resolve(canvas.toDataURL('image/jpeg', 0.80))
-    }
-    img.src = dataUrl
-  })
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -210,27 +189,21 @@ export default function ModelArkVideoPage() {
     }
   }, [selectedNiche])
 
-  // ── Handle photo upload for new character (with compression) ─────────────────
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // ── Handle photo upload for new character ────────────────────────────────────
+  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
     if (newCharPhotos.length + files.length > 9) {
       alert('Maximum 9 photos par personnage (limite API Seedance 2.0)')
       return
     }
-
-    for (const file of files) {
-      await new Promise<void>(resolve => {
-        const reader = new FileReader()
-        reader.onload = async ev => {
-          const raw = ev.target?.result as string
-          const compressed = await compressImage(raw)
-          setNewCharPhotos(prev => [...prev, compressed].slice(0, 9))
-          resolve()
-        }
-        reader.readAsDataURL(file)
-      })
-    }
-    // Reset input pour permettre de re-sélectionner les mêmes fichiers
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = ev => {
+        const dataUrl = ev.target?.result as string
+        setNewCharPhotos(prev => [...prev, dataUrl].slice(0, 9))
+      }
+      reader.readAsDataURL(file)
+    })
     e.target.value = ''
   }
 
