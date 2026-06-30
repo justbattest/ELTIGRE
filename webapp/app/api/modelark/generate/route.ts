@@ -48,9 +48,10 @@ export async function POST(req: NextRequest) {
     select: { modelArkCharacters: true, modelArkApiKey: true },
   })
 
-  const apiKey = decryptIfPresent(creds?.modelArkApiKey)
+  // Clef API : priorité env var (Railway), fallback DB
+  const apiKey = process.env.MODELARK_API_KEY || decryptIfPresent(creds?.modelArkApiKey)
   if (!apiKey) {
-    return NextResponse.json({ error: 'Clef API ModelArk non configurée. Allez dans Settings → ModelArk.' }, { status: 400 })
+    return NextResponse.json({ error: 'MODELARK_API_KEY non configurée dans les variables Railway.' }, { status: 400 })
   }
 
   const characters: ModelArkCharacter[] = creds?.modelArkCharacters

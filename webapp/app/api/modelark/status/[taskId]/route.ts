@@ -29,9 +29,9 @@ export async function GET(
     select: { modelArkApiKey: true },
   })
 
-  const apiKey = decryptIfPresent(creds?.modelArkApiKey)
+  const apiKey = process.env.MODELARK_API_KEY || decryptIfPresent(creds?.modelArkApiKey)
   if (!apiKey) {
-    return NextResponse.json({ error: 'Clef API ModelArk non configurée' }, { status: 400 })
+    return NextResponse.json({ error: 'MODELARK_API_KEY non configurée' }, { status: 400 })
   }
 
   const res = await fetch(`${MODELARK_BASE}/${taskId}`, {
