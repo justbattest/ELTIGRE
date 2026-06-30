@@ -50,32 +50,56 @@ const NICHE_LABELS: Record<string, string> = {
   standdetir: '🎯 Shooting Range',
 }
 
-// Extrait un prompt texte lisible depuis le promptJson (qui est du JSON Higgsfield)
+// Extrait un prompt texte depuis le promptJson Higgsfield.
+// Récupère toutes les valeurs string des champs de chaque shot, concaténées.
 function extractPromptText(promptJson: string): string {
   try {
     const parsed = JSON.parse(promptJson)
-    // Si c'est un array de shots
-    if (Array.isArray(parsed)) {
-      return parsed
-        .map((shot: Record<string, unknown>) => {
-          const desc = shot.scene_description || shot.description || shot.prompt || ''
-          return String(desc)
-        })
-        .filter(Boolean)
-        .join(' | ')
-        .substring(0, 500)
+    const extractFields = (obj: Record<string, unknown>): string => {
+      // Récupère toutes les valeurs string non-vides de l'objet
+      return Object.values(obj)
+        .filter(v => typeof v === 'string' && v.trim().length > 10)
+        .map(v => String(v).trim())
+        .join('. ')
     }
-    // Si c'est un objet simple
-    const text =
-      parsed.scene_description ||
-      parsed.description ||
-      parsed.prompt ||
-      parsed.content ||
-      JSON.stringify(parsed)
-    return String(text).substring(0, 500)
+
+    if (Array.isArray(parsed)) {
+      const parts = parsed.map(shot => extractFields(shot as Record<string, unknown>)).filter(Boolean)
+      const result = parts.join(' | ').substring(0, 800)
+      return result || JSON.stringify(parsed).substring(0, 800)
+    }
+
+    if (typeof parsed === 'object' && parsed !== null) {
+      const result = extractFields(parsed as Record<string, unknown>)
+      return result || JSON.stringify(parsed).substring(0, 800)
+    }
+
+    return String(parsed).substring(0, 800)
   } catch {
-    return promptJson.substring(0, 500)
+    return promptJson.substring(0, 800)
   }
+}
+
+// Compresse une image via canvas → JPEG 80% max 600px (réduit ~10× la taille base64)
+async function compressImage(dataUrl: string): Promise<string> {
+  return new Promise(resolve => {
+    const img = new Image()
+    img.onload = () => {
+      const MAX = 600
+      let { width, height } = img
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round((height * MAX) / width); width = MAX }
+        else { width = Math.round((width * MAX) / height); height = MAX }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      resolve(canvas.toDataURL('image/jpeg', 0.80))
+    }
+    img.src = dataUrl
+  })
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -186,22 +210,28 @@ export default function ModelArkVideoPage() {
     }
   }, [selectedNiche])
 
-  // ── Handle photo upload for new character ────────────────────────────────────
-  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // ── Handle photo upload for new character (with compression) ─────────────────
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
     if (newCharPhotos.length + files.length > 9) {
       alert('Maximum 9 photos par personnage (limite API Seedance 2.0)')
       return
     }
 
-    files.forEach(file => {
-      const reader = new FileReader()
-      reader.onload = ev => {
-        const dataUrl = ev.target?.result as string
-        setNewCharPhotos(prev => [...prev, dataUrl].slice(0, 9))
-      }
-      reader.readAsDataURL(file)
-    })
+    for (const file of files) {
+      await new Promise<void>(resolve => {
+        const reader = new FileReader()
+        reader.onload = async ev => {
+          const raw = ev.target?.result as string
+          const compressed = await compressImage(raw)
+          setNewCharPhotos(prev => [...prev, compressed].slice(0, 9))
+          resolve()
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+    // Reset input pour permettre de re-sélectionner les mêmes fichiers
+    e.target.value = ''
   }
 
   // ── Save new character ───────────────────────────────────────────────────────
