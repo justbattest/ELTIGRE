@@ -62,6 +62,8 @@ export async function GET() {
     scrapingProxyUrl: creds.scrapingProxyUrl || '',
     hikerApiKey: maskKey(creds.hikerApiKey),
     characterPromptRules: creds.characterPromptRules || '',
+    modelArkApiKey: maskKey(decryptIfPresent(creds.modelArkApiKey)),
+    modelArkApiKeyConnected: !!creds.modelArkApiKey,
   })
 }
 
@@ -88,6 +90,7 @@ export async function POST(req: NextRequest) {
     scrapingProxyUrl,
     hikerApiKey,
     characterPromptRules,
+    modelArkApiKey,
   } = body
 
   // Récupère les valeurs existantes pour ne pas écraser avec du vide
@@ -140,6 +143,9 @@ export async function POST(req: NextRequest) {
   }
   if (characterPromptRules !== undefined) {
     data.characterPromptRules = characterPromptRules
+  }
+  if (modelArkApiKey && !modelArkApiKey.includes('...')) {
+    data.modelArkApiKey = encrypt(modelArkApiKey)
   }
 
   await prisma.userCredentials.upsert({

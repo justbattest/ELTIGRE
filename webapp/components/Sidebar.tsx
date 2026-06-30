@@ -49,11 +49,12 @@ const GROUPS: GroupItem[] = [
     icon: VideoIcon,
     label: 'VIDEO',
     href: '/video',
-    pages: ['/video', '/prompt-lab', '/motion-control'],
+    pages: ['/video', '/prompt-lab', '/motion-control', '/modelark-video'],
     subTabs: [
       { label: 'Videos', href: '/video' },
       { label: 'Prompt Lab', href: '/prompt-lab' },
       { label: 'Motion Control', href: '/motion-control' },
+      { label: 'ModelArk', href: '/modelark-video' },
     ],
     separate: false,
   },
