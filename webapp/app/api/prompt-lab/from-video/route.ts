@@ -151,34 +151,47 @@ export async function POST(req: NextRequest) {
         // ── Étape 1 : extraction des frames via video_analyzer.py ──────────────
         send({ text: '⏳ Téléchargement et extraction des frames...\n' })
 
-        const scriptPath = path.join(process.cwd(), '..', 'pipeline', 'video_analyzer.py')
-        const pythonCmd = process.env.PYTHON_CMD || 'python3'
+        const projectRoot = path.join(process.cwd(), '..')
+        const pythonPath = path.join(projectRoot, 'venv', 'bin', 'python')
 
         const analyzeResult = await new Promise<{
           frames: { base64: string; timestamp: string }[]
           transcript: string
           metadata: { title: string; duration: number }
         }>((resolve, reject) => {
-          const proc = spawn(pythonCmd, ['-m', 'pipeline.video_analyzer', '--url', videoUrl.trim()], {
-            cwd: path.join(process.cwd(), '..'),
+          const proc = spawn(pythonPath, ['-m', 'pipeline.video_analyzer', '--url', videoUrl.trim()], {
+            cwd: projectRoot,
             env: {
               ...process.env,
               PYTHONUNBUFFERED: '1',
             },
+            stdio: ['ignore', 'pipe', 'pipe'],
           })
 
           let stdout = ''
           let stderr = ''
+          let settled = false
 
           proc.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
           proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
 
           const timeout = setTimeout(() => {
+            if (settled) return
+            settled = true
             proc.kill()
             reject(new Error('Timeout: extraction took more than 90s'))
           }, 90_000)
 
+          proc.on('error', (err) => {
+            if (settled) return
+            settled = true
+            clearTimeout(timeout)
+            reject(new Error(`Spawn error: ${err.message}`))
+          })
+
           proc.on('close', (code: number | null) => {
+            if (settled) return
+            settled = true
             clearTimeout(timeout)
             if (code !== 0) {
               reject(new Error(`video_analyzer failed (code ${code}): ${stderr.slice(0, 300)}`))

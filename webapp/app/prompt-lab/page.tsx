@@ -151,41 +151,45 @@ export default function PromptLabPage() {
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
 
-      while (true) {
+      let lineBuffer = ''
+      let streamDone = false
+
+      while (!streamDone) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const raw = decoder.decode(value)
-        const lines = raw.split('\n')
+        // Bufferiser entre deux lectures — une ligne "data: {...}" peut être coupée
+        // par une frontière réseau et arriver en 2 morceaux sur des read() séparés.
+        lineBuffer += decoder.decode(value, { stream: true })
+        const lines = lineBuffer.split('\n')
+        lineBuffer = lines.pop() ?? ''  // dernière ligne potentiellement incomplète → on la garde
+
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           const data = line.slice(6)
-          if (data === '[DONE]') break
-          try {
-            const chunk = JSON.parse(data)
-            if (chunk.error) throw new Error(chunk.error)
-            if (chunk.text) {
-              fullText += chunk.text
+          if (data === '[DONE]') { streamDone = true; break }
 
-              // Détecter la séparation ---JSON---
-              if (!jsonStarted && fullText.includes('---JSON---')) {
-                jsonStarted = true
-                const parts = fullText.split('---JSON---')
-                setAnalysisText(parts[0].trim())
-                jsonBuffer = parts[1] || ''
-              } else if (jsonStarted) {
-                jsonBuffer += chunk.text
-              } else {
-                setAnalysisText(fullText)
-              }
+          const chunk = JSON.parse(data)  // toujours complet ici — plus de try/catch fragile
+          if (chunk.error) throw new Error(chunk.error)
+          if (chunk.text) {
+            fullText += chunk.text
 
-              // Auto-scroll
-              if (analysisRef.current) {
-                analysisRef.current.scrollTop = analysisRef.current.scrollHeight
-              }
+            // Détecter la séparation ---JSON---
+            if (!jsonStarted && fullText.includes('---JSON---')) {
+              jsonStarted = true
+              const parts = fullText.split('---JSON---')
+              setAnalysisText(parts[0].trim())
+              jsonBuffer = parts[1] || ''
+            } else if (jsonStarted) {
+              jsonBuffer += chunk.text
+            } else {
+              setAnalysisText(fullText)
             }
-          } catch (parseErr) {
-            if ((parseErr as Error).message !== 'Unexpected end of JSON input') throw parseErr
+
+            // Auto-scroll
+            if (analysisRef.current) {
+              analysisRef.current.scrollTop = analysisRef.current.scrollHeight
+            }
           }
         }
       }

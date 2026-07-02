@@ -35,7 +35,11 @@ async def _get_duration(ffprobe_path: str, video_path: str) -> float:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.DEVNULL,
     )
-    out, _ = await proc.communicate()
+    try:
+        out, _ = await asyncio.wait_for(proc.communicate(), timeout=30.0)
+    except asyncio.TimeoutError:
+        proc.kill()
+        return 10.0
     try:
         return float(json.loads(out)["format"]["duration"])
     except Exception:
@@ -72,6 +76,7 @@ async def _download(video_url: str, output_dir: str) -> tuple[str, str | None, s
         "writesubtitles": True,
         "subtitlesformat": "vtt",
         "subtitleslangs": ["en", "fr"],
+        "socket_timeout": 30,
     }
 
     cookies_tmp: str | None = None
@@ -145,7 +150,11 @@ async def _extract_frames(ffmpeg_path: str, video_path: str, duration: float, nu
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
     )
-    await proc.communicate()
+    try:
+        await asyncio.wait_for(proc.communicate(), timeout=60.0)
+    except asyncio.TimeoutError:
+        proc.kill()
+        raise RuntimeError(f"ffmpeg timed out after 60s extracting frames from {video_path}")
 
     files = sorted(frames_dir.glob("frame_*.jpg"))[:num_frames]
     result = []
@@ -170,12 +179,15 @@ async def analyze(video_url: str, num_frames: int | None = None) -> dict:
     try:
         print("Downloading video...", file=sys.stderr, flush=True)
         video_path, subtitle_path, title = await _download(video_url, work_dir)
+        print(f"Download complete: {video_path}", file=sys.stderr, flush=True)
 
         duration = await _get_duration(ffprobe, video_path)
         n = num_frames or _auto_frame_count(duration)
+        print(f"Duration: {duration:.1f}s", file=sys.stderr, flush=True)
 
         print(f"Extracting {n} frames ({duration:.1f}s)...", file=sys.stderr, flush=True)
         frames = await _extract_frames(ffmpeg, video_path, duration, n)
+        print(f"Frames extracted: {len(frames)}", file=sys.stderr, flush=True)
 
         transcript = _parse_vtt(subtitle_path) if subtitle_path else ""
         if transcript:
