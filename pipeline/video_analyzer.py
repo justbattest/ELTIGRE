@@ -29,6 +29,7 @@ import base64
 import json
 import mimetypes
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -60,23 +61,33 @@ WHISPER_PROVIDERS = [
 ]
 
 
-async def _get_duration(ffprobe_path: str, video_path: str) -> float:
-    proc = await asyncio.create_subprocess_exec(
-        ffprobe_path,
-        "-v", "quiet", "-print_format", "json", "-show_format",
-        video_path,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL,
-    )
+DURATION_RE = re.compile(r"Duration:\s*(\d+):(\d+):(\d+)\.(\d+)")
+
+
+async def _get_duration(ffmpeg_path: str, video_path: str) -> float:
+    """Parses ffmpeg's own '-i' stderr output for Duration — avoids depending on
+    a separate ffprobe binary, which imageio-ffmpeg does NOT bundle (only ffmpeg)
+    and which is not guaranteed to be on PATH in every environment."""
     try:
-        out, _ = await asyncio.wait_for(proc.communicate(), timeout=30.0)
+        proc = await asyncio.create_subprocess_exec(
+            ffmpeg_path, "-i", video_path,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except OSError:
+        return 10.0
+
+    try:
+        _, err = await asyncio.wait_for(proc.communicate(), timeout=30.0)
     except asyncio.TimeoutError:
         proc.kill()
         return 10.0
-    try:
-        return float(json.loads(out)["format"]["duration"])
-    except Exception:
+
+    match = DURATION_RE.search(err.decode(errors="ignore"))
+    if not match:
         return 10.0
+    h, m, s, cs = match.groups()
+    return int(h) * 3600 + int(m) * 60 + int(s) + int(cs) / (10 ** len(cs))
 
 
 def _auto_frame_count(duration: float) -> int:
@@ -245,9 +256,7 @@ async def _transcribe_audio(audio_path: str, api_keys: dict[str, str]) -> str:
     # Split into N roughly-equal chunks by duration (stream-copy, no re-encode)
     ffmpeg = _find_ffmpeg()
     n_chunks = (size // MAX_UPLOAD_BYTES) + 1
-    ffprobe_candidate = Path(ffmpeg).parent / "ffprobe" if ffmpeg else None
-    ffprobe = str(ffprobe_candidate) if ffprobe_candidate and ffprobe_candidate.exists() else "ffprobe"
-    total_duration = await _get_duration(ffprobe, audio_path)
+    total_duration = await _get_duration(ffmpeg, audio_path)
     chunk_duration = total_duration / n_chunks
 
     texts = []
@@ -326,9 +335,6 @@ async def analyze(
     if not ffmpeg:
         raise RuntimeError("ffmpeg not found — ensure ffmpeg is installed on the server")
 
-    ffprobe_candidate = Path(ffmpeg).parent / "ffprobe"
-    ffprobe = str(ffprobe_candidate) if ffprobe_candidate.exists() else (shutil.which("ffprobe") or "ffprobe")
-
     work_dir = tempfile.mkdtemp(prefix="vid_analyzer_")
     try:
         if file_path:
@@ -340,7 +346,7 @@ async def analyze(
             video_path, title = await _download(video_url, work_dir)
             print(f"Download complete: {video_path}", file=sys.stderr, flush=True)
 
-        duration = await _get_duration(ffprobe, video_path)
+        duration = await _get_duration(ffmpeg, video_path)
         n = num_frames or _auto_frame_count(duration)
         print(f"Duration: {duration:.1f}s", file=sys.stderr, flush=True)
 

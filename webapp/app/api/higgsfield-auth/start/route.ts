@@ -46,8 +46,15 @@ export async function POST() {
     let resolved = false
     let output = ''
 
+    // Objet partagé mis à jour en continu, référencé (pas copié) dans pendingAuths
+    // pour que /poll puisse voir l'état du process même APRÈS l'émission de l'URL —
+    // avant ce fix, si le CLI plantait/sortait après avoir affiché l'URL, /poll ne
+    // le détectait jamais et restait bloqué sur "waiting" indéfiniment.
+    const state = { exited: false, exitCode: null as number | null, output: '' }
+
     const onLine = (line: string) => {
       output += line + '\n'
+      state.output = output
       const match = line.match(/https:\/\/higgsfield\.ai\/device\?code=\S+/)
       if (match && !resolved) {
         deviceUrl = match[0]
@@ -60,7 +67,7 @@ export async function POST() {
           pendingAuths.delete(userId)
         }, 5 * 60 * 1000) // cleanup auto après 5 min
 
-        pendingAuths.set(userId, { proc, tmpHome, timeoutId })
+        pendingAuths.set(userId, { proc, tmpHome, timeoutId, state })
 
         resolve(
           NextResponse.json({ deviceUrl, message: 'En attente d\'approbation...' })
@@ -76,6 +83,7 @@ export async function POST() {
     })
 
     proc.on('error', (err) => {
+      state.exited = true
       if (!resolved) {
         resolved = true
         try { fs.rmSync(tmpHome, { recursive: true, force: true }) } catch {}
@@ -84,6 +92,8 @@ export async function POST() {
     })
 
     proc.on('close', (code) => {
+      state.exited = true
+      state.exitCode = code
       if (!resolved) {
         resolved = true
         try { fs.rmSync(tmpHome, { recursive: true, force: true }) } catch {}
@@ -92,6 +102,8 @@ export async function POST() {
           error: `Higgsfield CLI exited (code ${code}) before returning a device URL.${detail ? ` Output: ${detail}` : ''}`,
         }, { status: 500 }))
       }
+      // Si déjà resolved (URL émise), /poll détectera state.exited et remontera
+      // l'erreur au lieu de rester bloqué indéfiniment sur "waiting".
     })
 
     // Timeout 45s pour obtenir l'URL

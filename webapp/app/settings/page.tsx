@@ -101,10 +101,17 @@ export default function SettingsPage() {
           if (higgsPollRef.current) clearInterval(higgsPollRef.current)
           setHiggsAuthState('approved')
           setHiggsConnected(true)
+          if (data.refreshTokenSaved === false) {
+            console.warn('Higgsfield connected without a refresh token — session may expire sooner than usual.')
+          }
         } else if (data.status === 'no_pending') {
           if (higgsPollRef.current) clearInterval(higgsPollRef.current)
           setHiggsAuthState('error')
           setHiggsError('Session expired before approval — click Reconnect to try again.')
+        } else if (data.status === 'error') {
+          if (higgsPollRef.current) clearInterval(higgsPollRef.current)
+          setHiggsAuthState('error')
+          setHiggsError(data.message || 'Higgsfield connection failed — click Reconnect to try again.')
         }
       } catch {
         // ignore transient poll errors, keep retrying until no_pending/approved

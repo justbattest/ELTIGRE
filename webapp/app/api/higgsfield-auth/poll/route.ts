@@ -27,6 +27,19 @@ export async function GET() {
   const credsFile = path.join(pending.tmpHome, '.config', 'higgsfield', 'credentials.json')
 
   if (!fs.existsSync(credsFile)) {
+    // Le process CLI a déjà quitté (crash, timeout interne...) et n'a jamais écrit
+    // le fichier — sans cette vérification, on resterait bloqué sur "waiting"
+    // indéfiniment jusqu'au cleanup 5 min, sans jamais remonter la vraie erreur.
+    if (pending.state?.exited) {
+      clearTimeout(pending.timeoutId)
+      try { fs.rmSync(pending.tmpHome, { recursive: true, force: true }) } catch {}
+      pendingAuths.delete(userId)
+      const detail = (pending.state.output || '').trim().slice(-300)
+      return NextResponse.json({
+        status: 'error',
+        message: `Higgsfield CLI stopped (exit code ${pending.state.exitCode}) before approval was detected.${detail ? ` Output: ${detail}` : ''}`,
+      })
+    }
     return NextResponse.json({ status: 'waiting' })
   }
 
@@ -37,6 +50,8 @@ export async function GET() {
     if (!creds.access_token) {
       return NextResponse.json({ status: 'waiting' })
     }
+
+    console.log(`[higgsfield-auth/poll] Token obtained for user ${userId} — refresh_token present: ${!!creds.refresh_token}`)
 
     // ✅ Token obtenu — chiffrer et stocker en DB
     await prisma.userCredentials.upsert({
@@ -58,7 +73,7 @@ export async function GET() {
     try { fs.rmSync(pending.tmpHome, { recursive: true, force: true }) } catch {}
     pendingAuths.delete(userId)
 
-    return NextResponse.json({ status: 'approved' })
+    return NextResponse.json({ status: 'approved', refreshTokenSaved: !!creds.refresh_token })
   } catch {
     return NextResponse.json({ status: 'waiting' })
   }
