@@ -35,6 +35,7 @@ export async function POST() {
   const tmpHome = path.join('/tmp', `hf_auth_${userId}_${Date.now()}`)
   const credsDir = path.join(tmpHome, '.config', 'higgsfield')
   fs.mkdirSync(credsDir, { recursive: true })
+  console.log(`[higgsfield-auth/start] starting CLI login for user ${userId}, tmpHome: ${tmpHome}`)
 
   return new Promise<Response>((resolve) => {
     const proc = spawn('higgsfield', ['auth', 'login'], {
@@ -53,6 +54,7 @@ export async function POST() {
     const state = { exited: false, exitCode: null as number | null, output: '' }
 
     const onLine = (line: string) => {
+      if (line.trim()) console.log(`[higgsfield-auth CLI] ${line}`)
       output += line + '\n'
       state.output = output
       const match = line.match(/https:\/\/higgsfield\.ai\/device\?code=\S+/)
@@ -92,6 +94,7 @@ export async function POST() {
     })
 
     proc.on('close', (code) => {
+      console.log(`[higgsfield-auth CLI] process closed, exit code ${code}, resolved=${resolved}`)
       state.exited = true
       state.exitCode = code
       if (!resolved) {

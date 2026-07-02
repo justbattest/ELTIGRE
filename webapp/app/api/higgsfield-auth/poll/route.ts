@@ -21,12 +21,15 @@ export async function GET() {
   const pending = pendingAuths.get(userId)
 
   if (!pending) {
+    console.log(`[higgsfield-auth/poll] no pending entry for user ${userId} (pendingAuths size: ${pendingAuths.size})`)
     return NextResponse.json({ status: 'no_pending' })
   }
 
   const credsFile = path.join(pending.tmpHome, '.config', 'higgsfield', 'credentials.json')
+  const fileExists = fs.existsSync(credsFile)
+  console.log(`[higgsfield-auth/poll] user ${userId} — credsFile exists: ${fileExists}, process exited: ${!!pending.state?.exited}`)
 
-  if (!fs.existsSync(credsFile)) {
+  if (!fileExists) {
     // Le process CLI a déjà quitté (crash, timeout interne...) et n'a jamais écrit
     // le fichier — sans cette vérification, on resterait bloqué sur "waiting"
     // indéfiniment jusqu'au cleanup 5 min, sans jamais remonter la vraie erreur.
