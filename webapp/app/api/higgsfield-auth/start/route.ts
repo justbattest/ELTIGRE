@@ -44,8 +44,10 @@ export async function POST() {
 
     let deviceUrl: string | null = null
     let resolved = false
+    let output = ''
 
     const onLine = (line: string) => {
+      output += line + '\n'
       const match = line.match(/https:\/\/higgsfield\.ai\/device\?code=\S+/)
       if (match && !resolved) {
         deviceUrl = match[0]
@@ -76,18 +78,33 @@ export async function POST() {
     proc.on('error', (err) => {
       if (!resolved) {
         resolved = true
-        resolve(NextResponse.json({ error: `CLI error: ${err.message}` }, { status: 500 }))
+        try { fs.rmSync(tmpHome, { recursive: true, force: true }) } catch {}
+        resolve(NextResponse.json({ error: `Higgsfield CLI error: ${err.message}` }, { status: 500 }))
       }
     })
 
-    // Timeout 30s pour obtenir l'URL
+    proc.on('close', (code) => {
+      if (!resolved) {
+        resolved = true
+        try { fs.rmSync(tmpHome, { recursive: true, force: true }) } catch {}
+        const detail = output.trim().slice(-300)
+        resolve(NextResponse.json({
+          error: `Higgsfield CLI exited (code ${code}) before returning a device URL.${detail ? ` Output: ${detail}` : ''}`,
+        }, { status: 500 }))
+      }
+    })
+
+    // Timeout 45s pour obtenir l'URL
     setTimeout(() => {
       if (!resolved) {
         resolved = true
         try { proc.kill() } catch {}
         try { fs.rmSync(tmpHome, { recursive: true, force: true }) } catch {}
-        resolve(NextResponse.json({ error: 'Timeout: URL non obtenue en 30s' }, { status: 504 }))
+        const detail = output.trim().slice(-300)
+        resolve(NextResponse.json({
+          error: `Timeout: no device URL after 45s.${detail ? ` CLI output: ${detail}` : ' No CLI output received — check that the higgsfield CLI is installed on the server.'}`,
+        }, { status: 504 }))
       }
-    }, 30000)
+    }, 45000)
   })
 }

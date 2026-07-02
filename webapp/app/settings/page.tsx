@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { TutorialVideo } from '@/components/TutorialVideo'
@@ -31,6 +31,8 @@ export default function SettingsPage() {
   const [higgsConnected, setHiggsConnected] = useState(false)
   const [higgsAuthState, setHiggsAuthState] = useState<HiggsAuthState>('idle')
   const [higgsDeviceUrl, setHiggsDeviceUrl] = useState('')
+  const [higgsError, setHiggsError] = useState('')
+  const higgsPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Google Drive
   const [driveFolderId, setDriveFolderId] = useState('')
@@ -86,24 +88,35 @@ export default function SettingsPage() {
 
   // Polling après device code flow
   const pollHiggsfield = useCallback(() => {
-    const interval = setInterval(async () => {
-      const res = await fetch('/api/higgsfield-auth/poll')
-      const data = await res.json()
-      if (data.status === 'approved') {
-        clearInterval(interval)
-        setHiggsAuthState('approved')
-        setHiggsConnected(true)
-      } else if (data.status === 'no_pending') {
-        clearInterval(interval)
-        setHiggsAuthState('idle')
+    if (higgsPollRef.current) clearInterval(higgsPollRef.current)
+    higgsPollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch('/api/higgsfield-auth/poll')
+        const data = await res.json()
+        if (data.status === 'approved') {
+          if (higgsPollRef.current) clearInterval(higgsPollRef.current)
+          setHiggsAuthState('approved')
+          setHiggsConnected(true)
+        } else if (data.status === 'no_pending') {
+          if (higgsPollRef.current) clearInterval(higgsPollRef.current)
+          setHiggsAuthState('error')
+          setHiggsError('Session expired before approval — click Reconnect to try again.')
+        }
+      } catch {
+        // ignore transient poll errors, keep retrying until no_pending/approved
       }
     }, 2000)
-    return interval
+  }, [])
+
+  // Nettoyage du polling au démontage
+  useEffect(() => {
+    return () => { if (higgsPollRef.current) clearInterval(higgsPollRef.current) }
   }, [])
 
   const startHiggsAuth = async () => {
     setHiggsAuthState('starting')
     setHiggsDeviceUrl('')
+    setHiggsError('')
     try {
       const res = await fetch('/api/higgsfield-auth/start', { method: 'POST' })
       const data = await res.json()
@@ -113,9 +126,11 @@ export default function SettingsPage() {
         pollHiggsfield()
       } else {
         setHiggsAuthState('error')
+        setHiggsError(data.error || 'Unknown error starting Higgsfield connection.')
       }
-    } catch {
+    } catch (e) {
       setHiggsAuthState('error')
+      setHiggsError(String(e))
     }
   }
 
@@ -336,20 +351,7 @@ export default function SettingsPage() {
           <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
             <h2 className="font-medium mb-3 text-gray-900">Higgsfield</h2>
 
-            {higgsConnected && higgsAuthState !== 'waiting' ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-green-400 text-sm">
-                  <span>✅</span>
-                  <span>Connected</span>
-                </div>
-                <button
-                  onClick={startHiggsAuth}
-                  className="text-xs bg-gradient-to-br from-violet-600 to-violet-700 text-white px-3 py-1.5 rounded-lg shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] transition"
-                >
-                  Reconnect
-                </button>
-              </div>
-            ) : higgsAuthState === 'waiting' ? (
+            {higgsAuthState === 'waiting' ? (
               <div className="space-y-3">
                 <p className="text-sm text-amber-600">⏳ Waiting for approval...</p>
                 <a
@@ -366,18 +368,32 @@ export default function SettingsPage() {
               <div className="text-green-400 text-sm">✅ Higgsfield connected!</div>
             ) : (
               <div className="space-y-2">
-                <p className="text-gray-700 text-sm">
-                  Connect your Higgsfield account in one click — no token copying needed.
-                </p>
-                <button
-                  onClick={startHiggsAuth}
-                  disabled={higgsAuthState === 'starting'}
-                  className="bg-white hover:bg-white/60 disabled:opacity-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2 transition shadow-sm"
-                >
-                  {higgsAuthState === 'starting' ? '⏳ Starting...' : '🔗 Connect Higgsfield'}
-                </button>
+                <div className="flex items-center justify-between gap-3">
+                  {higgsConnected ? (
+                    <div className="flex items-center gap-2 text-green-400 text-sm">
+                      <span>✅</span>
+                      <span>Connected</span>
+                    </div>
+                  ) : (
+                    <p className="text-gray-700 text-sm">
+                      Connect your Higgsfield account in one click — no token copying needed.
+                    </p>
+                  )}
+                  <button
+                    onClick={startHiggsAuth}
+                    disabled={higgsAuthState === 'starting'}
+                    className={higgsConnected
+                      ? 'text-xs bg-gradient-to-br from-violet-600 to-violet-700 text-white px-3 py-1.5 rounded-lg shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap'
+                      : 'bg-white hover:bg-white/60 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2 transition shadow-sm whitespace-nowrap'
+                    }
+                  >
+                    {higgsAuthState === 'starting'
+                      ? '⏳ Starting...'
+                      : higgsConnected ? 'Reconnect' : '🔗 Connect Higgsfield'}
+                  </button>
+                </div>
                 {higgsAuthState === 'error' && (
-                  <p className="text-red-600 text-xs">Connection error. Try again.</p>
+                  <p className="text-red-600 text-xs">{higgsError || 'Connection error. Try again.'}</p>
                 )}
               </div>
             )}
