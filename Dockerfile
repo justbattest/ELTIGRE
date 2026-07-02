@@ -20,7 +20,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Higgsfield CLI ────────────────────────────────────────────────────────────
-RUN npm install -g @higgsfield/cli
+# Version épinglée : 1.1.2+ a changé "auth login" pour un flux OAuth PKCE avec
+# redirection locale (127.0.0.1:PORT), incompatible avec un CLI lancé sur un
+# serveur distant pendant que le navigateur de l'utilisateur est ailleurs.
+# 0.1.40 utilise le flux device-code simple (https://higgsfield.ai/device?code=...)
+# qui fonctionne correctement dans ce contexte serveur.
+RUN npm install -g @higgsfield/cli@0.1.40
 
 # ── Répertoire de travail ─────────────────────────────────────────────────────
 WORKDIR /app
