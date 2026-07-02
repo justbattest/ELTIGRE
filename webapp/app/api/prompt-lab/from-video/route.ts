@@ -155,6 +155,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Clé Anthropic non configurée dans Settings' }, { status: 400 })
   }
   const groqApiKey = decryptIfPresent(creds?.groqApiKey)
+  const openaiApiKey = decryptIfPresent(creds?.openaiApiKey)
 
   // Si fichier uploadé, le sauver dans un tmp dir pour que video_analyzer.py le lise
   let uploadedFilePath: string | null = null
@@ -200,6 +201,7 @@ export async function POST(req: NextRequest) {
               ...process.env,
               PYTHONUNBUFFERED: '1',
               ...(groqApiKey ? { GROQ_API_KEY: groqApiKey } : {}),
+              ...(openaiApiKey ? { OPENAI_API_KEY: openaiApiKey } : {}),
             },
             stdio: ['ignore', 'pipe', 'pipe'],
           })

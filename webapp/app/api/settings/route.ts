@@ -66,6 +66,8 @@ export async function GET() {
     modelArkApiKeyConnected: !!creds.modelArkApiKey,
     groqApiKey: maskKey(decryptIfPresent(creds.groqApiKey)),
     groqApiKeyConnected: !!creds.groqApiKey,
+    openaiApiKey: maskKey(decryptIfPresent(creds.openaiApiKey)),
+    openaiApiKeyConnected: !!creds.openaiApiKey,
   })
 }
 
@@ -94,6 +96,7 @@ export async function POST(req: NextRequest) {
     characterPromptRules,
     modelArkApiKey,
     groqApiKey,
+    openaiApiKey,
   } = body
 
   // Récupère les valeurs existantes pour ne pas écraser avec du vide
@@ -152,6 +155,9 @@ export async function POST(req: NextRequest) {
   }
   if (groqApiKey && !groqApiKey.includes('...')) {
     data.groqApiKey = encrypt(groqApiKey)
+  }
+  if (openaiApiKey && !openaiApiKey.includes('...')) {
+    data.openaiApiKey = encrypt(openaiApiKey)
   }
 
   await prisma.userCredentials.upsert({

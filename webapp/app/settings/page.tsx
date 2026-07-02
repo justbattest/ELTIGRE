@@ -20,6 +20,7 @@ export default function SettingsPage() {
 
   const [anthropicKey, setAnthropicKey] = useState('')
   const [groqApiKey, setGroqApiKey] = useState('')
+  const [openaiApiKey, setOpenaiApiKey] = useState('')
   const [instagramSessionCookie, setInstagramSessionCookie] = useState('')
   const [defaultModel, setDefaultModel] = useState('auto')
   const [defaultAspectRatio, setDefaultAspectRatio] = useState('2:3')
@@ -59,6 +60,7 @@ export default function SettingsPage() {
       .then((data) => {
         setAnthropicKey(data.anthropicApiKey || '')
         setGroqApiKey(data.groqApiKey || '')
+        setOpenaiApiKey(data.openaiApiKey || '')
         setInstagramSessionCookie(data.instagramSessionCookie || '')
         setDefaultModel(data.defaultModel || 'auto')
         setDefaultAspectRatio(data.defaultAspectRatio || '2:3')
@@ -146,6 +148,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           anthropicApiKey: anthropicKey,
           groqApiKey,
+          openaiApiKey,
           defaultModel,
           defaultAspectRatio,
           defaultQuality,
@@ -365,6 +368,24 @@ export default function SettingsPage() {
             </p>
             {groqApiKey && !groqApiKey.includes('...') && (
               <p className="text-green-600 text-xs mt-1.5">✓ Groq configured — audio transcription enabled</p>
+            )}
+          </div>
+
+          {/* OpenAI (fallback transcription — si Groq inaccessible depuis ton réseau/pays) */}
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+            <h2 className="font-medium mb-3 text-gray-900">OpenAI API Key</h2>
+            <input
+              type="password"
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+            />
+            <p className="text-gray-800 text-xs mt-1.5">
+              platform.openai.com/api-keys — fallback used for audio transcription if Groq is unavailable (blocked in some regions). Used automatically if configured, whether or not Groq is also set.
+            </p>
+            {openaiApiKey && !openaiApiKey.includes('...') && (
+              <p className="text-green-600 text-xs mt-1.5">✓ OpenAI configured — audio transcription enabled</p>
             )}
           </div>
 

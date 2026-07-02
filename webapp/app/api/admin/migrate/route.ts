@@ -6,9 +6,10 @@ export async function GET() {
   try {
     await prisma.$executeRaw`
       ALTER TABLE user_credentials
-      ADD COLUMN IF NOT EXISTS groq_api_key TEXT
+      ADD COLUMN IF NOT EXISTS groq_api_key TEXT,
+      ADD COLUMN IF NOT EXISTS openai_api_key TEXT
     `
-    results.push('✅ Colonne groq_api_key ajoutée (ou déjà présente)')
+    results.push('✅ Colonnes groq_api_key + openai_api_key ajoutées (ou déjà présentes)')
   } catch (e) {
     results.push(`❌ ${String(e)}`)
   }

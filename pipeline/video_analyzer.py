@@ -7,9 +7,11 @@ Two input modes:
   --file-path PATH  Uses an already-uploaded local video file directly, no download.
 
 In both modes: extracts a generous number of evenly-spaced frames as base64 JPEGs,
-and transcribes the actual spoken audio track via Groq's Whisper API (large-v3) —
-not just platform captions, which are often absent, low quality, or unavailable
-entirely in file-upload mode.
+and transcribes the actual spoken audio track via Whisper — not just platform
+captions, which are often absent, low quality, or unavailable entirely in
+file-upload mode. Tries Groq first (cheaper/faster, model whisper-large-v3),
+falling back to OpenAI's Whisper API (whisper-1) if Groq is unreachable
+(Groq blocks some regions/networks) or errors out.
 
 Usage:
     python -m pipeline.video_analyzer --url URL [--num-frames N]
@@ -37,9 +39,25 @@ from pathlib import Path
 
 from pipeline.metadata_optimizer import _find_ffmpeg
 
-GROQ_WHISPER_ENDPOINT = "https://api.groq.com/openai/v1/audio/transcriptions"
-GROQ_MODEL = "whisper-large-v3"
-MAX_UPLOAD_BYTES = 24 * 1024 * 1024  # stay under Groq's 25MB limit
+MAX_UPLOAD_BYTES = 24 * 1024 * 1024  # stay under Groq/OpenAI's 25MB limit
+
+# Providers tried in order — Groq first (cheaper), OpenAI as fallback (Groq
+# blocks some regions/networks with "Access denied. Please check your
+# network settings.").
+WHISPER_PROVIDERS = [
+    {
+        "name": "groq",
+        "endpoint": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "model": "whisper-large-v3",
+        "env_key": "GROQ_API_KEY",
+    },
+    {
+        "name": "openai",
+        "endpoint": "https://api.openai.com/v1/audio/transcriptions",
+        "model": "whisper-1",
+        "env_key": "OPENAI_API_KEY",
+    },
+]
 
 
 async def _get_duration(ffprobe_path: str, video_path: str) -> float:
@@ -218,11 +236,11 @@ def _multipart_body(fields: dict, file_field: str, file_path: str) -> tuple[byte
     return b"".join(parts), boundary
 
 
-async def _transcribe_audio(audio_path: str, api_key: str) -> str:
-    """Calls Groq Whisper large-v3. Splits into <24MB chunks for long audio."""
+async def _transcribe_audio(audio_path: str, api_keys: dict[str, str]) -> str:
+    """Whisper transcription with provider fallback. Splits into <24MB chunks for long audio."""
     size = Path(audio_path).stat().st_size
     if size <= MAX_UPLOAD_BYTES:
-        return await _whisper_call(audio_path, api_key)
+        return await _whisper_call(audio_path, api_keys)
 
     # Split into N roughly-equal chunks by duration (stream-copy, no re-encode)
     ffmpeg = _find_ffmpeg()
@@ -243,57 +261,66 @@ async def _transcribe_audio(audio_path: str, api_key: str) -> str:
         await asyncio.wait_for(proc.communicate(), timeout=30.0)
         if Path(chunk_path).exists():
             try:
-                texts.append(await _whisper_call(chunk_path, api_key))
+                texts.append(await _whisper_call(chunk_path, api_keys))
             except Exception as e:
                 print(f"Whisper chunk {i} failed: {e}", file=sys.stderr, flush=True)
 
     return " ".join(t for t in texts if t)
 
 
-async def _whisper_call(audio_path: str, api_key: str, max_attempts: int = 4) -> str:
-    fields = {"model": GROQ_MODEL, "response_format": "verbose_json", "temperature": "0"}
-    body, boundary = _multipart_body(fields, "file", audio_path)
-
-    def _do_request() -> str:
-        req = urllib.request.Request(
-            GROQ_WHISPER_ENDPOINT,
-            data=body,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": f"multipart/form-data; boundary={boundary}",
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            data = json.loads(resp.read())
-        return data.get("text", "") or ""
-
-    delay = 2.0
+async def _whisper_call(audio_path: str, api_keys: dict[str, str], max_attempts: int = 3) -> str:
+    """Tries each configured provider in order (Groq then OpenAI), with retries per provider."""
     last_err: Exception | None = None
-    for attempt in range(max_attempts):
-        try:
-            return await asyncio.to_thread(_do_request)
-        except urllib.error.HTTPError as e:
-            last_err = e
-            if 400 <= e.code < 500 and e.code != 429:
-                raise  # client error, no point retrying
-            print(f"Groq Whisper HTTP {e.code} — retry {attempt + 1}/{max_attempts} in {delay}s",
-                  file=sys.stderr, flush=True)
-        except Exception as e:
-            last_err = e
-            print(f"Groq Whisper error — retry {attempt + 1}/{max_attempts} in {delay}s: {e}",
-                  file=sys.stderr, flush=True)
-        await asyncio.sleep(delay)
-        delay *= 2
 
-    raise RuntimeError(f"Groq Whisper failed after {max_attempts} attempts: {last_err}")
+    for provider in WHISPER_PROVIDERS:
+        api_key = api_keys.get(provider["name"])
+        if not api_key:
+            continue
+
+        fields = {"model": provider["model"], "response_format": "verbose_json", "temperature": "0"}
+        body, boundary = _multipart_body(fields, "file", audio_path)
+
+        def _do_request(endpoint=provider["endpoint"]) -> str:
+            req = urllib.request.Request(
+                endpoint,
+                data=body,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": f"multipart/form-data; boundary={boundary}",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = json.loads(resp.read())
+            return data.get("text", "") or ""
+
+        delay = 2.0
+        for attempt in range(max_attempts):
+            try:
+                return await asyncio.to_thread(_do_request)
+            except urllib.error.HTTPError as e:
+                last_err = e
+                if 400 <= e.code < 500 and e.code != 429:
+                    break  # client error on this provider, no point retrying — try next provider
+                print(f"{provider['name']} Whisper HTTP {e.code} — retry {attempt + 1}/{max_attempts} in {delay}s",
+                      file=sys.stderr, flush=True)
+            except Exception as e:
+                last_err = e
+                print(f"{provider['name']} Whisper error — retry {attempt + 1}/{max_attempts} in {delay}s: {e}",
+                      file=sys.stderr, flush=True)
+            await asyncio.sleep(delay)
+            delay *= 2
+
+        print(f"{provider['name']} Whisper failed, trying next provider if configured", file=sys.stderr, flush=True)
+
+    raise RuntimeError(f"All configured Whisper providers failed: {last_err}")
 
 
 async def analyze(
     video_url: str | None,
     file_path: str | None,
     num_frames: int | None,
-    groq_api_key: str | None,
+    whisper_keys: dict[str, str],
 ) -> dict:
     ffmpeg = _find_ffmpeg()
     if not ffmpeg:
@@ -322,20 +349,20 @@ async def analyze(
         print(f"Frames extracted: {len(frames)}", file=sys.stderr, flush=True)
 
         transcript = ""
-        if groq_api_key:
-            print("Extracting audio...", file=sys.stderr, flush=True)
+        if whisper_keys:
+            print(f"Extracting audio (providers available: {list(whisper_keys.keys())})...", file=sys.stderr, flush=True)
             audio_path = await _extract_audio(ffmpeg, video_path, work_dir)
             if audio_path:
-                print("Transcribing audio (Groq Whisper)...", file=sys.stderr, flush=True)
+                print("Transcribing audio (Whisper)...", file=sys.stderr, flush=True)
                 try:
-                    transcript = await _transcribe_audio(audio_path, groq_api_key)
+                    transcript = await _transcribe_audio(audio_path, whisper_keys)
                     print(f"Transcript: {len(transcript)} chars", file=sys.stderr, flush=True)
                 except Exception as e:
                     print(f"Transcription failed, continuing without: {e}", file=sys.stderr, flush=True)
             else:
                 print("No audio stream found, skipping transcription", file=sys.stderr, flush=True)
         else:
-            print("No Groq API key — skipping audio transcription", file=sys.stderr, flush=True)
+            print("No Whisper API key (Groq/OpenAI) — skipping audio transcription", file=sys.stderr, flush=True)
 
         return {"frames": frames, "transcript": transcript, "metadata": {"title": title, "duration": duration}}
     finally:
@@ -352,9 +379,15 @@ def main() -> None:
     if not args.url and not args.file_path:
         raise SystemExit("Either --url or --file-path is required")
 
-    groq_api_key = os.environ.get("GROQ_API_KEY", "").strip() or None
+    whisper_keys = {}
+    groq_key = os.environ.get("GROQ_API_KEY", "").strip()
+    if groq_key:
+        whisper_keys["groq"] = groq_key
+    openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if openai_key:
+        whisper_keys["openai"] = openai_key
 
-    result = asyncio.run(analyze(args.url, args.file_path, args.num_frames, groq_api_key))
+    result = asyncio.run(analyze(args.url, args.file_path, args.num_frames, whisper_keys))
     print(json.dumps(result), flush=True)
 
 
