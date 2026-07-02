@@ -35,7 +35,9 @@ export default function PromptLabPage() {
 
   // ── Mode ──
   const [mode, setMode] = useState<'video' | 'screenshots'>('video')
+  const [videoSource, setVideoSource] = useState<'url' | 'upload'>('url')
   const [videoUrl, setVideoUrl] = useState('')
+  const [videoFile, setVideoFile] = useState<File | null>(null)
 
   // ── Images (mode screenshots) ──
   const [images, setImages] = useState<{ file: File; preview: string; base64: string }[]>([])
@@ -109,7 +111,8 @@ export default function PromptLabPage() {
   // ── Génération streaming ───────────────────────────────────────────────────
   const generate = async () => {
     if (mode === 'video') {
-      if (!videoUrl.trim()) return setError('Enter a video URL.')
+      if (videoSource === 'url' && !videoUrl.trim()) return setError('Enter a video URL.')
+      if (videoSource === 'upload' && !videoFile) return setError('Upload a video file.')
     } else {
       if (!images.length) return setError('Upload at least one screenshot.')
       if (!description.trim()) return setError('Describe the scene.')
@@ -129,19 +132,26 @@ export default function PromptLabPage() {
     let jsonBuffer = ''
 
     try {
-      const res = await fetch(
-        mode === 'video' ? '/api/prompt-lab/from-video' : '/api/prompt-lab/generate',
-        {
+      let fetchOptions: RequestInit
+      let endpoint: string
+
+      if (mode === 'video') {
+        endpoint = '/api/prompt-lab/from-video'
+        const fd = new FormData()
+        if (videoSource === 'url') fd.append('videoUrl', videoUrl.trim())
+        else if (videoFile) fd.append('videoFile', videoFile)
+        fetchOptions = { method: 'POST', body: fd, signal: abort.signal }
+      } else {
+        endpoint = '/api/prompt-lab/generate'
+        fetchOptions = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(
-            mode === 'video'
-              ? { videoUrl: videoUrl.trim() }
-              : { images: images.map(i => i.base64), description }
-          ),
+          body: JSON.stringify({ images: images.map(i => i.base64), description }),
           signal: abort.signal,
         }
-      )
+      }
+
+      const res = await fetch(endpoint, fetchOptions)
 
       if (!res.ok || !res.body) {
         const d = await res.json().catch(() => ({}))
@@ -305,18 +315,55 @@ export default function PromptLabPage() {
           </button>
         </div>
 
-        {/* ── Mode vidéo : URL input ── */}
+        {/* ── Mode vidéo : source (URL ou upload) ── */}
         {mode === 'video' && (
           <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
-            <p className="text-xs text-gray-700 font-medium uppercase tracking-wider">Video URL</p>
-            <input
-              type="url"
-              value={videoUrl}
-              onChange={e => setVideoUrl(e.target.value)}
-              placeholder="https://www.instagram.com/reel/... or YouTube, TikTok, X..."
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
-            />
-            <p className="text-xs text-gray-500">Supports Instagram, YouTube, TikTok, X and more. Frames are extracted automatically.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setVideoSource('url')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${videoSource === 'url' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500 hover:text-gray-700'}`}
+              >
+                🔗 Video URL
+              </button>
+              <button
+                onClick={() => setVideoSource('upload')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${videoSource === 'upload' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500 hover:text-gray-700'}`}
+              >
+                📤 Upload video file
+              </button>
+            </div>
+
+            {videoSource === 'url' ? (
+              <>
+                <input
+                  type="url"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="https://www.instagram.com/reel/... or YouTube, TikTok, X..."
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
+                />
+                <p className="text-xs text-gray-500">Works well for YouTube, TikTok, X. Instagram can be unreliable (platform-side blocking) — use &quot;Upload video file&quot; instead if a reel fails.</p>
+              </>
+            ) : (
+              <>
+                <div
+                  onClick={() => document.getElementById('pl-video-file-input')?.click()}
+                  className="rounded-xl border-2 border-dashed border-gray-300 hover:border-violet-400 p-6 text-center cursor-pointer transition"
+                >
+                  <input
+                    id="pl-video-file-input"
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={e => setVideoFile(e.target.files?.[0] || null)}
+                  />
+                  <p className="text-gray-700 text-sm">
+                    {videoFile ? `📹 ${videoFile.name}` : 'Drop or click to select a video file (.mp4, .mov...)'}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500">Download the reel from your phone, then upload it here — bypasses Instagram entirely, no reliability issues.</p>
+              </>
+            )}
           </div>
         )}
 
@@ -372,7 +419,7 @@ export default function PromptLabPage() {
         <div className="flex gap-3">
           <button
             onClick={generate}
-            disabled={isRunning || (mode === 'video' ? !videoUrl.trim() : (!images.length || !description.trim()))}
+            disabled={isRunning || (mode === 'video' ? (videoSource === 'url' ? !videoUrl.trim() : !videoFile) : (!images.length || !description.trim()))}
             className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-500 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] hover:from-violet-500 hover:to-violet-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {isRunning ? (

@@ -1,14 +1,17 @@
 /**
  * POST /api/prompt-lab/from-video
  *
- * Télécharge une vidéo, extrait les frames, génère le prompt Higgsfield via Claude.
- * Entrée : { videoUrl: string }
+ * Télécharge une vidéo (ou utilise un fichier uploadé), extrait les frames + transcrit
+ * l'audio (Groq Whisper), génère le prompt Higgsfield via Claude.
+ * Entrée : FormData avec soit `videoUrl` (string), soit `videoFile` (File)
  * Sortie : SSE stream (même format que /api/prompt-lab/generate)
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { spawn } from 'child_process'
 import path from 'path'
+import fs from 'fs/promises'
+import os from 'os'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
@@ -69,6 +72,18 @@ Analyser **chaque frame dans l'ordre**, une par une.
 
 ---
 
+## PHASE 2bis — Compréhension contextuelle (ne pas juste combiner mécaniquement les infos)
+
+Avant d'écrire le prompt final, prends du recul et identifie :
+- **Le sous-entendu réel de la scène** : qu'est-ce que la vidéo suggère vraiment, au-delà de ce qui est littéralement montré ? (double sens, tension sexuelle, gêne comique, situation embarrassante...)
+- **Le ton exact du dialogue** : le transcript audio donne le phrasé RÉEL — utilise-le mot pour mot pour le dialogue plutôt que de le reformuler, sauf s'il est inaudible/incomplet
+- **La cohérence entre audio et image** : si le transcript indique une réaction (rire, soupir, exclamation) qui n'est pas visible sur les frames disponibles, déduis à quel moment de la timeline elle se produit et intègre-la dans l'action
+- **L'intention à reproduire, pas juste la description** : le but n'est pas de décrire ce qui s'est passé mais de fabriquer un prompt qui RECRÉERA le même effet/la même sensation chez le spectateur
+
+Cette étape doit se refléter dans l'ACTION (timing des réactions) et le DIALOGUE (répliques exactes), pas dans un texte séparé.
+
+---
+
 ## PHASE 3 — Structure du prompt
 
 **FRAMING** — 2 phrases max :
@@ -126,17 +141,29 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  const body = await req.json()
-  const { videoUrl } = body as { videoUrl: string }
+  const formData = await req.formData()
+  const videoUrl = (formData.get('videoUrl') as string | null)?.trim() || ''
+  const videoFile = formData.get('videoFile') as File | null
 
-  if (!videoUrl?.trim()) {
-    return NextResponse.json({ error: 'videoUrl requis' }, { status: 400 })
+  if (!videoUrl && !videoFile) {
+    return NextResponse.json({ error: 'videoUrl ou videoFile requis' }, { status: 400 })
   }
 
   const creds = await prisma.userCredentials.findUnique({ where: { userId: session.user.id } })
   const anthropicKey = decryptIfPresent(creds?.anthropicApiKey)
   if (!anthropicKey) {
     return NextResponse.json({ error: 'Clé Anthropic non configurée dans Settings' }, { status: 400 })
+  }
+  const groqApiKey = decryptIfPresent(creds?.groqApiKey)
+
+  // Si fichier uploadé, le sauver dans un tmp dir pour que video_analyzer.py le lise
+  let uploadedFilePath: string | null = null
+  if (videoFile) {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vid_upload_'))
+    const ext = path.extname(videoFile.name) || '.mp4'
+    uploadedFilePath = path.join(tmpDir, `upload${ext}`)
+    const buffer = Buffer.from(await videoFile.arrayBuffer())
+    await fs.writeFile(uploadedFilePath, buffer)
   }
 
   const encoder = new TextEncoder()
@@ -148,8 +175,12 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        // ── Étape 1 : extraction des frames via video_analyzer.py ──────────────
-        send({ text: '⏳ Téléchargement et extraction des frames...\n' })
+        // ── Étape 1 : extraction des frames + transcription via video_analyzer.py ──
+        send({
+          text: videoFile
+            ? '⏳ Extraction des frames + transcription audio...\n'
+            : '⏳ Téléchargement, extraction des frames + transcription audio...\n',
+        })
 
         const projectRoot = path.join(process.cwd(), '..')
         const pythonPath = path.join(projectRoot, 'venv', 'bin', 'python')
@@ -159,11 +190,16 @@ export async function POST(req: NextRequest) {
           transcript: string
           metadata: { title: string; duration: number }
         }>((resolve, reject) => {
-          const proc = spawn(pythonPath, ['-m', 'pipeline.video_analyzer', '--url', videoUrl.trim()], {
+          const sourceArgs = uploadedFilePath
+            ? ['--file-path', uploadedFilePath]
+            : ['--url', videoUrl]
+
+          const proc = spawn(pythonPath, ['-m', 'pipeline.video_analyzer', ...sourceArgs], {
             cwd: projectRoot,
             env: {
               ...process.env,
               PYTHONUNBUFFERED: '1',
+              ...(groqApiKey ? { GROQ_API_KEY: groqApiKey } : {}),
             },
             stdio: ['ignore', 'pipe', 'pipe'],
           })
@@ -175,12 +211,13 @@ export async function POST(req: NextRequest) {
           proc.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
           proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
 
+          // Plus long qu'avant : transcription audio + davantage de frames ajoutent du temps
           const timeout = setTimeout(() => {
             if (settled) return
             settled = true
             proc.kill()
-            reject(new Error('Timeout: extraction took more than 90s'))
-          }, 90_000)
+            reject(new Error('Timeout: extraction took more than 150s'))
+          }, 150_000)
 
           proc.on('error', (err) => {
             if (settled) return
@@ -227,7 +264,7 @@ export async function POST(req: NextRequest) {
 
         const content: ContentBlock[] = []
 
-        for (const frame of frames.slice(0, 15)) {
+        for (const frame of frames.slice(0, 40)) {
           const match = frame.base64.match(/^data:(image\/[a-z+]+);base64,(.+)$/)
           if (!match) continue
           const mediaType = match[1] as 'image/jpeg' | 'image/png' | 'image/webp'
@@ -238,15 +275,15 @@ export async function POST(req: NextRequest) {
         }
 
         const descriptionText = transcript
-          ? `Transcript de la vidéo :\n${transcript}\n\nFrames extraites de la vidéo à analyser.`
-          : `Frames extraites automatiquement de la vidéo. Analysez chaque frame pour reconstruire la scène complète.`
+          ? `Transcript audio réel de la vidéo (transcrit mot pour mot depuis la piste audio, PAS des captions générées automatiquement) :\n"${transcript}"\n\n${frames.length} frames extraites de la vidéo, dans l'ordre chronologique, à analyser selon la PHASE 1 puis la PHASE 2bis.`
+          : `${frames.length} frames extraites automatiquement de la vidéo, dans l'ordre chronologique. Aucun audio détecté ou transcrit — analysez uniquement à partir des frames pour reconstruire la scène complète.`
 
         content.push({ type: 'text', text: descriptionText })
 
         const client = new Anthropic({ apiKey: anthropicKey })
 
         const stream = await client.messages.stream({
-          model: 'claude-haiku-4-5-20251001',
+          model: 'claude-sonnet-5',
           max_tokens: 4096,
           system: SYSTEM_PROMPT,
           messages: [{ role: 'user', content }],
@@ -264,6 +301,9 @@ export async function POST(req: NextRequest) {
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
       } finally {
         controller.close()
+        if (uploadedFilePath) {
+          fs.rm(path.dirname(uploadedFilePath), { recursive: true, force: true }).catch(() => {})
+        }
       }
     },
   })

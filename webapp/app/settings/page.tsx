@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const { data: session } = useSession()
 
   const [anthropicKey, setAnthropicKey] = useState('')
+  const [groqApiKey, setGroqApiKey] = useState('')
   const [instagramSessionCookie, setInstagramSessionCookie] = useState('')
   const [defaultModel, setDefaultModel] = useState('auto')
   const [defaultAspectRatio, setDefaultAspectRatio] = useState('2:3')
@@ -57,6 +58,7 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((data) => {
         setAnthropicKey(data.anthropicApiKey || '')
+        setGroqApiKey(data.groqApiKey || '')
         setInstagramSessionCookie(data.instagramSessionCookie || '')
         setDefaultModel(data.defaultModel || 'auto')
         setDefaultAspectRatio(data.defaultAspectRatio || '2:3')
@@ -143,6 +145,7 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           anthropicApiKey: anthropicKey,
+          groqApiKey,
           defaultModel,
           defaultAspectRatio,
           defaultQuality,
@@ -345,6 +348,24 @@ export default function SettingsPage() {
             <p className="text-gray-800 text-xs mt-1.5">
               console.anthropic.com → API Keys
             </p>
+          </div>
+
+          {/* Groq (transcription audio — Prompt Lab From URL) */}
+          <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+            <h2 className="font-medium mb-3 text-gray-900">Groq API Key</h2>
+            <input
+              type="password"
+              value={groqApiKey}
+              onChange={(e) => setGroqApiKey(e.target.value)}
+              placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx"
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition font-mono text-sm"
+            />
+            <p className="text-gray-800 text-xs mt-1.5">
+              console.groq.com/keys — used for audio transcription in Prompt Lab &quot;From URL&quot; (Whisper large-v3, very cheap)
+            </p>
+            {groqApiKey && !groqApiKey.includes('...') && (
+              <p className="text-green-600 text-xs mt-1.5">✓ Groq configured — audio transcription enabled</p>
+            )}
           </div>
 
           {/* Higgsfield — Device Code Flow */}
