@@ -11,6 +11,7 @@ export type MetadataRunState = {
   userId: string
   uploading?: boolean   // true pendant Phase 1 (avant démarrage Python)
   totalFiles?: number   // nombre total de fichiers attendus
+  outputDir?: string    // /tmp/{runId}/output_{runId} — rempli au démarrage Python
 }
 
 export const metadataRuns: Map<string, MetadataRunState> = new Map()

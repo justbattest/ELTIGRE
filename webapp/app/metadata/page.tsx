@@ -1,8 +1,7 @@
 'use client'
 
-import { useCallback, useRef, useState, useEffect } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { compressImage } from '@/lib/compress-image'
 import { Sidebar } from '@/components/Sidebar'
@@ -20,7 +19,6 @@ type FileEntry = {
 type FileResult = {
   filename: string
   isVideo: boolean
-  driveUrl: string | null
   error: string | null
 }
 
@@ -51,7 +49,7 @@ function waitForRun(
       try {
         const ev = JSON.parse(e.data)
         if (ev.type === 'file') {
-          onFile({ filename: ev.filename, isVideo: ev.is_video, driveUrl: ev.drive_url, error: ev.error })
+          onFile({ filename: ev.filename, isVideo: ev.is_video, error: ev.error })
         } else if (ev.type === 'done') {
           cleanup(); resolve()
         } else if (ev.type === 'error') {
@@ -67,26 +65,10 @@ function waitForRun(
 
 export default function MetadataPage() {
   useSession()
-  const router = useRouter()
 
   const [entries,  setEntries]  = useState<FileEntry[]>([])
   const [dragging, setDragging] = useState(false)
   const [error,    setError]    = useState('')
-
-  // ── Personnage ──────────────────────────────────────────────────────────────
-  const [characters,            setCharacters]            = useState<{ id: string; name: string }[]>([])
-  const [selectedCharacterName, setSelectedCharacterName] = useState('')
-
-  useEffect(() => {
-    fetch('/api/characters')
-      .then(r => r.json())
-      .then(data => {
-        const all = [...(data.referenceElements || []), ...(data.soulCharacters || [])]
-        setCharacters(all)
-        if (all.length) setSelectedCharacterName(all[0].name)
-      })
-      .catch(() => {})
-  }, [])
 
   // ── État du run ─────────────────────────────────────────────────────────────
 
@@ -94,10 +76,11 @@ export default function MetadataPage() {
   const [phase,        setPhase]        = useState<'idle' | 'compressing' | 'uploading' | 'processing' | 'done'>('idle')
   const [uploadedFiles, setUploadedFiles] = useState(0)   // fichiers arrivés sur serveur
 
-  // Phase 2 — traitement Python + upload Drive
+  // Phase 2 — traitement Python (nettoyage metadata, sortie locale)
   const [total,      setTotal]      = useState(0)          // total fichiers à traiter
   const [completed,  setCompleted]  = useState(0)          // fichiers traités par Python
   const [results,    setResults]    = useState<FileResult[]>([])
+  const [runId,      setRunId]      = useState('')          // pour le téléchargement ZIP direct
 
   const abortRef = useRef<AbortController | null>(null)
 
@@ -138,7 +121,13 @@ export default function MetadataPage() {
     setTotal(0)
     setCompleted(0)
     setResults([])
+    setRunId('')
     setError('')
+  }
+
+  const download = () => {
+    if (!runId) return
+    window.location.href = `/api/metadata/download/${runId}`
   }
 
   // ── Drag & drop ─────────────────────────────────────────────────────────────
@@ -161,10 +150,10 @@ export default function MetadataPage() {
   //
   // Phase 2 — Processing (1 seul subprocess)
   //   • POST /api/metadata/start → lance 1 seul subprocess Python sur TOUS les fichiers
-  //   • Python lit l'unique dossier tmp, traite tout, uploade dans 1 dossier Drive
+  //   • Python lit l'unique dossier tmp, nettoie chaque fichier, écrit en local (output_dir)
   //   • SSE stream : 1 event par fichier → barre de progression live
   //
-  // Résultat Drive : <PERSO>/metadata/<run_id>/ avec TOUS les fichiers dedans
+  // Résultat : téléchargement ZIP direct via /api/metadata/download/[runId] — pas de Drive
 
   const launch = async () => {
     if (entries.length === 0) { setError('Add at least one file.'); return }
@@ -191,13 +180,14 @@ export default function MetadataPage() {
 
       // ── Phase 1 : upload de tous les fichiers par chunks EN PARALLÈLE ─────────
       setPhase('uploading')
-      const runId = `metadata_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+      const newRunId = `metadata_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+      setRunId(newRunId)
 
       // Enregistrer immédiatement le run en mémoire → visible dans En cours dès maintenant
       await fetch('/api/metadata/init', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ runId, fileCount: compressedEntries.length }),
+        body: JSON.stringify({ runId: newRunId, fileCount: compressedEntries.length }),
       }).catch(() => {}) // fire-and-forget, pas bloquant
 
       const chunks: FileEntry[][] = []
@@ -219,7 +209,7 @@ export default function MetadataPage() {
           }
           try {
             const form = new FormData()
-            form.append('runId', runId)
+            form.append('runId', newRunId)
             chunk.forEach(e => form.append('files', e.file))
             const res  = await fetch('/api/metadata/upload', { method: 'POST', body: form, signal: abort.signal })
             const data = await res.json()
@@ -236,7 +226,7 @@ export default function MetadataPage() {
         if (lastError && !abort.signal.aborted) throw lastError
       }
 
-      if (abort.signal.aborted || !runId) return
+      if (abort.signal.aborted) return
 
       // ── Phase 2 : démarrer le subprocess Python (1 seul pour tous les fichiers) ──
       setPhase('processing')
@@ -244,15 +234,19 @@ export default function MetadataPage() {
       const startRes  = await fetch('/api/metadata/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ runId, characterName: selectedCharacterName }),
+        body: JSON.stringify({ runId: newRunId }),
         signal: abort.signal,
       })
       const startData = await startRes.json()
       if (!startRes.ok || startData.error) throw new Error(startData.error || 'Startup error')
 
-      // Le subprocess Python tourne indépendamment côté serveur.
-      // On redirige vers En cours qui se reconnecte au SSE et affiche la progression.
-      router.push('/en-cours')
+      await waitForRun(newRunId, (r) => {
+        setResults(prev => [...prev, r])
+        setCompleted(prev => prev + 1)
+      }, abort.signal)
+
+      if (abort.signal.aborted) return
+      setPhase('done')
 
     } catch (e) {
       if (abort.signal.aborted) return
@@ -287,28 +281,6 @@ export default function MetadataPage() {
         {/* ── Config (idle uniquement) ────────────────────────────────────── */}
         {phase === 'idle' && (
           <>
-            {/* Sélecteur personnage */}
-            {characters.length > 0 && (
-              <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4">
-                <p className="text-xs text-gray-700 mb-2">Character (Drive folder)</p>
-                <div className="flex flex-wrap gap-2">
-                  {characters.map(c => (
-                    <button
-                      key={c.id}
-                      onClick={() => setSelectedCharacterName(c.name)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                        selectedCharacterName === c.name
-                          ? 'bg-gradient-to-br from-violet-600 to-violet-500 border-violet-500 text-white'
-                          : 'bg-white/60 border-gray-200 text-gray-900 hover:border-violet-500/50'
-                      }`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Zone drag & drop */}
             <div
               onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
@@ -319,7 +291,7 @@ export default function MetadataPage() {
             >
               <div className="text-4xl mb-3">🧹</div>
               <p className="text-gray-900 font-medium">Drag your photos &amp; videos here</p>
-              <p className="text-gray-700 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · unlimited quantity · all land in a single Drive folder</p>
+              <p className="text-gray-700 text-sm mt-1">JPG · PNG · WebP · MP4 · MOV · unlimited quantity · download a ZIP directly, no Drive needed</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -340,7 +312,7 @@ export default function MetadataPage() {
                     {videoCount > 0 && <span>{videoCount} video{videoCount > 1 ? 's' : ''}</span>}
                     {entries.length > UPLOAD_CHUNK_SIZE && (
                       <span className="text-gray-800 ml-2">
-                        · sent in {nChunks} batches of {UPLOAD_CHUNK_SIZE}, in 1 Drive folder
+                        · sent in {nChunks} batches of {UPLOAD_CHUNK_SIZE}
                       </span>
                     )}
                   </span>
@@ -373,7 +345,7 @@ export default function MetadataPage() {
             <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-4 space-y-1.5">
               <p className="text-[10px] text-gray-700">🖼️ <strong className="text-gray-900">Images</strong> — EXIF iPhone 17 Pro (iOS 26.x, GPS, ISO uniques) · ICC Display P3 · DQT Apple</p>
               <p className="text-[10px] text-gray-700">🎬 <strong className="text-gray-900">Vidéos</strong> — com.apple.quicktime.* · handler Core Media Video · strip Kling/Lavf</p>
-              <p className="text-[10px] text-gray-700">📂 <strong className="text-gray-900">Drive</strong> — <code className="text-violet-600">{selectedCharacterName || '…'}/metadata/&lt;run_id&gt;/</code> — 1 single folder, all files inside</p>
+              <p className="text-[10px] text-gray-700">⬇️ <strong className="text-gray-900">Download</strong> — direct ZIP from Modelify, no Google Drive needed</p>
             </div>
 
             {error && (
@@ -387,7 +359,7 @@ export default function MetadataPage() {
             >
               {entries.length === 0
                 ? 'Add files to get started'
-                : `Clean and upload ${entries.length} file${entries.length > 1 ? 's' : ''} — 1 Drive folder`}
+                : `Clean ${entries.length} file${entries.length > 1 ? 's' : ''}`}
             </button>
           </>
         )}
@@ -423,13 +395,13 @@ export default function MetadataPage() {
               </div>
               )}
 
-              {/* Phase 2 — nettoyage + Drive */}
+              {/* Phase 2 — nettoyage metadata */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-medium text-gray-700">
                     {phase === 'uploading'   ? '⏳ Waiting…'
                     : isDone && !error       ? '✅ Cleanup done!'
-                    : phase === 'processing' ? '🧹 Cleanup + Drive upload…'
+                    : phase === 'processing' ? '🧹 Cleaning metadata…'
                     : '❌ Error'}
                   </span>
                   <span className="text-xs text-gray-800">{completed}/{total}</span>
@@ -455,7 +427,18 @@ export default function MetadataPage() {
                 </button>
               )}
 
-              {isDone && (
+              {isDone && !error && results.length > 0 && (
+                <div className="flex gap-2">
+                  <button onClick={download} className="flex-1 bg-gradient-to-br from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 text-white text-sm font-medium rounded-lg py-2.5 transition">
+                    ⬇️ Download ZIP ({results.length} file{results.length > 1 ? 's' : ''})
+                  </button>
+                  <button onClick={resetAll} className="bg-white/80 hover:bg-gray-200 text-gray-900 text-sm rounded-lg py-2.5 px-4 transition">
+                    + New batch
+                  </button>
+                </div>
+              )}
+
+              {isDone && (error || results.length === 0) && (
                 <button onClick={resetAll} className="w-full bg-white/80 hover:bg-gray-200 text-gray-900 text-sm rounded-lg py-2.5 transition">
                   + New batch
                 </button>
@@ -482,12 +465,9 @@ export default function MetadataPage() {
                       </div>
                       {r.error ? (
                         <span className="text-[10px] text-red-600 shrink-0 ml-2">❌ {r.error.slice(0, 40)}</span>
-                      ) : r.driveUrl ? (
-                        <a href={r.driveUrl} target="_blank" rel="noopener noreferrer"
-                           className="text-[10px] text-violet-600 hover:text-violet-700 transition shrink-0 ml-2">
-                          Drive →
-                        </a>
-                      ) : null}
+                      ) : (
+                        <span className="text-[10px] text-green-600 shrink-0 ml-2">✓ cleaned</span>
+                      )}
                     </div>
                   ))}
                 </div>

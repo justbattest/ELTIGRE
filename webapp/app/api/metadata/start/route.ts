@@ -6,11 +6,11 @@
  * Body JSON : { runId, characterName }
  * Retourne  : { ok: true }
  * Stream SSE via : GET /api/metadata/events/[runId]
+ * Téléchargement direct (pas de Drive) via : GET /api/metadata/download/[runId]
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { spawn } from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
@@ -34,19 +34,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Aucun fichier trouvé pour ce run' }, { status: 400 })
   }
 
-  // Récupérer les credentials Drive
-  const creds = await prisma.userCredentials.findUnique({
-    where: { userId: session.user.id },
-  })
-  const googleRefreshToken = creds?.googleRefreshToken || null
-  const driveFolderId      = creds?.driveFolderId      || null
-
-  if (!googleRefreshToken || !driveFolderId) {
-    return NextResponse.json(
-      { error: 'Google Drive non configuré. Vérifier les Settings.' },
-      { status: 400 }
-    )
-  }
+  const outputDir = path.join('/tmp', runId, `output_${runId}`)
 
   // Mettre à jour le slot SSE (créé par /api/metadata/init, ou nouveau si init a été sauté)
   const existing = metadataRuns.get(runId)
@@ -58,6 +46,7 @@ export async function POST(req: NextRequest) {
     userId: session.user.id,
     uploading: false,
     totalFiles: existing?.totalFiles,
+    outputDir,
   })
 
   const pythonPath  = path.join(process.cwd(), '..', 'venv', 'bin', 'python')
@@ -71,17 +60,11 @@ export async function POST(req: NextRequest) {
       '-m', 'pipeline.metadata_batch',
       '--run-id',    runId,
       '--files-dir', uploadDir,
+      '--output-dir', outputDir,
     ],
     {
       cwd: projectRoot,
-      env: {
-        ...process.env,
-        GOOGLE_REFRESH_TOKEN: googleRefreshToken,
-        DRIVE_FOLDER_ID:      driveFolderId,
-        ...(process.env.GOOGLE_CLIENT_ID     ? { GOOGLE_CLIENT_ID:     process.env.GOOGLE_CLIENT_ID     } : {}),
-        ...(process.env.GOOGLE_CLIENT_SECRET ? { GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET } : {}),
-        ...(characterName ? { CHARACTER_FOLDER_NAME: characterName } : {}),
-      },
+      env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
     }
   )
@@ -123,10 +106,13 @@ export async function POST(req: NextRequest) {
       }
       state.done = true
     }
-    // Nettoyer les fichiers uploadés
-    try { fs.rmSync(path.join('/tmp', runId), { recursive: true, force: true }) } catch {}
-    // Nettoyer la map après 30 min
-    setTimeout(() => metadataRuns.delete(runId), 30 * 60 * 1000)
+    // Nettoyer uniquement les fichiers source uploadés — garder output_dir pour
+    // le téléchargement ZIP (nettoyé par /api/metadata/download ou après 30 min)
+    try { fs.rmSync(uploadDir, { recursive: true, force: true }) } catch {}
+    setTimeout(() => {
+      try { fs.rmSync(path.join('/tmp', runId), { recursive: true, force: true }) } catch {}
+      metadataRuns.delete(runId)
+    }, 30 * 60 * 1000)
   })
 
   proc.on('error', (err) => {

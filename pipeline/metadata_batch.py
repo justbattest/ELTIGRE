@@ -1,28 +1,27 @@
 """
-Metadata Batch — nettoie et uploade un lot de photos/vidéos vers Google Drive.
+Metadata Batch — nettoie un lot de photos/vidéos et écrit le résultat en local.
 
-Applique automatiquement pipeline.metadata_optimizer sur chaque fichier
-(via drive_uploader.upload_bytes qui intercepte avant chaque upload).
+Applique pipeline.metadata_optimizer (EXIF/metadata cleaning) sur chaque fichier,
+puis écrit directement dans --output-dir pour un téléchargement ZIP direct
+(pas de dépendance Google Drive — voir /api/metadata/download/[runId]).
 
-Structure Drive :
-  <CHARACTER>/
-    metadata/
-      <run_id>/
-        photo1.jpg
-        video1.mp4
-        ...
+Structure output :
+  <output_dir>/
+    photo1.jpg
+    video1.mp4
+    ...
 
 Protocol stdout (JSON lines) :
   {"type": "batch_start", "total": N}
-  {"type": "file", "n": i, "total": N, "filename": "x.jpg", "drive_url": "...", "error": null}
+  {"type": "file", "n": i, "total": N, "filename": "x.jpg", "error": null}
   {"type": "done", "run_id": "...", "total": N, "finished_at": "..."}
   {"type": "error", "message": "..."}
 """
 
 import asyncio
+import hashlib
 import json
-import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 SUPPORTED_IMAGES = {'.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'}
@@ -38,10 +37,13 @@ def _content_type(path: Path) -> str:
     return "application/octet-stream"
 
 
-async def run_metadata_batch(run_id: str, files_dir: str) -> None:
-    from pipeline.drive_uploader import get_uploader, init_drive_uploader_from_env
+async def run_metadata_batch(run_id: str, files_dir: str, output_dir: str) -> None:
+    from pipeline.metadata_optimizer import optimize_image_bytes, optimize_video_bytes
 
     files_dir_path = Path(files_dir)
+    output_dir_path = Path(output_dir)
+    output_dir_path.mkdir(parents=True, exist_ok=True)
+
     all_files = sorted([
         p for p in files_dir_path.iterdir()
         if p.suffix.lower() in (SUPPORTED_IMAGES | SUPPORTED_VIDEOS) and p.is_file()
@@ -60,39 +62,31 @@ async def run_metadata_batch(run_id: str, files_dir: str) -> None:
         "total": total,
     }), flush=True)
 
-    init_drive_uploader_from_env()
-    uploader = get_uploader()
-    if not uploader:
-        print(json.dumps({
-            "type": "error",
-            "message": "Google Drive non configuré (GOOGLE_REFRESH_TOKEN manquant)"
-        }), flush=True)
-        return
-
-    # Pré-créer le dossier du run dans Drive
-    run_folder_id = await uploader._ensure_metadata_run_folder(run_id)
-
     completed = 0
     for file_path in all_files:
         completed += 1
         ct = _content_type(file_path)
+        is_video = ct.startswith("video/")
 
         try:
             data = file_path.read_bytes()
-            # upload_bytes applique automatiquement metadata_optimizer
-            url = await uploader.upload_bytes(
-                data,
-                file_path.name,
-                run_folder_id,
-                content_type=ct,
+            seed = int(hashlib.md5(data).hexdigest()[:8], 16)
+
+            optimized = (
+                await asyncio.to_thread(optimize_video_bytes, data, seed)
+                if is_video
+                else await asyncio.to_thread(optimize_image_bytes, data, seed)
             )
+
+            out_path = output_dir_path / file_path.name
+            out_path.write_bytes(optimized)
+
             print(json.dumps({
                 "type": "file",
                 "n": completed,
                 "total": total,
                 "filename": file_path.name,
-                "is_video": ct.startswith("video/"),
-                "drive_url": url,
+                "is_video": is_video,
                 "error": None,
             }), flush=True)
 
@@ -102,8 +96,7 @@ async def run_metadata_batch(run_id: str, files_dir: str) -> None:
                 "n": completed,
                 "total": total,
                 "filename": file_path.name,
-                "is_video": ct.startswith("video/"),
-                "drive_url": None,
+                "is_video": is_video,
                 "error": str(e),
             }), flush=True)
 
@@ -111,25 +104,24 @@ async def run_metadata_batch(run_id: str, files_dir: str) -> None:
         "type": "done",
         "run_id": run_id,
         "total": total,
-        "finished_at": datetime.utcnow().isoformat(),
+        "finished_at": datetime.now(timezone.utc).isoformat(),
     }), flush=True)
-
-    # Fermer le client HTTP persistant proprement
-    await uploader.aclose()
 
 
 # ── Entry point CLI ────────────────────────────────────────────────────────────
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Metadata Batch — clean + Drive upload")
-    parser.add_argument("--run-id",    required=True, help="ID unique du run")
-    parser.add_argument("--files-dir", required=True, help="Dossier contenant les fichiers uploadés")
+    parser = argparse.ArgumentParser(description="Metadata Batch — clean metadata, output local files")
+    parser.add_argument("--run-id",     required=True, help="ID unique du run")
+    parser.add_argument("--files-dir",  required=True, help="Dossier contenant les fichiers uploadés")
+    parser.add_argument("--output-dir", required=True, help="Dossier de sortie pour le ZIP de téléchargement")
     args = parser.parse_args()
 
     asyncio.run(run_metadata_batch(
         run_id=args.run_id,
         files_dir=args.files_dir,
+        output_dir=args.output_dir,
     ))
 
 
