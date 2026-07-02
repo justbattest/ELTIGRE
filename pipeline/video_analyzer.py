@@ -77,6 +77,19 @@ async def _download(video_url: str, output_dir: str) -> tuple[str, str | None, s
         "subtitlesformat": "vtt",
         "subtitleslangs": ["en", "fr"],
         "socket_timeout": 30,
+        # Retry policy: Instagram frequently rate-limits/blocks data-center IPs
+        # (Railway) regardless of cookies. Retries + realistic headers improve
+        # odds without requiring login, though reliability stays imperfect —
+        # this is a well-documented, unresolved yt-dlp/Instagram limitation.
+        "retries": 3,
+        "fragment_retries": 3,
+        "extractor_retries": 2,
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+            ),
+        },
     }
 
     cookies_tmp: str | None = None
