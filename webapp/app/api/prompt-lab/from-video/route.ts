@@ -211,7 +211,13 @@ export async function POST(req: NextRequest) {
           let settled = false
 
           proc.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
-          proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
+          proc.stderr.on('data', (d: Buffer) => {
+            const text = d.toString()
+            stderr += text
+            text.split('\n').forEach(line => {
+              if (line.trim()) console.log(`[video_analyzer] ${line}`)
+            })
+          })
 
           // Plus long qu'avant : transcription audio + davantage de frames ajoutent du temps
           const timeout = setTimeout(() => {
