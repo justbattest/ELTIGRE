@@ -21,6 +21,7 @@ type ValidatedPrompt = {
   phraseVariations: string[] | null  // phrases dédiées à ce concept précis
   authorName: string | null          // auteur (prompts communautaires)
   userDescription: string | null     // description courte du concept
+  conceptGroup: string | null        // regroupe les variantes du même concept (null = concept unique)
   suggestedDuration: number          // durée suggérée (6-12s)
 }
 
@@ -239,6 +240,11 @@ export default function VideoPage() {
   // Mode direct : tous les prompts de l'onglet (plus de sub-filtre, l'onglet fait déjà le travail)
   const filteredPrompts = prompts
 
+  // Nombre de concepts DISTINCTS (regroupe les variantes DB du même concept, ex: "P3-V1/V2/V3")
+  const distinctConceptCount = new Set(
+    filteredPrompts.map(p => p.conceptGroup || `__single_${p.id}`)
+  ).size
+
   // ── Select all direct ──
   const toggleSelectAll = useCallback(() => {
     if (selectedIds.size === filteredPrompts.length) {
@@ -358,16 +364,54 @@ export default function VideoPage() {
   // Pioche `count` prompts en cyclant sur des reshuffles successifs si count > pool.length
   // (utilisé en mode variation — permet de générer plus de vidéos que de concepts distincts,
   // sans jamais répéter le même concept deux fois d'affilée à la jonction entre deux cycles).
+  //
+  // Certains prompts sont en fait des VARIANTES DB du même concept (ex: "P3-V1"/"P3-V2"/"P3-V3",
+  // "SK1"/"SK2" même trick filmé différemment) — regroupés via `conceptGroup`. Le cycling se fait
+  // au niveau du GROUPE (pas de la ligne) : un concept ne revient qu'une fois tous les autres
+  // groupes épuisés, et on pioche une ligne aléatoire DANS le groupe choisi à chaque tour.
   const buildCycledPrompts = (pool: ValidatedPrompt[], count: number): ValidatedPrompt[] => {
+    const groups = new Map<string, ValidatedPrompt[]>()
+    pool.forEach(p => {
+      const key = p.conceptGroup || `__single_${p.id}`
+      const list = groups.get(key)
+      if (list) list.push(p)
+      else groups.set(key, [p])
+    })
+    const groupList = Array.from(groups.values())
+
     const picked: ValidatedPrompt[] = []
     while (picked.length < count) {
-      const cycle = fisherYates(pool)
-      if (picked.length > 0 && cycle.length > 1 && cycle[0].id === picked[picked.length - 1].id) {
-        ;[cycle[0], cycle[1]] = [cycle[1], cycle[0]]
+      const cycle = fisherYates(groupList)
+      if (picked.length > 0 && cycle.length > 1) {
+        const lastGroupKey = picked[picked.length - 1].conceptGroup || `__single_${picked[picked.length - 1].id}`
+        const firstOfCycleKey = cycle[0][0].conceptGroup || `__single_${cycle[0][0].id}`
+        if (firstOfCycleKey === lastGroupKey) {
+          ;[cycle[0], cycle[1]] = [cycle[1], cycle[0]]
+        }
       }
-      picked.push(...cycle)
+      for (const group of cycle) {
+        picked.push(group[Math.floor(Math.random() * group.length)])
+        if (picked.length >= count) break
+      }
     }
     return picked.slice(0, count)
+  }
+
+  // Un seul prompt piocher par groupe de concept (pas de répétition possible) —
+  // utilisé en mode "Original concepts" pour éviter de tirer 2 fois le même concept
+  // (ex: "P3-V1" et "P3-V2" sont 2 lignes DB mais la même scène filmée différemment).
+  const pickDistinctGroups = (pool: ValidatedPrompt[], count: number): ValidatedPrompt[] => {
+    const groups = new Map<string, ValidatedPrompt[]>()
+    pool.forEach(p => {
+      const key = p.conceptGroup || `__single_${p.id}`
+      const list = groups.get(key)
+      if (list) list.push(p)
+      else groups.set(key, [p])
+    })
+    const shuffledGroups = fisherYates(Array.from(groups.values()))
+    return shuffledGroups
+      .slice(0, Math.min(count, shuffledGroups.length))
+      .map(group => group[Math.floor(Math.random() * group.length)])
   }
 
   // ── Launch Random ──
@@ -381,7 +425,7 @@ export default function VideoPage() {
 
     const picked = randomVariationMode
       ? buildCycledPrompts(filteredPrompts, randomCount)
-      : fisherYates(filteredPrompts).slice(0, Math.min(randomCount, filteredPrompts.length))
+      : pickDistinctGroups(filteredPrompts, randomCount)
     const ids = picked.map(p => p.id)
     setDuration(Math.max(...picked.map(p => p.suggestedDuration)))
 
@@ -902,9 +946,9 @@ export default function VideoPage() {
               <div>
                 <p className="text-xs text-gray-600 mb-2">
                   Number of videos: <span className="text-gray-900 font-medium">{randomCount}</span>
-                  {filteredPrompts.length > 0 && (
+                  {distinctConceptCount > 0 && (
                     <span className="text-gray-700 ml-1">
-                      ({filteredPrompts.length} concept{filteredPrompts.length > 1 ? 's' : ''} available{randomVariationMode ? ' — cycled if count is higher' : ''})
+                      ({distinctConceptCount} distinct concept{distinctConceptCount > 1 ? 's' : ''} available{randomVariationMode ? ' — cycled if count is higher' : ''})
                     </span>
                   )}
                 </p>
@@ -912,7 +956,7 @@ export default function VideoPage() {
                   <input
                     type="range"
                     min={1}
-                    max={randomVariationMode ? 30 : Math.min(20, Math.max(filteredPrompts.length, 1))}
+                    max={randomVariationMode ? 30 : Math.min(20, Math.max(distinctConceptCount, 1))}
                     value={randomCount}
                     onChange={e => setRandomCount(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
@@ -936,7 +980,7 @@ export default function VideoPage() {
                   ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Launching...</span>
                   : randomVariationMode
                     ? `🎲 Generate ${randomCount} variation${randomCount > 1 ? 's' : ''}`
-                    : `🎲 Generate ${Math.min(randomCount, filteredPrompts.length)} random video${Math.min(randomCount, filteredPrompts.length) > 1 ? 's' : ''}`
+                    : `🎲 Generate ${Math.min(randomCount, distinctConceptCount)} random video${Math.min(randomCount, distinctConceptCount) > 1 ? 's' : ''}`
                 }
               </button>
             </div>
