@@ -184,6 +184,10 @@ async def run_validated_studio(
         prompt_json: str = item["promptJson"]
         sub_niche: str = item.get("subNiche", "conference")
         title: str = item.get("title", f"prompt_{item['id']}")
+        # Chaque prompt a sa propre durée suggérée (DB) — un batch multi-concepts
+        # (random / random_variation) ne doit jamais forcer une durée unique à toutes
+        # les vidéos. Fallback sur le --duration global seulement si absent (legacy).
+        item_duration: int = item.get("duration") or duration
 
         # ── Mode variation / random_variation : appliquer les overrides outfit + phrase ──
         # random_variation applique la même logique per-job, mais chaque job vient
@@ -229,7 +233,7 @@ async def run_validated_studio(
             user_token=user_token,
             aspect_ratio=aspect_ratio,
             resolution=resolution,
-            duration=duration,
+            duration=item_duration,
             shortcode=shortcode,
         )
 

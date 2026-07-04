@@ -539,12 +539,20 @@ export default function VideoPage() {
         {/* ── Durée ── */}
         <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] flex items-center gap-6">
           <div className="flex-1">
-            <label className="block text-xs text-gray-600 mb-1.5">
-              Video duration: <span className="text-gray-900 font-medium">{duration}s</span>
-            </label>
-            <input type="range" min={3} max={15} value={duration}
-              onChange={e => setDuration(Number(e.target.value))}
-              className="w-full accent-violet-500" />
+            {uiMode === 'random' ? (
+              <p className="text-xs text-gray-600">
+                Each video automatically uses its own suggested duration (this slider doesn&apos;t apply in Random mode).
+              </p>
+            ) : (
+              <>
+                <label className="block text-xs text-gray-600 mb-1.5">
+                  Video duration: <span className="text-gray-900 font-medium">{duration}s</span>
+                </label>
+                <input type="range" min={3} max={15} value={duration}
+                  onChange={e => setDuration(Number(e.target.value))}
+                  className="w-full accent-violet-500" />
+              </>
+            )}
           </div>
           <div className="text-xs text-gray-700 text-right leading-relaxed">
             <div>9:16 · 720p</div>

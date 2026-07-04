@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     const dbPrompts = await prisma.validatedPrompt.findMany({
       where: { id: { in: validatedPromptIds }, isActive: true },
       orderBy: { sortOrder: 'asc' },
-      select: { id: true, title: true, promptJson: true, outfitText: true, speakerLine: true, subNiche: true, phraseVariations: true },
+      select: { id: true, title: true, promptJson: true, outfitText: true, speakerLine: true, subNiche: true, phraseVariations: true, suggestedDuration: true },
     })
 
     if (!dbPrompts.length) {
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
     type PromptJob = {
       id: number; title: string; promptJson: string; outfitText: string | null
       speakerLine: string | null; phraseVariations: unknown; subNiche: string; repeatIndex: number
+      duration: number
     }
 
     let validatedPrompts: PromptJob[]
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
           return {
             id: p.id, title: p.title, promptJson: p.promptJson, outfitText: p.outfitText,
             speakerLine: p.speakerLine, phraseVariations, subNiche: p.subNiche, repeatIndex: i,
+            duration: p.suggestedDuration,
           }
         })
         .filter((x): x is PromptJob => x !== null)
@@ -108,6 +110,7 @@ export async function POST(req: NextRequest) {
           phraseVariations,   // tableau de phrases dédiées à ce concept
           subNiche: p.subNiche,
           repeatIndex: i,
+          duration: p.suggestedDuration,
         }))
       })
     }
