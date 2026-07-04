@@ -185,8 +185,11 @@ async def run_validated_studio(
         sub_niche: str = item.get("subNiche", "conference")
         title: str = item.get("title", f"prompt_{item['id']}")
 
-        # ── Mode variation : appliquer les overrides outfit + phrase ──
-        if mode == "variation":
+        # ── Mode variation / random_variation : appliquer les overrides outfit + phrase ──
+        # random_variation applique la même logique per-job, mais chaque job vient
+        # potentiellement d'un concept de base différent (outfitText/phraseVariations
+        # lus par job, pas globalement — déjà correct pour ce cas multi-concepts).
+        if mode in ("variation", "random_variation"):
             outfit_text = item.get("outfitText")
             speaker_line = item.get("speakerLine")
 

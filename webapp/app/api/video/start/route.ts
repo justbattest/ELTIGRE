@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
   const driveFolderId = creds?.driveFolderId || null
 
   // ══════════════════════════════════════════════════════════════════
-  // NOUVEAUX MODES — direct / variation
+  // NOUVEAUX MODES — direct / variation / random_variation
   // ══════════════════════════════════════════════════════════════════
 
-  if (body.mode === 'direct' || body.mode === 'variation') {
+  if (body.mode === 'direct' || body.mode === 'variation' || body.mode === 'random_variation') {
     const {
       mode,
       validatedPromptIds = [] as number[],
@@ -72,20 +72,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Aucun prompt valide trouvé' }, { status: 404 })
     }
 
-    // Construire la liste des jobs : chaque prompt × batchCount
-    const validatedPrompts = dbPrompts.flatMap(p => {
-      const phraseVariations = p.phraseVariations ? JSON.parse(p.phraseVariations) : null
-      return Array.from({ length: batchCount }, (_, i) => ({
-        id: p.id,
-        title: p.title,
-        promptJson: p.promptJson,
-        outfitText: p.outfitText,
-        speakerLine: p.speakerLine,
-        phraseVariations,   // tableau de phrases dédiées à ce concept
-        subNiche: p.subNiche,
-        repeatIndex: i,
-      }))
-    })
+    type PromptJob = {
+      id: number; title: string; promptJson: string; outfitText: string | null
+      speakerLine: string | null; phraseVariations: unknown; subNiche: string; repeatIndex: number
+    }
+
+    let validatedPrompts: PromptJob[]
+
+    if (mode === 'random_variation') {
+      // Un job par id, dans l'ordre — validatedPromptIds peut contenir des doublons
+      // (si N vidéos > nb de concepts distincts dans la niche). Le SQL `IN` dédoublonne
+      // les lignes retournées, donc on remappe depuis un Map plutôt que d'itérer dbPrompts.
+      const byId = new Map(dbPrompts.map(p => [p.id, p]))
+      validatedPrompts = (validatedPromptIds as number[])
+        .map((id: number, i: number): PromptJob | null => {
+          const p = byId.get(id)
+          if (!p) return null
+          const phraseVariations = p.phraseVariations ? JSON.parse(p.phraseVariations) : null
+          return {
+            id: p.id, title: p.title, promptJson: p.promptJson, outfitText: p.outfitText,
+            speakerLine: p.speakerLine, phraseVariations, subNiche: p.subNiche, repeatIndex: i,
+          }
+        })
+        .filter((x): x is PromptJob => x !== null)
+    } else {
+      // direct / variation — comportement legacy inchangé : chaque prompt × batchCount
+      validatedPrompts = dbPrompts.flatMap(p => {
+        const phraseVariations = p.phraseVariations ? JSON.parse(p.phraseVariations) : null
+        return Array.from({ length: batchCount }, (_, i) => ({
+          id: p.id,
+          title: p.title,
+          promptJson: p.promptJson,
+          outfitText: p.outfitText,
+          speakerLine: p.speakerLine,
+          phraseVariations,   // tableau de phrases dédiées à ce concept
+          subNiche: p.subNiche,
+          repeatIndex: i,
+        }))
+      })
+    }
 
     // Créer le Run
     const run = await prisma.run.create({

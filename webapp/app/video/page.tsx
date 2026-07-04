@@ -153,6 +153,7 @@ export default function VideoPage() {
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation' | 'random'>('direct')
   const [randomCount, setRandomCount] = useState(5)
+  const [randomVariationMode, setRandomVariationMode] = useState(true)   // true = applique une variation par vidéo
 
   // ── Mode direct ──
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -344,6 +345,31 @@ export default function VideoPage() {
     }
   }
 
+  // Fisher-Yates shuffle — retourne une copie mélangée, ne mute pas l'original
+  const fisherYates = <T,>(arr: T[]): T[] => {
+    const copy = [...arr]
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[copy[i], copy[j]] = [copy[j], copy[i]]
+    }
+    return copy
+  }
+
+  // Pioche `count` prompts en cyclant sur des reshuffles successifs si count > pool.length
+  // (utilisé en mode variation — permet de générer plus de vidéos que de concepts distincts,
+  // sans jamais répéter le même concept deux fois d'affilée à la jonction entre deux cycles).
+  const buildCycledPrompts = (pool: ValidatedPrompt[], count: number): ValidatedPrompt[] => {
+    const picked: ValidatedPrompt[] = []
+    while (picked.length < count) {
+      const cycle = fisherYates(pool)
+      if (picked.length > 0 && cycle.length > 1 && cycle[0].id === picked[picked.length - 1].id) {
+        ;[cycle[0], cycle[1]] = [cycle[1], cycle[0]]
+      }
+      picked.push(...cycle)
+    }
+    return picked.slice(0, count)
+  }
+
   // ── Launch Random ──
   const launchRandom = async () => {
     if (!selectedElementId) return setLaunchError('Select a character.')
@@ -353,13 +379,9 @@ export default function VideoPage() {
     setLaunchSuccess('')
     setLaunching(true)
 
-    // Fisher-Yates shuffle
-    const shuffled = [...filteredPrompts]
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-    }
-    const picked = shuffled.slice(0, Math.min(randomCount, shuffled.length))
+    const picked = randomVariationMode
+      ? buildCycledPrompts(filteredPrompts, randomCount)
+      : fisherYates(filteredPrompts).slice(0, Math.min(randomCount, filteredPrompts.length))
     const ids = picked.map(p => p.id)
     setDuration(Math.max(...picked.map(p => p.suggestedDuration)))
 
@@ -368,7 +390,7 @@ export default function VideoPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mode: 'direct',
+          mode: randomVariationMode ? 'random_variation' : 'direct',
           validatedPromptIds: ids,
           batchCount: 1,
           elementId: selectedElementId,
@@ -380,7 +402,7 @@ export default function VideoPage() {
       if (!res.ok || data.error) {
         setLaunchError(data.error || 'Error launching')
       } else {
-        setLaunchSuccess(`✓ ${ids.length} video${ids.length > 1 ? 's' : ''} launched — random prompts`)
+        setLaunchSuccess(`✓ ${ids.length} video${ids.length > 1 ? 's' : ''} launched — ${randomVariationMode ? 'random variations' : 'random prompts'}`)
       }
     } catch {
       setLaunchError('Network error')
@@ -856,22 +878,41 @@ export default function VideoPage() {
             <div className="p-5 border-b border-gray-200">
               <p className="text-sm font-semibold text-gray-900">Random generation</p>
               <p className="text-xs text-gray-700 mt-0.5">
-                Picks {randomCount} random prompt{randomCount > 1 ? 's' : ''} from the selected niche and generates 1 video per prompt.
+                {randomVariationMode
+                  ? `Generates ${randomCount} video${randomCount > 1 ? 's' : ''} with a different outfit + line each time — no repeats.`
+                  : `Picks ${randomCount} random prompt${randomCount > 1 ? 's' : ''} from the selected niche and generates 1 video per prompt (raw concepts, no variation).`}
               </p>
             </div>
             <div className="p-5 space-y-4">
+              <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
+                <button
+                  onClick={() => setRandomVariationMode(true)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${randomVariationMode ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  🎨 Variations
+                </button>
+                <button
+                  onClick={() => setRandomVariationMode(false)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${!randomVariationMode ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  🎯 Original concepts
+                </button>
+              </div>
+
               <div>
                 <p className="text-xs text-gray-600 mb-2">
                   Number of videos: <span className="text-gray-900 font-medium">{randomCount}</span>
                   {filteredPrompts.length > 0 && (
-                    <span className="text-gray-700 ml-1">({filteredPrompts.length} prompts available)</span>
+                    <span className="text-gray-700 ml-1">
+                      ({filteredPrompts.length} concept{filteredPrompts.length > 1 ? 's' : ''} available{randomVariationMode ? ' — cycled if count is higher' : ''})
+                    </span>
                   )}
                 </p>
                 <div className="flex items-center gap-3">
                   <input
                     type="range"
                     min={1}
-                    max={Math.min(20, Math.max(filteredPrompts.length, 1))}
+                    max={randomVariationMode ? 30 : Math.min(20, Math.max(filteredPrompts.length, 1))}
                     value={randomCount}
                     onChange={e => setRandomCount(Number(e.target.value))}
                     className="flex-1 accent-violet-500"
@@ -893,7 +934,9 @@ export default function VideoPage() {
               >
                 {launching
                   ? <span className="flex items-center justify-center gap-2"><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="60" strokeDashoffset="20"/></svg> Launching...</span>
-                  : `🎲 Generate ${Math.min(randomCount, filteredPrompts.length)} random video${Math.min(randomCount, filteredPrompts.length) > 1 ? 's' : ''}`
+                  : randomVariationMode
+                    ? `🎲 Generate ${randomCount} variation${randomCount > 1 ? 's' : ''}`
+                    : `🎲 Generate ${Math.min(randomCount, filteredPrompts.length)} random video${Math.min(randomCount, filteredPrompts.length) > 1 ? 's' : ''}`
                 }
               </button>
             </div>
