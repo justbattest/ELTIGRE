@@ -11,7 +11,6 @@ import {
   Wand2,
   Shuffle,
   Timer,
-  Settings,
   BarChart2,
   ChevronLeft,
   ChevronRight,
@@ -33,6 +32,15 @@ type GroupItem = {
 
 const GROUPS: GroupItem[] = [
   {
+    key: 'dashboard',
+    icon: LayoutDashboard,
+    label: 'DASHBOARD',
+    href: '/dashboard',
+    pages: ['/dashboard'],
+    subTabs: [],
+    separate: false,
+  },
+  {
     key: 'image',
     icon: ImageIcon,
     label: 'IMAGE',
@@ -43,7 +51,7 @@ const GROUPS: GroupItem[] = [
       { label: 'Prompt Studio', href: '/studio' },
       { label: 'Bulk Edit', href: '/bulk-edit' },
     ],
-    separate: false,
+    separate: true,
   },
   {
     key: 'video',
@@ -69,7 +77,7 @@ const GROUPS: GroupItem[] = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
-  const activeGroup = GROUPS.find(g => g.pages.includes(pathname)) ?? GROUPS[0]
+  const activeGroup = GROUPS.find(g => g.pages.includes(pathname)) ?? GROUPS.find(g => g.key === 'image')!
 
   const [higgsStatus, setHiggsStatus] = useState<'checking' | 'valid' | 'invalid'>('checking')
 
@@ -253,7 +261,7 @@ export function Sidebar() {
               {higgsStatus === 'valid' ? 'Higgsfield ✓' : higgsStatus === 'invalid' ? 'HF Disconnected' : 'Checking…'}
             </span>
             {higgsStatus === 'invalid' && (
-              <Link href="/settings" className="text-[10px] px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition whitespace-nowrap font-medium">
+              <Link href="/dashboard" className="text-[10px] px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition whitespace-nowrap font-medium">
                 Reconnect
               </Link>
             )}
@@ -269,8 +277,6 @@ export function Sidebar() {
           </div>
         )}
         {[
-          { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', key: 'dashboard' },
-          { href: '/settings', icon: Settings, label: 'Settings', key: 'settings' },
           { href: '/kpi',      icon: BarChart2, label: 'KPI',      key: 'kpi'      },
           { href: '/tutorials', icon: BookOpen,  label: 'Tutorials', key: 'tutorials' },
         ].map(({ href, icon: Icon, label, key }) => (

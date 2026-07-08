@@ -2,7 +2,7 @@
  * GET /api/google-auth/callback
  * Reçoit le code d'autorisation Google après le consentement de l'user.
  * Échange le code contre des tokens, sauvegarde le refresh_token en DB.
- * Ferme la popup (postMessage vers l'opener) ou redirige vers /settings.
+ * Ferme la popup (postMessage vers l'opener) ou redirige vers /dashboard.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
@@ -98,7 +98,7 @@ function htmlPage(success: boolean, errorMsg?: string) {
           window.opener.postMessage({ type: 'google-drive-connected' }, '*');
           setTimeout(() => window.close(), 1500);
         } else {
-          setTimeout(() => window.location.href = '/settings', 1500);
+          setTimeout(() => window.location.href = '/dashboard', 1500);
         }
       </script>`
     : `

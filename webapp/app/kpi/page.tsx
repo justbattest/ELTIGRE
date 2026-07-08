@@ -207,8 +207,8 @@ export default function KPIPage() {
         <Link href="/" className="text-gray-700 hover:text-gray-900 transition text-sm">
           ← New Run
         </Link>
-        <Link href="/settings" className="text-gray-700 hover:text-gray-900 transition text-sm">
-          ⚙️ Settings
+        <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 transition text-sm">
+          ⚙️ Dashboard
         </Link>
       </nav>
 

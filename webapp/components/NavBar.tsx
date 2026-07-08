@@ -47,7 +47,7 @@ export function NavBar() {
         </div>
         <div className="flex items-center gap-5 text-sm">
           <Link href="/kpi" className="text-gray-700 hover:text-gray-900 transition-colors duration-150">KPI</Link>
-          <Link href="/settings" className="text-gray-700 hover:text-gray-900 transition-colors duration-150">Settings</Link>
+          <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 transition-colors duration-150">Dashboard</Link>
         </div>
       </div>
 

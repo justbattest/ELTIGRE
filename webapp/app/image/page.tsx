@@ -28,14 +28,14 @@ export default function ImagePage() {
                 {higgsOk ? 'HF Connected' : 'HF Disconnected'}
               </span>
               {!higgsOk && (
-                <Link href="/settings" className="text-xs px-2 py-0.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition font-medium">
+                <Link href="/dashboard" className="text-xs px-2 py-0.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition font-medium">
                   Reconnect
                 </Link>
               )}
             </div>
           )}
           <Link href="/kpi" className="text-gray-700 hover:text-gray-900 transition">📊 KPI</Link>
-          <Link href="/settings" className="text-gray-700 hover:text-gray-900 transition">⚙️ Settings</Link>
+          <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 transition">⚙️ Dashboard</Link>
         </div>
       </div>
       <div className="border-b border-gray-200 px-6">

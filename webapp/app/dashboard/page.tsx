@@ -10,6 +10,7 @@ import { GoogleDriveConnect } from '@/components/setup/GoogleDriveConnect'
 import { DASHBOARD_STEPS } from '@/lib/dashboard-tutorial-content'
 
 type SoulCharacter = { id: string; name: string; status?: string }
+type RefElement = { id: string; name: string; type?: string }
 
 type DashboardStatus = {
   higgsfield: { connected: boolean; refreshed?: boolean }
@@ -32,7 +33,7 @@ function NumberBadge({ n, done }: { n: number; done: boolean }) {
   )
 }
 
-/** Collapsible written instructions for a given step, sourced from the shared tutorial content. */
+/** Collapsible walkthrough video for a given step, sourced from the shared tutorial content. */
 function StepGuide({ step }: { step: number }) {
   const [open, setOpen] = useState(false)
   const content = DASHBOARD_STEPS.find(s => s.step === step)
@@ -43,17 +44,18 @@ function StepGuide({ step }: { step: number }) {
         onClick={() => setOpen(o => !o)}
         className="text-xs font-medium text-violet-600 hover:text-violet-700 transition"
       >
-        {open ? '▲ Hide instructions' : '▼ Show instructions'}
+        {open ? '▲ Hide video' : '▼ Watch how'}
       </button>
       {open && (
-        <ul className="mt-2 space-y-1.5 text-xs text-gray-700">
-          {content.bullets.map((b, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="text-violet-400 shrink-0">•</span>
-              <span>{b}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-2 relative w-full rounded-lg overflow-hidden shadow-sm" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={`https://www.youtube-nocookie.com/embed/${content.videoId}`}
+            title={`Step ${step} walkthrough`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
       )}
     </div>
   )
@@ -151,10 +153,146 @@ function ApiKeyStep({
   )
 }
 
+/** Optional: per-character physical/outfit rules injected into Prompt Studio. Autosaves on blur. */
+function CharacterRulesCard({ elements }: { elements: RefElement[] }) {
+  const [charRules, setCharRules] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data.characterPromptRules) {
+          try { setCharRules(JSON.parse(data.characterPromptRules)) } catch {}
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const save = async (next: Record<string, string>) => {
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterPromptRules: JSON.stringify(next) }),
+      })
+    } catch {
+      // best-effort
+    }
+  }
+
+  return (
+    <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+      <h2 className="font-medium mb-1 text-gray-900">Character Prompt Rules</h2>
+      <p className="text-gray-800 text-xs mb-4">
+        Physical traits &amp; outfit rules per character, injected into Claude prompts when generating in Prompt Studio. Saved automatically.
+      </p>
+      {elements.length === 0 ? (
+        <p className="text-gray-500 text-xs italic">No reference elements yet — add characters in Step 2 above.</p>
+      ) : (
+        <div className="space-y-3">
+          {elements.map((el) => (
+            <div key={el.id}>
+              <label className="block text-sm font-medium text-gray-800 mb-1">{el.name}</label>
+              <textarea
+                rows={3}
+                value={charRules[el.name] || ''}
+                onChange={(e) => setCharRules(prev => ({ ...prev, [el.name]: e.target.value }))}
+                onBlur={() => save(charRules)}
+                placeholder="e.g. Always show muscular arms, no long sleeves that hide muscles, large breasts visible..."
+                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 transition text-sm resize-y"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Optional: fallback model/ratio/quality used by Prompt Studio & New Run. Autosaves on change. */
+function DefaultsCard() {
+  const [defaultModel, setDefaultModel] = useState('auto')
+  const [defaultAspectRatio, setDefaultAspectRatio] = useState('2:3')
+  const [defaultQuality, setDefaultQuality] = useState('2k')
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        setDefaultModel(data.defaultModel || 'auto')
+        setDefaultAspectRatio(data.defaultAspectRatio || '2:3')
+        setDefaultQuality(data.defaultQuality || '2k')
+      })
+      .catch(() => {})
+  }, [])
+
+  const save = async (patch: Record<string, string>) => {
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+    } catch {
+      // best-effort
+    }
+  }
+
+  const selectClass = 'w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-gray-900 text-sm focus:outline-none focus:border-violet-500 transition'
+
+  return (
+    <div className="bg-white/75 backdrop-blur-xl rounded-xl border border-white/85 shadow-[0_4px_20px_rgba(109,40,217,0.09),inset_0_0_0_1px_rgba(255,255,255,0.55)] p-5">
+      <h2 className="font-medium mb-1 text-gray-900">Default settings</h2>
+      <p className="text-gray-800 text-xs mb-3">Fallback model, ratio and quality used across generation tools. Saved automatically.</p>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="block text-xs text-gray-800 mb-1">Model</label>
+          <select
+            value={defaultModel}
+            onChange={(e) => { setDefaultModel(e.target.value); save({ defaultModel: e.target.value }) }}
+            className={selectClass}
+          >
+            <option value="auto">Auto (fallback)</option>
+            <option value="soul_cinematic">Soul Cinema</option>
+            <option value="seedream_v4_5">Seedream 4.5</option>
+            <option value="nano_banana_2">Nano Banana</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-gray-800 mb-1">Ratio</label>
+          <select
+            value={defaultAspectRatio}
+            onChange={(e) => { setDefaultAspectRatio(e.target.value); save({ defaultAspectRatio: e.target.value }) }}
+            className={selectClass}
+          >
+            <option value="2:3">2:3</option>
+            <option value="1:1">1:1</option>
+            <option value="16:9">16:9</option>
+            <option value="9:16">9:16</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-gray-800 mb-1">Quality</label>
+          <select
+            value={defaultQuality}
+            onChange={(e) => { setDefaultQuality(e.target.value); save({ defaultQuality: e.target.value }) }}
+            className={selectClass}
+          >
+            <option value="2k">2K</option>
+            <option value="4k">4K</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const [status, setStatus] = useState<DashboardStatus | null>(null)
   const [higgsConnected, setHiggsConnected] = useState(false)
   const [soulCharacters, setSoulCharacters] = useState<SoulCharacter[] | null>(null)
+  const [referenceElements, setReferenceElements] = useState<RefElement[]>([])
 
   const refreshStatus = useCallback(() => {
     fetch('/api/dashboard/status')
@@ -225,7 +363,7 @@ export default function DashboardPage() {
                 <NumberBadge n={2} done={(status?.elements.count ?? 0) > 0} />
                 <ReferenceElementsManager
                   higgsConnected={higgsConnected}
-                  onChange={() => refreshStatus()}
+                  onChange={(els) => { setReferenceElements(els); refreshStatus() }}
                 >
                   <div className="mt-3 border-t border-gray-100 pt-3">
                     <h3 className="text-xs font-semibold text-gray-800 mb-1.5">Soul Characters (images)</h3>
@@ -281,6 +419,19 @@ export default function DashboardPage() {
                 <GoogleDriveConnect onConnectedChange={() => refreshStatus()}>
                   <StepGuide step={5} />
                 </GoogleDriveConnect>
+              </div>
+            </div>
+
+            {/* Optional configuration — not part of the 5 required steps */}
+            <div className="pt-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Optional configuration</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+              <div className="space-y-8">
+                <CharacterRulesCard elements={referenceElements} />
+                <DefaultsCard />
               </div>
             </div>
 
