@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
-import { TutorialVideo } from '@/components/TutorialVideo'
 import { HiggsfieldConnect } from '@/components/setup/HiggsfieldConnect'
 import { ReferenceElementsManager } from '@/components/setup/ReferenceElementsManager'
 import { GoogleDriveConnect } from '@/components/setup/GoogleDriveConnect'
@@ -346,8 +345,6 @@ export default function DashboardPage() {
                 />
               </div>
             </div>
-
-            <TutorialVideo videoId="1dv8371-Hhg" title="Full Setup Walkthrough" />
 
             <div className="space-y-8">
               {/* Step 1 — Higgsfield */}
