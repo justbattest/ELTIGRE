@@ -2,7 +2,7 @@
  * POST /api/prompt-lab/from-video
  *
  * Télécharge une vidéo (ou utilise un fichier uploadé), extrait les frames + transcrit
- * l'audio (Groq Whisper), génère le prompt Higgsfield via Claude.
+ * l'audio (OpenAI Whisper), génère le prompt Higgsfield via Claude.
  * Entrée : FormData avec soit `videoUrl` (string), soit `videoFile` (File)
  * Sortie : SSE stream (même format que /api/prompt-lab/generate)
  */
@@ -15,6 +15,7 @@ import os from 'os'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
+import { markLowBalance } from '@/lib/low-balance'
 import Anthropic from '@anthropic-ai/sdk'
 
 const SYSTEM_PROMPT = `Tu es un expert en création de prompts Seedance 2.0 (aussi compatible Kling 3.0).
@@ -154,7 +155,6 @@ export async function POST(req: NextRequest) {
   if (!anthropicKey) {
     return NextResponse.json({ error: 'Clé Anthropic non configurée dans Settings' }, { status: 400 })
   }
-  const groqApiKey = decryptIfPresent(creds?.groqApiKey)
   const openaiApiKey = decryptIfPresent(creds?.openaiApiKey)
 
   // Si fichier uploadé, le sauver dans un tmp dir pour que video_analyzer.py le lise
@@ -190,6 +190,7 @@ export async function POST(req: NextRequest) {
           frames: { base64: string; timestamp: string }[]
           transcript: string
           metadata: { title: string; duration: number }
+          low_balance_provider?: string
         }>((resolve, reject) => {
           const sourceArgs = uploadedFilePath
             ? ['--file-path', uploadedFilePath]
@@ -200,7 +201,6 @@ export async function POST(req: NextRequest) {
             env: {
               ...process.env,
               PYTHONUNBUFFERED: '1',
-              ...(groqApiKey ? { GROQ_API_KEY: groqApiKey } : {}),
               ...(openaiApiKey ? { OPENAI_API_KEY: openaiApiKey } : {}),
             },
             stdio: ['ignore', 'pipe', 'pipe'],
@@ -251,6 +251,10 @@ export async function POST(req: NextRequest) {
         })
 
         const { frames, transcript, metadata } = analyzeResult
+
+        if (analyzeResult.low_balance_provider === 'openai') {
+          markLowBalance(session.user.id, 'openai').catch(() => {})
+        }
 
         if (!frames.length) {
           throw new Error('Aucune frame extraite — vérifiez que l\'URL est accessible')
@@ -305,7 +309,11 @@ export async function POST(req: NextRequest) {
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
       } catch (e) {
-        send({ error: String(e) })
+        const msg = String(e)
+        if (msg.toLowerCase().includes('credit balance is too low') || msg.toLowerCase().includes('insufficient_quota')) {
+          markLowBalance(session.user.id, 'anthropic').catch(() => {})
+        }
+        send({ error: msg })
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
       } finally {
         controller.close()

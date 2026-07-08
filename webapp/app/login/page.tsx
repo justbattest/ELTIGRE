@@ -32,7 +32,9 @@ function LoginForm() {
     if (res?.error) {
       setError('Incorrect email or password')
     } else {
-      router.push('/')
+      const status = await fetch('/api/dashboard/status').then(r => r.json()).catch(() => null)
+      const setupComplete = status ? status.completed >= status.total : true
+      router.push(setupComplete ? '/' : '/dashboard')
     }
   }
 

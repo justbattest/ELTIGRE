@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Send,
   BookOpen,
+  LayoutDashboard,
 } from 'lucide-react'
 
 type GroupItem = {
@@ -268,6 +269,7 @@ export function Sidebar() {
           </div>
         )}
         {[
+          { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', key: 'dashboard' },
           { href: '/settings', icon: Settings, label: 'Settings', key: 'settings' },
           { href: '/kpi',      icon: BarChart2, label: 'KPI',      key: 'kpi'      },
           { href: '/tutorials', icon: BookOpen,  label: 'Tutorials', key: 'tutorials' },

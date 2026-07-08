@@ -3,6 +3,7 @@
  * Utilisé par /api/run (scraping) et /api/studio/start (prompt studio).
  */
 import { prisma } from '@/lib/prisma'
+import { markLowBalance, type LowBalanceProvider } from '@/lib/low-balance'
 
 type GenerationCompleteEvent = Record<string, unknown>
 
@@ -14,6 +15,11 @@ export async function handlePipelineEvent(
   userId: string,
   event: Record<string, unknown>
 ) {
+  // Peut être émis par n'importe quel type d'event (analysis_error, low_balance_signal, etc.)
+  if (event.low_balance === 'anthropic' || event.low_balance === 'openai') {
+    await markLowBalance(userId, event.low_balance as LowBalanceProvider)
+  }
+
   switch (event.type) {
     case 'phase':
       if (event.phase === 'scraping' && event.pct === 100) {

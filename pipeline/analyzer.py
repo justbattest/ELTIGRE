@@ -279,13 +279,17 @@ async def analyze_all_posts(
             except Exception as e:
                 item["analysis_error"] = str(e)
                 processed_count += 1
-                print(json.dumps({
+                err_msg = str(e)
+                event: dict = {
                     "type": "analysis_error",
                     "processed": processed_count,
                     "total": total,
                     "shortcode": shortcode,
-                    "error": str(e)[:200]
-                }), flush=True)
+                    "error": err_msg[:200]
+                }
+                if "credit balance is too low" in err_msg.lower() or "insufficient_quota" in err_msg.lower():
+                    event["low_balance"] = "anthropic"
+                print(json.dumps(event), flush=True)
 
         results[i] = item
 

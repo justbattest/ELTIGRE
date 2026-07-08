@@ -12,6 +12,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
+import { markLowBalance } from '@/lib/low-balance'
 import Anthropic from '@anthropic-ai/sdk'
 
 // ── Skill complet intégré ──────────────────────────────────────────────────────
@@ -226,8 +227,12 @@ export async function POST(req: NextRequest) {
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
       } catch (e) {
+        const msg = String(e)
+        if (msg.toLowerCase().includes('credit balance is too low') || msg.toLowerCase().includes('insufficient_quota')) {
+          markLowBalance(session.user.id, 'anthropic').catch(() => {})
+        }
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: String(e) })}\n\n`)
+          encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`)
         )
       } finally {
         controller.close()

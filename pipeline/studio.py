@@ -141,21 +141,27 @@ def _call_claude_for_prompts(
     """Un seul appel Claude pour `count` prompts (≤ _PROMPT_BATCH_SIZE)."""
     max_tokens = count * 750  # ~750 tokens/prompt avec marge
 
-    resp = client.messages.create(
-        model="claude-haiku-4-5",
-        max_tokens=max_tokens,
-        system=[
-            {
-                "type": "text",
-                "text": system_text,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{
-            "role": "user",
-            "content": _build_user_message(selections, mode, count)
-        }]
-    )
+    try:
+        resp = client.messages.create(
+            model="claude-haiku-4-5",
+            max_tokens=max_tokens,
+            system=[
+                {
+                    "type": "text",
+                    "text": system_text,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+            messages=[{
+                "role": "user",
+                "content": _build_user_message(selections, mode, count)
+            }]
+        )
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "credit balance is too low" in err_msg or "insufficient_quota" in err_msg:
+            print(json.dumps({"type": "low_balance_signal", "low_balance": "anthropic"}), flush=True)
+        raise
 
     raw = resp.content[0].text.strip()
 

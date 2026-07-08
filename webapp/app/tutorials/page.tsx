@@ -315,12 +315,27 @@ export default function TutorialsPage() {
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center">4</div>
                     <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Connect your OpenAI API Key</h4>
+                      <ul className="space-y-1.5 text-sm text-gray-700">
+                        <li>• Go to <span className="font-medium text-violet-700">platform.openai.com</span> → API Keys → Create new secret key</li>
+                        <li>• Copy it and paste it into <span className="font-medium">Settings → OpenAI API Key</span></li>
+                        <li>• Used automatically as the audio transcription (Whisper) engine in Prompt Lab&apos;s &quot;From Video&quot; mode</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* STEP 5 */}
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center">5</div>
+                    <div>
                       <h4 className="font-semibold text-gray-900 mb-1">Connect Google Drive</h4>
                       <ul className="space-y-1.5 text-sm text-gray-700">
-                        <li>• In Settings → click <span className="font-medium">Connect Drive</span> → authorize Google access</li>
-                        <li>• Go to <span className="font-medium text-violet-700">drive.google.com</span> → open (or create) the folder where you want results saved → copy the URL from your browser address bar</li>
+                        <li>• Go to <span className="font-medium text-violet-700">drive.google.com</span>, sign in, then click <span className="font-medium">New → New folder</span> and name it (e.g. &quot;Modelify Content&quot;)</li>
+                        <li>• Open the folder and look at your browser&apos;s address bar — everything after <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">/folders/</code> is your folder ID</li>
                         <li>• Example URL: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs break-all">https://drive.google.com/drive/folders/1ABCdef...XYZ</code></li>
-                        <li>• Paste that URL into <span className="font-medium">Settings → Drive Folder URL</span> → Save</li>
+                        <li>• Copy just that ID (not the full URL) and paste it into <span className="font-medium">Settings → Target Drive folder</span></li>
+                        <li>• Click <span className="font-medium">Connect Google Drive</span> and approve access — this may need reconnecting roughly weekly</li>
+                        <li>• Once both are set, every image/video generated afterward uploads there automatically — no manual downloading needed</li>
                       </ul>
                     </div>
                   </div>

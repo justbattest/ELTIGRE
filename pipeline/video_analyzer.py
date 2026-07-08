@@ -7,11 +7,9 @@ Two input modes:
   --file-path PATH  Uses an already-uploaded local video file directly, no download.
 
 In both modes: extracts a generous number of evenly-spaced frames as base64 JPEGs,
-and transcribes the actual spoken audio track via Whisper — not just platform
-captions, which are often absent, low quality, or unavailable entirely in
-file-upload mode. Tries Groq first (cheaper/faster, model whisper-large-v3),
-falling back to OpenAI's Whisper API (whisper-1) if Groq is unreachable
-(Groq blocks some regions/networks) or errors out.
+and transcribes the actual spoken audio track via OpenAI's Whisper API
+(whisper-1) — not just platform captions, which are often absent, low
+quality, or unavailable entirely in file-upload mode.
 
 Usage:
     python -m pipeline.video_analyzer --url URL [--num-frames N]
@@ -40,18 +38,9 @@ from pathlib import Path
 
 from pipeline.metadata_optimizer import _find_ffmpeg
 
-MAX_UPLOAD_BYTES = 24 * 1024 * 1024  # stay under Groq/OpenAI's 25MB limit
+MAX_UPLOAD_BYTES = 24 * 1024 * 1024  # stay under OpenAI's 25MB limit
 
-# Providers tried in order — Groq first (cheaper), OpenAI as fallback (Groq
-# blocks some regions/networks with "Access denied. Please check your
-# network settings.").
 WHISPER_PROVIDERS = [
-    {
-        "name": "groq",
-        "endpoint": "https://api.groq.com/openai/v1/audio/transcriptions",
-        "model": "whisper-large-v3",
-        "env_key": "GROQ_API_KEY",
-    },
     {
         "name": "openai",
         "endpoint": "https://api.openai.com/v1/audio/transcriptions",
@@ -277,8 +266,12 @@ async def _transcribe_audio(audio_path: str, api_keys: dict[str, str]) -> str:
     return " ".join(t for t in texts if t)
 
 
+class WhisperQuotaExceeded(Exception):
+    """Raised when OpenAI reports insufficient_quota — no point retrying, surfaced to the dashboard."""
+
+
 async def _whisper_call(audio_path: str, api_keys: dict[str, str], max_attempts: int = 3) -> str:
-    """Tries each configured provider in order (Groq then OpenAI), with retries per provider."""
+    """Tries each configured Whisper provider in order, with retries per provider."""
     last_err: Exception | None = None
 
     for provider in WHISPER_PROVIDERS:
@@ -309,6 +302,13 @@ async def _whisper_call(audio_path: str, api_keys: dict[str, str], max_attempts:
                 return await asyncio.to_thread(_do_request)
             except urllib.error.HTTPError as e:
                 last_err = e
+                if e.code == 429:
+                    try:
+                        body = json.loads(e.read())
+                    except Exception:
+                        body = {}
+                    if body.get("error", {}).get("type") == "insufficient_quota":
+                        raise WhisperQuotaExceeded(str(e)) from e
                 if 400 <= e.code < 500 and e.code != 429:
                     break  # client error on this provider, no point retrying — try next provider
                 print(f"{provider['name']} Whisper HTTP {e.code} — retry {attempt + 1}/{max_attempts} in {delay}s",
@@ -355,6 +355,7 @@ async def analyze(
         print(f"Frames extracted: {len(frames)}", file=sys.stderr, flush=True)
 
         transcript = ""
+        low_balance_provider = None
         if whisper_keys:
             print(f"Extracting audio (providers available: {list(whisper_keys.keys())})...", file=sys.stderr, flush=True)
             audio_path = await _extract_audio(ffmpeg, video_path, work_dir)
@@ -363,14 +364,20 @@ async def analyze(
                 try:
                     transcript = await _transcribe_audio(audio_path, whisper_keys)
                     print(f"Transcript: {len(transcript)} chars", file=sys.stderr, flush=True)
+                except WhisperQuotaExceeded as e:
+                    low_balance_provider = "openai"
+                    print(f"OpenAI quota exceeded, continuing without transcript: {e}", file=sys.stderr, flush=True)
                 except Exception as e:
                     print(f"Transcription failed, continuing without: {e}", file=sys.stderr, flush=True)
             else:
                 print("No audio stream found, skipping transcription", file=sys.stderr, flush=True)
         else:
-            print("No Whisper API key (Groq/OpenAI) — skipping audio transcription", file=sys.stderr, flush=True)
+            print("No Whisper API key (OpenAI) — skipping audio transcription", file=sys.stderr, flush=True)
 
-        return {"frames": frames, "transcript": transcript, "metadata": {"title": title, "duration": duration}}
+        result = {"frames": frames, "transcript": transcript, "metadata": {"title": title, "duration": duration}}
+        if low_balance_provider:
+            result["low_balance_provider"] = low_balance_provider
+        return result
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
 
@@ -386,9 +393,6 @@ def main() -> None:
         raise SystemExit("Either --url or --file-path is required")
 
     whisper_keys = {}
-    groq_key = os.environ.get("GROQ_API_KEY", "").strip()
-    if groq_key:
-        whisper_keys["groq"] = groq_key
     openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if openai_key:
         whisper_keys["openai"] = openai_key

@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
+import { checkAnthropicValidity, checkOpenAIValidity, checkDriveValidity } from '@/lib/provider-status'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import * as fs from 'fs'
@@ -59,25 +60,15 @@ export async function GET() {
 
   // Test Anthropic
   const anthropicKey = decryptIfPresent(creds?.anthropicApiKey)
-  if (anthropicKey) {
-    try {
-      const resp = await fetch('https://api.anthropic.com/v1/models', {
-        headers: {
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-        },
-      })
-      if (resp.ok) {
-        results.anthropic = { ok: true, message: 'claude-sonnet-4-6 disponible' }
-      } else {
-        results.anthropic = { ok: false, message: `Erreur ${resp.status}` }
-      }
-    } catch (e) {
-      results.anthropic = { ok: false, message: String(e) }
-    }
-  } else {
-    results.anthropic = { ok: false, message: 'Clé non configurée' }
-  }
+  results.anthropic = anthropicKey
+    ? await checkAnthropicValidity(anthropicKey)
+    : { ok: false, message: 'Clé non configurée' }
+
+  // Test OpenAI
+  const openaiKey = decryptIfPresent(creds?.openaiApiKey)
+  results.openai = openaiKey
+    ? await checkOpenAIValidity(openaiKey)
+    : { ok: false, message: 'Clé non configurée' }
 
   // Test Higgsfield via CLI
   const higgsToken = decryptIfPresent(creds?.higgsFieldToken)
@@ -160,40 +151,9 @@ export async function GET() {
 
   // Test Google Drive (vérifie si refresh token valide via token endpoint)
   const googleRefreshToken = creds?.googleRefreshToken
-  const googleClientId = process.env.GOOGLE_CLIENT_ID
-  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
-  if (googleRefreshToken && googleClientId && googleClientSecret) {
-    try {
-      const resp = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: googleRefreshToken,
-          client_id: googleClientId,
-          client_secret: googleClientSecret,
-        }),
-      })
-      const body = await resp.json().catch(() => ({}))
-      if (resp.ok && body.access_token) {
-        // Confirm Drive API access
-        const driveResp = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
-          headers: { Authorization: `Bearer ${body.access_token}` },
-        })
-        const driveBody = await driveResp.json().catch(() => ({}))
-        const email = driveBody.user?.emailAddress || 'Connecté'
-        results.drive = { ok: true, message: email }
-      } else {
-        results.drive = { ok: false, message: body.error_description || 'Token invalide' }
-      }
-    } catch (e) {
-      results.drive = { ok: false, message: `Erreur réseau: ${String(e).substring(0, 80)}` }
-    }
-  } else if (!googleRefreshToken) {
-    results.drive = { ok: false, message: 'Non connecté — cliquez sur Connecter Drive' }
-  } else {
-    results.drive = { ok: false, message: 'Variables GOOGLE_CLIENT_ID/SECRET manquantes' }
-  }
+  results.drive = googleRefreshToken
+    ? await checkDriveValidity(googleRefreshToken)
+    : { ok: false, message: 'Non connecté — cliquez sur Connecter Drive' }
 
   return NextResponse.json(results)
 }
