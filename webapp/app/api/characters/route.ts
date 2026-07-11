@@ -1,12 +1,16 @@
 /**
  * GET /api/characters — liste les Soul Characters disponibles via CLI.
- * Les Reference Elements sont gérés manuellement dans Settings (pas d'API avec token CLI).
+ * Les Reference Elements viennent de la DB (scannés ou ajoutés manuellement dans le Dashboard).
+ *
+ * Important: referenceElements est TOUJOURS renvoyé, même si le listing CLI des Soul
+ * Characters échoue (token expiré, CLI indisponible, etc.) — sinon un souci passager
+ * côté CLI empêchait aussi de sélectionner un Element pour générer une vidéo.
  */
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { decryptIfPresent } from '@/lib/crypto'
+import { getFreshAccessToken } from '@/lib/higgsfield-status'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import * as fs from 'fs'
@@ -23,9 +27,13 @@ export async function GET() {
     where: { userId: session.user.id },
   })
 
-  const token = decryptIfPresent(creds?.higgsFieldToken)
+  const referenceElements = creds?.referenceElements
+    ? JSON.parse(creds.referenceElements)
+    : []
+
+  const { token } = await getFreshAccessToken(session.user.id)
   if (!token) {
-    return NextResponse.json({ error: 'Higgsfield non connecté' }, { status: 400 })
+    return NextResponse.json({ soulCharacters: [], referenceElements, error: 'Higgsfield non connecté' })
   }
 
   // HOME isolé
@@ -49,14 +57,9 @@ export async function GET() {
     // Filtrer sur status completed uniquement
     chars = chars.filter((c: { status?: string }) => c.status === 'completed')
 
-    // Reference Elements depuis la DB (saisis manuellement)
-    const referenceElements = creds?.referenceElements
-      ? JSON.parse(creds.referenceElements)
-      : []
-
     return NextResponse.json({ soulCharacters: chars, referenceElements })
   } catch (e) {
-    return NextResponse.json({ error: `CLI error: ${String(e).substring(0, 200)}` }, { status: 500 })
+    return NextResponse.json({ soulCharacters: [], referenceElements, error: `CLI error: ${String(e).substring(0, 200)}` })
   } finally {
     fs.rmSync(tmpHome, { recursive: true, force: true })
   }

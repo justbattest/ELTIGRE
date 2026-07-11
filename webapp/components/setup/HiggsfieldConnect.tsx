@@ -5,33 +5,23 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 type HiggsAuthState = 'idle' | 'starting' | 'waiting' | 'approved' | 'error'
 
 type Props = {
-  /** Called whenever the live connection status changes (initial check, poll result, reconnect). */
+  /**
+   * Live connection status, owned by the parent (e.g. from the /api/dashboard/status
+   * aggregator). This component never live-checks Higgsfield itself on mount — it used
+   * to, which meant every Dashboard visit ran two redundant CLI status checks in parallel.
+   */
+  connected: boolean
+  /** Called when the device-code flow completes (new connection approved). */
   onStatusChange?: (connected: boolean) => void
   /** Extra content rendered at the bottom of the card (e.g. a collapsible tutorial on the Dashboard). */
   children?: React.ReactNode
 }
 
-export function HiggsfieldConnect({ onStatusChange, children }: Props) {
-  const [higgsConnected, setHiggsConnected] = useState(false)
+export function HiggsfieldConnect({ connected, onStatusChange, children }: Props) {
   const [higgsAuthState, setHiggsAuthState] = useState<HiggsAuthState>('idle')
   const [higgsDeviceUrl, setHiggsDeviceUrl] = useState('')
   const [higgsError, setHiggsError] = useState('')
   const higgsPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Override DB boolean with actual CLI-validated status
-  useEffect(() => {
-    fetch('/api/higgsfield-auth/status')
-      .then(r => r.json())
-      .then(data => {
-        setHiggsConnected(data.valid)
-        onStatusChange?.(!!data.valid)
-        if (data.refreshed) {
-          console.log('Higgsfield token auto-refreshed')
-        }
-      })
-      .catch(() => {})
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Polling après device code flow
   const pollHiggsfield = useCallback(() => {
@@ -43,7 +33,6 @@ export function HiggsfieldConnect({ onStatusChange, children }: Props) {
         if (data.status === 'approved') {
           if (higgsPollRef.current) clearInterval(higgsPollRef.current)
           setHiggsAuthState('approved')
-          setHiggsConnected(true)
           onStatusChange?.(true)
           if (data.refreshTokenSaved === false) {
             console.warn('Higgsfield connected without a refresh token — session may expire sooner than usual.')
@@ -112,7 +101,7 @@ export function HiggsfieldConnect({ onStatusChange, children }: Props) {
       ) : (
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            {higgsConnected ? (
+            {connected ? (
               <div className="flex items-center gap-2 text-green-400 text-sm">
                 <span>✅</span>
                 <span>Connected</span>
@@ -125,14 +114,14 @@ export function HiggsfieldConnect({ onStatusChange, children }: Props) {
             <button
               onClick={startHiggsAuth}
               disabled={higgsAuthState === 'starting'}
-              className={higgsConnected
+              className={connected
                 ? 'text-xs bg-gradient-to-br from-violet-600 to-violet-700 text-white px-3 py-1.5 rounded-lg shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap'
                 : 'bg-white hover:bg-white/60 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2 transition shadow-sm whitespace-nowrap'
               }
             >
               {higgsAuthState === 'starting'
                 ? '⏳ Starting...'
-                : higgsConnected ? 'Reconnect' : '🔗 Connect Higgsfield'}
+                : connected ? 'Reconnect' : '🔗 Connect Higgsfield'}
             </button>
           </div>
           {higgsAuthState === 'error' && (

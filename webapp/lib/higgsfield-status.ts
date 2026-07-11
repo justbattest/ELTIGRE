@@ -6,24 +6,27 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 
 export type HiggsfieldStatusResult = { valid: boolean; refreshed?: boolean; email?: string }
+export type FreshTokenResult = { token: string | null; email?: string; refreshed?: boolean }
 
 /**
- * Real Higgsfield connection check for a user: validates the stored token via the CLI,
- * silently refreshing it via the stored refresh token if the CLI reports an expired session.
- * Shared by /api/higgsfield-auth/status and /api/dashboard/status.
+ * Returns a Higgsfield access token known to work for this user, silently refreshing
+ * it via the stored refresh token if the CLI reports an expired session (and persisting
+ * the refreshed token back to the DB). Any caller that shells out to the Higgsfield CLI
+ * should use this instead of reading `higgsFieldToken` directly, so an expired access
+ * token doesn't cause the whole request to fail.
  */
-export async function checkHiggsfieldStatus(userId: string): Promise<HiggsfieldStatusResult> {
+export async function getFreshAccessToken(userId: string): Promise<FreshTokenResult> {
   try {
     const creds = await prisma.userCredentials.findUnique({ where: { userId } })
-    if (!creds?.higgsFieldToken) return { valid: false }
+    if (!creds?.higgsFieldToken) return { token: null }
 
     const accessToken = decryptIfPresent(creds.higgsFieldToken)
-    if (!accessToken) return { valid: false }
+    if (!accessToken) return { token: null }
 
     const refreshToken = decryptIfPresent(creds.higgsFieldRefreshToken ?? '') || ''
 
     const result = await checkHiggsToken(accessToken, userId)
-    if (result.valid) return { valid: true, email: result.email }
+    if (result.valid) return { token: accessToken, email: result.email }
 
     // If expired AND we have a refresh token → try to refresh silently
     if (result.expired && refreshToken) {
@@ -44,19 +47,29 @@ export async function checkHiggsfieldStatus(userId: string): Promise<HiggsfieldS
           })
 
           const retryResult = await checkHiggsToken(refreshResult.access_token, userId)
-          if (retryResult.valid) {
-            return { valid: true, email: retryResult.email, refreshed: true }
-          }
+          return { token: refreshResult.access_token, email: retryResult.email, refreshed: true }
         }
       } catch {
-        // Refresh failed — fall through to invalid
+        // Refresh failed — fall through to "no usable token"
       }
+      return { token: null }
     }
 
-    return { valid: false }
+    return { token: null }
   } catch {
-    return { valid: false }
+    return { token: null }
   }
+}
+
+/**
+ * Real Higgsfield connection check for a user: validates the stored token via the CLI,
+ * silently refreshing it via the stored refresh token if the CLI reports an expired session.
+ * Shared by /api/higgsfield-auth/status and /api/dashboard/status.
+ */
+export async function checkHiggsfieldStatus(userId: string): Promise<HiggsfieldStatusResult> {
+  const result = await getFreshAccessToken(userId)
+  if (!result.token) return { valid: false }
+  return { valid: true, email: result.email, refreshed: result.refreshed }
 }
 
 /**

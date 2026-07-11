@@ -304,6 +304,12 @@ export default function DashboardPage() {
     refreshStatus()
   }, [refreshStatus])
 
+  // Sync the local flag from the aggregator's live check (single source of truth —
+  // HiggsfieldConnect no longer live-checks on its own to avoid a duplicate CLI call).
+  useEffect(() => {
+    if (status) setHiggsConnected(status.higgsfield.connected)
+  }, [status])
+
   useEffect(() => {
     if (!higgsConnected) {
       setSoulCharacters(null)
@@ -350,7 +356,7 @@ export default function DashboardPage() {
               {/* Step 1 — Higgsfield */}
               <div className="relative">
                 <NumberBadge n={1} done={higgsConnected} />
-                <HiggsfieldConnect onStatusChange={(c) => { setHiggsConnected(c); refreshStatus() }}>
+                <HiggsfieldConnect connected={higgsConnected} onStatusChange={(c) => { setHiggsConnected(c); refreshStatus() }}>
                   <StepGuide step={1} />
                 </HiggsfieldConnect>
               </div>

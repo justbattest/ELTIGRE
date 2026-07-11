@@ -1,9 +1,11 @@
 /**
  * GET /api/dashboard/status — agrège le statut des 5 étapes de setup en un seul appel.
- * Utilisé par la page /dashboard (5 cartes + compteur "N/5") et par /login
- * (décider si l'utilisateur doit être redirigé vers /dashboard après connexion).
+ * Utilisé par la page /dashboard (5 cartes + compteur "N/5", vérification live complète)
+ * et par /login avec ?quick=1 (décider vite si l'utilisateur doit être redirigé vers
+ * /dashboard après connexion, sans attendre le CLI Higgsfield ni les pings Anthropic/OpenAI —
+ * juste la présence des identifiants en DB).
  */
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -12,16 +14,19 @@ import { checkHiggsfieldStatus } from '@/lib/higgsfield-status'
 import { checkAnthropicValidity, checkOpenAIValidity } from '@/lib/provider-status'
 import { clearLowBalance } from '@/lib/low-balance'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
   }
   const userId = session.user.id
+  const quick = req.nextUrl.searchParams.get('quick') === '1'
 
   const creds = await prisma.userCredentials.findUnique({ where: { userId } })
 
-  const higgsfieldStatus = await checkHiggsfieldStatus(userId)
+  const higgsfieldStatus = quick
+    ? { valid: !!creds?.higgsFieldToken, refreshed: false }
+    : await checkHiggsfieldStatus(userId)
 
   const referenceElements: { id: string; type?: string }[] = creds?.referenceElements
     ? JSON.parse(creds.referenceElements)
@@ -33,10 +38,12 @@ export async function GET() {
   const anthropicKey = decryptIfPresent(creds?.anthropicApiKey)
   const openaiKey = decryptIfPresent(creds?.openaiApiKey)
 
-  const [anthropicCheck, openaiCheck] = await Promise.all([
-    anthropicKey ? checkAnthropicValidity(anthropicKey) : Promise.resolve(null),
-    openaiKey ? checkOpenAIValidity(openaiKey) : Promise.resolve(null),
-  ])
+  const [anthropicCheck, openaiCheck] = quick
+    ? [null, null]
+    : await Promise.all([
+        anthropicKey ? checkAnthropicValidity(anthropicKey) : Promise.resolve(null),
+        openaiKey ? checkOpenAIValidity(openaiKey) : Promise.resolve(null),
+      ])
 
   // Un recheck manuel réussi efface l'alerte "solde bas" précédemment posée.
   if (anthropicCheck?.ok && creds?.anthropicLowBalance) {
