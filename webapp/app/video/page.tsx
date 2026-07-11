@@ -215,6 +215,11 @@ export default function VideoPage() {
 
   // ── Load validated prompts (reload au changement d'onglet) ──
   useEffect(() => {
+    // Garde anti-race : si l'utilisateur change de niche avant que cette requête ne
+    // réponde, sa réponse (tardive) ne doit jamais écraser les prompts de la niche
+    // actuelle avec ceux de l'ancienne — sinon Random peut lancer des vidéos de la
+    // mauvaise niche alors que l'onglet sélectionné à l'écran est correct.
+    let ignore = false
     setLoadingPrompts(true)
     setPrompts([])
     setSelectedIds(new Set())
@@ -226,6 +231,7 @@ export default function VideoPage() {
     fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
       .then(data => {
+        if (ignore) return
         const all: ValidatedPrompt[] = data.prompts || []
         // Filtre côté client par subNiche pour conference/sport ; golf, vieux, etc. sont déjà leur propre niche
         const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo' || niche === 'serveuse' || niche === 'mcdo' || niche === 'skatepark' || niche === 'standdetir')
@@ -234,7 +240,8 @@ export default function VideoPage() {
         setPrompts(filtered)
       })
       .catch(() => {})
-      .finally(() => setLoadingPrompts(false))
+      .finally(() => { if (!ignore) setLoadingPrompts(false) })
+    return () => { ignore = true }
   }, [niche])
 
   // Mode direct : tous les prompts de l'onglet (plus de sub-filtre, l'onglet fait déjà le travail)
