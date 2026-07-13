@@ -197,9 +197,11 @@ async def run_validated_studio(
             outfit_text = item.get("outfitText")
             speaker_line = item.get("speakerLine")
 
-            # Outfit : override explicite OU aléatoire dans le pool (sans répétitions)
+            # Outfit : override explicite OU aléatoire dans le pool (sans répétitions).
+            # None si sub-niche sans pool (niche custom) → outfit original conservé.
             new_outfit = outfit_override or pick_variation_outfit(sub_niche, used_outfits)
-            used_outfits.append(new_outfit)
+            if new_outfit:
+                used_outfits.append(new_outfit)
 
             # Phrase : depuis le pool DÉDIÉ à ce prompt (phraseVariations en DB)
             # Override explicite > aléatoire dans le pool du prompt > rien si pas de pool

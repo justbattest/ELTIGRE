@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 import { TutorialVideo } from '@/components/TutorialVideo'
+import { STATIC_VIDEO_TABS, type VideoTab } from '@/lib/niches'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,7 +129,9 @@ function SubNicheLabel({ subNiche }: { subNiche: string }) {
   if (subNiche === 'mcdo') return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700 border border-yellow-200 font-medium">🍔 McDo</span>
   if (subNiche === 'skatepark') return <span className="text-xs px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">🛴 Skatepark</span>
   if (subNiche === 'standdetir') return <span className="text-xs px-1.5 py-0.5 rounded bg-stone-50 text-stone-700 border border-stone-200 font-medium">🎯 Shooting Range</span>
-  return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 font-medium">🎓 Conf.</span>
+  if (subNiche === 'conference') return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 font-medium">🎓 Conf.</span>
+  // Niche custom créée via Prompt Lab — badge générique avec le slug
+  return <span className="text-xs px-1.5 py-0.5 rounded bg-gray-50 text-gray-700 border border-gray-200 font-medium">🆕 {subNiche.charAt(0).toUpperCase() + subNiche.slice(1).replace(/_/g, ' ')}</span>
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -148,8 +151,16 @@ export default function VideoPage() {
   const [prompts, setPrompts] = useState<ValidatedPrompt[]>([])
   const [loadingPrompts, setLoadingPrompts] = useState(false)
 
-  // ── Niche — 4 onglets séparés ──
-  const [niche, setNiche] = useState<'conference' | 'sport' | 'golf' | 'vieux' | 'meteo' | 'serveuse' | 'mcdo' | 'skatepark' | 'standdetir'>('conference')
+  // ── Niches — onglets statiques (render instantané) + customs chargées depuis l'API ──
+  const [tabs, setTabs] = useState<VideoTab[]>(STATIC_VIDEO_TABS)
+  const [niche, setNiche] = useState<string>('conference')
+
+  useEffect(() => {
+    fetch('/api/video/niches')
+      .then(r => r.json())
+      .then(data => { if (data.niches?.length) setTabs(data.niches) })
+      .catch(() => {})
+  }, [])
 
   // ── UI mode ──
   const [uiMode, setUiMode] = useState<'direct' | 'variation' | 'random'>('direct')
@@ -226,17 +237,18 @@ export default function VideoPage() {
     setVarBaseId(null)
     setVarOutfit('')
     setVarPhrase('')
-    // conference et sport sont dans le même niche DB 'conference_sport', filtrés côté client
-    const dbNiche = niche === 'vieux' ? 'vieux' : niche === 'golf' ? 'golf' : niche === 'meteo' ? 'meteo' : niche === 'serveuse' ? 'serveuse' : niche === 'mcdo' ? 'mcdo' : niche === 'skatepark' ? 'skatepark' : niche === 'standdetir' ? 'standdetir' : 'conference_sport'
+    // dbNiche vient de la définition de l'onglet (une niche custom a dbNiche = tabKey = slug)
+    const dbNiche = tabs.find(t => t.tabKey === niche)?.dbNiche ?? niche
     fetch(`/api/video/validated-prompts?niche=${dbNiche}`)
       .then(r => r.json())
       .then(data => {
         if (ignore) return
         const all: ValidatedPrompt[] = data.prompts || []
-        // Filtre côté client par subNiche pour conference/sport ; golf, vieux, etc. sont déjà leur propre niche
-        const filtered = (niche === 'vieux' || niche === 'golf' || niche === 'meteo' || niche === 'serveuse' || niche === 'mcdo' || niche === 'skatepark' || niche === 'standdetir')
-          ? all
-          : all.filter(p => p.subNiche === niche)
+        // conference et sport partagent la niche DB 'conference_sport' → filtre client par subNiche.
+        // Toutes les autres niches (built-in ou custom) affichent la niche entière.
+        const filtered = dbNiche === 'conference_sport'
+          ? all.filter(p => p.subNiche === niche)
+          : all
         setPrompts(filtered)
       })
       .catch(() => {})
@@ -276,7 +288,9 @@ export default function VideoPage() {
     if (sub === 'mcdo') return MCDO_OUTFITS
     if (sub === 'skatepark') return SKATEPARK_OUTFITS
     if (sub === 'standdetir') return STANDDETIR_OUTFITS
-    return CONF_OUTFITS
+    if (sub === 'conference') return CONF_OUTFITS
+    // Niche custom : pas de pool prédéfini — l'outfit original du prompt est conservé
+    return []
   })()
 
   // ── Phrases dédiées au prompt sélectionné (depuis DB) ──
@@ -472,24 +486,14 @@ export default function VideoPage() {
 
         <TutorialVideo videoId="WuTWTwoGjFQ" title="Videos" />
 
-        {/* ── Sélecteur de niche — 3 onglets séparés ── */}
+        {/* ── Sélecteur de niche — onglets statiques + niches custom (Prompt Lab) ── */}
         <div className="flex gap-2 flex-wrap">
-          {([
-            { id: 'conference' as const, emoji: '🎓', label: 'Conference' },
-            { id: 'sport' as const,      emoji: '🏃', label: 'Coach' },
-            { id: 'golf' as const,       emoji: '⛳', label: 'Golf' },
-            { id: 'vieux' as const,      emoji: '👴', label: 'Old' },
-            { id: 'meteo' as const,      emoji: '📺', label: 'Weather' },
-            { id: 'serveuse' as const,   emoji: '🍾', label: 'Waitress' },
-            { id: 'mcdo' as const,       emoji: '🍔', label: 'McDo' },
-            { id: 'skatepark' as const,  emoji: '🛴', label: 'Skatepark' },
-            { id: 'standdetir' as const, emoji: '🎯', label: 'Shooting Range' },
-          ]).map(n => (
+          {tabs.map(n => (
             <button
-              key={n.id}
-              onClick={() => setNiche(n.id)}
+              key={n.tabKey}
+              onClick={() => setNiche(n.tabKey)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${
-                niche === n.id
+                niche === n.tabKey
                   ? 'bg-violet-600 border-violet-500 text-white'
                   : 'bg-white border-gray-200 text-gray-700 hover:border-violet-400 hover:text-violet-700'
               }`}
@@ -846,7 +850,15 @@ export default function VideoPage() {
             )}
 
             {/* ── ÉTAPE 3 : Outfit ── */}
-            {varBaseId && (
+            {varBaseId && outfitPool.length === 0 && (
+              <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] px-5 py-4">
+                <p className="text-sm font-semibold text-gray-900">{currentPhrasePool ? '③' : '②'} Outfit</p>
+                <p className="text-xs text-gray-700 mt-1">
+                  Custom niche — no predefined outfit pool. The original outfit is kept, phrases still vary.
+                </p>
+              </div>
+            )}
+            {varBaseId && outfitPool.length > 0 && (
               <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
                   <div>

@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Sidebar } from '@/components/Sidebar'
 import { PageWrapper } from '@/components/PageWrapper'
 import { TutorialVideo } from '@/components/TutorialVideo'
+import { SAVE_CATEGORIES } from '@/lib/niches'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,15 +19,7 @@ type HistoryEntry = {
   previews: string[]  // premières images (base64 thumbnails)
 }
 
-const CATEGORIES = [
-  { key: 'conference', label: '🎓 Conference' },
-  { key: 'sport',      label: '🏃 Coach' },
-  { key: 'golf',       label: '⛳ Golf' },
-  { key: 'nurse',      label: '🏥 Elderly — Nurse' },
-  { key: 'restaurant', label: '🍽️ Elderly — Restaurant' },
-  { key: 'meteo',      label: '📺 Weather' },
-  { key: 'reporter',   label: '🌪️ Weather — Reporter' },
-] as const
+type CustomNiche = { tabKey: string; dbNiche: string; label: string }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -68,6 +61,9 @@ export default function PromptLabPage() {
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState('')
 
+  // ── Niches custom existantes (créées par les utilisateurs) — proposées dans le select ──
+  const [existingCustomNiches, setExistingCustomNiches] = useState<CustomNiche[]>([])
+
   // ── Charger historique depuis localStorage ──
   useEffect(() => {
     try {
@@ -76,17 +72,50 @@ export default function PromptLabPage() {
     } catch { /* ignore */ }
   }, [])
 
+  // ── Charger les niches custom existantes (pour re-sauvegarder dedans sans les retaper) ──
+  useEffect(() => {
+    fetch('/api/video/niches')
+      .then(r => r.json())
+      .then(data => {
+        const customs = (data.niches || []).filter((n: CustomNiche & { isCustom?: boolean }) => n.isCustom)
+        setExistingCustomNiches(customs)
+      })
+      .catch(() => {})
+  }, [])
+
   const saveHistory = (entries: HistoryEntry[]) => {
     setHistory(entries)
     try { localStorage.setItem('prompt-lab-history', JSON.stringify(entries.slice(0, 20))) } catch { /* ignore */ }
   }
 
   // ── Drag & drop ────────────────────────────────────────────────────────────
-  const toBase64 = (file: File): Promise<string> =>
-    new Promise(res => {
-      const reader = new FileReader()
-      reader.onload = e => res(e.target?.result as string)
-      reader.readAsDataURL(file)
+  // Redimensionne + recompresse chaque screenshot côté client avant envoi à Claude.
+  // Sans ça, un screenshot Retina/4K en PNG (5-15 MB) dépasse la limite de l'API
+  // (5 MB/image + budget tokens) → erreur "too large" chez certains utilisateurs.
+  // 1568px = dimension max optimale pour la vision Anthropic (aucune perte utile au-delà).
+  const toResizedBase64 = (file: File): Promise<string> =>
+    new Promise((res, rej) => {
+      const url = URL.createObjectURL(file)
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        const MAX = 1568
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+        const w = Math.max(1, Math.round(img.width * scale))
+        const h = Math.max(1, Math.round(img.height * scale))
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return rej(new Error('Canvas unavailable'))
+        // Fond blanc — aplatit la transparence PNG avant export JPEG
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, w, h)
+        ctx.drawImage(img, 0, 0, w, h)
+        res(canvas.toDataURL('image/jpeg', 0.85))
+      }
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Invalid image')) }
+      img.src = url
     })
 
   const addFiles = useCallback(async (files: FileList | File[]) => {
@@ -94,7 +123,7 @@ export default function PromptLabPage() {
     const newImages = await Promise.all(arr.map(async f => ({
       file: f,
       preview: URL.createObjectURL(f),
-      base64: await toBase64(f),
+      base64: await toResizedBase64(f),
     })))
     setImages(prev => [...prev, ...newImages].slice(0, 10))
   }, [])
@@ -252,6 +281,11 @@ export default function PromptLabPage() {
     if (!saveAuthor.trim() || !saveDescription.trim() || !promptJson) return
     setSaving(true)
     try {
+      // Niche custom existante sélectionnée (préfixe 'existing:') → réutilise le
+      // chemin 'custom' du save route avec le slug existant : même slug = même niche.
+      const existing = saveCategoryKey.startsWith('existing:')
+        ? existingCustomNiches.find(n => n.dbNiche === saveCategoryKey.slice('existing:'.length))
+        : null
       const res = await fetch('/api/prompt-lab/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -259,9 +293,9 @@ export default function PromptLabPage() {
           promptJson,
           authorName: saveAuthor.trim(),
           userDescription: saveDescription.trim(),
-          categoryKey: saveCategoryKey,
-          customNiche: saveCategoryKey === 'custom' ? customNiche : undefined,
-          customLabel: saveCategoryKey === 'custom' ? customLabel : undefined,
+          categoryKey: existing ? 'custom' : saveCategoryKey,
+          customNiche: existing ? existing.dbNiche : (saveCategoryKey === 'custom' ? customNiche : undefined),
+          customLabel: existing ? existing.label : (saveCategoryKey === 'custom' ? customLabel : undefined),
         }),
       })
       const data = await res.json()
@@ -553,9 +587,16 @@ export default function PromptLabPage() {
                   onChange={e => setSaveCategoryKey(e.target.value)}
                   className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-sm"
                 >
-                  {CATEGORIES.map(c => (
+                  {SAVE_CATEGORIES.map(c => (
                     <option key={c.key} value={c.key}>{c.label}</option>
                   ))}
+                  {existingCustomNiches.length > 0 && (
+                    <optgroup label="Custom niches">
+                      {existingCustomNiches.map(n => (
+                        <option key={n.dbNiche} value={`existing:${n.dbNiche}`}>🆕 {n.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
                   <option value="custom">➕ New category...</option>
                 </select>
               </div>

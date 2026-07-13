@@ -558,7 +558,40 @@ VARIATION_OUTFITS: dict[str, list[str]] = {
         "very short pink mini skirt, tight black deep V-neck crop top deep cleavage, long brown wavy hair",
         "very short white mini skirt, tight red deep V-neck crop top deep cleavage, long dark wavy hair",
     ],
+    # ── Stand de tir (P50-P66) ──────────────────────────────────────────────────
+    # Doit rester en sync avec STANDDETIR_OUTFITS dans webapp/app/video/page.tsx.
+    "standdetir": [
+        "fitted olive green zip-up crop top deep V neckline showing prominent cleavage, fitted olive cargo pants, tactical belt, clear safety glasses, black over-ear hearing protection",
+        "black tank top deep neckline, black ruched scrunch shorts with side cutout, thigh holster double garter straps holstered pistol, black over-the-knee boots, clear safety glasses",
+        "fitted olive green ribbed long-sleeve crop top, black ruched scrunch shorts, thigh holster with holstered pistol, clear safety glasses, black over-ear hearing protection",
+        "camo print deep V sports bra showing prominent cleavage, fitted black tactical cargo pants, fingerless tactical gloves, clear safety glasses, black over-ear hearing protection",
+        "fitted black zip-up bodysuit deep V neckline prominent cleavage, thigh holster with holstered pistol, tactical belt, clear safety glasses",
+        "tight white deep V crop top showing cleavage, olive green micro shorts, black thigh holster, clear safety glasses, black over-ear hearing protection",
+        "fitted olive green long-sleeve turtleneck top, fingerless tactical gloves, thigh holster with holstered pistol, clear safety glasses, black over-ear hearing protection",
+        "red deep V sports bra prominent cleavage, fitted black cargo pants low waist, tactical belt, clear safety glasses, black over-ear hearing protection",
+    ],
+    # ── Serveuse (S1-S9) ────────────────────────────────────────────────────────
+    # Doit rester en sync avec SERVEUSE_OUTFITS dans webapp/app/video/page.tsx.
+    "serveuse": [
+        "tight black fitted server uniform jumpsuit deep V-neck zipper deep cleavage, short puffed sleeves, fitted pants, small chest badge, long dark wavy hair, nude pointed heels",
+        "tight white fitted server blouse deep V-neckline generous cleavage, very short black skirt, small chest badge, black pointed heels",
+        "tight fitted black server dress deep V-neckline generous cleavage, hemline mid-thigh, small chest badge, black pointed heels",
+        "tight burgundy fitted server uniform deep V-neckline generous cleavage, small chest badge, black stiletto heels, long dark wavy hair",
+        "tight black satin server top deep V-neckline generous cleavage, fitted black mini skirt, small server badge, nude pointed heels",
+    ],
+    # ── Météo (studio TV / reporter terrain, P33-P36) ──────────────────────────
+    # Doit rester en sync avec METEO_OUTFITS dans webapp/app/video/page.tsx.
+    "meteo": [
+        "blue navy semi-transparent lace overlay bodice, blue navy wrap mini skirt with lace ribbon tie",
+        "fitted red blazer mini dress, very short hemline, deep open neckline",
+        "white fitted pencil mini dress, very short hemline, deep V neckline",
+        "camel fitted blazer, extremely short nude beige mini skirt, open neckline",
+        "extremely short brown halter-neck mini dress rhinestone floral pattern, black bra visible deep V neckline",
+    ],
 }
+
+# 'reporter' partage le pool météo (même univers TV/terrain)
+VARIATION_OUTFITS["reporter"] = VARIATION_OUTFITS["meteo"]
 
 def apply_variation(
     prompt_json: str,
@@ -598,9 +631,17 @@ def apply_variation(
     return result
 
 
-def pick_variation_outfit(sub_niche: str, used: list[str] | None = None) -> str:
-    """Tire un outfit de variation en évitant les répétitions si possible."""
-    pool = VARIATION_OUTFITS.get(sub_niche, VARIATION_OUTFITS["conference"])
+def pick_variation_outfit(sub_niche: str, used: list[str] | None = None) -> str | None:
+    """Tire un outfit de variation en évitant les répétitions si possible.
+
+    Sub-niche inconnue (ex: niche custom créée via Prompt Lab) → None :
+    l'outfit original du prompt est conservé tel quel (apply_variation ne
+    remplace rien quand new_outfit est None). Surtout ne PAS retomber sur le
+    pool conference — ça collait des tailleurs de conf sur d'autres décors.
+    """
+    pool = VARIATION_OUTFITS.get(sub_niche)
+    if pool is None:
+        return None
     if used:
         remaining = [o for o in pool if o not in used]
         if remaining:

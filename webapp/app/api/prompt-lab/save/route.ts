@@ -8,17 +8,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decryptIfPresent } from '@/lib/crypto'
+import { SAVE_CATEGORIES } from '@/lib/niches'
 import Anthropic from '@anthropic-ai/sdk'
 
-const NICHE_MAP: Record<string, { niche: string; subNiche: string }> = {
-  conference:  { niche: 'conference_sport', subNiche: 'conference' },
-  sport:       { niche: 'conference_sport', subNiche: 'sport' },
-  golf:        { niche: 'golf',             subNiche: 'golf' },
-  nurse:       { niche: 'vieux',            subNiche: 'nurse' },
-  restaurant:  { niche: 'vieux',            subNiche: 'restaurant' },
-  meteo:       { niche: 'meteo',            subNiche: 'meteo' },
-  reporter:    { niche: 'meteo',            subNiche: 'reporter' },
-}
+// Dérivé de la source de vérité partagée — doit rester aligné avec le sélecteur du Prompt Lab.
+const NICHE_MAP: Record<string, { niche: string; subNiche: string }> = Object.fromEntries(
+  SAVE_CATEGORIES.map(c => [c.key, { niche: c.niche, subNiche: c.subNiche }])
+)
 
 // ── Auto-variations (fire-and-forget) ─────────────────────────────────────────
 async function generateVariations(promptId: number, promptJson: string, anthropicKey: string) {
