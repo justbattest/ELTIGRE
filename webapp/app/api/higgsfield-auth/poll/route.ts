@@ -10,6 +10,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { encrypt } from '@/lib/crypto'
 import * as fs from 'fs'
+import * as os from 'os'
 import * as path from 'path'
 import { pendingAuths } from '../start/route'
 
@@ -24,9 +25,19 @@ export async function GET() {
     return NextResponse.json({ status: 'no_pending' })
   }
 
-  const credsFile = path.join(pending.tmpHome, '.config', 'higgsfield', 'credentials.json')
+  // En prod (Linux), le CLI respecte HOME=tmpHome → creds isolés dans tmpHome.
+  // Sur Windows, le binaire ignore HOME et écrit dans ~/.config (USERPROFILE) :
+  // on ajoute ce chemin en fallback uniquement sur win32 pour ne pas casser
+  // l'isolation multi-utilisateur en prod.
+  const candidates = [
+    path.join(pending.tmpHome, '.config', 'higgsfield', 'credentials.json'),
+  ]
+  if (process.platform === 'win32') {
+    candidates.push(path.join(os.homedir(), '.config', 'higgsfield', 'credentials.json'))
+  }
+  const credsFile = candidates.find((f) => fs.existsSync(f))
 
-  if (!fs.existsSync(credsFile)) {
+  if (!credsFile) {
     return NextResponse.json({ status: 'waiting' })
   }
 

@@ -17,16 +17,33 @@ import {
   ChevronRight,
   Send,
   BookOpen,
+  Map,
 } from 'lucide-react'
+import { STEPS } from '@/lib/journey'
 
 const GROUPS = [
+  {
+    key: 'parcours',
+    icon: Map,
+    label: 'PARCOURS',
+    href: '/parcours',
+    // actif sur l'overview ET sur chaque page d'étape → les sous-menus restent dépliés
+    pages: ['/parcours', ...STEPS.map(s => `/parcours/${s.slug}`)],
+    // chaque étape = un menu dans la nav bar
+    subTabs: [
+      { label: 'Vue d\'ensemble', href: '/parcours' },
+      ...STEPS.map(s => ({ label: `${s.n}. ${s.title}`, href: `/parcours/${s.slug}` })),
+    ],
+    separate: false,
+  },
   {
     key: 'image',
     icon: ImageIcon,
     label: 'IMAGE',
     href: '/',
-    pages: ['/', '/studio', '/bulk-edit', '/image'],
+    pages: ['/', '/studio', '/bulk-edit', '/image', '/creer-modele'],
     subTabs: [
+      { label: 'Créer le modèle', href: '/creer-modele' },
       { label: 'Scraping', href: '/' },
       { label: 'Prompt Studio', href: '/studio' },
       { label: 'Bulk Edit', href: '/bulk-edit' },

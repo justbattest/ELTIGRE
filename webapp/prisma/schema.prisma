@@ -17,6 +17,8 @@ model User {
   runs           Run[]
   credentials    UserCredentials?
   motionConcepts MotionConcept[]
+  models         Model[]
+  modelRevenues  ModelRevenue[]
 
   @@map("users")
 }
@@ -31,15 +33,15 @@ model UserCredentials {
   defaultAspectRatio     String?   @default("2:3") @map("default_aspect_ratio")
   defaultQuality         String?   @default("2k") @map("default_quality")
   referenceElements      String?   @map("reference_elements")
-  googleRefreshToken        String?   @map("google_refresh_token")
-  driveFolderId             String?   @map("drive_folder_id")
-  instagramSessionCookie    String?   @map("instagram_session_cookie")
-  klingAccessKey            String?   @map("kling_access_key")
-  klingSecretKey            String?   @map("kling_secret_key")
-  networkProxies            String?   @map("network_proxies") @db.Text  // JSON: {"iPhone 12promax": "http://user:pass@host:port"}
-  scrapingProxyUrl          String?   @map("scraping_proxy_url")         // Proxy résidentiel pour le scraping (ex: webshare.io)
-  hikerApiKey               String?   @map("hiker_api_key")               // HikerAPI token — méthode scraping principale
-  higgsFieldClerkToken      String?   @map("higgsfield_clerk_token")      // Clerk JWT session token (pour /chains/motion-control)
+  googleRefreshToken     String?   @map("google_refresh_token")
+  driveFolderId          String?   @map("drive_folder_id")
+  instagramSessionCookie String?   @map("instagram_session_cookie")
+  klingAccessKey         String?   @map("kling_access_key")
+  klingSecretKey         String?   @map("kling_secret_key")
+  networkProxies         String?   @map("network_proxies") @db.Text // JSON: {"iPhone 12promax": "http://user:pass@host:port"}
+  scrapingProxyUrl       String?   @map("scraping_proxy_url") // Proxy résidentiel pour le scraping (ex: webshare.io)
+  hikerApiKey            String?   @map("hiker_api_key") // HikerAPI token — méthode scraping principale
+  higgsFieldClerkToken   String?   @map("higgsfield_clerk_token") // Clerk JWT session token (pour /chains/motion-control)
   updatedAt              DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -78,22 +80,22 @@ model Run {
 // ─── Motion Concepts ──────────────────────────────────────────────────────────
 
 model MotionConcept {
-  id              String    @id @default(cuid())
-  userId          String    @map("user_id")
-  name            String?                             // Nom libre (ex: "reel plage juillet")
-  sourceVideoUrl  String?   @map("source_video_url")  // URL Instagram originale
-  localVideoPath  String?   @map("local_video_path")  // Chemin local /tmp/mc_concepts/{id}/video.mp4
-  bestFrameUrl    String?   @map("best_frame_url")    // URL CDN de la frame auto-sélectionnée
-  conceptImageUrl String?   @map("concept_image_url") // URL CDN après person swap (nano_banana_2)
-  outfitImages    Json      @default("[]") @map("outfit_images") // ["url1","url2","url3","url4"]
-  characterName   String?   @map("character_name")    // Nom du personnage Higgsfield
-  elementId       String?   @map("element_id")        // Higgsfield element_id utilisé
-  notes           String?   @db.Text
-  viewCount       Int       @default(0)  @map("view_count")
-  isFavorite      Boolean   @default(false) @map("is_favorite")
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  name            String? // Nom libre (ex: "reel plage juillet")
+  sourceVideoUrl  String?  @map("source_video_url") // URL Instagram originale
+  localVideoPath  String?  @map("local_video_path") // Chemin local /tmp/mc_concepts/{id}/video.mp4
+  bestFrameUrl    String?  @map("best_frame_url") // URL CDN de la frame auto-sélectionnée
+  conceptImageUrl String?  @map("concept_image_url") // URL CDN après person swap (nano_banana_2)
+  outfitImages    Json     @default("[]") @map("outfit_images") // ["url1","url2","url3","url4"]
+  characterName   String?  @map("character_name") // Nom du personnage Higgsfield
+  elementId       String?  @map("element_id") // Higgsfield element_id utilisé
+  notes           String?  @db.Text
+  viewCount       Int      @default(0) @map("view_count")
+  isFavorite      Boolean  @default(false) @map("is_favorite")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   runs            Run[]
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId], map: "idx_motion_concepts_user_id")
   @@index([createdAt], map: "idx_motion_concepts_created_at")
@@ -101,34 +103,34 @@ model MotionConcept {
 }
 
 model Generation {
-  id                     Int       @id @default(autoincrement())
-  runId                  String?   @map("run_id")
-  userId                 String?   @map("user_id")
-  sourcePostUrl          String?   @map("source_post_url")
-  sourceShortcode        String?   @map("source_shortcode")
-  sourceLikes            Int?      @default(0) @map("source_likes")
-  sourceComments         Int?      @default(0) @map("source_comments")
-  sourceCaption          String?   @map("source_caption")
-  sourceRank             Int?      @map("source_rank")
-  slideIndex             Int?      @map("slide_index")
-  localImagePath         String?   @map("local_image_path")
-  promptUsed             String?   @map("prompt_used")
-  sceneDescription       String?   @map("scene_description")
-  claudeRecommendedModel String?   @map("claude_recommended_model")
-  modelUsed              String?   @map("model_used")
-  fallbackUsed           Boolean?  @default(false) @map("fallback_used")
-  fallbackReason         String?   @map("fallback_reason")
-  higgsFieldJobId        String?   @map("higgsfield_job_id")
-  generatedImageUrl      String?   @map("generated_image_url")
-  driveGeneratedUrl      String?   @map("drive_generated_url")  // URL Drive permanente du résultat généré
-  driveSourceUrl         String?   @map("drive_source_url")      // URL Drive de l'image source Instagram
-  generationStatus       String?   @default("pending") @map("generation_status")
-  creditsUsed            Float?    @map("credits_used")
-  scrapedAt              DateTime? @map("scraped_at") @db.Timestamptz(6)
-  analyzedAt             DateTime? @map("analyzed_at") @db.Timestamptz(6)
-  generatedAt            DateTime? @map("generated_at") @db.Timestamptz(6)
-  run                    Run?      @relation(fields: [runId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user                   User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                     Int             @id @default(autoincrement())
+  runId                  String?         @map("run_id")
+  userId                 String?         @map("user_id")
+  sourcePostUrl          String?         @map("source_post_url")
+  sourceShortcode        String?         @map("source_shortcode")
+  sourceLikes            Int?            @default(0) @map("source_likes")
+  sourceComments         Int?            @default(0) @map("source_comments")
+  sourceCaption          String?         @map("source_caption")
+  sourceRank             Int?            @map("source_rank")
+  slideIndex             Int?            @map("slide_index")
+  localImagePath         String?         @map("local_image_path")
+  promptUsed             String?         @map("prompt_used")
+  sceneDescription       String?         @map("scene_description")
+  claudeRecommendedModel String?         @map("claude_recommended_model")
+  modelUsed              String?         @map("model_used")
+  fallbackUsed           Boolean?        @default(false) @map("fallback_used")
+  fallbackReason         String?         @map("fallback_reason")
+  higgsFieldJobId        String?         @map("higgsfield_job_id")
+  generatedImageUrl      String?         @map("generated_image_url")
+  driveGeneratedUrl      String?         @map("drive_generated_url") // URL Drive permanente du résultat généré
+  driveSourceUrl         String?         @map("drive_source_url") // URL Drive de l'image source Instagram
+  generationStatus       String?         @default("pending") @map("generation_status")
+  creditsUsed            Float?          @map("credits_used")
+  scrapedAt              DateTime?       @map("scraped_at") @db.Timestamptz(6)
+  analyzedAt             DateTime?       @map("analyzed_at") @db.Timestamptz(6)
+  generatedAt            DateTime?       @map("generated_at") @db.Timestamptz(6)
+  run                    Run?            @relation(fields: [runId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user                   User?           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   instagramPosts         InstagramPost[]
 
   @@index([runId], map: "idx_generations_run_id")
@@ -139,20 +141,20 @@ model Generation {
 }
 
 model ValidatedPrompt {
-  id          Int      @id @default(autoincrement())
-  niche       String                            // 'conference_sport'
-  subNiche    String   @map("sub_niche")        // 'conference' | 'sport'
-  title       String
-  promptJson  String   @map("prompt_json") @db.Text
-  outfitText  String?  @map("outfit_text") @db.Text   // exact substring à remplacer pour variation outfit
-  speakerLine      String?  @map("speaker_line") @db.Text       // exact texte de la réplique féminine à remplacer
-  phraseVariations String?  @map("phrase_variations") @db.Text  // JSON array de phrases dédiées à ce concept
-  authorName      String?  @map("author_name")                       // Prénom/pseudo de l'auteur (prompts communautaires)
-  userDescription String?  @map("user_description") @db.Text          // Description courte du concept
-  isBest      Boolean  @default(false) @map("is_best")
-  isActive    Boolean  @default(true) @map("is_active")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id               Int      @id @default(autoincrement())
+  niche            String // 'conference_sport'
+  subNiche         String   @map("sub_niche") // 'conference' | 'sport'
+  title            String
+  promptJson       String   @map("prompt_json") @db.Text
+  outfitText       String?  @map("outfit_text") @db.Text // exact substring à remplacer pour variation outfit
+  speakerLine      String?  @map("speaker_line") @db.Text // exact texte de la réplique féminine à remplacer
+  phraseVariations String?  @map("phrase_variations") @db.Text // JSON array de phrases dédiées à ce concept
+  authorName       String?  @map("author_name") // Prénom/pseudo de l'auteur (prompts communautaires)
+  userDescription  String?  @map("user_description") @db.Text // Description courte du concept
+  isBest           Boolean  @default(false) @map("is_best")
+  isActive         Boolean  @default(true) @map("is_active")
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@index([niche])
   @@map("validated_prompts")
@@ -161,22 +163,22 @@ model ValidatedPrompt {
 // ─── Instagram Poster ──────────────────────────────────────────────────────────
 
 model InstagramAccount {
-  id           String          @id @default(cuid())
-  userId       String          @map("user_id")
-  username     String
-  passwordEnc  String?         @map("password_enc")    // AES-256 encrypted
-  totpSecret    String?         @map("totp_secret")     // Secret base32 Google Authenticator (AES-256)
-  characterName String?         @map("character_name")  // Nom du personnage Higgsfield lié (ex: "EMMA", "NINA")
-  sessionJson  String?         @map("session_json") @db.Text  // JSON instagrapi chiffré
-  deviceJson   String?         @map("device_json") @db.Text   // Fingerprint device chiffré
-  networkName  String          @map("network_name")   // "iPhone_SIM1"
-  warmupPhase  Int             @default(1) @map("warmup_phase")  // 1,2,3,4
-  status       String          @default("warmup")     // warmup|active|challenge|banned|suspended
-  lastPostedAt DateTime?       @map("last_posted_at") @db.Timestamptz(6)
-  postsToday   Int             @default(0) @map("posts_today")
-  postsTodayDate DateTime?     @map("posts_today_date") @db.Timestamptz(6)
-  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  posts        InstagramPost[]
+  id             String          @id @default(cuid())
+  userId         String          @map("user_id")
+  username       String
+  passwordEnc    String?         @map("password_enc") // AES-256 encrypted
+  totpSecret     String?         @map("totp_secret") // Secret base32 Google Authenticator (AES-256)
+  characterName  String?         @map("character_name") // Nom du personnage Higgsfield lié (ex: "EMMA", "NINA")
+  sessionJson    String?         @map("session_json") @db.Text // JSON instagrapi chiffré
+  deviceJson     String?         @map("device_json") @db.Text // Fingerprint device chiffré
+  networkName    String          @map("network_name") // "iPhone_SIM1"
+  warmupPhase    Int             @default(1) @map("warmup_phase") // 1,2,3,4
+  status         String          @default("warmup") // warmup|active|challenge|banned|suspended
+  lastPostedAt   DateTime?       @map("last_posted_at") @db.Timestamptz(6)
+  postsToday     Int             @default(0) @map("posts_today")
+  postsTodayDate DateTime?       @map("posts_today_date") @db.Timestamptz(6)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  posts          InstagramPost[]
 
   @@index([userId], map: "idx_ig_accounts_user_id")
   @@index([status], map: "idx_ig_accounts_status")
@@ -184,25 +186,25 @@ model InstagramAccount {
 }
 
 model InstagramPost {
-  id           String           @id @default(cuid())
-  userId       String           @map("user_id")
-  accountId    String           @map("account_id")
-  generationId Int?             @map("generation_id")  // FK Generation (optionnel)
-  driveFileId    String?          @map("drive_file_id")      // ID fichier Google Drive (video/photo)
-  driveFileUrl   String?          @map("drive_file_url") @db.Text   // URL shareable Drive (video/photo)
-  driveFilesJson String?          @map("drive_files_json") @db.Text  // JSON array d'URLs pour carousel
-  carouselFolderId String?        @map("carousel_folder_id")  // ID Drive du dossier carousel_N (déduplication)
-  caption      String?          @db.Text
-  mediaType    String           @default("reel")       // reel|photo
-  scheduledFor DateTime?        @map("scheduled_for") @db.Timestamptz(6)
-  postedAt     DateTime?        @map("posted_at") @db.Timestamptz(6)
-  status       String           @default("pending")    // pending|processing|posted|failed|cancelled
-  igPostId     String?          @map("ig_post_id")
-  errorMessage String?          @map("error_message") @db.Text
-  retryCount   Int              @default(0) @map("retry_count")
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  account      InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  generation   Generation?      @relation(fields: [generationId], references: [id], onDelete: SetNull)
+  id               String           @id @default(cuid())
+  userId           String           @map("user_id")
+  accountId        String           @map("account_id")
+  generationId     Int?             @map("generation_id") // FK Generation (optionnel)
+  driveFileId      String?          @map("drive_file_id") // ID fichier Google Drive (video/photo)
+  driveFileUrl     String?          @map("drive_file_url") @db.Text // URL shareable Drive (video/photo)
+  driveFilesJson   String?          @map("drive_files_json") @db.Text // JSON array d'URLs pour carousel
+  carouselFolderId String?          @map("carousel_folder_id") // ID Drive du dossier carousel_N (déduplication)
+  caption          String?          @db.Text
+  mediaType        String           @default("reel") // reel|photo
+  scheduledFor     DateTime?        @map("scheduled_for") @db.Timestamptz(6)
+  postedAt         DateTime?        @map("posted_at") @db.Timestamptz(6)
+  status           String           @default("pending") // pending|processing|posted|failed|cancelled
+  igPostId         String?          @map("ig_post_id")
+  errorMessage     String?          @map("error_message") @db.Text
+  retryCount       Int              @default(0) @map("retry_count")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  account          InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  generation       Generation?      @relation(fields: [generationId], references: [id], onDelete: SetNull)
 
   @@index([userId], map: "idx_ig_posts_user_id")
   @@index([status], map: "idx_ig_posts_status")
@@ -230,4 +232,104 @@ model VideoPromptBank {
   @@index([userId], map: "idx_vpb_user_id")
   @@index([characterName], map: "idx_vpb_character")
   @@map("video_prompt_bank")
+}
+
+// ─── Modèles (la "fille" IA) + parcours step-by-step ────────────────────────────
+
+model Model {
+  id          String  @id @default(cuid())
+  userId      String  @map("user_id")
+  name        String
+  status      String  @default("creating") // creating|content|accounts|launched|monetizing|paused|archived
+  currentStep Int     @default(1) @map("current_step") // 1..6
+  stepState   Json    @default("{}") @map("step_state") // { "creer-le-modele": { "s1-photos": true, ... }, ... }
+  avatarUrl   String? @map("avatar_url")
+
+  // Identité / comptes (étape 3)
+  gmailAddress     String? @map("gmail_address")
+  gmailPasswordEnc String? @map("gmail_password_enc") // AES-256
+  instagramHandle  String? @map("instagram_handle")
+  fanvueHandle     String? @map("fanvue_handle")
+  phoneLabel       String? @map("phone_label") // quel device / SIM physique
+  phoneNumber      String? @map("phone_number") // numéro (TextVerified)
+
+  // Lien Higgsfield (étape 1)
+  higgsfieldCharacterName String? @map("higgsfield_character_name")
+  higgsfieldSoulId        String? @map("higgsfield_soul_id")
+  higgsfieldElementId     String? @map("higgsfield_element_id")
+
+  notes      String?   @db.Text
+  archivedAt DateTime? @map("archived_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  revenues ModelRevenue[]
+
+  @@index([userId], map: "idx_models_user_id")
+  @@index([status], map: "idx_models_status")
+  @@map("models")
+}
+
+model ModelRevenue {
+  id          String   @id @default(cuid())
+  modelId     String   @map("model_id")
+  userId      String   @map("user_id")
+  amount      Float // montant brut
+  currency    String   @default("EUR")
+  source      String   @default("fanvue") // fanvue|tips|other
+  periodMonth String   @map("period_month") // "2026-06"
+  note        String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  model Model @relation(fields: [modelId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([modelId], map: "idx_model_revenues_model_id")
+  @@index([userId], map: "idx_model_revenues_user_id")
+  @@index([periodMonth], map: "idx_model_revenues_period")
+  @@map("model_revenues")
+}
+
+// ─── Modelify MCP : clés API + crédits ──────────────────────────────────────────
+// Couche fondation du serveur MCP "Modelify". Ajout PUREMENT additif :
+// relations vers User volontairement NON déclarées côté Prisma (scalaire userId +
+// index uniquement) pour ne pas avoir à modifier le modèle User existant. La FK
+// physique vers users(id) est posée dans la migration SQL manuelle
+// (prisma/manual-migrations/0001_modelify_mcp_credits.sql).
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  keyHash    String    @unique @map("key_hash") // SHA-256 hex de la clé en clair — l'index unique fait office d'index de lookup
+  keyPrefix  String    @map("key_prefix") // ex "mk_live_" + début, affichable sans révéler la clé
+  label      String?
+  scopes     String[]  @default([])
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_api_keys_user_id")
+  @@map("api_keys")
+}
+
+model CreditWallet {
+  userId    String   @id @map("user_id") // un wallet par utilisateur (PK = userId)
+  balance   Int      @default(0)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("credit_wallets")
+}
+
+model CreditTransaction {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  delta        Int // négatif = débit, positif = crédit
+  reason       String
+  runId        String?  @map("run_id") // lie un débit à un run de génération (runs.id), nullable
+  balanceAfter Int      @map("balance_after")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_credit_transactions_user_id")
+  @@map("credit_transactions")
 }
