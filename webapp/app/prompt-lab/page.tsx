@@ -27,7 +27,11 @@ export default function PromptLabPage() {
   useSession()
 
   // ── Mode ──
-  const [mode, setMode] = useState<'video' | 'screenshots'>('video')
+  const [mode, setMode] = useState<'video' | 'screenshots' | 'paste'>('video')
+
+  // ── Mode paste : coller un prompt existant et le sauvegarder direct ──
+  const [pastedPrompt, setPastedPrompt] = useState('')
+  const [pasteError, setPasteError] = useState('')
   const [videoSource, setVideoSource] = useState<'url' | 'upload'>('url')
   const [videoUrl, setVideoUrl] = useState('')
   const [videoFile, setVideoFile] = useState<File | null>(null)
@@ -347,7 +351,48 @@ export default function PromptLabPage() {
           >
             🖼 Screenshots
           </button>
+          <button
+            onClick={() => setMode('paste')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${mode === 'paste' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            📋 Paste &amp; Save
+          </button>
         </div>
+
+        {/* ── Mode paste : coller un prompt déjà prêt → save direct dans une niche ── */}
+        {mode === 'paste' && (
+          <div className="bg-white/75 backdrop-blur-xl rounded-2xl p-5 border border-white/85 shadow-[0_4px_24px_rgba(109,40,217,0.10),inset_0_0_0_1px_rgba(255,255,255,0.60)] space-y-3">
+            <p className="text-sm text-gray-700">
+              Already have a working prompt? Paste the JSON below and save it straight into a niche — no generation step needed.
+            </p>
+            <textarea
+              value={pastedPrompt}
+              onChange={e => { setPastedPrompt(e.target.value); setPasteError('') }}
+              rows={12}
+              placeholder={'[\n  { "framing": "...", "motion_intensity": 0.5, "action": "...", "dialogue": "..." },\n  { "style": "..." }\n]'}
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 transition text-xs font-mono resize-y"
+            />
+            {pasteError && (
+              <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2">{pasteError}</p>
+            )}
+            <button
+              onClick={() => {
+                // Normalise les guillemets typographiques (copier-coller depuis Notes/Word)
+                const normalized = pastedPrompt.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim()
+                try {
+                  const parsed = JSON.parse(normalized)
+                  openSaveDialog(JSON.stringify(parsed, null, 2))
+                } catch {
+                  setPasteError('Invalid JSON — check for missing brackets/commas. Smart quotes from Notes/Word are auto-fixed, but the structure must be valid JSON.')
+                }
+              }}
+              disabled={!pastedPrompt.trim()}
+              className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-br from-violet-600 to-violet-700 shadow-[0_4px_15px_rgba(109,40,217,0.40)] hover:shadow-[0_6px_20px_rgba(109,40,217,0.50)] disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              💾 Save this prompt to a niche
+            </button>
+          </div>
+        )}
 
         {/* ── Mode vidéo : source (URL ou upload) ── */}
         {mode === 'video' && (
@@ -449,7 +494,8 @@ export default function PromptLabPage() {
         </div>
         )}
 
-        {/* ── Bouton générer ── */}
+        {/* ── Bouton générer (pas en mode paste — le save est direct) ── */}
+        {mode !== 'paste' && (
         <div className="flex gap-3">
           <button
             onClick={generate}
@@ -467,6 +513,7 @@ export default function PromptLabPage() {
             <button onClick={stopGeneration} className="px-5 py-3 rounded-xl font-semibold text-white bg-red-700 hover:bg-red-600 transition">Stop</button>
           )}
         </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

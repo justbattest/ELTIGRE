@@ -129,6 +129,10 @@ function SubNicheLabel({ subNiche }: { subNiche: string }) {
   if (subNiche === 'mcdo') return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-700 border border-yellow-200 font-medium">🍔 McDo</span>
   if (subNiche === 'skatepark') return <span className="text-xs px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">🛴 Skatepark</span>
   if (subNiche === 'standdetir') return <span className="text-xs px-1.5 py-0.5 rounded bg-stone-50 text-stone-700 border border-stone-200 font-medium">🎯 Shooting Range</span>
+  if (subNiche === 'moto') return <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-300 font-medium">🏍️ Moto</span>
+  if (subNiche === 'skydive') return <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-700 border border-cyan-200 font-medium">🪂 Skydive</span>
+  if (subNiche === 'mma') return <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-medium">🥋 MMA</span>
+  if (subNiche === 'prank') return <span className="text-xs px-1.5 py-0.5 rounded bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 font-medium">🎭 Prank</span>
   if (subNiche === 'conference') return <span className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 font-medium">🎓 Conf.</span>
   // Niche custom créée via Prompt Lab — badge générique avec le slug
   return <span className="text-xs px-1.5 py-0.5 rounded bg-gray-50 text-gray-700 border border-gray-200 font-medium">🆕 {subNiche.charAt(0).toUpperCase() + subNiche.slice(1).replace(/_/g, ' ')}</span>
@@ -854,7 +858,7 @@ export default function VideoPage() {
               <div className="bg-white/75 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_4px_24px_rgba(109,40,217,0.09),_inset_0_0_0_1px_rgba(255,255,255,0.5)] px-5 py-4">
                 <p className="text-sm font-semibold text-gray-900">{currentPhrasePool ? '③' : '②'} Outfit</p>
                 <p className="text-xs text-gray-700 mt-1">
-                  Custom niche — no predefined outfit pool. The original outfit is kept, phrases still vary.
+                  No predefined outfit pool for this niche — the concept's original outfit is kept, phrases still vary.
                 </p>
               </div>
             )}

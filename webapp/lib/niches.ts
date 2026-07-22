@@ -27,6 +27,10 @@ export const SAVE_CATEGORIES: SaveCategory[] = [
   { key: 'mcdo',       niche: 'mcdo',       subNiche: 'mcdo',       label: '🍔 McDo' },
   { key: 'skatepark',  niche: 'skatepark',  subNiche: 'skatepark',  label: '🛴 Skatepark' },
   { key: 'standdetir', niche: 'standdetir', subNiche: 'standdetir', label: '🎯 Shooting Range' },
+  { key: 'moto',       niche: 'moto',       subNiche: 'moto',       label: '🏍️ Moto' },
+  { key: 'skydive',    niche: 'skydive',    subNiche: 'skydive',    label: '🪂 Skydive' },
+  { key: 'mma',        niche: 'mma',        subNiche: 'mma',        label: '🥋 MMA' },
+  { key: 'prank',      niche: 'prank',      subNiche: 'prank',      label: '🎭 Pranks' },
 ]
 
 export const STATIC_VIDEO_TABS: VideoTab[] = [
@@ -39,6 +43,10 @@ export const STATIC_VIDEO_TABS: VideoTab[] = [
   { tabKey: 'mcdo',       dbNiche: 'mcdo',       label: 'McDo',           emoji: '🍔' },
   { tabKey: 'skatepark',  dbNiche: 'skatepark',  label: 'Skatepark',      emoji: '🛴' },
   { tabKey: 'standdetir', dbNiche: 'standdetir', label: 'Shooting Range', emoji: '🎯' },
+  { tabKey: 'moto',       dbNiche: 'moto',       label: 'Moto',           emoji: '🏍️' },
+  { tabKey: 'skydive',    dbNiche: 'skydive',    label: 'Skydive',        emoji: '🪂' },
+  { tabKey: 'mma',        dbNiche: 'mma',        label: 'MMA',            emoji: '🥋' },
+  { tabKey: 'prank',      dbNiche: 'prank',      label: 'Pranks',         emoji: '🎭' },
 ]
 
 /** Toutes les niches DB "built-in" — tout ce qui est en dehors est une niche custom. */
